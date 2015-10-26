@@ -1,0 +1,4 @@
+
+  global.Neuro = Neuro;
+
+})(window);
