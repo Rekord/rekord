@@ -28,7 +28,28 @@ NeuroDatabase.prototype =
   // Sorts the models & notifies listeners that the database has been updated.
   updated: function()
   {
-    this.models.sort( this.comparator );
+    var cmp = this.comparator;
+
+    if ( isFunction( cmp ) )
+    {
+      this.models.sort( cmp );
+    }
+    else if ( isString( cmp ) )
+    {
+      var order = 1;
+
+      if ( cmp.charAt(0) === '-' )
+      {
+        cmp = cmp.substring( 1 );
+        order = -1;
+      }
+
+      this.models.sort(function(a, b)
+      {
+        return order * compare( a[ cmp ], b[ cmp ] );
+      });
+    }
+
     this.trigger( 'updated' );
   },
 
@@ -388,6 +409,12 @@ NeuroDatabase.prototype =
     var $saving = model.$saved ? 
       diff( encoded, model.$saved, db.fields, equals ) :
       encoded;
+
+    // If there's nothing to save, don't bother!
+    if ( isEmpty( $saving ) )
+    {
+      return promise.$success();
+    }
 
     var key = model.$key();
 

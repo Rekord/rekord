@@ -15,6 +15,11 @@ function isString(x)
   return typeof x === 'string';
 }
 
+function isNumber(x)
+{
+  return typeof x === 'number' && !isNaN(x);
+}
+
 function isDate(x)
 {
   return x instanceof Date;
@@ -136,6 +141,32 @@ function diff(curr, old, props, comparator)
   return d;
 }
 
+function isEmpty(x)
+{
+  if (x === null || x === void 0 || x === 0) 
+  {
+    return true;
+  }
+  if (isArray(x)) 
+  {
+    return x.length === 0;
+  }
+  if (isDate(x)) 
+  {
+    return x.getTime() === 0 || isNaN( x.getTime() );
+  }
+  if (isObject(x)) 
+  {
+    for (var prop in x) 
+    {
+      return false;
+    }
+    return true;
+  }
+
+  return false;
+}
+
 function equalsStrict(a, b)
 {
   return a === b;
@@ -191,4 +222,35 @@ function equals(a, b)
   }
 
   return false;
+}
+
+function compareNumbers(a, b) 
+{
+  return (a === b ? 0 : (a < b ? -1 : 1));
+}
+
+function compare(a, b)
+{
+  if (a == b) 
+  {
+    return 0;
+  }
+  if (isDate(a)) 
+  {
+    a = a.getTime();
+  }
+  if (isDate(b)) 
+  {
+    b = b.getTime();
+  }
+  if (isNumber(a) && isNumber(b)) 
+  {
+    return compareNumbers(a, b);
+  }
+  if (isArray(a) && isArray(b)) 
+  {
+    return compareNumbers(a.length, b.length);
+  }
+  
+  return (a + '').localeCompare(b + '');
 }

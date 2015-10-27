@@ -47,9 +47,12 @@
             token: 'root',
             key: 'id',
             fields: ['id', 'name', 'done', 'created_at', 'updated_at'],
-            comparator: function(a, b) {
-              return b.created_at - a.created_at;
-            }
+            defaults: {
+              done: false,
+              created_at: Date.now,
+              updated_at: Date.now
+            },
+            comparator: '-created_at'
           });
 
           return Todo;

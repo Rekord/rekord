@@ -18,7 +18,7 @@ function Neuro(options)
 {
   var database = new NeuroDatabase( options );
 
-  var model = new Function('return function ' + options.className + '(props) { this.$set( props ) }')();
+  var model = new Function('return function ' + options.className + '(props) { this.$reset( props ) }')();
   model.prototype = new NeuroModel( database );
   model.db = database;
 
@@ -26,7 +26,7 @@ function Neuro(options)
   database.init();
 
   Neuro.debug( Neuro.Events.CREATION, options, database );
-  
+
   return {
     Database: database, 
     Model: model

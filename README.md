@@ -4,7 +4,8 @@ Tasks
 - [X] Add status method to NeuroModel
 - [X] If an unsaved model is deleted - remove pending save/delete
 - [X] If a model has a pending save (because offline) - don't run saveRemote again
-- [ ] Add defaults to Neuro options
+- [X] If there are no changes for a model - ignore a remote save
+- [X] Add defaults to Neuro options
 - [ ] Add feature to pubsub to queue publishes to a channel for a token - and when that token reconnects send those messages.
 - [ ] Add relations to input for many-to-one, one-to-one, one-to-many, and many-to-many. A property stores an id or a reference to an object - or an array of ids or array of references.
   - [ ] One-to-One: (this model owns another)  

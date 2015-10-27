@@ -113,10 +113,41 @@ NeuroModel.prototype =
   $reset: function(props)
   {
     var def = this.$db.defaults;
+    var fields = this.$db.fields;
 
-    for (var prop in def)
+    if ( isObject( def ) )
     {
-      this[ def ] = copy( def[ prop ] );
+      for (var i = 0; i < fields.length; i++)
+      {
+        var prop = fields[ i ];
+
+        if ( prop in def )
+        {
+          var defaultValue = def[ prop ];
+
+          if ( isFunction( defaultValue ) )
+          {
+            this[ prop ] = defaultValue();
+          }
+          else
+          {
+            this[ prop ] = copy( defaultValue );
+          }
+        }
+        else
+        {
+          this[ prop ] = undefined;
+        }
+      }
+    }
+    else
+    {
+      for (var i = 0; i < fields.length; i++)
+      {
+        var prop = fields[ i ];
+
+        this[ prop ] = undefined;
+      }
     }
 
     this.$set( props );
