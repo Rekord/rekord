@@ -16,10 +16,57 @@ NeuroDatabase.prototype =
   // Whether or not there's a load pending until we're online again
   $pendingLoad: false,
 
-  // The method responsible for generating a key for the models in the database.
-  generateKey: function()
+  // Removes the key from the given model
+  removeKey: function(model)
   {
-    return uuid();
+    var k = this.key;
+
+    if ( isArray(k) )
+    {
+      for (var i = 0; i < k.length; i++) 
+      {
+        delete model[ k[i] ];
+      }
+    }
+    else
+    {
+      delete model[ k ];
+    }
+  },
+
+  // Gets the key from the given model
+  getKey: function(model)
+  {
+    var k = this.key;
+    var key = null;
+
+    if ( isArray(k) )
+    {
+      var ks = this.keySeparator || '/';
+      
+      key = '';
+      
+      for (var i = 0; i < k.length; i++) 
+      {
+        if (i > 0) 
+        {
+          key += ks;
+        }
+
+        key += model[ k[i] ];
+      }
+    }
+    else
+    {
+      key = model[ k ];
+
+      if (!key)
+      {
+        model[ k ] = key = uuid();
+      }
+    }
+
+    return key;
   },
 
   // Sorts the models & notifies listeners that the database has been updated.
@@ -55,7 +102,7 @@ NeuroDatabase.prototype =
   putRemoteData: function(encoded, key, model)
   {
     var db = this;
-    var key = key || encoded[ db.key ];
+    var key = key || db.getKey( encoded );
     var model = model || db.models.get( key );
     var decoded = db.decode( copy( encoded ) );
 
@@ -119,8 +166,9 @@ NeuroDatabase.prototype =
         // Removed saved history and the current ID
         delete model.$saved;
         delete model.$local.$saved;
-        delete model[ db.key ];
-        delete model.$local[ db.key ];
+
+        db.removeKey( model );
+        db.removeKey( model.$local );
 
         model.$queue(function()
         {

@@ -44,6 +44,24 @@ function NeuroModel(db)
    */
 }
 
+/**
+ * $nextOperation = method name on database to invoke with this model
+ * $next = function to invoke once the current operation finishes
+ * 
+ * OP_REMOVE_LOCAL  
+ * OP_REMOVE_REMOTE
+ *
+ * OP_SAVE_LOCAL
+ * OP_SAVE_REMOTE
+ *
+ * if ($nextOperation !== THIS OPERATION) {
+ *   return
+ * }
+ *
+ * 
+ * 
+ */
+
 NeuroModel.prototype =
 {
 
@@ -160,9 +178,7 @@ NeuroModel.prototype =
 
   $key: function()
   {
-    var k = this.$db.key;
-
-    return k in this ? this[ k ] : (this[ k ] = this.$db.generateKey());
+    return this.$db.getKey( this );
   },
 
   $isSaved: function()
