@@ -595,22 +595,6 @@ Neuro.rest = function(options, promise)
   promise.$failure( [{}, 0] );
 };
 
-Neuro.getPubSub = function(url)
-{
-  if ( !(url in Neuro.pubsubs) )
-  {
-    var pubsub = new PubSub( url );
-
-    Neuro.pubsubs[ url ] = pubsub;
-
-    Neuro.debug( Neuro.Events.PUBSUB_CREATED, pubsub );
-  }
-
-  return Neuro.pubsubs[ url ];
-};
-
-Neuro.pubsubs = {};
-
 // Initial online
 Neuro.online = window.navigator.onLine !== false;
 
@@ -674,13 +658,10 @@ function NeuroDatabase(options)
 {  
   transfer( options, this );
 
-  var pubsub = Neuro.getPubSub( options.pubsub );
-
   this.stork = new Stork( options );
   this.models = new Stork.FastMap();
 
-  this.channel = pubsub.subscribe( options.channel, options.token );
-  this.channel.onpublish = this.handlePublish( this );
+  this.live = Neuro.live( this, this.handlePublish( this ) );
 }
 
 NeuroDatabase.prototype =
@@ -1134,7 +1115,7 @@ NeuroDatabase.prototype =
       Neuro.debug( Neuro.Events.SAVE_PUBLISH, $saving, model );
 
       // Publish saved data to everyone else
-      db.channel.publish({
+      db.live({
         op: 'SAVE',
         model: $saving,
         key: key
@@ -1347,7 +1328,7 @@ NeuroDatabase.prototype =
       // Publish REMOVE
       Neuro.debug( Neuro.Events.REMOVE_PUBLISH, key, model );
 
-      db.channel.publish({
+      db.live({
         op: 'REMOVE',
         key: key
       });
