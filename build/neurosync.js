@@ -761,7 +761,7 @@ function NeuroDatabase(options)
   transfer( options, this );
 
   this.models = new NeuroMap();
-  
+
   this.rest = Neuro.rest( this );
   this.store = Neuro.store( this );
   this.live = Neuro.live( this, this.handlePublish( this ) );
@@ -771,7 +771,7 @@ NeuroDatabase.prototype =
 {
 
   // Whether or not there's a load pending until we're online again
-  $pendingLoad: false,
+  pendingLoad: false,
 
   // Removes the key from the given model
   removeKey: function(model)
@@ -862,6 +862,7 @@ NeuroDatabase.prototype =
     var key = key || db.getKey( encoded );
     var model = model || db.models.get( key );
     var decoded = db.decode( copy( encoded ) );
+    var hasModel = !!model;
 
     if ( model && model.$saved )
     {
@@ -891,11 +892,14 @@ NeuroDatabase.prototype =
       model.$saved = model.$local.$saved = copy( encoded );
 
       model.$addOperation( NeuroSaveNow );
-
-      db.models.put( key, model );
     }
 
-    model.trigger('saved');
+    if ( !db.models.has( key ) )
+    {
+      db.models.put( key, model );
+
+      model.trigger( 'saved' );
+    }
 
     return model;
   },
@@ -1054,15 +1058,15 @@ NeuroDatabase.prototype =
 
         if ( !Neuro.online )
         {
-          db.$pendingLoad = true;
+          db.pendingLoad = true;
 
           Neuro.once('online', function()
           {
             Neuro.debug( Neuro.Events.REMOTE_LOAD_RESUME );
 
-            if ( db.$pendingLoad )
+            if ( db.pendingLoad )
             {
-              db.$pendingLoad = false;
+              db.pendingLoad = false;
 
               db.loadRemote(); 
             }
@@ -1153,6 +1157,8 @@ NeuroDatabase.prototype =
     {
       db.models.put( key, model );
       db.updated();
+
+      model.trigger('saved');
     }
 
     // Start by saving locally.
@@ -1170,6 +1176,8 @@ NeuroDatabase.prototype =
     {
       db.models.remove( key );
       db.updated();
+
+      model.trigger('removed');
     }
 
     // Mark as deleted right away
@@ -1834,8 +1842,13 @@ NeuroRemoveNow.prototype = new NeuroOperation( true );
 NeuroRemoveNow.prototype.run = function(db, model)
 {
   var key = model.$key();
-  
-  db.models.remove( key );
+
+  if ( db.models.has( key ) )
+  {
+    db.models.remove( key );
+
+    model.trigger('removed');
+  }
 
   db.store.remove( key, this.success(), this.failure() );
 };
@@ -1915,9 +1928,6 @@ NeuroRemoveRemote.prototype.finishRemove = function()
   // Remove from local storage now
   this.insertNext( NeuroRemoveNow );
 
-  // Notify the model that it's been removed
-  model.trigger('removed');
-
   // Publish REMOVE
   Neuro.debug( Neuro.Events.REMOVE_PUBLISH, key, model );
 
@@ -1970,6 +1980,8 @@ NeuroSaveLocal.prototype.onSuccess = function(key, encoded, previousValue)
 
 NeuroSaveLocal.prototype.onFailure = function(e)
 {
+  var model = this.model;
+
   Neuro.debug( Neuro.Events.SAVE_LOCAL_ERROR, model, e );
 
   this.tryNext( NeuroSaveRemote );

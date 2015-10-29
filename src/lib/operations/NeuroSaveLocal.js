@@ -42,6 +42,8 @@ NeuroSaveLocal.prototype.onSuccess = function(key, encoded, previousValue)
 
 NeuroSaveLocal.prototype.onFailure = function(e)
 {
+  var model = this.model;
+
   Neuro.debug( Neuro.Events.SAVE_LOCAL_ERROR, model, e );
 
   this.tryNext( NeuroSaveRemote );

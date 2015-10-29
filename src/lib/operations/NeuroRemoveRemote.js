@@ -74,9 +74,6 @@ NeuroRemoveRemote.prototype.finishRemove = function()
   // Remove from local storage now
   this.insertNext( NeuroRemoveNow );
 
-  // Notify the model that it's been removed
-  model.trigger('removed');
-
   // Publish REMOVE
   Neuro.debug( Neuro.Events.REMOVE_PUBLISH, key, model );
 
