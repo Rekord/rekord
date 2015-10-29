@@ -3,7 +3,7 @@
   <head>
     <title>Neurosync</title>
   </head>
-  <body ng-app="neurosync">
+  <body ng-app="todos">
 
     <div ng-controller="TodoController as ctrl">
 
@@ -28,11 +28,17 @@
     <script src="../../build/neurosync.js"></script>
     <script src="../../src/plugins/live-pubsub.js"></script>
     <script src="../../src/plugins/store-stork.js"></script>
+    <script src="../../src/plugins/rest-angular.js"></script>
 
     <!-- Todo Application -->
     <script>
 
-      angular.module('neurosync', [])
+      angular.module('todos', ['neurosync'])
+
+        .config(function($logProvider)
+        {
+          $logProvider.debugEnabled( true );
+        })
 
         .value('PUBSUB', 'http://localhost:3000')
 
@@ -75,6 +81,7 @@
               '   <input type="checkbox" id="todo{{ model.id }}" ng-model="model.done" ng-change="saveTodo()">',
               '   <label for="todo{{ model.id }}">{{ model.name }}</label>',
               '   <span style="float: right">',
+              '     <span ng-hide="model.$isSaved()">(local)</span>',
               '     <a href="#" ng-click="editTodo()">Edit</a>',
               '     <a href="#" ng-click="removeTodo()">Remove</a>',
               '   </span>',
@@ -139,99 +146,6 @@
 
           window.TodoController = this;
           window.Todo = Todo;
-        })
-
-        .factory('Neuro', function($http, $interpolate) 
-        {
-
-          var EventToDescription = {
-            0:  $interpolate('Neuro created {{ a.name }}'),
-            1:  $interpolate('{{ a.method }} {{ a.data }} to {{ a.url }}'),
-            2:  $interpolate('Remote data received to {{ b.id }}, existing model updated {{ a }}'),
-            3:  $interpolate('Remote data received, new model created {{ a }}'),
-            4:  $interpolate('Model remotely removed, removed locally {{ a.name }}'),
-            5:  $interpolate('Models loaded remotely: {{ a.length }}'),
-            6:  $interpolate('Offline, failed loading models remotely'),
-            7:  $interpolate('Error loading remote models {{ a }}'),
-            8:  $interpolate('Saved model removed locally because it does not exist remotely {{ a }}'),
-            9:  $interpolate('Models loaded locally: {{ a.length }}'),
-            10: $interpolate('Model deleted locally, resuming remote deletion of {{ a.name }}'),
-            11: $interpolate('Model loaded but not saved, resuming save of {{ a.name }}'),
-            12: $interpolate('Model loaded {{ a.name }} {{ a.done }}'),
-            13: $interpolate('Real-time save {{ a }}'),
-            14: $interpolate('Real-time removal {{ a }}'),
-            15: $interpolate('Model saved values: {{ a }}'),
-            16: $interpolate('Model save published {{ a }} for {{ b.name }}'),
-            17: $interpolate('Model save failure, conflict for {{ a.name }}'),
-            18: $interpolate('Model update failure, does not exist remotely for {{ a.name }}'),
-            19: $interpolate('Model save error {{ a.name }} {{ b }}'),
-            20: $interpolate('Model save failure, offline! {{ a.name }}'),
-            21: $interpolate('Model save resume {{ a.name }}'),
-            22: $interpolate('Models loading remotely resumed'),
-            23: $interpolate('Model saved locally {{ a.$toJSON() }}'),
-            24: $interpolate('Model failed to save locally, will still try to save it remotely: {{ b }} {{ a }}'),
-            25: $interpolate('Model saved remotely {{ a.name }}'),
-            26: $interpolate('Model remove published {{ a }}'),
-            27: $interpolate('Model removed locally {{ a }}'),
-            28: $interpolate('Model remove failure, does not exist remotely {{ a }}'),
-            29: $interpolate('Model remove error {{ a }}'),
-            30: $interpolate('Model remove failure, offline! {{ a.name }}'),
-            31: $interpolate('Model remove resume {{ a.name }}'),
-            32: $interpolate('Model removed remotely {{ a.name }}'),
-            33: $interpolate('Model removed locally {{ a.name }}'),
-            34: $interpolate('Model failed to remove locally, will still try to remove it remotely {{ a.name }} {{ b }}'),
-            35: $interpolate('Application Online'),
-            36: $interpolate('Application Offline'),
-            37: $interpolate('PUBSUB created {{ a.url }}'),
-            38: $interpolate('Model local save ineffective, model is deleted {{ a.name }}'),
-            39: $interpolate('Model local save blocked, waiting until previous operation finishes for {{ a.name }}'),
-            40: $interpolate('Model save ineffective, model is deleted {{ a.name }}'),
-            41: $interpolate('Model remote save ineffective, model is deleted {{ a.name }}'),
-            42: $interpolate('Model remove save blocked, waiting until previous operation finishes for {{ a.name }}'),
-            43: $interpolate('Model remote remove blocked, waiting until previous operation finishes for {{ a.name }}'),
-            44: $interpolate('Model local remove blocked, waiting until previous operation finishes for {{ a.name }}'),
-            45: $interpolate('Model local remove ineffective, no local model to remove for {{ a.name }}'),
-            46: $interpolate('Model local remove effective, unsaved model removed {{ a.name }}'),
-            47: $interpolate('Model had a pending save that was canceled by remove for {{ a.name }}')
-          };
-
-          Neuro.debug = function(event, a, b, c)
-          {
-            var exp = EventToDescription[ event ];
-            var result = exp( { a: a, b: b, c: c } );
-
-            console.log( event + ' - ' +  result );
-          };
-
-          Neuro.rest = function(database)
-          {
-            return function(options, success, failure) 
-            {
-              Neuro.debug( Neuro.Events.REST, options );
-
-              if ( Neuro.forceOffline )
-              {
-                failure( {}, 0 );
-              } 
-              else 
-              {
-                $http( options ).then(
-                  function onRestSuccess(response) 
-                  {
-                    success( response.data );
-                  },
-                  function onRestError(response) 
-                  {
-                    failure( response.data, response.status );
-                  }
-                );
-              }            
-            };
-          };
-
-          Neuro.listenToNetworkStatus();
-
-          return Neuro;
         })
 
         .directive('ngEnter', function()
