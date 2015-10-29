@@ -65,6 +65,13 @@ function transfer(from, to)
   return to;
 }
 
+function swap(a, i, k)
+{
+  var t = a[ i ];
+  a[ i ] = a[ k ];
+  a[ k ] = t;
+}
+
 function grab(obj, props, copyValues)
 {
   var grabbed = {};

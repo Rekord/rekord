@@ -68,6 +68,13 @@ function transfer(from, to)
   return to;
 }
 
+function swap(a, i, k)
+{
+  var t = a[ i ];
+  a[ i ] = a[ k ];
+  a[ k ] = t;
+}
+
 function grab(obj, props, copyValues)
 {
   var grabbed = {};
@@ -482,11 +489,10 @@ function eventize(target)
 /*
 new Neuro({
   name: 'name',
-  rest: 'http://api/name',
+  api: 'http://api/name',
   pubsub: 'http://url:port',
   channel: 'houseid',
   token: 'userid',
-  timestamp: 'updated_at',              // server returns new updated_at & old, old is compared against current
   key: 'id',
   fields: ['id', 'name', 'updated_at'],
 //  encode: function() {},
@@ -498,9 +504,9 @@ function Neuro(options)
 {
   var database = new NeuroDatabase( options );
 
-  var model = new Function('return function ' + options.className + '(props) { this.$reset( props ) }')();
+  var model = new Function('return function ' + options.className + '(props) { this.$init( props ) }')();
+
   model.prototype = new NeuroModel( database );
-  model.db = database;
 
   database.model = model;
   database.init();
@@ -588,11 +594,107 @@ Neuro.Events = {
 
 // Neuro.rest = function(options, success(data), failure(data, status))
 
-Neuro.rest = function(options, promise)
+Neuro.rest = function(database)
 {
-  // success ( data )
-  // failure ( data, status )
-  promise.$failure( [{}, 0] );
+  return function (options, success, failure)
+  {
+    // success ( data )
+    // failure ( data, status )
+    
+    failure( {}, 0 );
+  };
+};
+/**
+ * A factory function for returning an object capable of storing objects for
+ * retrieval later by the application.
+ * 
+ * @param  {NeuroDatabase} database
+ *         The database this store is for.
+ * @return {Object} -
+ *         An object with put, remove, and all functions.
+ */
+Neuro.store = function(database)
+{
+  return {
+
+    /**
+     * Places a record in the store with the given key.
+     * 
+     * @param  {String|Number} key
+     *         The key to store the record as.
+     * @param  {Object} record
+     *         The record to store.
+     * @param  {function} success
+     *         A function to invoke when the record is successfully stored with
+     *         the key. The arguments of the function should be the key and 
+     *         record passed to this function.
+     * @param  {function} failure
+     *         A function to invoke when the record failed to be stored with the
+     *         key. The arguments of the function should be the key, record, and
+     *         an error that occurred if available.
+     */
+    put: function(key, record, success, failure) 
+    { 
+      // implement
+    },
+
+    /**
+     * Removes a record from the store with the given key.
+     * 
+     * @param  {String|Number} key
+     *         The key to remove from the store.
+     * @param  {[type]} success
+     *         A function to invoke when the record doesn't exist in the store.
+     *         The arguments of the function are the removedValue (if any) and
+     *         the key passed to this function.
+     * @param  {[type]} failure
+     *         A function to invoke when there was an issue removing the key
+     *         from the store. The arguments of the function are the key given
+     *         to this function and an error that occurred if available.
+     */
+    remove: function(key, success, failure) 
+    {
+      // implement
+    },
+
+    /**
+     * Returns all records and their keys to the given success callback.
+     * 
+     * @param  {function} success
+     *         The function to invoke with the array of records and an array
+     *         of keys.
+     * @param  {function} failure
+     *         The function to invoke with the error that occurred if available.
+     */
+    all: function(success, failure) 
+    {
+      // implement
+    }
+
+  };
+
+};
+
+/**
+ * The factory responsible for creating a service which publishes operations
+ * and receives operations that have occurred. The first argument is a reference
+ * to the NeuroDatabase and the second argument is a function to invoke when a
+ * live operation occurs. This function must return a function that can be passed
+ * an operation to be delegated to other clients.
+ * 
+ * @param  {NeuroDatabase} database
+ *         The database this live function is for.
+ * @param  {function} onPublish
+ *         The function which receives live operations.
+ * @return {function} -
+ *         The function which sends operations.
+ */
+Neuro.live = function(database, onPublish)
+{
+  return function publish(message)
+  {
+    // ignore the message.
+  };
 };
 
 // Initial online
@@ -658,9 +760,10 @@ function NeuroDatabase(options)
 {  
   transfer( options, this );
 
-  this.stork = new Stork( options );
-  this.models = new Stork.FastMap();
-
+  this.models = new NeuroMap();
+  
+  this.rest = Neuro.rest( this );
+  this.store = Neuro.store( this );
   this.live = Neuro.live( this, this.handlePublish( this ) );
 }
 
@@ -778,12 +881,7 @@ NeuroDatabase.prototype =
         model.$saved[ prop ] = copy( encoded[ prop ] );
       }
 
-      model.$queue(function()
-      {
-        Neuro.debug( Neuro.Events.REMOTE_UPDATE, encoded, model );
-
-        return db.stork.save( model.$local );
-      });
+      model.$addOperation( NeuroSaveNow );
     }
     else
     {
@@ -792,12 +890,7 @@ NeuroDatabase.prototype =
       model.$local = encoded;
       model.$saved = model.$local.$saved = copy( encoded );
 
-      model.$queue(function()
-      {
-        Neuro.debug( Neuro.Events.REMOTE_CREATE, encoded, model );
-
-        return db.stork.save( model.$local );
-      });
+      model.$addOperation( NeuroSaveNow );
 
       db.models.put( key, model );
     }
@@ -824,19 +917,12 @@ NeuroDatabase.prototype =
         db.removeKey( model );
         db.removeKey( model.$local );
 
-        model.$queue(function()
-        {
-          return db.stork.save( model.$local );
-        });
+        model.$addOperation( NeuroSaveNow );
      
         return false;
       }
 
-      model.$queue(function()
-      {
-        return db.stork.remove( key );
-
-      }, true );
+      model.$addOperation( NeuroRemoveNow );
 
       db.models.remove( key );
 
@@ -846,7 +932,7 @@ NeuroDatabase.prototype =
     }
     else
     {
-      db.stork.remove( key, function(removedValue)
+      db.store.remove( key, function(removedValue)
       {
         if (removedValue) 
         {
@@ -867,9 +953,7 @@ NeuroDatabase.prototype =
   {
     var db = this;
 
-    db.PROMISED = new Stork.Promise( db ).$success();
-
-    db.stork.all(function(records, keys)
+    db.store.all(function(records, keys)
     {
       Neuro.debug( Neuro.Events.LOCAL_LOAD, records );
 
@@ -880,30 +964,32 @@ NeuroDatabase.prototype =
         var encoded = records[ i ];
         var key = keys[ i ];
         var decoded = db.decode( copy( encoded, true ) );
-        var inst = db.instantiate( decoded );
+        var model = db.instantiate( decoded );
 
-        inst.$local = encoded;
+        model.$local = encoded;
 
         if ( encoded.$deleted )
         {
-          Neuro.debug( Neuro.Events.LOCAL_RESUME_DELETE, inst );
+          Neuro.debug( Neuro.Events.LOCAL_RESUME_DELETE, model );
 
-          db.removeRemote( inst );
+          model.$addOperation( NeuroRemoveRemote );
         }
         else
         {
           if ( !encoded.$saved )
           {
-            Neuro.debug( Neuro.Events.LOCAL_RESUME_SAVE, inst );
+            Neuro.debug( Neuro.Events.LOCAL_RESUME_SAVE, model );
 
-            db.saveRemote( inst );
+            model.$addOperation( NeuroSaveRemote );
           }
           else
           {
-            Neuro.debug( Neuro.Events.LOCAL_LOAD_SAVED, inst );
+            Neuro.debug( Neuro.Events.LOCAL_LOAD_SAVED, model );
+
+            model.$local.$saved = model.$saved;
           }
 
-          db.models.put( key, inst );
+          db.models.put( key, model );
         }
       }
 
@@ -917,83 +1003,80 @@ NeuroDatabase.prototype =
   loadRemote: function()
   {
     var db = this;
-
-    var loadPromise = new Stork.Promise( this );
-
     var options = {
       method: 'GET',
-      url: this.rest
+      url: db.api
     };
 
-    Neuro.rest( options, loadPromise );
+    db.rest( options, onModels, onLoadError );
+    
+    function onModels(models) 
+    {
+      var mapped = {};
 
-    loadPromise.then(
-      function onModels(models) 
+      for (var i = 0; i < models.length; i++)
       {
-        var mapped = {};
+        var model = db.putRemoteData( models[ i ] );
+        var key = model.$key();
 
-        for (var i = 0; i < models.length; i++)
-        {
-          var model = db.putRemoteData( models[ i ] );
-          var key = model.$key();
+        mapped[ key ] = model;
+      }
 
-          mapped[ key ] = model;
-        }
+      var keys = db.models.keys;
 
-        var keys = db.models.keys;
-
-        for (var i = 0; i < keys.length; i++)
-        {
-          var k = keys[ i ];
-
-          if ( !(k in mapped) )
-          {
-            var old = db.models.get( k );
-
-            if ( old.$saved )
-            {
-              Neuro.debug( Neuro.Events.REMOTE_LOAD_REMOVE, k );
-
-              db.destroyLocalModel( k );
-            }
-          }
-        }
-
-        db.updated();
-
-        Neuro.debug( Neuro.Events.REMOTE_LOAD, models );
-      },
-      function onLoadError(models, status) 
+      for (var i = 0; i < keys.length; i++)
       {
-        if ( status === 0 )
-        {
-          Neuro.checkNetworkStatus();
+        var k = keys[ i ];
 
-          if ( !Neuro.online )
+        if ( !(k in mapped) )
+        {
+          var old = db.models.get( k );
+
+          if ( old.$saved )
           {
-            db.$pendingLoad = true;
+            Neuro.debug( Neuro.Events.REMOTE_LOAD_REMOVE, k );
 
-            Neuro.once('online', function()
-            {
-              Neuro.debug( Neuro.Events.REMOTE_LOAD_RESUME );
-
-              if ( db.$pendingLoad )
-              {
-                db.$pendingLoad = false;
-
-                db.loadRemote(); 
-              }
-            })
+            db.destroyLocalModel( k );
           }
-
-          Neuro.debug( Neuro.Events.REMOTE_LOAD_OFFLINE );
-        }
-        else
-        {
-          Neuro.debug( Neuro.Events.REMOTE_LOAD_ERROR, status );
         }
       }
-    );
+
+      db.updated();
+
+      Neuro.debug( Neuro.Events.REMOTE_LOAD, models );
+    }
+
+    function onLoadError(models, status) 
+    {
+      if ( status === 0 )
+      {
+        Neuro.checkNetworkStatus();
+
+        if ( !Neuro.online )
+        {
+          db.$pendingLoad = true;
+
+          Neuro.once('online', function()
+          {
+            Neuro.debug( Neuro.Events.REMOTE_LOAD_RESUME );
+
+            if ( db.$pendingLoad )
+            {
+              db.$pendingLoad = false;
+
+              db.loadRemote(); 
+            }
+          })
+        }
+
+        Neuro.debug( Neuro.Events.REMOTE_LOAD_OFFLINE );
+      }
+      else
+      {
+        Neuro.debug( Neuro.Events.REMOTE_LOAD_ERROR, status );
+      }
+    }
+  
   },
 
   // The reference to all of the models in the database
@@ -1051,204 +1134,10 @@ NeuroDatabase.prototype =
     return rawData;
   },
 
-  // Waits for the given promise to finish before proceeding with the method
-  waitForPending: function(promise, method, args)
-  {
-    var db = this;
-
-    if ( promise.$pending() )
-    {
-      promise.either(function()
-      {
-        method.apply( db, args );
-      });
-
-      return true;
-    }
-    else
-    {
-      promise.$reset();
-
-      return false;
-    }
-  },
-
-  // Interrupt a pending promise
-  interruptPending: function(promise)
-  {
-    promise.$clear();
-  },
-
-  // Save a model remotely
-  saveRemote: function(model)
-  {
-    var db = this;
-    var promise = model.$promise;
-    var promiseRest = new Stork.Promise( model );
-
-    // If the model is deleted, return immediately!
-    if ( model.$deleted )
-    {
-      Neuro.debug( Neuro.Events.SAVE_REMOTE_DELETED, model );
-
-      return promise;
-    }
-
-    // Wait for other methods to finish executing
-    if ( db.waitForPending( promise, this.saveRemote, arguments ) )
-    {
-      Neuro.debug( Neuro.Events.SAVE_REMOTE_BLOCKED, model );
-
-      return promise;
-    }
-
-    var encoded = model.$toJSON();
-
-    // The fields that have changed since last save
-    var $saving = model.$saved ? 
-      diff( encoded, model.$saved, db.fields, equals ) :
-      encoded;
-
-    // If there's nothing to save, don't bother!
-    if ( isEmpty( $saving ) )
-    {
-      return promise.$success();
-    }
-
-    var key = model.$key();
-
-    // Make the REST call to remove the mdoel
-    var options = {
-      method: model.$saved ? 'PUT' : 'POST',
-      url:    model.$saved ? db.rest + key : db.rest,
-      data:   $saving
-    };
-    Neuro.rest( options, promiseRest );
-
-    // FInish saving the model
-    var finishSave = function(data)
-    {
-      // Check deleted one more time before updating model.
-      if ( model.$deleted )
-      {
-        Neuro.debug( Neuro.Events.SAVE_REMOTE_DELETED, model, data );
-
-        return promise.$failure();
-      }
-
-      // If data was returned, place it in saving to update the model and publish
-      for (var prop in data)
-      {
-        if ( !(prop in $saving ) )
-        {
-          $saving[ prop ] = data[ prop ];
-        }
-      }
-
-      Neuro.debug( Neuro.Events.SAVE_VALUES, $saving, model );
-
-      // If the model hasn't been saved before - create the record where the 
-      // local and model point to the same object.
-      if ( !model.$saved )
-      {
-        model.$saved = model.$local.$saved = {};
-      }
-       
-      // Update the model with the return data
-      db.putRemoteData( $saving, key, model );
-
-      // Success!
-      promise.$success();
-
-      Neuro.debug( Neuro.Events.SAVE_PUBLISH, $saving, model );
-
-      // Publish saved data to everyone else
-      db.live({
-        op: 'SAVE',
-        model: $saving,
-        key: key
-      });
-    };
-
-    promiseRest.then(
-      function onRemoteSave(data) 
-      {
-        Neuro.debug( Neuro.Events.SAVE_REMOTE, model );
-
-        // Update the model with the data saved and returned
-        finishSave( data );
-      },
-      function onRemoteFailure(data, status) 
-      {
-        // A non-zero status means a real problem occurred
-        if ( status === 409 ) // 409 Conflict
-        {
-          Neuro.debug( Neuro.Events.SAVE_CONFLICT, data, model );
-
-          // Update the model with the data saved and returned
-          finishSave( data );
-        }
-        else if ( status === 410 || status === 404 ) // 410 Gone, 404 Not Found
-        {
-          Neuro.debug( Neuro.Events.SAVE_UPDATE_FAIL, model );
-
-          promise.$failure();
-
-          model.$queue(function()
-          {
-            db.models.remove( key );
-
-            return db.stork.remove( key );
-          });
-        }
-        else if ( status !== 0 ) 
-        {          
-          Neuro.debug( Neuro.Events.SAVE_ERROR, model, status );
-
-          promise.$failure();
-        } 
-        else 
-        {
-          // Check the network status right now
-          Neuro.checkNetworkStatus();
-
-          // If not online for sure, try saving once online again
-          if (!Neuro.online) 
-          {
-            model.$pendingSave = true;
-
-            Neuro.once('online', function() 
-            {
-              if ( model.$pendingSave )
-              { 
-                model.$pendingSave = false;
-
-                Neuro.debug( Neuro.Events.SAVE_RESUME, model );
-
-                db.saveRemote( model, true );
-              }
-            });
-
-            promise.$success();
-          } 
-          else 
-          {
-            promise.$failure();
-          }
-
-          Neuro.debug( Neuro.Events.SAVE_OFFLINE, model );
-        }
-      }
-    );
-
-    return promise;
-  },
-
-  // Save the model locally then try remotely
+  // Save the model
   save: function(model)
   {
     var db = this;
-    var promise = model.$promise;
     var key = model.$key();
 
     // If the model is deleted, return immediately!
@@ -1256,7 +1145,7 @@ NeuroDatabase.prototype =
     {
       Neuro.debug( Neuro.Events.SAVE_DELETED, model );
 
-      return promise;
+      return;
     }
 
     // Place the model and trigger a database update.
@@ -1266,247 +1155,11 @@ NeuroDatabase.prototype =
       db.updated();
     }
 
-    return db.saveLocal( model );
+    // Start by saving locally.
+    model.$addOperation( NeuroSaveLocal );
   },
 
-  // Saves the model locally
-  saveLocal: function(model)
-  {
-    var db = this;
-    var promise = model.$promise;
-    var encoded = model.$toJSON();
-
-    // If the model is deleted, return immediately!
-    if ( model.$deleted )
-    {
-      Neuro.debug( Neuro.Events.SAVE_LOCAL_DELETED, model );
-
-      return promise;
-    }
-
-    // Wait for other methods to finish executing
-    if ( db.waitForPending( promise, this.saveLocal, arguments ) )
-    {
-      Neuro.debug( Neuro.Events.SAVE_LOCAL_BLOCKED, mdoel );
-
-      return promise;
-    }
-
-    // If this model doesn't have a local copy yet - create it.
-    if ( !model.$local ) 
-    {
-      model.$local = encoded;
-    } 
-    else 
-    {
-      // Copy to the local copy
-      transfer( encoded, model.$local );
-    }
-
-    // Save the local copy of the model.
-    var localSave = db.stork.save( model.$local );
-
-    // Finishes the local saving
-    var finishSave = function()
-    {
-      promise.$success();
-
-      db.saveRemote( model );
-    };
-
-    localSave.then(
-      function onLocalSave(encoded) 
-      {
-        Neuro.debug( Neuro.Events.SAVE_LOCAL, model );
-
-        finishSave();
-      },
-      function onLocalFailure(e) 
-      {
-        Neuro.debug( Neuro.Events.SAVE_LOCAL_ERROR, model, e );
-
-        finishSave();
-      }
-    );
-
-    return promise;
-  },
-
-  // Remove remotely
-  removeRemote: function(model)
-  {
-    var db = this;
-    var promise = model.$promise;
-    var promiseRest = new Stork.Promise( model );
-    var key = model.$key();
-    
-    // Cancel any pending saves
-    model.$pendingSave = false;
-    model.$deleted = true;
-
-    // Removals cancel other operations
-    db.interruptPending( promise );
-
-    // Wait for an existing promise to finish
-    if ( db.waitForPending( promise, this.removeRemote, arguments ) )
-    {
-      Neuro.debug( Neuro.Events.REMOVE_REMOTE_BLOCKED, model );
-
-      return promise;
-    }
-
-    // Make the REST call to remove the model
-    var options = {
-      method: 'DELETE',
-      url:    this.rest + key
-    };
-    Neuro.rest( options, promiseRest );
-
-    // Finish removing the model
-    var removeModel = function()
-    {
-      Neuro.debug( Neuro.Events.REMOVE_LOCAL, key, model ); 
-
-      // We're done removing when it's removed locally.
-      promise.$bindTo( db.stork.remove( key ) );
-
-      // Notify the model that it's been removed
-      model.trigger('removed');
-
-      // Publish REMOVE
-      Neuro.debug( Neuro.Events.REMOVE_PUBLISH, key, model );
-
-      db.live({
-        op: 'REMOVE',
-        key: key
-      });
-    };
-
-    promiseRest.then(
-      function onRemoteRemove(data) 
-      {
-        Neuro.debug( Neuro.Events.REMOVE_REMOTE, model );
-
-        removeModel();
-      },
-      function onRemoteFailure(data, status) 
-      {
-        if ( status === 404 || status === 410 )
-        {
-          Neuro.debug( Neuro.Events.REMOVE_MISSING, key, model );
-
-          removeModel();
-        }
-        else if ( status !== 0 ) 
-        {
-          Neuro.debug( Neuro.Events.REMOVE_ERROR, status, key, model );
-
-          promise.$failure();
-        } 
-        else 
-        {
-          // Looks like we're offline!
-          Neuro.checkNetworkStatus();
-
-          // If we are offline, wait until we're online again to resume the delete
-          if (!Neuro.online) 
-          {
-            Neuro.once('online', function() 
-            {
-              Neuro.debug( Neuro.Events.REMOVE_RESUME, model );
-            });
-
-            promise.$success();
-          } 
-          else
-          {
-            promise.$failure();
-          }
-
-          Neuro.debug( Neuro.Events.REMOVE_OFFLINE, model );
-        }
-      }
-    );
-
-    return promise;
-  },
-
-  removeLocal: function(model)
-  {
-    var db = this;
-    var promise = model.$promise;
-    var key = model.$key();
-
-    // Removals cancel other operations
-    db.interruptPending( promise );
-
-    // Wait for an existing promise to finish
-    if ( db.waitForPending( promise, this.removeLocal, arguments ) )
-    {
-      Neuro.debug( Neuro.Events.REMOVE_LOCAL_BLOCKED, model );
-
-      return promise;
-    }
-
-    // If there is no local there's nothing to remove from anywhere!
-    if ( !model.$local )
-    {
-      Neuro.debug( Neuro.Events.REMOVE_LOCAL_NONE, model );
-
-      return promise.$success();
-    }
-
-    // If this model hasn't been saved we only need to remove it from local
-    // storage.
-    if ( !model.$saved )
-    {
-      Neuro.debug( Neuro.Events.REMOVE_LOCAL_UNSAVED, model );
-
-      promise.$bindTo( db.stork.remove( key ) );
-    }
-    else
-    {
-      // Mark local copy as deleted in the event we're not online
-      model.$local.$deleted = true;
-
-      var localSave = db.stork.save( model.$local );
-
-      var localRemove = function()
-      {
-        // If the model is saved, make sure we call removeRemote immediately.
-        if ( model.$saved )
-        {
-          db.interruptPending( promise );
-
-          promise.$success();
-
-          db.removeRemote( model ); 
-        }
-        else
-        {
-          promise.$success();
-        }
-      };
-
-      localSave.then(
-        function onLocalRemove(encoded) 
-        {
-          Neuro.debug( Neuro.Events.REMOVE_LOCAL, model );
-
-          localRemove();          
-        },
-        function onLocalFailure(e) 
-        {
-          Neuro.debug( Neuro.Events.REMOVE_LOCAL_ERROR, model, e );
-
-          localRemove();
-        }
-      );
-    }
-
-    return promise;
-  },
-
+  // Remove the model 
   remove: function(model)
   {
     var db = this;
@@ -1531,8 +1184,8 @@ NeuroDatabase.prototype =
       model.$pendingSave = false; 
     }
 
-    // Remove it locally
-    return db.removeLocal( model );
+    // Start by removing locally.
+    model.$addOperation( NeuroRemoveLocal );
   }
 
 };
@@ -1542,19 +1195,10 @@ eventize( NeuroDatabase.prototype );
 function NeuroModel(db)
 {
   this.$db = db;
-  this.$promise = Stork.Promise.Done( this );
-  this.$pendingSave = false;
-  this.$pendingRemove = false;
 
   /**
    * @property {NeuroDatabase} $db
    *           The reference to the database this model is stored in.
-   */
-
-  /**
-   * @property {Stork.Promise} $promise
-   *           The last promise on the model. When this promise completes 
-   *           another action can be performed on the model.
    */
 
   /**
@@ -1583,24 +1227,6 @@ function NeuroModel(db)
    *           Whether there is a pending save for this model.
    */
 }
-
-/**
- * $nextOperation = method name on database to invoke with this model
- * $next = function to invoke once the current operation finishes
- * 
- * OP_REMOVE_LOCAL  
- * OP_REMOVE_REMOTE
- *
- * OP_SAVE_LOCAL
- * OP_SAVE_REMOTE
- *
- * if ($nextOperation !== THIS OPERATION) {
- *   return
- * }
- *
- * 
- * 
- */
 
 NeuroModel.prototype =
 {
@@ -1650,22 +1276,29 @@ NeuroModel.prototype =
     return this.$db.remove( this );
   },
 
-  $queue: function(callback, interrupt)
+  $addOperation: function(OperationType) 
   {
-    var p = this.$promise;
+    var operation = new OperationType( this );
 
-    if (interrupt)
+    if ( !this.$operation ) 
     {
-      p.$clear();
+      this.$operation = operation;
+      this.$operation.execute();
+    } 
+    else 
+    {
+      this.$operation.queue( operation );
     }
+  },
 
-    p.either(function()
-    {
-      p.$reset();
-      p.$bindTo( callback() );
-    });
+  $init: function(props)
+  {
+    this.$pendingSave = false;
+    this.$pendingRemove = false;
+    this.$queued = [];
+    this.$operation = null;
 
-    return p;
+    this.$reset( props );
   },
 
   $reset: function(props)
@@ -1758,6 +1391,744 @@ NeuroModel.prototype =
 };
 
 eventize( NeuroModel.prototype );
+
+/**
+ * A NeuroMap has the key-to-value benefits of a map and iteration benefits of an
+ * array. This is especially beneficial when most of the time the contents of 
+ * the structure need to be iterated and order doesn't matter (since removal 
+ * performs a swap which breaks insertion order).
+ *
+ * @constructor
+ */
+function NeuroMap()
+{
+  /**
+   * An array of the values in this map.
+   * @member {Array}
+   */
+  this.values = [];
+
+  /**
+   * An array of the keys in this map.
+   * @type {Array}
+   */
+  this.keys = [];
+
+  /**
+   * An object of key to index mappings.
+   * @type {Object}
+   */
+  this.indices = {};
+}
+
+NeuroMap.prototype =
+{
+
+  /**
+   * Resets the map by initializing the values, keys, and indexes.
+   * 
+   * @return {NeuroMap} -
+   *         The reference to this map.
+   */
+  reset: function()
+  {
+    this.values.length = 0;
+    this.keys.length = 0;
+    this.indices = {};
+
+    return this;
+  },
+
+  /**
+   * Puts the value in the map by the given key.
+   *
+   * @param {String} key
+   * @param {V} value
+   * @return {NeuroMap} -
+   *         The reference to this map.
+   */
+  put: function(key, value)
+  {
+    if ( key in this.indices )
+    {
+      this.values[ this.indices[ key ] ] = value;
+    }
+    else
+    {
+      this.indices[ key ] = this.values.length;
+      this.values.push( value );
+      this.keys.push( key );
+    }
+
+    return this;
+  },
+
+  /**
+   * Returns the value mapped by the given key.
+   *
+   * @param {String} key
+   * @return {V}
+   */
+  get: function(key)
+  {
+    return this.values[ this.indices[ key ] ];
+  },
+
+  /**
+   * Removes the value by a given key
+   *
+   * @param {String} key
+   * @return {NeuroMap} -
+   *         The reference to this map.
+   */
+  remove: function(key)
+  {
+    var index = this.indices[ key ];
+
+    if ( isNumber( index ) )
+    {
+      this.removeAt( index );
+    }
+
+    return this;
+  },
+
+  /**
+   * Removes the value & key at the given index.
+   *
+   * @param {Number} index
+   * @return {NeuroMap} -
+   *         The reference to this map.
+   */
+  removeAt: function(index)
+  {
+    var key = this.keys[ index ];
+    var lastValue = this.values.pop();
+    var lastKey = this.keys.pop();
+
+    if ( index < this.values.length )
+    {
+      this.values[ index ] = lastValue;
+      this.keys[ index ] = lastKey;
+      this.indices[ lastKey ] = index;
+    }
+
+    delete this.indices[ key ];
+
+    return this;
+  },
+
+  /**
+   * Returns whether this map has a value for the given key.
+   *
+   * @param {String} key
+   * @return {Boolean}
+   */
+  has: function(key)
+  {
+    return key in this.indices;
+  },
+
+  /**
+   * Returns the number of elements in the map.
+   *
+   * @return {Number}
+   */
+  size: function()
+  {
+    return this.values.length;
+  },
+
+  /**
+   * Reverses the order of the underlying values & keys.
+   * 
+   * @return {NeuroMap} -
+   *         The referense to this map.
+   */
+  reverse: function()
+  {
+    var max = this.size() - 1;
+    var half = Math.ceil( max / 2 );
+
+    for (var i = 0; i < half; i++)
+    {
+      swap( this.values, i, max - i );
+      swap( this.keys, i, max - i );
+    }
+
+    this.rebuildIndex();
+
+    return this;
+  },
+
+  /**
+   * Sorts the underlying values & keys given a value compare function.
+   * 
+   * @param  {function} comparator
+   *         A function which accepts two values and returns a number used for
+   *         sorting. If the first argument is less than the second argument, a
+   *         negative number should be returned. If the arguments are equivalent
+   *         then 0 should be returned, otherwise a positive number should be
+   *         returned.
+   * @return {NeuroMap} -
+   *         The reference to this map.
+   */
+  sort: function(comparator)
+  {
+    var map = this;
+
+    // Sort this partition!
+    function partition(left, right)
+    {
+      var pivot = map.values[ Math.floor((right + left) / 2) ];
+      var i = left;
+      var j = right;
+
+      while (i <= j) 
+      {
+        while (comparator( map.values[i], pivot ) < 0) i++
+        while (comparator( map.values[j], pivot ) > 0) j--;
+
+        if (i <= j) {
+          swap( map.values, i, j );
+          swap( map.keys, i, j );
+          i++;
+          j--;
+        }
+      }
+
+      return i;
+    }
+
+    // Quicksort
+    function qsort(left, right)
+    {
+      var index = partition( left, right );
+
+      if (left < index - 1) 
+      {
+        qsort( left, index - 1 );
+      }
+
+      if (index < right) 
+      {
+        qsort( index, right );
+      }
+    }
+
+    var right = this.size() - 1;
+
+    // Are there elements to sort?
+    if ( right > 0 )
+    {
+      qsort( 0, right );
+
+      this.rebuildIndex();
+    }
+
+    return this;
+  },
+
+  /**
+   * Rebuilds the index based on the keys.
+   * 
+   * @return {NeuroMap} -
+   *         The reference to this map.
+   */
+  rebuildIndex: function()
+  {
+    this.indices = {};
+
+    for (var i = 0, l = this.keys.length; i < l; i++)
+    {
+      this.indices[ this.keys[ i ] ] = i;
+    }
+
+    return this;
+  }
+
+};
+
+function NeuroOperation(interrupts)
+{
+  this.interrupts = interrupts;
+}
+
+NeuroOperation.prototype = 
+{
+  reset: function(model)
+  {
+    this.model = model;
+    this.db = model.$db;
+    this.next = null;
+    this.finished = false;
+  },
+
+  queue: function(operation)
+  {
+    if ( this.next && !operation.interrupts )
+    {
+      this.next.queue( operation );
+    }
+    else
+    {
+      this.next = operation;
+    }
+  },
+
+  execute: function()
+  {
+    this.run( this.db, this.model );
+  },
+
+  run: function(db, model)
+  {
+    throw 'NeuroOperation.run Not implemented';
+  },
+
+  finish: function()
+  {
+    if ( !this.finished )
+    {
+      this.finished = true;
+
+      if ( this.model.$operation = this.next )
+      {
+        this.next.execute();
+      }
+    }
+
+    return this;
+  },
+
+  tryNext: function(OperationType)
+  {
+    if ( !this.next )
+    {
+      this.next = new OperationType( this.model );
+    }
+  },
+
+  insertNext: function(OperationType)
+  {
+    var op = new OperationType( this.model );
+
+    op.next = this.next;
+    this.next = op;
+  },
+
+  success: function()
+  {
+    var op = this;
+
+    return function handleSuccess() 
+    {
+      op.onSuccess.apply( op, arguments );
+      op.finish();
+    };
+  },
+
+  onSuccess: function()
+  {
+
+  },
+
+  failure: function()
+  {
+    var op = this;
+
+    return function handleFailure() 
+    {
+      op.onFailure.apply( op, arguments );
+      op.finish();
+    };
+  },
+
+  onFailure: function()
+  {
+
+  }
+
+};
+
+/**
+
+$operation;
+
+$addOperation: function(OperationType) {
+  var operation = new OperationType( this );
+  if ( !this.$operation ) {
+    this.$operation = operation;
+    this.$operation.execute();
+  } else {
+    this.$operation.queue( operation );
+  }
+}
+
+ */
+function NeuroRemoveLocal(model)
+{
+  this.reset( model );
+}
+
+NeuroRemoveLocal.prototype = new NeuroOperation( true );
+
+NeuroRemoveLocal.prototype.run = function(db, model)
+{
+  var key = model.$key();
+
+  // If there is no local there's nothing to remove from anywhere!
+  if ( !model.$local )
+  {
+    Neuro.debug( Neuro.Events.REMOVE_LOCAL_NONE, model );
+
+    return this.finish();
+  }
+
+  // If this model hasn't been saved we only need to remove it from local storage.
+  if ( model.$saved )
+  {
+    // Mark local copy as deleted in the event we're not online
+    model.$local.$deleted = true;
+
+    db.store.put( key, model.$local, this.success(), this.failure() );
+  }
+  else
+  {
+    Neuro.debug( Neuro.Events.REMOVE_LOCAL_UNSAVED, model );
+
+    db.store.remove( key, this.success(), this.failure() );
+  }
+};
+
+NeuroRemoveLocal.prototype.onSuccess = function(key, encoded, previousValue)
+{
+  var model = this.model;
+
+  Neuro.debug( Neuro.Events.REMOVE_LOCAL, model );
+
+  if ( model.$saved )
+  {
+    model.$addOperation( NeuroRemoveRemote );
+  }
+};
+
+NeuroRemoveLocal.prototype.onFailure = function(e)
+{
+  var model = this.model;
+
+  Neuro.debug( Neuro.Events.REMOVE_LOCAL_ERROR, model, e );
+
+  if ( model.$saved )
+  {
+    model.$addOperation( NeuroRemoveRemote );
+  }
+};
+function NeuroRemoveNow(model)
+{
+  this.reset( model );
+}
+
+NeuroRemoveNow.prototype = new NeuroOperation( true );
+
+NeuroRemoveNow.prototype.run = function(db, model)
+{
+  var key = model.$key();
+  
+  db.models.remove( key );
+
+  db.store.remove( key, this.success(), this.failure() );
+};
+function NeuroRemoveRemote(model)
+{
+  this.reset( model );
+}
+
+NeuroRemoveRemote.prototype = new NeuroOperation( true );
+
+NeuroRemoveRemote.prototype.run = function(db, model)
+{
+  // Cancel any pending saves
+  model.$pendingSave = false;
+  model.$deleted = true;
+
+  // Grab key & encode to JSON
+  this.key = model.$key();
+
+  // Make the REST call to remove the model
+  var options = {
+    method: 'DELETE',
+    url:    db.api + this.key
+  };
+
+  db.rest( options, this.success(), this.failure() );
+};
+
+NeuroRemoveRemote.prototype.onSuccess = function(data)
+{
+  this.finishRemove();
+};
+
+NeuroRemoveRemote.prototype.onFailure = function(data, status)
+{
+  var key = this.key;
+  var model = this.model;
+
+  if ( status === 404 || status === 410 )
+  {
+    Neuro.debug( Neuro.Events.REMOVE_MISSING, key, model );
+
+    this.finishRemove();
+  }
+  else if ( status !== 0 ) 
+  {
+    Neuro.debug( Neuro.Events.REMOVE_ERROR, status, key, model );
+  } 
+  else 
+  {
+    // Looks like we're offline!
+    Neuro.checkNetworkStatus();
+
+    // If we are offline, wait until we're online again to resume the delete
+    if (!Neuro.online) 
+    {
+      Neuro.once('online', function() 
+      {
+        Neuro.debug( Neuro.Events.REMOVE_RESUME, model );
+
+        model.$addOperation( NeuroRemoveRemote );
+      });
+    }
+
+    Neuro.debug( Neuro.Events.REMOVE_OFFLINE, model );
+  }
+};
+
+NeuroRemoveRemote.prototype.finishRemove = function()
+{
+  var db = this.db;
+  var key = this.key;
+  var model = this.model;
+
+  Neuro.debug( Neuro.Events.REMOVE_REMOTE, key, model );
+
+  // Remove from local storage now
+  this.insertNext( NeuroRemoveNow );
+
+  // Notify the model that it's been removed
+  model.trigger('removed');
+
+  // Publish REMOVE
+  Neuro.debug( Neuro.Events.REMOVE_PUBLISH, key, model );
+
+  db.live({
+    op: 'REMOVE',
+    key: key
+  });
+};
+function NeuroSaveLocal(model)
+{
+  this.reset( model );
+}
+
+NeuroSaveLocal.prototype = new NeuroOperation( false );
+
+NeuroSaveLocal.prototype.run = function(db, model)
+{
+  // If the model is deleted, return immediately!
+  if ( model.$deleted )
+  {
+    Neuro.debug( Neuro.Events.SAVE_LOCAL_DELETED, model );
+
+    return this.finish();
+  }
+
+  var encoded = model.$toJSON();
+
+  // If this model doesn't have a local copy yet - create it.
+  if ( !model.$local ) 
+  {
+    model.$local = encoded;
+  } 
+  else 
+  {
+    // Copy to the local copy
+    transfer( encoded, model.$local );
+  }
+
+  db.store.put( model.$key(), model.$local, this.success(), this.failure() );
+};
+
+NeuroSaveLocal.prototype.onSuccess = function(key, encoded, previousValue)
+{
+  var model = this.model;
+
+  Neuro.debug( Neuro.Events.SAVE_LOCAL, model );
+
+  this.tryNext( NeuroSaveRemote );
+};
+
+NeuroSaveLocal.prototype.onFailure = function(e)
+{
+  Neuro.debug( Neuro.Events.SAVE_LOCAL_ERROR, model, e );
+
+  this.tryNext( NeuroSaveRemote );
+};
+function NeuroSaveNow(model)
+{
+  this.reset( model );
+}
+
+NeuroSaveNow.prototype = new NeuroOperation( false );
+
+NeuroSaveNow.prototype.run = function(db, model)
+{
+  db.store.put( model.$key(), model.$local, this.success(), this.failure() );
+};
+function NeuroSaveRemote(model)
+{
+  this.reset( model );
+}
+
+NeuroSaveRemote.prototype = new NeuroOperation( false );
+
+NeuroSaveRemote.prototype.run = function(db, model)
+{
+  // If the model is deleted, return immediately!
+  if ( model.$deleted )
+  {
+    Neuro.debug( Neuro.Events.SAVE_REMOTE_DELETED, model );
+
+    return this.finish();
+  }
+
+  // Grab key & encode to JSON
+  this.key = model.$key();
+  this.encoded = model.$toJSON();
+
+  // The fields that have changed since last save
+  this.saving = model.$saved ? 
+    diff( this.encoded, model.$saved, db.fields, equals ) :
+    this.encoded;
+
+  // If there's nothing to save, don't bother!
+  if ( isEmpty( this.saving ) )
+  {
+    return this.finish();
+  }
+
+  // Make the REST call to remove the model
+  var options = {
+    method: model.$saved ? 'PUT' : 'POST',
+    url:    model.$saved ? db.api + this.key : db.api,
+    data:   this.saving
+  };
+
+  db.rest( options, this.success(), this.failure() );
+};
+
+NeuroSaveRemote.prototype.onSuccess = function(data)
+{
+  var model = this.model;
+
+  Neuro.debug( Neuro.Events.SAVE_REMOTE, model );
+
+  this.handleData( data );
+};
+
+NeuroSaveRemote.prototype.onFailure = function(data, status)
+{
+  var db = this.db;
+  var model = this.model;
+
+  // A non-zero status means a real problem occurred
+  if ( status === 409 ) // 409 Conflict
+  {
+    Neuro.debug( Neuro.Events.SAVE_CONFLICT, data, model );
+
+    // Update the model with the data saved and returned
+    this.handleData( data, model, this.db );
+  }
+  else if ( status === 410 || status === 404 ) // 410 Gone, 404 Not Found
+  {
+    Neuro.debug( Neuro.Events.SAVE_UPDATE_FAIL, model );
+
+    this.insertNext( NeuroRemoveNow );
+  }
+  else if ( status !== 0 ) 
+  {          
+    Neuro.debug( Neuro.Events.SAVE_ERROR, model, status );
+  } 
+  else 
+  {
+    // Check the network status right now
+    Neuro.checkNetworkStatus();
+
+    // If not online for sure, try saving once online again
+    if (!Neuro.online) 
+    {
+      model.$pendingSave = true;
+
+      Neuro.once('online', function() 
+      {
+        if ( model.$pendingSave )
+        { 
+          model.$pendingSave = false;
+          model.$addOperation( NeuroSaveRemote );
+
+          Neuro.debug( Neuro.Events.SAVE_RESUME, model );
+        }
+      });
+    }
+
+    Neuro.debug( Neuro.Events.SAVE_OFFLINE, model );
+  }
+};
+
+NeuroSaveRemote.prototype.handleData = function(data)
+{
+  var db = this.db;
+  var model = this.model;
+  var saving = this.saving;
+
+  // Check deleted one more time before updating model.
+  if ( model.$deleted )
+  {
+    Neuro.debug( Neuro.Events.SAVE_REMOTE_DELETED, model, data );
+
+    return;
+  }
+
+  // If data was returned, place it in saving to update the model and publish
+  for (var prop in data)
+  {
+    if ( !(prop in saving ) )
+    {
+      saving[ prop ] = data[ prop ];
+    }
+  }
+
+  Neuro.debug( Neuro.Events.SAVE_VALUES, saving, model );
+
+  // If the model hasn't been saved before - create the record where the 
+  // local and model point to the same object.
+  if ( !model.$saved )
+  {
+    model.$saved = model.$local.$saved = {};
+  }
+  
+  // Update the model with the return data
+  db.putRemoteData( saving, this.key, model );
+
+  // Publish saved data to everyone else
+  Neuro.debug( Neuro.Events.SAVE_PUBLISH, saving, model );
+
+  db.live({
+    op: 'SAVE',
+    model: saving,
+    key: this.key
+  });
+};
 
   global.Neuro = Neuro;
 

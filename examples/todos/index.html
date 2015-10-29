@@ -27,6 +27,7 @@
     <script src="pubsub/pubsub-client.js"></script>
     <script src="../../build/neurosync.js"></script>
     <script src="../../src/plugins/live-pubsub.js"></script>
+    <script src="../../src/plugins/store-stork.js"></script>
 
     <!-- Todo Application -->
     <script>
@@ -42,7 +43,7 @@
           var Todo = Neuro({
             name: 'todos',
             className: 'Todo',
-            rest: RESTBASE + 'todos/',
+            api: RESTBASE + 'todos/',
             pubsub: PUBSUB,
             channel: 'todos',
             token: 'root',
@@ -202,27 +203,30 @@
             console.log( event + ' - ' +  result );
           };
 
-          Neuro.rest = function(options, promise) 
+          Neuro.rest = function(database)
           {
-            Neuro.debug( Neuro.Events.REST, options );
+            return function(options, success, failure) 
+            {
+              Neuro.debug( Neuro.Events.REST, options );
 
-            if (Neuro.forceOffline) 
-            {
-              promise.$failure( [{}, 0] );
-            } 
-            else 
-            {
-              $http( options ).then(
-                function onRestSuccess(response) 
-                {
-                  promise.$success( [response.data] );
-                },
-                function onRestError(response) 
-                {
-                  promise.$failure( [response.data, response.status] );
-                })
-              ;
-            }            
+              if ( Neuro.forceOffline )
+              {
+                failure( {}, 0 );
+              } 
+              else 
+              {
+                $http( options ).then(
+                  function onRestSuccess(response) 
+                  {
+                    success( response.data );
+                  },
+                  function onRestError(response) 
+                  {
+                    failure( response.data, response.status );
+                  }
+                );
+              }            
+            };
           };
 
           Neuro.listenToNetworkStatus();

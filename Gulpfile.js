@@ -14,10 +14,14 @@ var core =
   './src/lib/Neuro.js',
   './src/lib/Neuro_debug.js',
   './src/lib/Neuro_rest.js',
-  './src/lib/Neuro_pubsub.js',
+  './src/lib/Neuro_store.js',
+  './src/lib/Neuro_live.js',
   './src/lib/Neuro_offline.js',
   './src/lib/NeuroDatabase.js',
   './src/lib/NeuroModel.js',
+  './src/lib/NeuroMap.js',
+  './src/lib/NeuroOperation.js',
+  './src/lib/operations/*.js',
   './src/footer.js'
 ];
 

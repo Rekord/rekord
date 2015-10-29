@@ -1,9 +1,13 @@
 
 // Neuro.rest = function(options, success(data), failure(data, status))
 
-Neuro.rest = function(options, promise)
+Neuro.rest = function(database)
 {
-  // success ( data )
-  // failure ( data, status )
-  promise.$failure( [{}, 0] );
+  return function (options, success, failure)
+  {
+    // success ( data )
+    // failure ( data, status )
+    
+    failure( {}, 0 );
+  };
 };

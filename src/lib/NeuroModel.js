@@ -2,19 +2,10 @@
 function NeuroModel(db)
 {
   this.$db = db;
-  this.$promise = Stork.Promise.Done( this );
-  this.$pendingSave = false;
-  this.$pendingRemove = false;
 
   /**
    * @property {NeuroDatabase} $db
    *           The reference to the database this model is stored in.
-   */
-
-  /**
-   * @property {Stork.Promise} $promise
-   *           The last promise on the model. When this promise completes 
-   *           another action can be performed on the model.
    */
 
   /**
@@ -43,24 +34,6 @@ function NeuroModel(db)
    *           Whether there is a pending save for this model.
    */
 }
-
-/**
- * $nextOperation = method name on database to invoke with this model
- * $next = function to invoke once the current operation finishes
- * 
- * OP_REMOVE_LOCAL  
- * OP_REMOVE_REMOTE
- *
- * OP_SAVE_LOCAL
- * OP_SAVE_REMOTE
- *
- * if ($nextOperation !== THIS OPERATION) {
- *   return
- * }
- *
- * 
- * 
- */
 
 NeuroModel.prototype =
 {
@@ -110,22 +83,29 @@ NeuroModel.prototype =
     return this.$db.remove( this );
   },
 
-  $queue: function(callback, interrupt)
+  $addOperation: function(OperationType) 
   {
-    var p = this.$promise;
+    var operation = new OperationType( this );
 
-    if (interrupt)
+    if ( !this.$operation ) 
     {
-      p.$clear();
+      this.$operation = operation;
+      this.$operation.execute();
+    } 
+    else 
+    {
+      this.$operation.queue( operation );
     }
+  },
 
-    p.either(function()
-    {
-      p.$reset();
-      p.$bindTo( callback() );
-    });
+  $init: function(props)
+  {
+    this.$pendingSave = false;
+    this.$pendingRemove = false;
+    this.$queued = [];
+    this.$operation = null;
 
-    return p;
+    this.$reset( props );
   },
 
   $reset: function(props)
