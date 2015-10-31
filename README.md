@@ -1,66 +1,89 @@
-Tasks
-- [X] When we receive a REMOVE operation and the model has unsaved data - don't remove it but clear it as being saved so it will be "inserted" again
-- [X] Add Neuro.Events which we pass an event, the model, and the key to Neuro.debug
-- [X] Add status method to NeuroModel
-- [X] If an unsaved model is deleted - remove pending save/delete
-- [X] If a model has a pending save (because offline) - don't run saveRemote again
-- [X] If there are no changes for a model - ignore a remote save
-- [X] Add defaults to Neuro options
-- [ ] Add feature to pubsub to queue publishes to a channel for a token - and when that token reconnects send those messages.
-- [ ] Add relations to input for many-to-one, one-to-one, one-to-many, and many-to-many. A property stores an id or a reference to an object - or an array of ids or array of references.
-  - [ ] One-to-One: (this model owns another)  
-    ```javascript
-      { 
-        type: Neuro.ONE_TO_ONE,
-        name: 'relation_name',
-        model: ModelObject,
-        local: 'local_field',
-        store: Neuro.STORE_KEY | Neuro.STORE_MODEL | Neuro.STORE_NONE,
-        cascade: true | false
-      }
-    ```
-  - [ ] Many-to-One: (this model belongs to another)  
-    ```javascript
-      {
-        type: Neuro.MANY_TO_ONE,
-        name: 'relation_name',
-        model: ModelObject, 
-        local: 'local_field',
-        store: Neuro.STORE_KEY | Neuro.STORE_MODEL | Neuro.STORE_NONE
-      }
-    ```
-  - [ ] One-to-Many: (opposite of Many-to-One, this model owns others)  
-    ```javascript
-      {
-        type: Neuro.ONE_TO_MANY,
-        name: 'relation_name',
-        model: ModelObject,
-        foreign: 'foreign_field',
-        store: Neuro.STORE_KEY | Neuro.STORE_MODEL | Neuro.STORE_NONE
-      }
-    ```
-  - [ ] Many-to-Many: (has many through a relationship)  
-    ```javascript
-      {
-        type: Neuro.MANY_TO_MANY,
-        name: 'relation_name',
-        model: ModelObject,
-        relation: RelationObject,
-        foreign: 'foreign_field',
-        related: 'field_on_relation_pointing_to_model',
-        store: Neuro.STORE_KEY | Neuro.STORE_MODEL | Neuro.STORE_NONE
-      }
-    ```
+# Neurosync
 
-  ```javascript
-    relations: {
-      hasOne: { relation_name: { ... }, },
-      belongsTo: { relation_name: { ... }, },
-      hasMany: { relation_name: { ... }, }
-      hasManyThrough: { relation_name: { ... }, }
-    }
-  ```
+A javascript library for creating applications that work offline and in real-time.
 
-- [ ] Enable key option to be an array of fields and add an option keySeparator which joins column values together to form a key
-- [ ] Add ability to use composite keys for relations
-- [ ] Add ability to prioritize models so if we run out of local space we can remove the lower priority objects to free up space
+Neurosync is a client-side ORM that saves data locally, attempts to save remotely, and when successful it publishes any changes to a pubsub channel for other applications to see.
+
+The real-time feature ensures local changes are not lost - and any conflicts
+causes events to be thrown.
+
+### Simple Example
+
+```javascript
+// Setup a new type
+var Todo = Neuro({
+
+  // Local Storage
+  name: 'todos',
+
+  // Rest
+  api: 'http://yourwebsite.com/api/1.0/todos/',
+  
+  // Real-time
+  pubsub: 'http://yourwebsite.com:3000',
+  channel: 'todos',
+  token: 'a_valid_token', 
+
+  // Definition
+  className: 'Todo',
+  key: 'id',
+  fields: ['id', 'name', 'done', 'created_at', 'updated_at'],
+  defaults: {
+    done: false,
+    created_at: Date.now,
+    updated_at: Date.now
+  },
+
+  // Sort Todo.Database by this field (function can also be used)
+  comparator: '-created_at'
+});
+
+// Create an instance
+var t = new Todo.Model({
+  name: 'Use Neurosync'
+});
+t.$save();
+
+// Update an instance
+t.name = 'Using Neurosync';
+// or
+t.$set('updated_at', Date.now());
+// or
+t.$set({
+  done: true
+});
+// finally
+t.$save();
+
+// Checking whether an instance has been saved via REST
+if ( t.$isSaved() ) {
+  
+}
+
+// Checking whether an instance has unsaved changes
+if ( t.$hasChanges() ) {
+  
+}
+
+// Removing an instance
+t.$remove()
+
+// Checking if an instance has been removed
+if ( t.$deleted ) {
+  
+}
+
+// Get reference to todos array (this reference doesn't change)
+var todos = Todo.Database.getModels()
+
+// Listen for database changes
+Todo.Database.on('updated', function() {
+  // Todos added, updated, or removed
+});
+
+// Get a specific model and listen for it's changes
+var existing = Todo.Database.getModel('some-uuid');
+existing.on('saved', function() { ... });
+existing.on('removed', function() { ... });
+
+```
