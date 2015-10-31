@@ -166,7 +166,7 @@ function eventize(target)
   };
   
   // Triggers listeneers for the given event
-  var triggerListeners = function(listeners, event, argument, clear)
+  var triggerListeners = function(listeners, event, args, clear)
   {
     if (listeners && event in listeners)
     {
@@ -177,7 +177,7 @@ function eventize(target)
       {
         var callback = eventListeners[ i ];
         
-        callback[0].call( callback[1], argument );
+        callback[0].apply( callback[1], args );
       }
       
       if ( clear )
@@ -200,10 +200,10 @@ function eventize(target)
    * @method trigger
    * @for eventize
    * @param {String} event
-   * @param {Any} argument
+   * @param {Array} args
    * @chainable
    */
-  target.trigger = function(events, argument)
+  target.trigger = function(events, args)
   {
     var events = toArray( events, ' ' );
 
@@ -211,8 +211,8 @@ function eventize(target)
     {
       var e = events[ i ];
 
-      triggerListeners( this.$on, e, argument, false );
-      triggerListeners( this.$once, e, argument, true );
+      triggerListeners( this.$on, e, args, false );
+      triggerListeners( this.$once, e, args, true );
     }
 
     return this;

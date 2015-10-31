@@ -483,7 +483,7 @@ function eventize(target)
   };
   
   // Triggers listeneers for the given event
-  var triggerListeners = function(listeners, event, argument, clear)
+  var triggerListeners = function(listeners, event, args, clear)
   {
     if (listeners && event in listeners)
     {
@@ -494,7 +494,7 @@ function eventize(target)
       {
         var callback = eventListeners[ i ];
         
-        callback[0].call( callback[1], argument );
+        callback[0].apply( callback[1], args );
       }
       
       if ( clear )
@@ -517,10 +517,10 @@ function eventize(target)
    * @method trigger
    * @for eventize
    * @param {String} event
-   * @param {Any} argument
+   * @param {Array} args
    * @chainable
    */
-  target.trigger = function(events, argument)
+  target.trigger = function(events, args)
   {
     var events = toArray( events, ' ' );
 
@@ -528,8 +528,8 @@ function eventize(target)
     {
       var e = events[ i ];
 
-      triggerListeners( this.$on, e, argument, false );
-      triggerListeners( this.$once, e, argument, true );
+      triggerListeners( this.$on, e, args, false );
+      triggerListeners( this.$once, e, args, true );
     }
 
     return this;
@@ -965,6 +965,9 @@ NeuroDatabase.prototype =
     if ( model && model.$saved )
     {
       var current = model.$toJSON();
+      var conflicts = {};
+      var conflicted = false;
+      var updated = {};
 
       for (var prop in encoded)
       {
@@ -974,11 +977,27 @@ NeuroDatabase.prototype =
         if ( equals( currentValue, savedValue ) )
         {
           model[ prop ] = decoded[ prop ];
-          model.$local[ prop ] = encoded[ prop ];
+          updated[ prop ] = model.$local[ prop ] = encoded[ prop ];
+        }
+        else
+        {
+          conflicts[ prop ] = encoded[ prop ];
+          conflicted = true;
         }
 
         model.$saved[ prop ] = copy( encoded[ prop ] );
       }
+
+      if ( conflicted )
+      {
+        model.trigger( 'partial-update', [encoded, conflicts] );
+      }
+      else
+      {
+        model.trigger( 'full-update', [encoded, updated] );
+      }
+
+      model.trigger( 'remote-update', [encoded] );
 
       model.$addOperation( NeuroSaveNow );
     }
@@ -995,6 +1014,7 @@ NeuroDatabase.prototype =
     if ( !db.models.has( key ) )
     {
       db.models.put( key, model );
+      db.trigger( 'model-added', [model] );
 
       model.trigger( 'saved' );
     }
@@ -1010,6 +1030,7 @@ NeuroDatabase.prototype =
 
     if ( model )
     {
+      // If a model was removed remotely but the model has changes - don't remove it.
       if ( model.$hasChanges() )
       {
         // Removed saved history and the current ID
@@ -1019,14 +1040,19 @@ NeuroDatabase.prototype =
         db.removeKey( model );
         db.removeKey( model.$local );
 
+        model.trigger( 'detach' );
+
         model.$addOperation( NeuroSaveNow );
      
         return false;
       }
 
+      model.trigger( 'remote-remove' );
+
       model.$addOperation( NeuroRemoveNow );
 
       db.models.remove( key );
+      db.trigger( 'model-removed', [model] );
 
       model.trigger('removed');
 
@@ -1095,6 +1121,8 @@ NeuroDatabase.prototype =
         }
       }
 
+      db.trigger( 'local-load' );
+
       db.updated();
 
       db.loadRemote();
@@ -1142,6 +1170,8 @@ NeuroDatabase.prototype =
           }
         }
       }
+
+      db.trigger( 'remote-load' );
 
       db.updated();
 
@@ -1277,9 +1307,14 @@ NeuroDatabase.prototype =
     if ( !db.models.has( key ) )
     {
       db.models.put( key, model );
+      db.trigger( 'model-added', [model] );
       db.updated();
 
       model.trigger('saved');
+    }
+    else
+    {
+      db.trigger( 'model-updated', [model] );
     }
 
     // Start by saving locally.
@@ -1296,6 +1331,7 @@ NeuroDatabase.prototype =
     if ( db.models.has( key ) )
     {
       db.models.remove( key );
+      db.trigger( 'model-removed', [model] );
       db.updated();
 
       model.trigger('removed');
@@ -2023,6 +2059,7 @@ NeuroRemoveNow.prototype.run = function(db, model)
   if ( db.models.has( key ) )
   {
     db.models.remove( key );
+    db.trigger( 'model-removed', [model] );
     db.updated();
 
     model.trigger('removed');
