@@ -416,13 +416,14 @@ NeuroDatabase.prototype =
   {
     if ( isArray( key ) )
     {
+      var ks = this.keySeparator || '/';
       var keyString = '';
 
       for (var i = 0; i < key.length; i++)
       {
         if (i > 0)
         {
-          keyString += this.keySeparator;
+          keyString += ks;
         }
 
         keyString += key[ i ];
