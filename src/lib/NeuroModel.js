@@ -189,6 +189,15 @@ NeuroModel.prototype =
     return !!this.$local;
   },
 
+  $getChanges: function()
+  {
+    var saved = this.$saved;
+    var encoded = this.$toJSON();
+    var fields = this.$db.fields;
+
+    return saved ? diff( encoded, saved, fields, equals ) : encoded;
+  },
+
   $hasChanges: function()
   {
     if (!this.$saved) 

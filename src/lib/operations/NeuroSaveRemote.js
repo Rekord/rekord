@@ -16,16 +16,13 @@ NeuroSaveRemote.prototype.run = function(db, model)
   }
 
   // Grab key & encode to JSON
-  this.key = model.$key();
-  this.encoded = model.$toJSON();
+  var key = this.key = model.$key();
 
   // The fields that have changed since last save
-  this.saving = model.$saved ? 
-    diff( this.encoded, model.$saved, db.fields, equals ) :
-    this.encoded;
+  var saving = this.saving = model.$getChanges();
 
   // If there's nothing to save, don't bother!
-  if ( isEmpty( this.saving ) )
+  if ( isEmpty( saving ) )
   {
     return this.finish();
   }
@@ -33,8 +30,8 @@ NeuroSaveRemote.prototype.run = function(db, model)
   // Make the REST call to remove the model
   var options = {
     method: model.$saved ? 'PUT' : 'POST',
-    url:    model.$saved ? db.api + this.key : db.api,
-    data:   this.saving
+    url:    model.$saved ? db.api + key : db.api,
+    data:   saving
   };
 
   db.rest( options, this.success(), this.failure() );
