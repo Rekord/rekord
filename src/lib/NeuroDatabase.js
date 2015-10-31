@@ -19,7 +19,7 @@ NeuroDatabase.prototype =
 {
 
   // Whether or not there's a load pending until we're online again
-  pendingLoad: false,
+  pendingRefresh: false,
 
   // Removes the key from the given model
   removeKey: function(model)
@@ -319,12 +319,15 @@ NeuroDatabase.prototype =
 
       db.updated();
 
-      db.loadRemote();
+      if ( db.loadRemote !== false )
+      {
+        db.refresh();
+      }
     });    
   },
 
   // Loads all data remotely
-  loadRemote: function()
+  refresh: function()
   {
     var db = this;
     var options = {
@@ -380,17 +383,17 @@ NeuroDatabase.prototype =
 
         if ( !Neuro.online )
         {
-          db.pendingLoad = true;
+          db.pendingRefresh = true;
 
           Neuro.once('online', function()
           {
             Neuro.debug( Neuro.Events.REMOTE_LOAD_RESUME );
 
-            if ( db.pendingLoad )
+            if ( db.pendingRefresh )
             {
-              db.pendingLoad = false;
+              db.pendingRefresh = false;
 
-              db.loadRemote(); 
+              db.refresh(); 
             }
           })
         }
