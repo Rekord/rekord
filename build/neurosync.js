@@ -48,6 +48,21 @@ function toArray(x, split)
   return x instanceof Array ? x : x.split( split );
 }
 
+function indexOf(arr, x, comparator)
+{
+  var cmp = comparator || equalsStrict;
+
+  for (var i = 0, n = arr.length; i < n; i++)
+  {
+    if ( cmp( arr[i], x ) )
+    {
+      return i;
+    }
+  }
+
+  return false;
+}
+
 function S4() 
 {
   return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
@@ -56,6 +71,41 @@ function S4()
 function uuid() 
 {
     return (S4()+S4()+"-"+S4()+"-"+S4()+"-"+S4()+"-"+S4()+S4()+S4());
+}
+
+function extend(parent, child, override)
+{
+  child.prototype = parent;
+
+  for (var prop in override)
+  {
+    child.prototype[ prop ] = override[ prop ];
+  }
+}
+
+function propsMatch(test, testFields, expected, expectedFields)
+{
+  if ( isString( testFields ) ) // && isString( expectedFields )
+  {
+    return test[ testFields ] === expected[ expectedFields ];
+  }
+  else // if ( isArray( testFields ) && isArray( expectedFields ) )
+  {
+    for (var i = 0; i < testFields.length; i++)
+    {
+      var testProp = testFields[ i ];
+      var expectedProp = expectedFields[ i ];
+
+      if ( test[ testProp ] !== expected[ expectedProp ] )
+      {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  return false;
 }
 
 function transfer(from, to)
@@ -765,6 +815,10 @@ function NeuroDatabase(options)
   this.rest = Neuro.rest( this );
   this.store = Neuro.store( this );
   this.live = Neuro.live( this, this.handlePublish( this ) );
+
+  this.relations = {};
+
+  this.setComparator( this.comparator );
 }
 
 NeuroDatabase.prototype =
@@ -829,29 +883,73 @@ NeuroDatabase.prototype =
   // Sorts the models & notifies listeners that the database has been updated.
   updated: function()
   {
-    var cmp = this.comparator;
-
-    if ( isFunction( cmp ) )
-    {
-      this.models.sort( cmp );
-    }
-    else if ( isString( cmp ) )
-    {
-      var order = 1;
-
-      if ( cmp.charAt(0) === '-' )
-      {
-        cmp = cmp.substring( 1 );
-        order = -1;
-      }
-
-      this.models.sort(function(a, b)
-      {
-        return order * compare( a[ cmp ], b[ cmp ] );
-      });
-    }
-
+    this.sort();
     this.trigger( 'updated' );
+  },
+
+  // Sets a comparator for this database. It can be a field name, a field name
+  // with a minus in the front to sort in reverse, or a comparator function.
+  setComparator: function(comparator)
+  {
+    if ( isFunction( comparator ) )
+    {
+      this.comparatorFunction = comparator;
+    }
+    else if ( isString( comparator ) )
+    {
+      if ( comparator.charAt(0) === '-' )
+      {
+        comparator = comparator.substring( 1 );
+
+        this.comparatorFunction = function(a, b)
+        {
+          return compare( b[ comparator ], a[ comparator ] );
+        };
+      }
+      else
+      {
+        this.comparatorFunction = function(a, b)
+        {
+          return compare( a[ comparator ], b[ comparator ] );
+        };
+      }
+    }
+    else
+    {
+      this.comparatorFunction = null;
+    }
+  },
+
+  // Sorts the database if it isn't sorted.
+  sort: function()
+  {
+    if ( !this.isSorted() )
+    {
+      this.models.sort( this.comparatorFunction );
+    }
+  },
+
+  // Determines whether this database is sorted.
+  isSorted: function()
+  {
+    var comparator = this.comparatorFunction;
+
+    if ( !comparator )
+    {
+      return true;
+    }
+
+    var models = this.models.values;
+
+    for (var i = 0, n = models.length - 1; i < n; i++)
+    {
+      if ( comparator( models[ i ], models[ i + 1 ] ) > 0 )
+      {
+        return false;
+      }
+    }
+
+    return true;
   },
 
   // Handles when we receive data from the server - either from
@@ -1089,6 +1187,29 @@ NeuroDatabase.prototype =
     return this.models.values;
   }, 
 
+  // Returns a model
+  getModel: function(key)
+  {
+    if ( isArray( key ) )
+    {
+      var keyString = '';
+
+      for (var i = 0; i < key.length; i++)
+      {
+        if (i > 0)
+        {
+          keyString += this.keySeparator;
+        }
+
+        keyString += key[ i ];
+      }
+
+      key = keyString;
+    }
+
+    return this.models.get( key );
+  },
+
   // Crates a function for handling real-time changes
   handlePublish: function(db)
   {
@@ -1239,72 +1360,11 @@ function NeuroModel(db)
 NeuroModel.prototype =
 {
 
-  $set: function(props, value)
-  {
-    if ( isObject( props ) )
-    {
-      transfer( props, this );
-    }
-    else if ( isString( props ) && value !== void 0 )
-    {
-      this[ props ] = value;
-    }
-  },
-
-  $get: function(props, copyValues)
-  {
-    if ( isArray( props ) )
-    {
-      return grab( this, props, copyValues );
-    }
-    else if ( isObject( props ) )
-    {
-      for (var p in props)
-      {
-        props[ p ] = copyValues ? copy( this[ p ] ) : this[ p ];
-      }
-
-      return props;
-    }
-    else if ( isString( props ) )
-    {
-      return copyValues ? copy( this[ props ] ) : this[ props ];
-    }
-  },
-
-  $save: function(setProperties, setValue)
-  {
-    this.$set( setProperties, setValue );
-
-    return this.$db.save( this );
-  },
-
-  $remove: function()
-  {
-    return this.$db.remove( this );
-  },
-
-  $addOperation: function(OperationType) 
-  {
-    var operation = new OperationType( this );
-
-    if ( !this.$operation ) 
-    {
-      this.$operation = operation;
-      this.$operation.execute();
-    } 
-    else 
-    {
-      this.$operation.queue( operation );
-    }
-  },
-
   $init: function(props)
   {
     this.$pendingSave = false;
-    this.$pendingRemove = false;
-    this.$queued = [];
     this.$operation = null;
+    this.$relations = {};
 
     this.$reset( props );
   },
@@ -1352,6 +1412,85 @@ NeuroModel.prototype =
     this.$set( props );
   },
 
+  $set: function(props, value)
+  {
+    if ( isObject( props ) )
+    {
+      transfer( props, this );
+    }
+    else if ( isString( props ) && value !== void 0 )
+    {
+      if ( props in this.$relations )
+      {
+        var relation = this.$db.relations[ props ];
+
+        relation.set( this, value );
+      }
+      else
+      {
+        this[ props ] = value; 
+      }
+    }
+  },
+
+  $get: function(props, copyValues)
+  {
+    if ( isArray( props ) )
+    {
+      return grab( this, props, copyValues );
+    }
+    else if ( isObject( props ) )
+    {
+      for (var p in props)
+      {
+        props[ p ] = copyValues ? copy( this[ p ] ) : this[ p ];
+      }
+
+      return props;
+    }
+    else if ( isString( props ) )
+    {
+      if ( props in this.$relations )
+      {
+        var relation = this.$db.relations[ props ];
+        var values = relation.get( this );
+
+        return copyValues ? copy( values ) : values;
+      }
+      else
+      {
+        return copyValues ? copy( this[ props ] ) : this[ props ]; 
+      }
+    }
+  },
+
+  $save: function(setProperties, setValue)
+  {
+    this.$set( setProperties, setValue );
+
+    return this.$db.save( this );
+  },
+
+  $remove: function()
+  {
+    return this.$db.remove( this );
+  },
+
+  $addOperation: function(OperationType) 
+  {
+    var operation = new OperationType( this );
+
+    if ( !this.$operation ) 
+    {
+      this.$operation = operation;
+      this.$operation.execute();
+    } 
+    else 
+    {
+      this.$operation.queue( operation );
+    }
+  },
+
   $toJSON: function()
   {
     return this.$db.encode( grab( this, this.$db.fields, true ) );
@@ -1370,6 +1509,15 @@ NeuroModel.prototype =
   $isSavedLocally: function()
   {
     return !!this.$local;
+  },
+
+  $getChanges: function()
+  {
+    var saved = this.$saved;
+    var encoded = this.$toJSON();
+    var fields = this.$db.fields;
+
+    return saved ? diff( encoded, saved, fields, equals ) : encoded;
   },
 
   $hasChanges: function()
@@ -1545,6 +1693,35 @@ NeuroMap.prototype =
   size: function()
   {
     return this.values.length;
+  },
+
+  /**
+   * Passes all values & keys in this map to a callback and if it returns a 
+   * truthy value then the key and value are placed in the destination map.
+   * 
+   * @param  {Function} callback [description]
+   * @param  {NeuroMap} [dest]     [description]
+   * @return {[type]}            [description]
+   */
+  filter: function(callback, dest)
+  {
+    var out = dest || new NeuroMap();
+    var n = this.size();
+    var values = this.values;
+    var keys = this.keys;
+
+    for (var i = 0; i < n; i++)
+    {
+      var v = values[ i ];
+      var k = keys[ i ];
+
+      if ( callback( v, k ) )
+      {
+        out.put( k, v );
+      }
+    }
+
+    return out;
   },
 
   /**
@@ -1846,6 +2023,7 @@ NeuroRemoveNow.prototype.run = function(db, model)
   if ( db.models.has( key ) )
   {
     db.models.remove( key );
+    db.updated();
 
     model.trigger('removed');
   }
@@ -2015,16 +2193,13 @@ NeuroSaveRemote.prototype.run = function(db, model)
   }
 
   // Grab key & encode to JSON
-  this.key = model.$key();
-  this.encoded = model.$toJSON();
+  var key = this.key = model.$key();
 
   // The fields that have changed since last save
-  this.saving = model.$saved ? 
-    diff( this.encoded, model.$saved, db.fields, equals ) :
-    this.encoded;
+  var saving = this.saving = model.$getChanges();
 
   // If there's nothing to save, don't bother!
-  if ( isEmpty( this.saving ) )
+  if ( isEmpty( saving ) )
   {
     return this.finish();
   }
@@ -2032,8 +2207,8 @@ NeuroSaveRemote.prototype.run = function(db, model)
   // Make the REST call to remove the model
   var options = {
     method: model.$saved ? 'PUT' : 'POST',
-    url:    model.$saved ? db.api + this.key : db.api,
-    data:   this.saving
+    url:    model.$saved ? db.api + key : db.api,
+    data:   saving
   };
 
   db.rest( options, this.success(), this.failure() );

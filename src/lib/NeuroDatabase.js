@@ -11,6 +11,8 @@ function NeuroDatabase(options)
   this.live = Neuro.live( this, this.handlePublish( this ) );
 
   this.relations = {};
+
+  this.setComparator( this.comparator );
 }
 
 NeuroDatabase.prototype =
@@ -75,29 +77,73 @@ NeuroDatabase.prototype =
   // Sorts the models & notifies listeners that the database has been updated.
   updated: function()
   {
-    var cmp = this.comparator;
-
-    if ( isFunction( cmp ) )
-    {
-      this.models.sort( cmp );
-    }
-    else if ( isString( cmp ) )
-    {
-      var order = 1;
-
-      if ( cmp.charAt(0) === '-' )
-      {
-        cmp = cmp.substring( 1 );
-        order = -1;
-      }
-
-      this.models.sort(function(a, b)
-      {
-        return order * compare( a[ cmp ], b[ cmp ] );
-      });
-    }
-
+    this.sort();
     this.trigger( 'updated' );
+  },
+
+  // Sets a comparator for this database. It can be a field name, a field name
+  // with a minus in the front to sort in reverse, or a comparator function.
+  setComparator: function(comparator)
+  {
+    if ( isFunction( comparator ) )
+    {
+      this.comparatorFunction = comparator;
+    }
+    else if ( isString( comparator ) )
+    {
+      if ( comparator.charAt(0) === '-' )
+      {
+        comparator = comparator.substring( 1 );
+
+        this.comparatorFunction = function(a, b)
+        {
+          return compare( b[ comparator ], a[ comparator ] );
+        };
+      }
+      else
+      {
+        this.comparatorFunction = function(a, b)
+        {
+          return compare( a[ comparator ], b[ comparator ] );
+        };
+      }
+    }
+    else
+    {
+      this.comparatorFunction = null;
+    }
+  },
+
+  // Sorts the database if it isn't sorted.
+  sort: function()
+  {
+    if ( !this.isSorted() )
+    {
+      this.models.sort( this.comparatorFunction );
+    }
+  },
+
+  // Determines whether this database is sorted.
+  isSorted: function()
+  {
+    var comparator = this.comparatorFunction;
+
+    if ( !comparator )
+    {
+      return true;
+    }
+
+    var models = this.models.values;
+
+    for (var i = 0, n = models.length - 1; i < n; i++)
+    {
+      if ( comparator( models[ i ], models[ i + 1 ] ) > 0 )
+      {
+        return false;
+      }
+    }
+
+    return true;
   },
 
   // Handles when we receive data from the server - either from
