@@ -45,6 +45,21 @@ function toArray(x, split)
   return x instanceof Array ? x : x.split( split );
 }
 
+function indexOf(arr, x, comparator)
+{
+  var cmp = comparator || equalsStrict;
+
+  for (var i = 0, n = arr.length; i < n; i++)
+  {
+    if ( cmp( arr[i], x ) )
+    {
+      return i;
+    }
+  }
+
+  return false;
+}
+
 function S4() 
 {
   return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
@@ -53,6 +68,41 @@ function S4()
 function uuid() 
 {
     return (S4()+S4()+"-"+S4()+"-"+S4()+"-"+S4()+"-"+S4()+S4()+S4());
+}
+
+function extend(parent, child, override)
+{
+  child.prototype = parent;
+
+  for (var prop in override)
+  {
+    child.prototype[ prop ] = override[ prop ];
+  }
+}
+
+function propsMatch(test, testFields, expected, expectedFields)
+{
+  if ( isString( testFields ) ) // && isString( expectedFields )
+  {
+    return test[ testFields ] === expected[ expectedFields ];
+  }
+  else // if ( isArray( testFields ) && isArray( expectedFields ) )
+  {
+    for (var i = 0; i < testFields.length; i++)
+    {
+      var testProp = testFields[ i ];
+      var expectedProp = expectedFields[ i ];
+
+      if ( test[ testProp ] !== expected[ expectedProp ] )
+      {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  return false;
 }
 
 function transfer(from, to)

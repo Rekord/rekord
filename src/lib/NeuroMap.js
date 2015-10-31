@@ -147,6 +147,35 @@ NeuroMap.prototype =
   },
 
   /**
+   * Passes all values & keys in this map to a callback and if it returns a 
+   * truthy value then the key and value are placed in the destination map.
+   * 
+   * @param  {Function} callback [description]
+   * @param  {NeuroMap} [dest]     [description]
+   * @return {[type]}            [description]
+   */
+  filter: function(callback, dest)
+  {
+    var out = dest || new NeuroMap();
+    var n = this.size();
+    var values = this.values;
+    var keys = this.keys;
+
+    for (var i = 0; i < n; i++)
+    {
+      var v = values[ i ];
+      var k = keys[ i ];
+
+      if ( callback( v, k ) )
+      {
+        out.put( k, v );
+      }
+    }
+
+    return out;
+  },
+
+  /**
    * Reverses the order of the underlying values & keys.
    * 
    * @return {NeuroMap} -

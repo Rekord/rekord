@@ -9,6 +9,8 @@ function NeuroDatabase(options)
   this.rest = Neuro.rest( this );
   this.store = Neuro.store( this );
   this.live = Neuro.live( this, this.handlePublish( this ) );
+
+  this.relations = {};
 }
 
 NeuroDatabase.prototype =
@@ -332,6 +334,29 @@ NeuroDatabase.prototype =
   {
     return this.models.values;
   }, 
+
+  // Returns a model
+  getModel: function(key)
+  {
+    if ( isArray( key ) )
+    {
+      var keyString = '';
+
+      for (var i = 0; i < key.length; i++)
+      {
+        if (i > 0)
+        {
+          keyString += this.keySeparator;
+        }
+
+        keyString += key[ i ];
+      }
+
+      key = keyString;
+    }
+
+    return this.models.get( key );
+  },
 
   // Crates a function for handling real-time changes
   handlePublish: function(db)

@@ -12,6 +12,7 @@ NeuroRemoveNow.prototype.run = function(db, model)
   if ( db.models.has( key ) )
   {
     db.models.remove( key );
+    db.updated();
 
     model.trigger('removed');
   }

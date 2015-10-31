@@ -38,72 +38,11 @@ function NeuroModel(db)
 NeuroModel.prototype =
 {
 
-  $set: function(props, value)
-  {
-    if ( isObject( props ) )
-    {
-      transfer( props, this );
-    }
-    else if ( isString( props ) && value !== void 0 )
-    {
-      this[ props ] = value;
-    }
-  },
-
-  $get: function(props, copyValues)
-  {
-    if ( isArray( props ) )
-    {
-      return grab( this, props, copyValues );
-    }
-    else if ( isObject( props ) )
-    {
-      for (var p in props)
-      {
-        props[ p ] = copyValues ? copy( this[ p ] ) : this[ p ];
-      }
-
-      return props;
-    }
-    else if ( isString( props ) )
-    {
-      return copyValues ? copy( this[ props ] ) : this[ props ];
-    }
-  },
-
-  $save: function(setProperties, setValue)
-  {
-    this.$set( setProperties, setValue );
-
-    return this.$db.save( this );
-  },
-
-  $remove: function()
-  {
-    return this.$db.remove( this );
-  },
-
-  $addOperation: function(OperationType) 
-  {
-    var operation = new OperationType( this );
-
-    if ( !this.$operation ) 
-    {
-      this.$operation = operation;
-      this.$operation.execute();
-    } 
-    else 
-    {
-      this.$operation.queue( operation );
-    }
-  },
-
   $init: function(props)
   {
     this.$pendingSave = false;
-    this.$pendingRemove = false;
-    this.$queued = [];
     this.$operation = null;
+    this.$relations = {};
 
     this.$reset( props );
   },
@@ -149,6 +88,85 @@ NeuroModel.prototype =
     }
 
     this.$set( props );
+  },
+
+  $set: function(props, value)
+  {
+    if ( isObject( props ) )
+    {
+      transfer( props, this );
+    }
+    else if ( isString( props ) && value !== void 0 )
+    {
+      if ( props in this.$relations )
+      {
+        var relation = this.$db.relations[ props ];
+
+        relation.set( this, value );
+      }
+      else
+      {
+        this[ props ] = value; 
+      }
+    }
+  },
+
+  $get: function(props, copyValues)
+  {
+    if ( isArray( props ) )
+    {
+      return grab( this, props, copyValues );
+    }
+    else if ( isObject( props ) )
+    {
+      for (var p in props)
+      {
+        props[ p ] = copyValues ? copy( this[ p ] ) : this[ p ];
+      }
+
+      return props;
+    }
+    else if ( isString( props ) )
+    {
+      if ( props in this.$relations )
+      {
+        var relation = this.$db.relations[ props ];
+        var values = relation.get( this );
+
+        return copyValues ? copy( values ) : values;
+      }
+      else
+      {
+        return copyValues ? copy( this[ props ] ) : this[ props ]; 
+      }
+    }
+  },
+
+  $save: function(setProperties, setValue)
+  {
+    this.$set( setProperties, setValue );
+
+    return this.$db.save( this );
+  },
+
+  $remove: function()
+  {
+    return this.$db.remove( this );
+  },
+
+  $addOperation: function(OperationType) 
+  {
+    var operation = new OperationType( this );
+
+    if ( !this.$operation ) 
+    {
+      this.$operation = operation;
+      this.$operation.execute();
+    } 
+    else 
+    {
+      this.$operation.queue( operation );
+    }
   },
 
   $toJSON: function()

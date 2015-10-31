@@ -23,7 +23,7 @@ var Todo = Neuro({
   pubsub: 'http://yourwebsite.com:3000',
   channel: 'todos',
   token: 'a_valid_token', 
-
+  
   // Definition
   className: 'Todo',
   key: 'id',

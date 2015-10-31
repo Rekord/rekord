@@ -8,7 +8,7 @@ Neuro.live = (function()
     return url in cache ? cache[ url ] : ( cache[ url ] = new PubSub( url ) );
   }
 
-  return function LiveFactory(database, onPublish)
+  function LiveFactory(database, onPublish)
   {
     var pubsub = get( database.pubsub );
     var channel = pubsub.subscribe( database.channel, database.token );
@@ -17,10 +17,17 @@ Neuro.live = (function()
 
     channel.onpublish = onPublish;
 
-    return function publish(message)
+    function publish(message)
     {
       channel.publish( message );
     };
+
+    publish.pubsub = pubsub;
+    publish.channel = channel;
+
+    return publish;
   };
+
+  return LiveFactory;
 
 })();
