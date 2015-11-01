@@ -50,7 +50,8 @@ angular.module('neurosync', [])
       44: $interpolate('Model local remove blocked, waiting until previous operation finishes for {{ a.$toJSON() }}'),
       45: $interpolate('Model local remove ineffective, no local model to remove for {{ a.$toJSON() }}'),
       46: $interpolate('Model local remove effective, unsaved model removed {{ a.$toJSON() }}'),
-      47: $interpolate('Model had a pending save that was canceled by remove for {{ a.$toJSON() }}')
+      47: $interpolate('Model had a pending save that was canceled by remove for {{ a.$toJSON() }}'),
+      48: $interpolate('Model update blocked with older revision {{ a.$toJSON() }}: {{ b }}')
     };
 
     Neuro.debug = function(event, a, b, c)
@@ -73,16 +74,17 @@ angular.module('neurosync', [])
         } 
         else 
         {
-          $http( options ).then(
-            function onRestSuccess(response) 
-            {
-              success( response.data );
-            },
-            function onRestError(response) 
-            {
-              failure( response.data, response.status );
-            }
-          );
+          function onRestSuccess(response) 
+          {
+            success( response.data );
+          }
+          
+          function onRestError(response) 
+          {
+            failure( response.data, response.status );
+          }
+
+          $http( options ).then( onRestSuccess, onRestError );
         }            
       };
     };

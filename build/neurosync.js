@@ -610,6 +610,8 @@ Neuro.Events = {
   SAVE_REMOTE: 25,            // NeuroModel
   SAVE_DELETED: 40,           // NeuroModel
 
+  SAVE_OLD_REVISION: 48,      // NeuroModel, encoded
+
   SAVE_LOCAL: 23,             // NeuroModel
   SAVE_LOCAL_ERROR: 24,       // NeuroModel, error
   SAVE_LOCAL_DELETED: 38,     // NeuroModel
@@ -819,6 +821,7 @@ function NeuroDatabase(options)
   this.relations = {};
 
   this.setComparator( this.comparator );
+  this.setRevision( this.revision );
 }
 
 NeuroDatabase.prototype =
@@ -885,6 +888,31 @@ NeuroDatabase.prototype =
   {
     this.sort();
     this.trigger( 'updated' );
+  },
+
+  // Sets a revision comparision function for this database. It can be a field
+  // name or a function. This is used to avoid updating model data that is older
+  // than the model's current data.
+  setRevision: function(revision)
+  {
+    if ( isFunction( revision ) )
+    {
+      this.revisionFunction = revision;
+    }
+    else if ( isString( revision ) )
+    {
+      this.revisionFunction = function(a, b)
+      {
+        return (revision in a && revision in b) ? (a[ revision ] - b[ revision ]) : false;
+      };
+    }
+    else 
+    {
+      this.revisionFunction = function(a, b)
+      {
+        return false;
+      };
+    }
   },
 
   // Sets a comparator for this database. It can be a field name, a field name
@@ -961,6 +989,18 @@ NeuroDatabase.prototype =
     var model = model || db.models.get( key );
     var decoded = db.decode( copy( encoded ) );
     var hasModel = !!model;
+
+    if ( model )
+    {
+      var revisionCompare = this.revisionFunction( model, encoded );
+
+      if ( revisionCompare !== false && revisionCompare > 0 )
+      {
+        Neuro.debug( Neuro.Events.SAVE_OLD_REVISION, model, encoded );
+
+        return;
+      }
+    }
 
     if ( model && model.$saved )
     {
@@ -1080,6 +1120,16 @@ NeuroDatabase.prototype =
   init: function()
   {
     var db = this;
+
+    if ( db.cache === false )
+    {
+      if ( db.loadRemote )
+      {
+        db.refresh();
+      }
+
+      return;
+    }
 
     db.store.all(function(records, keys)
     {

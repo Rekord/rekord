@@ -37,6 +37,8 @@ Neuro.Events = {
   SAVE_REMOTE: 25,            // NeuroModel
   SAVE_DELETED: 40,           // NeuroModel
 
+  SAVE_OLD_REVISION: 48,      // NeuroModel, encoded
+
   SAVE_LOCAL: 23,             // NeuroModel
   SAVE_LOCAL_ERROR: 24,       // NeuroModel, error
   SAVE_LOCAL_DELETED: 38,     // NeuroModel
