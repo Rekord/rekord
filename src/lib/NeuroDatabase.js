@@ -22,19 +22,37 @@ function NeuroDatabase(options)
 NeuroDatabase.prototype =
 {
 
-  ready: function(callback, context)
+  // Notifies a callback when the database has loaded (either locally or remotely).
+  ready: function(callback, context, persistent)
   {
     var db = this;
     var callbackContext = context || db;
+    var invoked = false;
 
     if ( db.initialized )
     {
       callback.call( callbackContext, db );
+      invoked = true;
     }
     else
     {
-      db.once( 'local-load remote-load', callback, callbackContext );
+      function onReady()
+      {
+        if ( !persistent )
+        {
+          db.off( 'local-load remote-load', onReady );
+        }
+        if ( !invoked || persistent )
+        {
+          callback.call( callbackContext, db );
+          invoked = true;
+        }
+      }
+
+      db.on( 'local-load remote-load', onReady );
     }
+
+    return invoked;
   },
 
   // Removes the key from the given model
