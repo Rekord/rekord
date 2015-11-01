@@ -124,7 +124,14 @@ NeuroSaveRemote.prototype.handleData = function(data)
   // local and model point to the same object.
   if ( !model.$saved )
   {
-    model.$saved = model.$local.$saved = {};
+    if ( db.cache === false )
+    {
+      model.$saved = {};
+    }
+    else
+    {
+      model.$saved = model.$local.$saved = {}; 
+    }
   }
   
   // Update the model with the return data

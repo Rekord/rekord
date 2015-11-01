@@ -988,7 +988,6 @@ NeuroDatabase.prototype =
     var key = key || db.getKey( encoded );
     var model = model || db.models.get( key );
     var decoded = db.decode( copy( encoded ) );
-    var hasModel = !!model;
 
     if ( model )
     {
@@ -1017,7 +1016,12 @@ NeuroDatabase.prototype =
         if ( equals( currentValue, savedValue ) )
         {
           model[ prop ] = decoded[ prop ];
-          updated[ prop ] = model.$local[ prop ] = encoded[ prop ];
+          updated[ prop ] = encoded[ prop ];
+
+          if ( db.cache !== false )
+          {
+            model.$local[ prop ] = encoded[ prop ];
+          }
         }
         else
         {
@@ -1039,16 +1043,26 @@ NeuroDatabase.prototype =
 
       model.trigger( 'remote-update', [encoded] );
 
-      model.$addOperation( NeuroSaveNow );
+      if ( db.cache !== false )
+      {
+        model.$addOperation( NeuroSaveNow ); 
+      }
     }
     else
     {
       model = db.instantiate( decoded );
 
-      model.$local = encoded;
-      model.$saved = model.$local.$saved = copy( encoded );
+      if ( db.cache !== false )
+      {
+        model.$local = encoded;
+        model.$saved = model.$local.$saved = copy( encoded );
 
-      model.$addOperation( NeuroSaveNow );
+        model.$addOperation( NeuroSaveNow );
+      }
+      else
+      {
+        model.$saved = encoded;
+      }
     }
 
     if ( !db.models.has( key ) )
@@ -1062,12 +1076,40 @@ NeuroDatabase.prototype =
     return model;
   },
 
-  // Destroys a model locally because it doesn't exist remotely
-  destroyLocalModel: function(key)
+  destroyLocalUncachedModel: function(model)
   {
     var db = this;
-    var model = db.models.get( key );
 
+    if ( model )
+    {
+      if ( model.$hasChanges() )
+      {
+        delete model.$saved;
+
+        db.removeKey( model );
+
+        model.trigger( 'detach' );
+
+        return false;
+      }
+
+      model.trigger( 'remote-remove' );
+
+      db.models.remove( key );
+      db.trigger( 'model-removed', [model] );
+
+      model.trigger('removed');
+
+      Neuro.debug( Neuro.Events.REMOTE_REMOVE, model );
+
+      return true;
+    }
+
+    return false;
+  },
+
+  destroyLocalCachedModel: function(model, key)
+  {
     if ( model )
     {
       // If a model was removed remotely but the model has changes - don't remove it.
@@ -1115,6 +1157,22 @@ NeuroDatabase.prototype =
     return true;
   },
 
+  // Destroys a model locally because it doesn't exist remotely
+  destroyLocalModel: function(key)
+  {
+    var db = this;
+    var model = db.models.get( key );
+
+    if ( db.cache === false )
+    {
+      return db.destroyLocalUncachedModel( model );
+    }
+    else
+    {
+      return db.destroyLocalCachedModel( model, key );
+    }
+  },
+
   // Initialize the database by loading local values and on success load
   // remove values.
   init: function()
@@ -1123,7 +1181,7 @@ NeuroDatabase.prototype =
 
     if ( db.cache === false )
     {
-      if ( db.loadRemote )
+      if ( db.loadRemote !== false )
       {
         db.refresh();
       }
@@ -1371,8 +1429,16 @@ NeuroDatabase.prototype =
       db.trigger( 'model-updated', [model] );
     }
 
-    // Start by saving locally.
-    model.$addOperation( NeuroSaveLocal );
+    if ( db.cache === false )
+    {
+      // Save remotely
+      model.$addOperation( NeuroSaveRemote );
+    }
+    else
+    {
+      // Start by saving locally.
+      model.$addOperation( NeuroSaveLocal );
+    }
   },
 
   // Remove the model 
@@ -1403,8 +1469,16 @@ NeuroDatabase.prototype =
       model.$pendingSave = false; 
     }
 
-    // Start by removing locally.
-    model.$addOperation( NeuroRemoveLocal );
+    if ( db.cache === false )
+    {
+      // Remove remotely
+      model.$addOperation( NeuroRemoveRemote );
+    }
+    else
+    { 
+      // Start by removing locally.
+      model.$addOperation( NeuroRemoveLocal );
+    }
   }
 
 };
@@ -2392,7 +2466,14 @@ NeuroSaveRemote.prototype.handleData = function(data)
   // local and model point to the same object.
   if ( !model.$saved )
   {
-    model.$saved = model.$local.$saved = {};
+    if ( db.cache === false )
+    {
+      model.$saved = {};
+    }
+    else
+    {
+      model.$saved = model.$local.$saved = {}; 
+    }
   }
   
   // Update the model with the return data
