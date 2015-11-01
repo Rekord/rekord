@@ -6,6 +6,9 @@ function NeuroDatabase(options)
 
   this.models = new NeuroMap();
 
+  this.initialized = false;
+  this.pendingRefresh = false;
+
   this.rest = Neuro.rest( this );
   this.store = Neuro.store( this );
   this.live = Neuro.live( this, this.handlePublish( this ) );
@@ -19,8 +22,20 @@ function NeuroDatabase(options)
 NeuroDatabase.prototype =
 {
 
-  // Whether or not there's a load pending until we're online again
-  pendingRefresh: false,
+  ready: function(callback, context)
+  {
+    var db = this;
+    var callbackContext = context || db;
+
+    if ( db.initialized )
+    {
+      callback.call( callbackContext, db );
+    }
+    else
+    {
+      db.once( 'local-load remote-load', callback, callbackContext );
+    }
+  },
 
   // Removes the key from the given model
   removeKey: function(model)
@@ -420,8 +435,10 @@ NeuroDatabase.prototype =
           db.models.put( key, model );
         }
       }
+      
+      db.initialized = true;
 
-      db.trigger( 'local-load' );
+      db.trigger( 'local-load', [db] );
 
       db.updated();
 
@@ -474,7 +491,9 @@ NeuroDatabase.prototype =
         }
       }
 
-      db.trigger( 'remote-load' );
+      db.initialized = true;
+
+      db.trigger( 'remote-load', [db] );
 
       db.updated();
 
