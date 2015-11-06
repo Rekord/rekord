@@ -72,10 +72,18 @@
       this.scope = scope;
       this.target = target;
       this.callback = callback;
+
       this.notify = this.newNotification();
       this.release = this.newRelease();
+      
       this.on();
     }
+
+    NeuroBind.Events = {
+      Database: 'updated',
+      Model: 'saved removed remote-update relation-update',
+      Scope: '$destroy'
+    };
 
     NeuroBind.prototype = 
     {
@@ -88,24 +96,24 @@
 
         if ( this.target instanceof Neuro.Database )
         {
-          this.target.on( 'updated', this.notify  );
+          this.target.on( NeuroBind.Events.Database, this.notify  );
         }
         else if ( this.target instanceof Neuro.Model )
         {
-          this.target.$on( 'saved removed remote-update', this.notify );
+          this.target.$on( NeuroBind.Events.Model, this.notify );
         }
 
-        this.scope.$on( '$destroy', this.release );
+        this.scope.$on( NeuroBind.Events.Scope, this.release );
       },
       off: function()
       {
         if ( this.target instanceof Neuro.Database )
         {
-          this.target.off( 'updated', this.notify );
+          this.target.off( NeuroBind.Events.Database, this.notify );
         }
         else if ( this.target instanceof Neuro.Model )
         {
-          this.target.$off( 'saved removed remote-update', this.notify );
+          this.target.$off( NeuroBind.Events.Model, this.notify );
         }
       },
       newRelease: function()

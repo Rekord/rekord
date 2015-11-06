@@ -39,6 +39,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.5.0-beta.1/angular.js"></script>
     <script src="https://cdn.socket.io/socket.io-1.3.7.js"></script>
     <script src="http://rawgit.com/ClickerMonkey/storkjs/master/build/stork.min.js"></script>
+    <script src="http://rawgit.com/yaru22/angular-timeago/master/dist/angular-timeago.min.js"></script>
     <script src="pubsub/pubsub-client.js"></script>
 
     <script src="../../build/neurosync.js"></script>
@@ -63,7 +64,7 @@
         };
       };
 
-      angular.module('tasks', ['neurosync'])
+      angular.module('tasks', ['neurosync', 'yaru22.angular-timeago'])
 
         .config(function($logProvider, NeuroSettings)
         {

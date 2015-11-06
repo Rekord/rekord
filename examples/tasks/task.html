@@ -8,7 +8,7 @@
   </label>
   <span class="task-actions">
     <span ng-show="$.finished" class="hide-on-hover">
-      {{ model.finished_at | date : 'short' }}
+      {{ model.finished_at | timeAgo }}
     </span>
     <a href="#" ng-click="edit()">Edit</a>
     <a href="#" ng-click="remove()">Remove</a>

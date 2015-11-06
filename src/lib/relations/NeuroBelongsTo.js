@@ -242,7 +242,12 @@ extend( new NeuroRelation(), NeuroBelongsTo,
   {
     if ( this.property )
     {
-      model[ this.name ] = relation.model;
+      if ( model[ this.name ] !== relation.model )
+      {
+        model[ this.name ] = relation.model;
+        
+        model.$trigger( 'relation-update', [this, relation] );
+      }
     }
   }
 

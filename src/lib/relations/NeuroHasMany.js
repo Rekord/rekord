@@ -312,7 +312,7 @@ extend( new NeuroRelation(), NeuroHasMany,
 
       this.sort( relation );
 
-      if ( skipCheck )
+      if ( !skipCheck )
       {
         this.checkSave( relation );
       }
@@ -416,10 +416,15 @@ extend( new NeuroRelation(), NeuroHasMany,
   sort: function(relation)
   {
     var related = relation.models;
-
-    if ( !relation.delaySorting && !related.isSorted( this.comparator ) )
+    
+    if ( !relation.delaySorting )
     {
-      related.sort( this.comparator );
+      if ( !related.isSorted( this.comparator ) )
+      {
+        related.sort( this.comparator );
+      }
+
+      relation.parent.$trigger( 'relation-update', [this, relation] );
     }
   }
 
