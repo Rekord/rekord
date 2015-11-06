@@ -15,12 +15,7 @@ NeuroRemoveRemote.prototype.run = function(db, model)
   this.key = model.$key();
 
   // Make the REST call to remove the model
-  var options = {
-    method: 'DELETE',
-    url:    db.api + this.key
-  };
-
-  db.rest( options, this.success(), this.failure() );
+  db.rest( 'DELETE', model, undefined, this.success(), this.failure() );
 };
 
 NeuroRemoveRemote.prototype.onSuccess = function(data)

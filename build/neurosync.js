@@ -844,7 +844,7 @@ Neuro.Events = {
 
 Neuro.rest = function(database)
 {
-  return function (options, success, failure)
+  return function (method, model, data, success, failure)
   {
     // success ( data )
     // failure ( data, status )
@@ -1653,12 +1653,8 @@ NeuroDatabase.prototype =
   refresh: function()
   {
     var db = this;
-    var options = {
-      method: 'GET',
-      url: db.api
-    };
-
-    db.rest( options, onModels, onLoadError );
+    
+    db.rest( 'GET', undefined, undefined, onModels, onLoadError );
     
     function onModels(models) 
     {
@@ -2743,12 +2739,7 @@ NeuroRemoveRemote.prototype.run = function(db, model)
   this.key = model.$key();
 
   // Make the REST call to remove the model
-  var options = {
-    method: 'DELETE',
-    url:    db.api + this.key
-  };
-
-  db.rest( options, this.success(), this.failure() );
+  db.rest( 'DELETE', model, undefined, this.success(), this.failure() );
 };
 
 NeuroRemoveRemote.prototype.onSuccess = function(data)
@@ -2901,14 +2892,8 @@ NeuroSaveRemote.prototype.run = function(db, model)
     return this.finish();
   }
 
-  // Make the REST call to remove the model
-  var options = {
-    method: model.$saved ? 'PUT' : 'POST',
-    url:    model.$saved ? db.api + key : db.api,
-    data:   saving
-  };
-
-  db.rest( options, this.success(), this.failure() );
+  // Make the REST call to save the model
+  db.rest( model.$saved ? 'PUT' : 'POST', model, saving, this.success(), this.failure() );
 };
 
 NeuroSaveRemote.prototype.onSuccess = function(data)

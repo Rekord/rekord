@@ -15,8 +15,14 @@
   {
     Neuro.rest = function(database)
     {
-      return function(options, success, failure) 
+      return function(method, model, data, success, failure) 
       {
+        var options = {
+          method: method,
+          data: data,
+          url: (!model || method === 'POST') ? database.api : database.api + model.$key()
+        };
+
         Neuro.debug( Neuro.Events.REST, this, options.method, options.url, options.data );
 
         if ( Neuro.forceOffline )

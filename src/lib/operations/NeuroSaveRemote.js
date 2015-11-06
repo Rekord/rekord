@@ -27,14 +27,8 @@ NeuroSaveRemote.prototype.run = function(db, model)
     return this.finish();
   }
 
-  // Make the REST call to remove the model
-  var options = {
-    method: model.$saved ? 'PUT' : 'POST',
-    url:    model.$saved ? db.api + key : db.api,
-    data:   saving
-  };
-
-  db.rest( options, this.success(), this.failure() );
+  // Make the REST call to save the model
+  db.rest( model.$saved ? 'PUT' : 'POST', model, saving, this.success(), this.failure() );
 };
 
 NeuroSaveRemote.prototype.onSuccess = function(data)

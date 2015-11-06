@@ -3,7 +3,7 @@
 
 Neuro.rest = function(database)
 {
-  return function (options, success, failure)
+  return function (method, model, data, success, failure)
   {
     // success ( data )
     // failure ( data, status )
