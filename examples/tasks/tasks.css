@@ -55,6 +55,9 @@
   float: right;
   margin-top: 4px;
 }
+.task-actions span {
+  color: #999;
+}
 .task-actions a {
   padding-left: 10px;
   color: #666;
@@ -64,4 +67,36 @@
 }
 .task-actions a:hover {
   text-decoration: underline;
+}
+
+/* Animations */
+.animated.ng-enter, 
+.animated.ng-leave { 
+    -webkit-transition: 400ms cubic-bezier(0.250, 0.250, 0.750, 0.750) all;
+    -moz-transition: 400ms cubic-bezier(0.250, 0.250, 0.750, 0.750) all;
+    -ms-transition: 400ms cubic-bezier(0.250, 0.250, 0.750, 0.750) all;
+    -o-transition: 400ms cubic-bezier(0.250, 0.250, 0.750, 0.750) all;
+    transition: 400ms cubic-bezier(0.250, 0.250, 0.750, 0.750) all;
+    position: relative;
+    display: block;
+} 
+ 
+.animated.ng-leave.ng-leave-active,
+.animated.ng-enter {
+    -webkit-transform: translateX(10%);
+    -moz-transform: translateX(10%);
+    -ms-transform: translateX(10%);
+    -o-transform: translateX(10%);
+    transform: translateX(10%);
+    opacity: 0;
+}
+ 
+.animated.ng-enter.ng-enter-active,
+.animated.ng-leave {
+    -webkit-transform: translateX(0%);
+    -moz-transform: translateX(0%);
+    -ms-transform: translateX(0%);
+    -o-transform: translateX(0%);
+    transform: translateX(0%);
+    opacity: 1;
 }
