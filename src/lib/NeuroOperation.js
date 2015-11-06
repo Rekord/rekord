@@ -1,7 +1,8 @@
 
-function NeuroOperation(interrupts)
+function NeuroOperation(interrupts, type)
 {
   this.interrupts = interrupts;
+  this.type = type;
 }
 
 NeuroOperation.prototype = 

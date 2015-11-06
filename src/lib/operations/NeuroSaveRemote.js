@@ -3,14 +3,14 @@ function NeuroSaveRemote(model)
   this.reset( model );
 }
 
-NeuroSaveRemote.prototype = new NeuroOperation( false );
+NeuroSaveRemote.prototype = new NeuroOperation( false, 'NeuroSaveRemote' );
 
 NeuroSaveRemote.prototype.run = function(db, model)
 {
   // If the model is deleted, return immediately!
   if ( model.$deleted )
   {
-    Neuro.debug( Neuro.Events.SAVE_REMOTE_DELETED, model );
+    Neuro.debug( Neuro.Events.SAVE_REMOTE_DELETED, this, model );
 
     return this.finish();
   }
@@ -19,7 +19,7 @@ NeuroSaveRemote.prototype.run = function(db, model)
   var key = this.key = model.$key();
 
   // The fields that have changed since last save
-  var saving = this.saving = model.$getChanges();
+  var saving = this.saving = model.$getChanges( true );
 
   // If there's nothing to save, don't bother!
   if ( isEmpty( saving ) )
@@ -41,33 +41,34 @@ NeuroSaveRemote.prototype.onSuccess = function(data)
 {
   var model = this.model;
 
-  Neuro.debug( Neuro.Events.SAVE_REMOTE, model );
+  Neuro.debug( Neuro.Events.SAVE_REMOTE, this, model );
 
   this.handleData( data );
 };
 
 NeuroSaveRemote.prototype.onFailure = function(data, status)
 {
+  var operation = this;
   var db = this.db;
   var model = this.model;
 
   // A non-zero status means a real problem occurred
   if ( status === 409 ) // 409 Conflict
   {
-    Neuro.debug( Neuro.Events.SAVE_CONFLICT, data, model );
+    Neuro.debug( Neuro.Events.SAVE_CONFLICT, this, data, model );
 
     // Update the model with the data saved and returned
     this.handleData( data, model, this.db );
   }
   else if ( status === 410 || status === 404 ) // 410 Gone, 404 Not Found
   {
-    Neuro.debug( Neuro.Events.SAVE_UPDATE_FAIL, model );
+    Neuro.debug( Neuro.Events.SAVE_UPDATE_FAIL, this, model );
 
     this.insertNext( NeuroRemoveNow );
   }
   else if ( status !== 0 ) 
   {          
-    Neuro.debug( Neuro.Events.SAVE_ERROR, model, status );
+    Neuro.debug( Neuro.Events.SAVE_ERROR, this, model, status );
   } 
   else 
   {
@@ -86,12 +87,12 @@ NeuroSaveRemote.prototype.onFailure = function(data, status)
           model.$pendingSave = false;
           model.$addOperation( NeuroSaveRemote );
 
-          Neuro.debug( Neuro.Events.SAVE_RESUME, model );
+          Neuro.debug( Neuro.Events.SAVE_RESUME, operation, model );
         }
       });
     }
 
-    Neuro.debug( Neuro.Events.SAVE_OFFLINE, model );
+    Neuro.debug( Neuro.Events.SAVE_OFFLINE, this, model );
   }
 };
 
@@ -104,7 +105,7 @@ NeuroSaveRemote.prototype.handleData = function(data)
   // Check deleted one more time before updating model.
   if ( model.$deleted )
   {
-    Neuro.debug( Neuro.Events.SAVE_REMOTE_DELETED, model, data );
+    Neuro.debug( Neuro.Events.SAVE_REMOTE_DELETED, this, model, data );
 
     return;
   }
@@ -118,7 +119,7 @@ NeuroSaveRemote.prototype.handleData = function(data)
     }
   }
 
-  Neuro.debug( Neuro.Events.SAVE_VALUES, saving, model );
+  Neuro.debug( Neuro.Events.SAVE_VALUES, this, saving, model );
 
   // If the model hasn't been saved before - create the record where the 
   // local and model point to the same object.
@@ -138,7 +139,7 @@ NeuroSaveRemote.prototype.handleData = function(data)
   db.putRemoteData( saving, this.key, model );
 
   // Publish saved data to everyone else
-  Neuro.debug( Neuro.Events.SAVE_PUBLISH, saving, model );
+  Neuro.debug( Neuro.Events.SAVE_PUBLISH, this, saving, model );
 
   db.live({
     op: 'SAVE',

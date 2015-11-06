@@ -9,7 +9,7 @@
  *     target.on( events, callback, [context] )
  *     target.once( events, callback, [context] )
  *     target.off( events, callback )
- *     target.trigger( event, [argument] )
+ *     target.trigger( events, [a, b, c...] )
  *
  * Where... 
  * - `events` is a string of space delimited events.
@@ -23,7 +23,7 @@
  * @param {Object} target The object to add `on`, `once`, `off`, and `trigger` 
  *    functions to.
  */
-function eventize(target)
+function eventize(target, secret)
 {
   /**
    * **See:** {{#crossLink "Core/eventize:method"}}{{/crossLink}}
@@ -32,8 +32,13 @@ function eventize(target)
    */
 
   // Adds a listener to $this
-  var onListeners = function($this, property, events, callback, context)
+  function onListeners($this, property, events, callback, context)
   {
+    if ( !isFunction( callback ) )
+    {
+      return;
+    }
+
     var events = toArray( events, ' ' );
     
     if ( !isDefined( $this[ property ] ) )
@@ -63,12 +68,12 @@ function eventize(target)
    * @param {Object} [context]
    * @chainable
    */
-  target.on = function(events, callback, context)
+  function on(events, callback, context)
   {
-    onListeners( this, '$on', events, callback, context );
+    onListeners( this, '$$on', events, callback, context );
 
     return this;
-  };
+  }
   
   /**
    * Listens for the next occurrence for each of the given events and invokes
@@ -81,15 +86,15 @@ function eventize(target)
    * @param {Object} [context]
    * @chainable
    */
-  target.once = function(events, callback, context)
+  function once(events, callback, context)
   {
-    onListeners( this, '$once', events, callback, context );
+    onListeners( this, '$$once', events, callback, context );
 
     return this;
-  };
+  }
   
   // Removes a listener from an array of listeners.
-  var offListeners = function(listeners, event, callback)
+  function offListeners(listeners, event, callback)
   {
     if (listeners && event in listeners)
     {
@@ -103,16 +108,16 @@ function eventize(target)
         }
       }  
     }
-  };
+  }
 
   // Deletes a property from the given object if it exists
-  var deleteProperty = function(obj, prop)
+  function deleteProperty(obj, prop)
   {
     if ( obj && prop in obj )
     {
       delete obj[ prop ];
     }
-  };
+  }
   
   /**
    * Stops listening for a given callback for a given set of events.
@@ -130,13 +135,13 @@ function eventize(target)
    * @param {Function} [callback]
    * @chainable
    */
-  target.off = function(events, callback)
+  function off(events, callback)
   {
     // Remove ALL listeners
     if ( !isDefined( events ) )
     {
-      deleteProperty( this, '$on' );
-      deleteProperty( this, '$once' );
+      deleteProperty( this, '$$on' );
+      deleteProperty( this, '$$once' );
     }
     else
     {
@@ -147,8 +152,8 @@ function eventize(target)
       {
         for (var i = 0; i < events.length; i++)
         {
-          deleteProperty( this.$on, events[i] );
-          deleteProperty( this.$once, events[i] );
+          deleteProperty( this.$$on, events[i] );
+          deleteProperty( this.$$once, events[i] );
         }
       }
       // Remove specific listener
@@ -156,17 +161,17 @@ function eventize(target)
       {
         for (var i = 0; i < events.length; i++)
         {
-          offListeners( this.$on, events[i], callback );
-          offListeners( this.$once, events[i], callback );
+          offListeners( this.$$on, events[i], callback );
+          offListeners( this.$$once, events[i], callback );
         }
       }
     }
 
     return this;
-  };
-  
+  }
+
   // Triggers listeneers for the given event
-  var triggerListeners = function(listeners, event, args, clear)
+  function triggerListeners(listeners, event, args, clear)
   {
     if (listeners && event in listeners)
     {
@@ -176,8 +181,11 @@ function eventize(target)
       for (var i = 0; i < max; i++)
       {
         var callback = eventListeners[ i ];
-        
-        callback[0].apply( callback[1], args );
+
+        if ( callback )
+        {
+          callback[0].apply( callback[1], args );  
+        }
       }
       
       if ( clear )
@@ -192,7 +200,7 @@ function eventize(target)
         }
       }
     }
-  };
+  }
   
   /**
    * Triggers a single event optionally passing an argument to any listeners.
@@ -203,7 +211,7 @@ function eventize(target)
    * @param {Array} args
    * @chainable
    */
-  target.trigger = function(events, args)
+  function trigger(events, args)
   {
     var events = toArray( events, ' ' );
 
@@ -211,10 +219,25 @@ function eventize(target)
     {
       var e = events[ i ];
 
-      triggerListeners( this.$on, e, args, false );
-      triggerListeners( this.$once, e, args, true );
+      triggerListeners( this.$$on, e, args, false );
+      triggerListeners( this.$$once, e, args, true );
     }
 
     return this;
-  };
+  }
+
+  if ( secret )
+  {
+    target.$on = on;
+    target.$once = once;
+    target.$off = off;
+    target.$trigger = trigger;
+  }
+  else
+  {
+    target.on = on;
+    target.once = once;
+    target.off = off;
+    target.trigger = trigger;
+  }
 };

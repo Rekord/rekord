@@ -9,18 +9,53 @@ function NeuroDatabase(options)
   this.initialized = false;
   this.pendingRefresh = false;
 
+  this.localLoaded = false;
+  this.remoteLoaded = false;
+
   this.rest = Neuro.rest( this );
   this.store = Neuro.store( this );
   this.live = Neuro.live( this, this.handlePublish( this ) );
 
-  this.relations = {};
-
   this.setComparator( this.comparator );
   this.setRevision( this.revision );
+
+  this.relations = {};
+
+  for (var relationType in options)
+  {
+    if ( !(relationType in Neuro.RELATIONS) )
+    {
+      continue;
+    }
+    var RelationClass = Neuro.RELATIONS[ relationType ];
+
+    if ( !(RelationClass.prototype instanceof NeuroRelation ) )
+    {
+      continue;
+    }
+
+    var relationMap = options[ relationType ];
+
+    for ( var name in relationMap )
+    {
+      var relationOptions = relationMap[ name ];
+      var relation = new RelationClass();
+
+      relation.init( this, name, relationOptions );
+
+      this.relations[ name ] = relation;
+    }
+  }
 }
 
 NeuroDatabase.prototype =
 {
+
+  //
+  toString: function(model) 
+  {
+    return '';
+  },
 
   // Notifies a callback when the database has loaded (either locally or remotely).
   ready: function(callback, context, persistent)
@@ -36,15 +71,23 @@ NeuroDatabase.prototype =
     }
     else
     {
+      function onReadyRemove()
+      {
+        db.off( 'local-load remote-load', onReady );
+      }
+
       function onReady()
       {
         if ( !persistent )
         {
-          db.off( 'local-load remote-load', onReady );
+          onReadyRemove();
         }
         if ( !invoked || persistent )
         {
-          callback.call( callbackContext, db );
+          if ( callback.call( callbackContext, db ) === false )
+          {
+            onReadyRemove();
+          }
           invoked = true;
         }
       }
@@ -53,6 +96,89 @@ NeuroDatabase.prototype =
     }
 
     return invoked;
+  },
+
+  // Grab a model with the given input and notify the callback
+  grabModel: function(input, callback, context)
+  {
+    var db = this;
+    var callbackContext = context || db;
+
+    function checkModel()
+    {
+      var result = db.parseModel( input, true );
+
+      if ( result !== false )
+      {
+        callback.call( callbackContext, result );
+      }
+
+      return result;
+    }
+
+    if ( checkModel() )
+    {
+      db.ready( checkModel, db, true );
+    }
+  },
+
+  // Parses the model from the given input
+  // 
+  // Returns false if the input doesn't resolve to a model at the moment
+  // Returns null if the input doesn't resolve to a model and all models have been remotely loaded
+  // 
+  // parseModel( Neuro )
+  // parseModel( Neuro.Model )
+  // parseModel( 'uuid' )
+  // parseModel( ['uuid'] )
+  // parseModel( modelInstance )
+  // parseModel( {name:'new model'} )
+  // parseModel( {id:4, name:'new or existing model'} )
+  // 
+  parseModel: function(input, fromStorage)
+  {
+    var db = this;
+
+    if ( !isValue( input ) )
+    {
+      return db.remoteLoaded ? null : false;
+    }
+
+    if ( isNeuro( input ) )
+    {
+      input = new input.Model();
+    }
+    else if ( isModelConstructor( input ) )
+    {
+      input = new input();
+    }
+
+    var key = db.buildKeyFromInput( input );
+
+    if ( input instanceof db.model )
+    {
+      if ( !db.models.has( key ) )
+      {
+        // trigger? save?
+        db.models.put( key, input );
+      }
+
+      return input;
+    }
+    else if ( db.models.has( key ) )
+    {
+      return db.models.get( key );
+    }
+    else if ( isObject( input ) )
+    {
+      return db.putRemoteData( input, undefined, undefined, fromStorage );
+    }
+    else if ( db.remoteLoaded )
+    {
+      return null;
+    }
+
+    return false;
   },
 
   // Removes the key from the given model
@@ -73,39 +199,115 @@ NeuroDatabase.prototype =
     }
   },
 
-  // Gets the key from the given model
-  getKey: function(model)
+  // Builds a key string from the given model and array of fields
+  buildKey: function(model, fields)
   {
-    var k = this.key;
+    var key = this.buildKeys( model, fields );
+
+    if ( isArray( key ) )
+    {
+      key = key.join( this.keySeparator || '/' );
+    }
+    
+    return key;
+  },
+
+  // Builds a key (possibly array) from the given model and array of fields
+  buildKeys: function(model, fields)
+  {
     var key = null;
 
-    if ( isArray(k) )
-    {
-      var ks = this.keySeparator || '/';
+    if ( isArray( fields ) )
+    {      
+      key = [];
       
-      key = '';
-      
-      for (var i = 0; i < k.length; i++) 
+      for (var i = 0; i < fields.length; i++) 
       {
-        if (i > 0) 
-        {
-          key += ks;
-        }
-
-        key += model[ k[i] ];
+        key.push( model[ fields[i] ] );
       }
     }
     else
     {
-      key = model[ k ];
+      key = model[ fields ];
 
       if (!key)
       {
-        model[ k ] = key = uuid();
+        key = model[ fields ] = uuid();
       }
     }
 
     return key;
+  },
+
+  // Builds a key from various types of input.
+  buildKeyFromInput: function(input)
+  {
+    if ( input instanceof this.model )
+    {
+      return input.$key();
+    }
+    else if ( isArray( input ) ) // && isArray( this.key )
+    {
+      return this.buildKeyFromArray( input );
+    }
+    else if ( isObject( input ) )
+    {
+      return this.buildKey( input, this.key );
+    }
+
+    return input;
+  },
+
+  // Builds a key from an array
+  buildKeyFromArray: function(arr)
+  {
+    var ks = this.keySeparator || '/';
+    var key = '';
+
+    for (var i = 0; i < arr.length; i++)
+    {
+      if (i > 0)
+      {
+        key += ks;
+      }
+
+      key += arr[ i ];
+    }
+
+    return key;
+  },
+
+  // Gets the key from the given model
+  getKey: function(model)
+  {
+    return this.buildKey( model, this.key );
+  },
+
+  // Gets the key from the given model
+  getKeys: function(model)
+  {
+    return this.buildKeys( model, this.key );
+  },
+
+  // Determines whether the given model has the given fields
+  hasFields: function(model, fields, exists)
+  {
+    if ( isArray( fields ) )
+    {
+      for (var i = 0; i < fields.length; i++) 
+      {
+        if ( !exists( model[ fields[ i ] ] ) )
+        {
+          return false;
+        }
+      }
+
+      return true;
+    }
+    else // isString( fields )
+    {
+      return exists( model[ fields ] );
+    }
   },
 
   // Sorts the models & notifies listeners that the database has been updated.
@@ -131,7 +333,7 @@ NeuroDatabase.prototype =
         return (revision in a && revision in b) ? (a[ revision ] - b[ revision ]) : false;
       };
     }
-    else 
+    else
     {
       this.revisionFunction = function(a, b)
       {
@@ -144,33 +346,7 @@ NeuroDatabase.prototype =
   // with a minus in the front to sort in reverse, or a comparator function.
   setComparator: function(comparator)
   {
-    if ( isFunction( comparator ) )
-    {
-      this.comparatorFunction = comparator;
-    }
-    else if ( isString( comparator ) )
-    {
-      if ( comparator.charAt(0) === '-' )
-      {
-        comparator = comparator.substring( 1 );
-
-        this.comparatorFunction = function(a, b)
-        {
-          return compare( b[ comparator ], a[ comparator ] );
-        };
-      }
-      else
-      {
-        this.comparatorFunction = function(a, b)
-        {
-          return compare( a[ comparator ], b[ comparator ] );
-        };
-      }
-    }
-    else
-    {
-      this.comparatorFunction = null;
-    }
+    this.comparatorFunction = createComparator( comparator );
   },
 
   // Sorts the database if it isn't sorted.
@@ -185,29 +361,12 @@ NeuroDatabase.prototype =
   // Determines whether this database is sorted.
   isSorted: function()
   {
-    var comparator = this.comparatorFunction;
-
-    if ( !comparator )
-    {
-      return true;
-    }
-
-    var models = this.models.values;
-
-    for (var i = 0, n = models.length - 1; i < n; i++)
-    {
-      if ( comparator( models[ i ], models[ i + 1 ] ) > 0 )
-      {
-        return false;
-      }
-    }
-
-    return true;
+    return this.models.isSorted( this.comparatorFunction );
   },
 
   // Handles when we receive data from the server - either from
   // a publish, refresh, or values being returned on a save.
-  putRemoteData: function(encoded, key, model)
+  putRemoteData: function(encoded, key, model, fromStorage)
   {
     var db = this;
     var key = key || db.getKey( encoded );
@@ -220,7 +379,7 @@ NeuroDatabase.prototype =
 
       if ( revisionCompare !== false && revisionCompare > 0 )
       {
-        Neuro.debug( Neuro.Events.SAVE_OLD_REVISION, model, encoded );
+        Neuro.debug( Neuro.Events.SAVE_OLD_REVISION, db, model, encoded );
 
         return;
       }
@@ -228,13 +387,18 @@ NeuroDatabase.prototype =
 
     if ( model && model.$saved )
     {
-      var current = model.$toJSON();
+      var current = model.$toJSON( true );
       var conflicts = {};
       var conflicted = false;
       var updated = {};
 
       for (var prop in encoded)
       {
+        if ( prop.charAt(0) === '$' )
+        {
+          continue;
+        }
+
         var currentValue = current[ prop ];
         var savedValue = model.$saved[ prop ];
 
@@ -259,14 +423,14 @@ NeuroDatabase.prototype =
 
       if ( conflicted )
       {
-        model.trigger( 'partial-update', [encoded, conflicts] );
+        model.$trigger( 'partial-update', [encoded, conflicts] );
       }
       else
       {
-        model.trigger( 'full-update', [encoded, updated] );
+        model.$trigger( 'full-update', [encoded, updated] );
       }
 
-      model.trigger( 'remote-update', [encoded] );
+      model.$trigger( 'remote-update', [encoded] );
 
       if ( db.cache !== false )
       {
@@ -275,7 +439,7 @@ NeuroDatabase.prototype =
     }
     else
     {
-      model = db.instantiate( decoded );
+      model = db.instantiate( decoded, fromStorage );
 
       if ( db.cache !== false )
       {
@@ -286,7 +450,7 @@ NeuroDatabase.prototype =
       }
       else
       {
-        model.$saved = encoded;
+        model.$saved = clean( encoded );
       }
     }
 
@@ -295,13 +459,16 @@ NeuroDatabase.prototype =
       db.models.put( key, model );
       db.trigger( 'model-added', [model] );
 
-      model.trigger( 'saved' );
+      if ( !fromStorage )
+      {
+        model.$trigger( 'saved' ); 
+      }
     }
 
     return model;
   },
 
-  destroyLocalUncachedModel: function(model)
+  destroyLocalUncachedModel: function(model, key)
   {
     var db = this;
 
@@ -313,19 +480,19 @@ NeuroDatabase.prototype =
 
         db.removeKey( model );
 
-        model.trigger( 'detach' );
+        model.$trigger( 'detach' );
 
         return false;
       }
 
-      model.trigger( 'remote-remove' );
+      model.$trigger( 'remote-remove' );
 
       db.models.remove( key );
       db.trigger( 'model-removed', [model] );
 
-      model.trigger('removed');
+      model.$trigger('removed');
 
-      Neuro.debug( Neuro.Events.REMOTE_REMOVE, model );
+      Neuro.debug( Neuro.Events.REMOTE_REMOVE, db, model );
 
       return true;
     }
@@ -335,6 +502,8 @@ NeuroDatabase.prototype =
 
   destroyLocalCachedModel: function(model, key)
   {
+    var db = this;
+
     if ( model )
     {
       // If a model was removed remotely but the model has changes - don't remove it.
@@ -347,23 +516,23 @@ NeuroDatabase.prototype =
         db.removeKey( model );
         db.removeKey( model.$local );
 
-        model.trigger( 'detach' );
+        model.$trigger( 'detach' );
 
         model.$addOperation( NeuroSaveNow );
      
         return false;
       }
 
-      model.trigger( 'remote-remove' );
+      model.$trigger( 'remote-remove' );
 
       model.$addOperation( NeuroRemoveNow );
 
       db.models.remove( key );
       db.trigger( 'model-removed', [model] );
 
-      model.trigger('removed');
+      model.$trigger('removed');
 
-      Neuro.debug( Neuro.Events.REMOTE_REMOVE, model );
+      Neuro.debug( Neuro.Events.REMOTE_REMOVE, db, model );
     }
     else
     {
@@ -371,7 +540,7 @@ NeuroDatabase.prototype =
       {
         if (removedValue) 
         {
-          Neuro.debug( Neuro.Events.REMOTE_REMOVE, removedValue );
+          Neuro.debug( Neuro.Events.REMOTE_REMOVE, db, removedValue );
         }
       });
 
@@ -390,7 +559,7 @@ NeuroDatabase.prototype =
 
     if ( db.cache === false )
     {
-      return db.destroyLocalUncachedModel( model );
+      return db.destroyLocalUncachedModel( model, key );
     }
     else
     {
@@ -416,7 +585,7 @@ NeuroDatabase.prototype =
 
     db.store.all(function(records, keys)
     {
-      Neuro.debug( Neuro.Events.LOCAL_LOAD, records );
+      Neuro.debug( Neuro.Events.LOCAL_LOAD, db, records );
 
       db.models.reset();
 
@@ -425,13 +594,13 @@ NeuroDatabase.prototype =
         var encoded = records[ i ];
         var key = keys[ i ];
         var decoded = db.decode( copy( encoded, true ) );
-        var model = db.instantiate( decoded );
+        var model = db.instantiate( decoded, true );
 
         model.$local = encoded;
 
         if ( encoded.$deleted )
         {
-          Neuro.debug( Neuro.Events.LOCAL_RESUME_DELETE, model );
+          Neuro.debug( Neuro.Events.LOCAL_RESUME_DELETE, db, model );
 
           model.$addOperation( NeuroRemoveRemote );
         }
@@ -439,22 +608,31 @@ NeuroDatabase.prototype =
         {
           if ( !encoded.$saved )
           {
-            Neuro.debug( Neuro.Events.LOCAL_RESUME_SAVE, model );
+            Neuro.debug( Neuro.Events.LOCAL_RESUME_SAVE, db, model );
 
             model.$addOperation( NeuroSaveRemote );
           }
           else
           {
-            Neuro.debug( Neuro.Events.LOCAL_LOAD_SAVED, model );
+            Neuro.debug( Neuro.Events.LOCAL_LOAD_SAVED, db, model );
 
             model.$local.$saved = model.$saved;
           }
 
-          db.models.put( key, model );
+          // TODO investigate why sometimes the key is removed from the model then saved
+          if ( key === model.$key() )
+          {
+            db.models.put( key, model );            
+          }
+          else
+          {
+            db.store.remove( key );
+          }
         }
       }
       
       db.initialized = true;
+      db.localLoaded = true;
 
       db.trigger( 'local-load', [db] );
 
@@ -502,7 +680,7 @@ NeuroDatabase.prototype =
 
           if ( old.$saved )
           {
-            Neuro.debug( Neuro.Events.REMOTE_LOAD_REMOVE, k );
+            Neuro.debug( Neuro.Events.REMOTE_LOAD_REMOVE, db, k );
 
             db.destroyLocalModel( k );
           }
@@ -510,12 +688,13 @@ NeuroDatabase.prototype =
       }
 
       db.initialized = true;
+      db.remoteLoaded = true;
 
       db.trigger( 'remote-load', [db] );
 
       db.updated();
 
-      Neuro.debug( Neuro.Events.REMOTE_LOAD, models );
+      Neuro.debug( Neuro.Events.REMOTE_LOAD, db, models );
     }
 
     function onLoadError(models, status) 
@@ -530,7 +709,7 @@ NeuroDatabase.prototype =
 
           Neuro.once('online', function()
           {
-            Neuro.debug( Neuro.Events.REMOTE_LOAD_RESUME );
+            Neuro.debug( Neuro.Events.REMOTE_LOAD_RESUME, db );
 
             if ( db.pendingRefresh )
             {
@@ -541,11 +720,11 @@ NeuroDatabase.prototype =
           })
         }
 
-        Neuro.debug( Neuro.Events.REMOTE_LOAD_OFFLINE );
+        Neuro.debug( Neuro.Events.REMOTE_LOAD_OFFLINE, db );
       }
       else
       {
-        Neuro.debug( Neuro.Events.REMOTE_LOAD_ERROR, status );
+        Neuro.debug( Neuro.Events.REMOTE_LOAD_ERROR, db, status );
       }
     }
   
@@ -562,20 +741,7 @@ NeuroDatabase.prototype =
   {
     if ( isArray( key ) )
     {
-      var ks = this.keySeparator || '/';
-      var keyString = '';
-
-      for (var i = 0; i < key.length; i++)
-      {
-        if (i > 0)
-        {
-          keyString += ks;
-        }
-
-        keyString += key[ i ];
-      }
-
-      key = keyString;
+      key = this.buildKeyFromArray( key );
     }
 
     return this.models.get( key );
@@ -596,7 +762,7 @@ NeuroDatabase.prototype =
         db.putRemoteData( encoded, key );
         db.updated();
 
-        Neuro.debug( Neuro.Events.REALTIME_SAVE, message.model );
+        Neuro.debug( Neuro.Events.REALTIME_SAVE, db, message.model, key );
         break;
 
       case 'REMOVE':
@@ -606,16 +772,16 @@ NeuroDatabase.prototype =
           db.updated(); 
         }
 
-        Neuro.debug( Neuro.Events.REALTIME_REMOVE, key );
+        Neuro.debug( Neuro.Events.REALTIME_REMOVE, db, key );
         break;
       }
     };
   },
 
   // Return an instance of the model with the data as initial values
-  instantiate: function(data)
+  instantiate: function(data, fromStorage)
   {
-    return new this.model( data );
+    return new this.model( data, fromStorage );
   },
 
   // Converts properties in data into their storable form
@@ -639,7 +805,7 @@ NeuroDatabase.prototype =
     // If the model is deleted, return immediately!
     if ( model.$deleted )
     {
-      Neuro.debug( Neuro.Events.SAVE_DELETED, model );
+      Neuro.debug( Neuro.Events.SAVE_DELETED, db, model );
 
       return;
     }
@@ -651,11 +817,13 @@ NeuroDatabase.prototype =
       db.trigger( 'model-added', [model] );
       db.updated();
 
-      model.trigger('saved');
+      model.$trigger('created saved');
     }
     else
     {
       db.trigger( 'model-updated', [model] );
+
+      model.$trigger('updated saved');
     }
 
     if ( db.cache === false )
@@ -683,7 +851,7 @@ NeuroDatabase.prototype =
       db.trigger( 'model-removed', [model] );
       db.updated();
 
-      model.trigger('removed');
+      model.$trigger('removed');
     }
 
     // Mark as deleted right away
@@ -693,7 +861,7 @@ NeuroDatabase.prototype =
     // TODO Add Debug here?
     if ( model.$pendingSave )
     {
-      Neuro.debug( Neuro.Events.REMOVE_CANCEL_SAVE, model );
+      Neuro.debug( Neuro.Events.REMOVE_CANCEL_SAVE, db, model );
 
       model.$pendingSave = false; 
     }

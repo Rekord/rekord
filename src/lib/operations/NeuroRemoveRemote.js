@@ -3,7 +3,7 @@ function NeuroRemoveRemote(model)
   this.reset( model );
 }
 
-NeuroRemoveRemote.prototype = new NeuroOperation( true );
+NeuroRemoveRemote.prototype = new NeuroOperation( true, 'NeuroRemoveRemote' );
 
 NeuroRemoveRemote.prototype.run = function(db, model)
 {
@@ -30,18 +30,19 @@ NeuroRemoveRemote.prototype.onSuccess = function(data)
 
 NeuroRemoveRemote.prototype.onFailure = function(data, status)
 {
+  var operation = this;
   var key = this.key;
   var model = this.model;
 
   if ( status === 404 || status === 410 )
   {
-    Neuro.debug( Neuro.Events.REMOVE_MISSING, key, model );
+    Neuro.debug( Neuro.Events.REMOVE_MISSING, this, key, model );
 
     this.finishRemove();
   }
   else if ( status !== 0 ) 
   {
-    Neuro.debug( Neuro.Events.REMOVE_ERROR, status, key, model );
+    Neuro.debug( Neuro.Events.REMOVE_ERROR, this, status, key, model );
   } 
   else 
   {
@@ -53,13 +54,13 @@ NeuroRemoveRemote.prototype.onFailure = function(data, status)
     {
       Neuro.once('online', function() 
       {
-        Neuro.debug( Neuro.Events.REMOVE_RESUME, model );
+        Neuro.debug( Neuro.Events.REMOVE_RESUME, operation, model );
 
         model.$addOperation( NeuroRemoveRemote );
       });
     }
 
-    Neuro.debug( Neuro.Events.REMOVE_OFFLINE, model );
+    Neuro.debug( Neuro.Events.REMOVE_OFFLINE, this, model );
   }
 };
 
@@ -69,13 +70,13 @@ NeuroRemoveRemote.prototype.finishRemove = function()
   var key = this.key;
   var model = this.model;
 
-  Neuro.debug( Neuro.Events.REMOVE_REMOTE, key, model );
+  Neuro.debug( Neuro.Events.REMOVE_REMOTE, this, key, model );
 
   // Remove from local storage now
   this.insertNext( NeuroRemoveNow );
 
   // Publish REMOVE
-  Neuro.debug( Neuro.Events.REMOVE_PUBLISH, key, model );
+  Neuro.debug( Neuro.Events.REMOVE_PUBLISH, this, key, model );
 
   db.live({
     op: 'REMOVE',

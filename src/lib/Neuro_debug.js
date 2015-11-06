@@ -1,12 +1,12 @@
 
-Neuro.debug = function(event, data)
+Neuro.debug = function(event, source)  /*, data.. */
 {
   // up to the user
 };
 
 Neuro.Events = {
 
-  CREATION: 0,                // options, NeuroDatabase
+  CREATION: 0,                // options
 
   REST: 1,                    // options
 
@@ -24,7 +24,7 @@ Neuro.Events = {
   LOCAL_RESUME_SAVE: 11,      // NeuroModel
   LOCAL_LOAD_SAVED: 12,       // NeuroModel
 
-  REALTIME_SAVE: 13,          // encoded
+  REALTIME_SAVE: 13,          // encoded, key
   REALTIME_REMOVE: 14,        // key
 
   SAVE_VALUES: 15,            // encoded, NeuroModel
@@ -67,6 +67,32 @@ Neuro.Events = {
   ONLINE: 35,                 //
   OFFLINE: 36,                //
 
-  PUBSUB_CREATED: 37          // PubSub
+  PUBSUB_CREATED: 37,         // PubSub
+
+  HASONE_INIT: 53,            // NeuroHasOne
+  HASONE_NINJA_REMOVE: 49,    // NeuroModel, relation
+  HASONE_NINJA_SAVE: 50,      // NeuroModel, relation
+  HASONE_INITIAL_PULLED: 51,  // NeuroModel, initial
+  HASONE_INITIAL: 52,         // NeuroModel, initial
+  HASONE_CLEAR_MODEL: 54,     // relation
+  HASONE_SET_MODEL: 55,       // relation
+  HASONE_PRESAVE: 56,         // NeuroModel, relation
+  HASONE_POSTREMOVE: 57,      // NeuroModel, relation
+  HASONE_CLEAR_KEY: 58,       // NeuroModel, local
+  HASONE_UPDATE_KEY: 59,      // NeuroModel, local, NeuroModel, foreign
+  HASONE_LOADED: 60,          // NeuroModel, relation, [NeuroModel]
+
+  BELONGSTO_INIT: 61,          // NeuroHasOne
+  BELONGSTO_NINJA_REMOVE: 62,  // NeuroModel, relation
+  BELONGSTO_NINJA_SAVE: 63,    // NeuroModel, relation
+  BELONGSTO_INITIAL_PULLED: 64,// NeuroModel, initial
+  BELONGSTO_INITIAL: 65,       // NeuroModel, initial
+  BELONGSTO_CLEAR_MODEL: 66,   // relation
+  BELONGSTO_SET_MODEL: 67,     // relation
+  BELONGSTO_PRESAVE: 68,       // NeuroModel, relation
+  BELONGSTO_POSTREMOVE: 69,    // NeuroModel, relation
+  BELONGSTO_CLEAR_KEY: 70,     // NeuroModel, local
+  BELONGSTO_UPDATE_KEY: 71,    // NeuroModel, local, NeuroModel, foreign
+  BELONGSTO_LOADED: 71         // NeuroModel, relation, [NeuroModel]
 
 };

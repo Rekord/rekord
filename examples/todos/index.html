@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Neurosync</title>
+    <title>Neurosync Todo Example</title>
   </head>
   <body ng-app="todos">
 
@@ -25,10 +25,11 @@
     <script src="https://cdn.socket.io/socket.io-1.3.7.js"></script>
     <script src="http://rawgit.com/ClickerMonkey/storkjs/master/build/stork.min.js"></script>
     <script src="pubsub/pubsub-client.js"></script>
-    <script src="../../build/neurosync.js"></script>
-    <script src="../../src/plugins/live-pubsub.js"></script>
-    <script src="../../src/plugins/store-stork.js"></script>
-    <script src="../../src/plugins/rest-angular.js"></script>
+
+    <script src="../../build/plugins/neurosync-pubsub.min.js"></script>
+    <script src="../../build/plugins/neurosync-stork.min.js"></script>
+    <script src="../../build/plugins/neurosync-debug.min.js"></script>
+    <script src="../../build/plugins/neurosync-angular.min.js"></script>
 
     <!-- Todo Application -->
     <script>
@@ -44,7 +45,28 @@
 
         .value('RESTBASE', 'http://localhost:8080/api/')
 
-        .factory('Todo', function(Neuro, PUBSUB, RESTBASE)
+        .factory('Accessible', function(Neuro, PUBSUB, RESTBASE)
+        {
+          var Accessible = Neuro({
+            name: 'accessible',
+            className: 'Accessible',
+            api: RESTBASE + 'accessible/',
+            pubsub: PUBSUB,
+            channel: 'accessibles',
+            token: 'root',
+            key: 'id',
+            fields: ['id', 'users'],
+            defaults: {
+              users: []
+            }
+          });
+
+          window.Accessible = Accessible;
+
+          return Accessible;
+        })
+
+        .factory('Todo', function(Neuro, Accessible, PUBSUB, RESTBASE)
         {
           var Todo = Neuro({
             name: 'todos',
@@ -54,16 +76,28 @@
             channel: 'todos',
             token: 'root',
             key: 'id',
-            // cache: false,
-            // revision: 'updated_at',
-            fields: ['id', 'name', 'done', 'created_at', 'updated_at'],
+            fields: ['id', 'name', 'done', 'created_at', 'updated_at', 'accessible_id'],
             defaults: {
               done: false,
               created_at: Date.now,
-              updated_at: Date.now
+              updated_at: Date.now,
+              accessible: Accessible
             },
-            comparator: '-created_at'
+            comparator: '-created_at',
+
+            loadRelations: true,
+            hasOne: {
+              accessible: {
+                model: Accessible,
+                auto: true
+                // local: 'accessible_id'
+                // store: Neuro.STORE_NONE
+                // save: Neuro.SAVE_NONE
+              }
+            }
           });
+
+          window.Todo = Todo;
 
           return Todo;
         })
@@ -113,7 +147,7 @@
           this.todos = Todo.Database.getModels();
 
           this.newTodo = function() {
-            this.todo = new Todo.Model({
+            this.todo = new Todo({
               name: '',
               done: false
             });
@@ -147,7 +181,6 @@
           });
 
           window.TodoController = this;
-          window.Todo = Todo;
         })
 
         .directive('ngEnter', function()

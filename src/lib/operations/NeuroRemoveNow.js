@@ -3,7 +3,7 @@ function NeuroRemoveNow(model)
   this.reset( model );
 }
 
-NeuroRemoveNow.prototype = new NeuroOperation( true );
+NeuroRemoveNow.prototype = new NeuroOperation( true, 'NeuroRemoveNow' );
 
 NeuroRemoveNow.prototype.run = function(db, model)
 {
@@ -13,9 +13,10 @@ NeuroRemoveNow.prototype.run = function(db, model)
   {
     db.models.remove( key );
     db.trigger( 'model-removed', [model] );
+    
     db.updated();
 
-    model.trigger('removed');
+    model.$trigger('removed');
   }
 
   db.store.remove( key, this.success(), this.failure() );

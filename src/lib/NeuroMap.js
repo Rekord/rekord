@@ -198,6 +198,31 @@ NeuroMap.prototype =
   },
 
   /**
+   * 
+   * @param  {[type]}  comparator [description]
+   * @return {Boolean}            [description]
+   */
+  isSorted: function(comparator)
+  {
+    if ( !comparator )
+    {
+      return true;
+    }
+
+    var models = this.values;
+
+    for (var i = 0, n = models.length - 1; i < n; i++)
+    {
+      if ( comparator( models[ i ], models[ i + 1 ] ) > 0 )
+      {
+        return false;
+      }
+    }
+
+    return true;
+  },
+
+  /**
    * Sorts the underlying values & keys given a value compare function.
    * 
    * @param  {function} comparator

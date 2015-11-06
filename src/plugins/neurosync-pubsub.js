@@ -10,6 +10,11 @@ Neuro.live = (function()
 
   function LiveFactory(database, onPublish)
   {
+    if ( !database.pubsub || !database.channel || !database.token )
+    {
+      return function() {};
+    }
+
     var pubsub = get( database.pubsub );
     var channel = pubsub.subscribe( database.channel, database.token );
 

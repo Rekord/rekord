@@ -1,0 +1,67 @@
+
+/* TaskList */
+.task-list {
+  margin-top: 15px;
+  margin-bottom: -5px;
+  padding: 5px 20px;
+}
+.task-list-name {
+  font-weight: bold;
+  font-size: 18px;
+}
+.task-list-actions {
+  float: right;
+  margin-top: -2px;
+}
+.task-list-actions a {
+  margin-left: 10px;
+  color: #666;
+  font-size: 14px;
+  text-decoration: none;
+  display: none;
+}
+.task-list-actions a:hover {
+  text-decoration: underline;
+}
+.task-list:hover {
+  background-color: #eee;
+}
+.task-list:hover .task-list-actions a {
+  display: inline-block;
+}
+
+/* Tasks */
+.tasks .collection .collection-item {
+  padding: 5px 10px;
+}
+.tasks .collection .collection-item:hover {
+  background-color: #eee;
+}
+.tasks .collection .collection-item:hover .hide-on-hover {
+  display: none;
+}
+.tasks .collection .collection-item:hover .task-actions a {
+  display: inline-block;
+}
+
+/* Task */
+.task {
+  padding: 3px;
+}
+.task-name.finished {
+  text-decoration: line-through;
+}
+.task-actions {
+  float: right;
+  margin-top: 4px;
+}
+.task-actions a {
+  padding-left: 10px;
+  color: #666;
+  font-size: 14px;
+  text-decoration: none;
+  display: none;
+}
+.task-actions a:hover {
+  text-decoration: underline;
+}

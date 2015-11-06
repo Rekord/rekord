@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Neurosync Tasks Example</title>
+
+    <link rel="stylesheet" href="tasks.css">
+
+  </head>
+  <body ng-app="tasks">
+
+    <div class="container">
+
+      <div ng-controller="TaskController as ctrl">
+
+        <!-- Online status -->
+        <div style="float:right">{{ ctrl.status }}</div>
+
+        <!-- New Task List -->
+        <div class="row">
+          <div class="input-field col s12">
+            <input type="text" ng-model="ctrl.taskList.name" ng-enter="ctrl.addTaskList()" id="taskListName">
+            <label for="taskListName">New Task List</label>
+          </div>
+        </div>
+
+        <!-- Task Lists -->
+        <task-list ng-repeat="t in ctrl.taskLists track by t.id" model="t"></task-list>
+
+      </div>
+
+    </div>
+
+    <!-- Materialize -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.1/css/materialize.min.css">
+    <script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.1/js/materialize.min.js"></script>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.5.0-beta.1/angular.js"></script>
+    <script src="https://cdn.socket.io/socket.io-1.3.7.js"></script>
+    <script src="http://rawgit.com/ClickerMonkey/storkjs/master/build/stork.min.js"></script>
+    <script src="pubsub/pubsub-client.js"></script>
+
+    <script src="../../build/neurosync.js"></script>
+    <script src="../../build/plugins/neurosync-pubsub.min.js"></script>
+    <script src="../../build/plugins/neurosync-stork.min.js"></script>
+    <script src="../../build/plugins/neurosync-debug.min.js"></script>
+    <script src="../../build/plugins/neurosync-angular.min.js"></script>
+
+    <!-- Todo Application -->
+    <script>
+
+      // Skip the first N times a function is called
+      Function.prototype.skip = function(times) {
+        var func = this;
+        var skips = parseInt(times) || 1;
+        return function() {
+          if (skips === 0) {
+            func.apply( this, arguments );
+          } else {
+            skips--; 
+          }
+        };
+      };
+
+      angular.module('tasks', ['neurosync'])
+
+        .config(function($logProvider, NeuroSettings)
+        {
+          $logProvider.debugEnabled( true );
+
+          NeuroSettings.debug = true;
+          Neuro.debugTrace = true;
+        })
+
+        .value('PUBSUB', 'http://localhost:3000')
+
+        .value('RESTBASE', 'http://localhost:8080/api/')
+
+        .factory('Task', function(Neuro, PUBSUB, RESTBASE)
+        {
+          var Task = Neuro({
+            name: 'task',
+            className: 'Task',
+            // cache: false,               // Don't store locally, tasks are stored directly on TaskLists
+            // loadRemote: false,          // We also don't need to load them remotely, we have them on the TaskLists
+            api: RESTBASE + 'task/',
+            pubsub: PUBSUB,
+            channel: 'tasks',
+            token: 'root',
+            key: 'id',
+            fields: ['id', 'task_list_id', 'name', 'finished_at', 'updated_at', 'created_at'],
+            defaults: {
+              updated_at: Date.now,
+              created_at: Date.now,
+              finished_at: null
+            },
+            belongsTo: {
+              taskList: {
+                model: 'TaskList'
+              }
+            },
+            toString: function(task) {
+              return task.name;
+            }
+          });
+
+          window.Task = Task;
+
+          return Task;
+        })
+
+        .factory('TaskList', function(Neuro, PUBSUB, RESTBASE)
+        {
+          var TaskList = Neuro({
+            name: 'task_list',
+            className: 'TaskList',
+            api: RESTBASE + 'task_list/',
+            pubsub: PUBSUB,
+            channel: 'task_lists',
+            token: 'root',
+            key: 'id',
+            fields: ['id', 'name', 'updated_at', 'created_at'/*, 'tasks'*/],
+            comparator: '-created_at',
+            defaults: {
+              updated_at: Date.now,
+              created_at: Date.now
+            },
+            loadRelations: true,
+            hasMany: {
+              tasks: {
+                model: 'Task',
+                property: true,
+                // save: Neuro.SAVE_MODEL,
+                // store: Neuro.STORE_MODEL,
+                cascadeRemove: true,
+                comparator: function(a, b) {
+                  return -Neuro.compare( a.finished_at, b.finished_at ) ||
+                         -Neuro.compare( a.created_at, b.created_at );
+                }
+              }
+            },
+            toString: function(taskList) {
+              return taskList.name;
+            }
+          });
+
+          window.TaskList = TaskList;
+
+          return TaskList;
+        })
+
+        .directive('taskList', function(Task, NeuroBind)
+        {
+          return {
+            restrict: 'E',
+            scope: {
+              model: '='
+            },
+            templateUrl: 'taskList.html',
+            link: function(scope, element, attrs) 
+            {
+              NeuroBind( scope, scope.model );
+
+              scope.editing = false;
+
+              scope.newTask = function() {
+                scope.task = new Task({
+                  name: ''
+                });
+              };
+              scope.save = function() {
+                if (!scope.model.name) return;
+                scope.model.$save({
+                  updated_at: Date.now()
+                });
+                scope.editing = false;
+              };
+              scope.edit = function() {
+                scope.editing = true;
+              };
+              scope.remove = function() {
+                scope.model.$remove();
+              };
+              scope.clear = function() {
+                scope.model.$unrelate('tasks');
+              };
+              scope.addTask = function() {
+                if (!scope.task.name) return;
+                scope.model.$relate('tasks', scope.task);
+                scope.task.$save({
+                  updated_at: Date.now(),
+                  created_at: Date.now()
+                });
+                scope.newTask();
+              }; 
+
+              scope.newTask();
+            }
+          }
+        })
+
+        .directive('task', function(NeuroBind)
+        {
+          return {
+            restrict: 'E',
+            scope: {
+              model: '='
+            },
+            templateUrl: 'task.html',
+            link: function(scope, element, attrs) 
+            {
+              NeuroBind( scope, scope.model, updateFinished );
+
+              scope.editing = false;
+              scope.$ = {finished: !!scope.model.finished_at};
+
+              scope.edit = function() {
+                scope.editing = true;
+              };
+              scope.remove = function() {
+                scope.model.$remove();
+              };
+              scope.save = function() {
+                if (!scope.model.name) return;
+                scope.model.$save({
+                  updated_at: Date.now()
+                });
+                scope.editing = false;
+              };
+
+              scope.$watch('$.finished', function(finished) {
+                scope.model.$save({
+                  finished_at: finished ? Date.now() : null,
+                  updated_at: Date.now()
+                });
+              }.skip() );
+
+              function updateFinished() {
+                scope.$.finished = !!scope.model.finished_at;
+              }
+            }
+          }
+        })
+
+        .controller('TaskController', function($scope, Neuro, NeuroBind, TaskList)
+        {
+          NeuroBind( $scope, TaskList );
+
+          this.status = Neuro.online ? 'Online' : 'Offline';
+          this.taskLists = TaskList.Database.getModels();
+
+          this.newTaskList = function() {
+            this.taskList = new TaskList({
+              name: ''
+            });
+          };
+
+          this.addTaskList = function() {
+            if (!this.taskList.name) return;
+            this.taskList.$save({
+              created_at: Date.now(),
+              updated_at: Date.now()
+            });
+            this.newTaskList();
+          };
+
+          this.newTaskList();
+
+          this.setStatus = function(value) {
+            return function() {
+              $scope.$evalAsync(function() {
+                $scope.status = value;
+              });
+            };
+          };
+
+          Neuro.on('online', this.setStatus('Online'));
+          Neuro.on('offline', this.setStatus('Offline'));
+
+          window.TaskController = this;
+        })
+
+        .directive('ngEnter', function()
+        {
+          return function(scope, element, attrs) 
+          {
+            element.on('keydown', function(e) 
+            {
+              if (e.which === 13) 
+              {
+                scope.$evalAsync(attrs.ngEnter);
+                e.preventDefault();
+              }
+            });
+          }
+        })
+      ;
+
+    </script>
+
+  </body>
+</html>

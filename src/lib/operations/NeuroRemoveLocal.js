@@ -3,7 +3,7 @@ function NeuroRemoveLocal(model)
   this.reset( model );
 }
 
-NeuroRemoveLocal.prototype = new NeuroOperation( true );
+NeuroRemoveLocal.prototype = new NeuroOperation( true, 'NeuroRemoveLocal' );
 
 NeuroRemoveLocal.prototype.run = function(db, model)
 {

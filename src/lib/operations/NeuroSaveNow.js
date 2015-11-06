@@ -3,7 +3,7 @@ function NeuroSaveNow(model)
   this.reset( model );
 }
 
-NeuroSaveNow.prototype = new NeuroOperation( false );
+NeuroSaveNow.prototype = new NeuroOperation( false, 'NeuroSaveNow' );
 
 NeuroSaveNow.prototype.run = function(db, model)
 {

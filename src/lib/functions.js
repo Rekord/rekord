@@ -2,12 +2,22 @@
 
 function isDefined(x)
 {
-  return typeof x !== 'undefined';
+  return x !== undefined;
 }
 
 function isFunction(x)
 {
   return !!(x && x.constructor && x.call && x.apply);
+}
+
+function isModelConstructor(x)
+{
+  return isFunction( x ) && x.prototype instanceof NeuroModel;
+}
+
+function isNeuro(x)
+{
+  return !!(x && x.Model && x.Database);
 }
 
 function isString(x)
@@ -43,6 +53,16 @@ function isObject(x)
 function toArray(x, split)
 {
   return x instanceof Array ? x : x.split( split );
+}
+
+function isTruthy(x)
+{
+  return !!x;
+}
+
+function isValue(x)
+{
+  return x !== undefined && x !== null;
 }
 
 function indexOf(arr, x, comparator)
@@ -93,7 +113,7 @@ function propsMatch(test, testFields, expected, expectedFields)
       var testProp = testFields[ i ];
       var expectedProp = expectedFields[ i ];
 
-      if ( test[ testProp ] !== expected[ expectedProp ] )
+      if ( !equals( test[ testProp ], expected[ expectedProp ] ) )
       {
         return false;
       }
@@ -122,6 +142,29 @@ function swap(a, i, k)
   a[ k ] = t;
 }
 
+function evaluate(x)
+{
+  if ( !isValue( x ) )
+  {
+    return x;
+  }
+
+  if ( isNeuro( x ) )
+  {
+    return new x.Model();
+  }
+  if ( isModelConstructor( x ) )
+  {
+    return new x();
+  }
+  if ( isFunction( x ) )
+  {
+    return x();
+  }
+
+  return copy( x );
+}
+
 function grab(obj, props, copyValues)
 {
   var grabbed = {};
@@ -137,6 +180,43 @@ function grab(obj, props, copyValues)
   }
 
   return grabbed;
+}
+
+function pull(obj, props, copyValues)
+{
+  if ( isString( props ) )
+  {
+    var pulledValue = obj[ props ];
+
+    return copyValues ? copy( pulledValue ) : pulledValue;
+  }
+  else // isArray( props )
+  {
+    var pulled = [];
+
+    for (var i = 0; i < props.length; i++) 
+    {
+      var p = props[ i ];
+      var pulledValue = obj[ p ];
+
+      pulled.push( copyValues ? copy( pulledValue ) : pulledValue );
+    }
+
+    return pulled;
+  }
+}
+
+function clean(x)
+{
+  for (var prop in x)
+  {
+    if ( prop.charAt(0) === '$' )
+    {
+      delete x[ prop ];
+    }
+  }
+
+  return x;
 }
 
 function copy(x, copyHidden)
@@ -189,7 +269,7 @@ function diff(curr, old, props, comparator)
   {
     var p = props[ i ];
 
-    if (p in curr && p in old && !comparator( curr[ p ], old[ p ] ) )
+    if (!comparator( curr[ p ], old[ p ] ) )
     {
       d[ p ] = copy( curr[ p ] );
     }
@@ -204,7 +284,7 @@ function isEmpty(x)
   {
     return true;
   }
-  if (isArray(x)) 
+  if (isArray(x) || isString(x)) 
   {
     return x.length === 0;
   }
@@ -310,4 +390,33 @@ function compare(a, b)
   }
   
   return (a + '').localeCompare(b + '');
+}
+
+function createComparator(comparator)
+{
+  if ( isFunction( comparator ) )
+  {
+    return comparator;
+  }
+  else if ( isString( comparator ) )
+  {
+    if ( comparator.charAt(0) === '-' )
+    {
+      comparator = comparator.substring( 1 );
+
+      return function compareObjects(a, b)
+      {
+        return compare( b[ comparator ], a[ comparator ] );
+      };
+    }
+    else
+    {
+      return function compareObjects(a, b)
+      {
+        return compare( a[ comparator ], b[ comparator ] );
+      };
+    }
+  }
+
+  return null;
 }

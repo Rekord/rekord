@@ -38,42 +38,59 @@ function NeuroModel(db)
 NeuroModel.prototype =
 {
 
-  $init: function(props)
+  $init: function(props, exists)
   {
     this.$pendingSave = false;
     this.$operation = null;
     this.$relations = {};
 
-    this.$reset( props );
+    if ( exists )
+    {
+      this.$set( props );
+    }
+    else
+    {
+      this.$reset( props );
+    }
+
+    // Load relations after initialization?
+    if ( this.$db.loadRelations )
+    {
+      var databaseRelations = this.$db.relations;
+
+      for (var name in databaseRelations)
+      {
+        this.$getRelation( name );
+      }
+    }
   },
 
   $reset: function(props)
   {
     var def = this.$db.defaults;
     var fields = this.$db.fields;
+    var relations = this.$db.relations;
 
     if ( isObject( def ) )
     {
       for (var i = 0; i < fields.length; i++)
       {
         var prop = fields[ i ];
+        var defaultValue = def[ prop ];
+        var evaluatedValue = evaluate( defaultValue );
 
+        this[ prop ] = evaluatedValue;
+      }
+
+      for (var prop in relations)
+      {
         if ( prop in def )
         {
           var defaultValue = def[ prop ];
+          var evaluatedValue = evaluate( defaultValue );
+          var relation = this.$getRelation( prop );
 
-          if ( isFunction( defaultValue ) )
-          {
-            this[ prop ] = defaultValue();
-          }
-          else
-          {
-            this[ prop ] = copy( defaultValue );
-          }
-        }
-        else
-        {
-          this[ prop ] = undefined;
+          relation.set( this, evaluatedValue );
         }
       }
     }
@@ -96,12 +113,12 @@ NeuroModel.prototype =
     {
       transfer( props, this );
     }
-    else if ( isString( props ) && value !== void 0 )
+    else if ( isString( props ) )
     {
-      if ( props in this.$relations )
+      var relation = this.$getRelation( props );
+      
+      if ( relation )
       {
-        var relation = this.$db.relations[ props ];
-
         relation.set( this, value );
       }
       else
@@ -128,30 +145,96 @@ NeuroModel.prototype =
     }
     else if ( isString( props ) )
     {
-      if ( props in this.$relations )
+      var relation = this.$getRelation( props );
+
+      if ( relation )
       {
-        var relation = this.$db.relations[ props ];
         var values = relation.get( this );
 
         return copyValues ? copy( values ) : values;
       }
       else
       {
-        return copyValues ? copy( this[ props ] ) : this[ props ]; 
+        return copyValues ? copy( this[ props ] ) : this[ props ];
       }
     }
+  },
+
+  $relate: function(prop, relate)
+  {
+    var relation = this.$getRelation( prop );
+
+    if ( relation )
+    {
+      relation.relate( this, relate );
+    }
+  },
+
+  $unrelate: function(prop, unrelated)
+  {
+    var relation = this.$getRelation( prop );
+
+    if ( relation )
+    {
+      relation.unrelate( this, unrelated );
+    }
+  },
+
+  $getRelation: function(prop)
+  {
+    var databaseRelations = this.$db.relations;
+
+    if ( prop in databaseRelations )
+    {
+      var relation = databaseRelations[ prop ];
+
+      if ( !(prop in this.$relations) )
+      {
+        relation.load( this );
+      }
+
+      return relation;
+    }
+
+    return false;
   },
 
   $save: function(setProperties, setValue)
   {
     this.$set( setProperties, setValue );
 
-    return this.$db.save( this );
+    this.$callRelationFunction( 'preSave' );
+
+    this.$db.save( this );
+
+    this.$callRelationFunction( 'postSave' );
   },
 
   $remove: function()
   {
-    return this.$db.remove( this );
+    if ( this.$exists() )
+    {
+      this.$callRelationFunction( 'preRemove' );
+
+      this.$db.remove( this );
+
+      this.$callRelationFunction( 'postRemove' );
+    }
+  },
+
+  $exists: function()
+  {
+    return !this.$deleted && this.$db.models.has( this.$key() );
+  },
+
+  $callRelationFunction: function(functionName)
+  {
+    var databaseRelations = this.$db.relations;
+
+    for ( var name in databaseRelations )
+    {
+      databaseRelations[ name ][ functionName ]( this );
+    }
   },
 
   $addOperation: function(OperationType) 
@@ -169,14 +252,29 @@ NeuroModel.prototype =
     }
   },
 
-  $toJSON: function()
+  $toJSON: function( forSaving )
   {
-    return this.$db.encode( grab( this, this.$db.fields, true ) );
+    var encoded = this.$db.encode( grab( this, this.$db.fields, true ) );
+
+    var databaseRelations = this.$db.relations;
+    var relations = this.$relations;
+
+    for (var name in relations)
+    {
+      databaseRelations[ name ].encode( this, encoded, forSaving );
+    }
+
+    return encoded;
   },
 
   $key: function()
   {
     return this.$db.getKey( this );
+  },
+
+  $keys: function()
+  {
+    return this.$db.getKeys( this );
   },
 
   $isSaved: function()
@@ -189,10 +287,15 @@ NeuroModel.prototype =
     return !!this.$local;
   },
 
+  $isNew: function()
+  {
+    return !(this.$saved || this.$local);
+  },
+
   $getChanges: function()
   {
     var saved = this.$saved;
-    var encoded = this.$toJSON();
+    var encoded = this.$toJSON( true );
     var fields = this.$db.fields;
 
     return saved ? diff( encoded, saved, fields, equals ) : encoded;
@@ -205,7 +308,7 @@ NeuroModel.prototype =
       return true;
     }
 
-    var encoded = this.$toJSON();
+    var encoded = this.$toJSON( true );
     var saved = this.$saved;
 
     for (var prop in encoded) 
@@ -224,4 +327,4 @@ NeuroModel.prototype =
 
 };
 
-eventize( NeuroModel.prototype );
+eventize( NeuroModel.prototype, true );
