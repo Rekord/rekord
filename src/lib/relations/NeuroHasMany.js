@@ -3,8 +3,7 @@ function NeuroHasMany()
   this.type = 'hasMany';
 }
 
-// cascadeSave = when model is saved, save children?
-// cascadeRemove = when model is deleted, delete children?
+Neuro.Relations.hasMany = NeuroHasMany;
 
 extend( new NeuroRelation(), NeuroHasMany, 
 {
@@ -82,9 +81,7 @@ extend( new NeuroRelation(), NeuroHasMany,
     } 
     else
     {
-      var source = relatedDatabase.models;
-        
-      relatedDatabase.ready( this.handleLazyLoad( relation, source ), this );
+      relatedDatabase.ready( this.handleLazyLoad( relation ), this );
     }
 
     // We only need to set the property once since the underlying array won't change.
@@ -244,7 +241,7 @@ extend( new NeuroRelation(), NeuroHasMany,
   {
     if ( !relation.delaySaving )
     {
-      if ( this.store === Neuro.STORE_MODEL || this.save === Neuro.SAVE_MODEL )
+      if ( this.store === Neuro.Store.Model || this.save === Neuro.Save.Model )
       {
         relation.parent.$save();
       }
@@ -278,12 +275,12 @@ extend( new NeuroRelation(), NeuroHasMany,
     };
   },
 
-  handleLazyLoad: function(relation, source)
+  handleLazyLoad: function(relation)
   {
     return function (relatedDatabase)
     {
-      var map = source.filter( relation.isRelated );
-      var models = map.values;
+      var related = relatedDatabase.models.filter( relation.isRelated );
+      var models = related.values;
 
       this.bulk( relation, function()
       {
@@ -429,5 +426,3 @@ extend( new NeuroRelation(), NeuroHasMany,
   }
 
 });
-
-Neuro.RELATIONS[ 'hasMany' ] = NeuroHasMany;

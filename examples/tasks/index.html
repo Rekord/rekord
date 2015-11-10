@@ -31,16 +31,31 @@
     </div>
 
     <!-- Materialize -->
+    <!-- Online - ->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.1/css/materialize.min.css">
     <script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.1/js/materialize.min.js"></script>
+    <!- - /Online -->
+    <link rel="stylesheet" href="../../deps/materialize.min.css">
+    <script src="../../deps/jquery-1.11.3.min.js"></script>
+    <script src="../../deps/materialize.min.js"></script>
 
     <!-- Scripts -->
+    <!-- Online - ->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.4.7/angular.js"></script>
     <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.4.7/angular-animate.js"></script>
     <script src="https://cdn.socket.io/socket.io-1.3.7.js"></script>
     <script src="http://rawgit.com/ClickerMonkey/storkjs/master/build/stork.min.js"></script>
     <script src="http://rawgit.com/yaru22/angular-timeago/master/dist/angular-timeago.min.js"></script>
+    <!- - /Online -->
+
+    <!-- Offline -->
+    <script src="../../deps/angular.js"></script>
+    <script src="../../deps/angular-animate.js"></script>
+    <script src="../../deps/socket.io-1.3.7.js"></script>
+    <script src="../../deps/stork.min.js"></script>
+    <script src="../../deps/angular-timeago.min.js"></script>
+
     <script src="pubsub/pubsub-client.js"></script>
 
     <script src="../../build/neurosync.js"></script>
@@ -133,8 +148,8 @@
               tasks: {
                 model: 'Task',
                 property: true,
-                // save: Neuro.SAVE_MODEL,
-                // store: Neuro.STORE_MODEL,
+                // save: Neuro.Save.Model,
+                // store: Neuro.Store.Model,
                 cascadeRemove: true,
                 comparator: function(a, b) {
                   return -Neuro.compare( a.finished_at, b.finished_at ) ||

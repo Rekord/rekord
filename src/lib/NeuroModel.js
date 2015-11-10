@@ -35,6 +35,22 @@ function NeuroModel(db)
    */
 }
 
+NeuroModel.Events = 
+{
+  Created:          'created',
+  Saved:            'saved',
+  PartialUpdate:    'partial-update',
+  FullUpdate:       'full-update',
+  Updated:          'updated',
+  Detach:           'detach',
+  CreateAndSave:    'created saved',
+  UpdateAndSave:    'updated saved',
+  Removed:          'removed',
+  RemoteUpdate:     'remote-update',
+  RemoteRemove:     'remote-remove',
+  RemoteAndRemove:  'remote-remove removed'
+};
+
 NeuroModel.prototype =
 {
 

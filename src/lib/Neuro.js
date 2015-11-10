@@ -69,6 +69,4 @@ Neuro.get = function(name, callback, context)
   return cached;
 };
 
-Neuro.RELATIONS = {};
-
 eventize( Neuro );

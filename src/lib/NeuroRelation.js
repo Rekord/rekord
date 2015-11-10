@@ -3,15 +3,23 @@ function NeuroRelation()
 
 }
 
-Neuro.STORE_NONE = 0;
-Neuro.STORE_MODEL = 1;
-Neuro.STORE_KEY = 2;
-Neuro.STORE_KEYS = 3;
+Neuro.Relations = {
 
-Neuro.SAVE_NONE = 0;
-Neuro.SAVE_MODEL = 4;
+};
 
-NeuroRelation.prototype = 
+Neuro.Store = {
+  None: 0,
+  Model: 1,
+  Key: 2,
+  Keys: 3
+};
+
+Neuro.Save = {
+  None: 0,
+  Model: 4
+};
+
+NeuroRelation.prototype =
 {
 
   /**
@@ -27,10 +35,13 @@ NeuroRelation.prototype =
     this.database = database;
     this.name = field;
     this.options = options;
-    this.store = options.store || Neuro.STORE_NONE;
-    this.save = options.save || Neuro.SAVE_NONE;
+    this.store = options.store || Neuro.Store.None;
+    this.save = options.save || Neuro.Save.None;
     this.auto = !!options.auto;
     this.property = !!options.property;
+    this.discriminator = options.discriminator || 'discriminator';
+    this.discriminators = options.discriminators || {};
+    this.discriminated = !!options.discriminators;
 
     var setNeuro = this.setNeuro( database, field, options );
 
@@ -40,7 +51,7 @@ NeuroRelation.prototype =
     }
     else
     {
-      setNeuro( options.model );
+      setNeuro.call( this, options.model );
     }
   },
 
@@ -57,6 +68,11 @@ NeuroRelation.prototype =
       if ( !this.property )
       {
         this.property = indexOf( database.fields, this.name ) !== false;        
+      }
+
+      if ( this.discriminated )
+      {
+        this.loadDiscriminators();
       }
 
       this.onInitialized( database, field, options );
@@ -239,10 +255,10 @@ NeuroRelation.prototype =
     {
       switch (mode) 
       {
-      case Neuro.SAVE_MODEL:
+      case Neuro.Save.Model:
         return related.$toJSON( true );
 
-      case Neuro.STORE_MODEL:
+      case Neuro.Store.Model:
         if ( related.$local ) 
         {
           return related.$local;
@@ -259,16 +275,164 @@ NeuroRelation.prototype =
           return local;
         }
 
-      case Neuro.STORE_KEY:
+      case Neuro.Store.Key:
         return related.$key();
 
-      case Neuro.STORE_KEYS:
+      case Neuro.Store.Keys:
         return related.$keys();
 
       }
     }
 
     return null;
+  },
+
+  /* Polymorphic Relationships */
+
+  loadDiscriminators: function()
+  {
+    for (var discriminator in this.discriminators)
+    {
+      var name = this.discriminators[ discriminator ];
+
+      Neuro.get( name, this.setDiscriminated, this );
+    }
+  },
+
+  setDiscriminated: function(discriminator)
+  {
+    return function(neuro)
+    {
+      this.discriminators[ discriminator ] = neuro;
+    };
+  },
+
+  getDiscriminator: function(model)
+  {
+    return model[ this.discriminator ];
+  },
+
+  getDiscriminatorDatabase: function(model)
+  {
+    var discriminator = this.getDiscriminator( model );
+
+    if ( discriminator in this.discriminators )
+    {
+      var model = this.discriminators[ discriminator ];
+
+      return model.Database;
+    }
+
+    return false;
+  },
+
+  parseDiscriminated: function(input)
+  {
+    if ( isObject( input ) )
+    {
+      var db = this.getDiscriminatorDatabase( input );
+
+      return db.parseModel( input );
+    }
+
+    return false;
+  },
+
+  grabModel: function(isRelated, forModel, input, callback)
+  {
+    if ( this.discriminated )
+    {
+      if ( this.grabDiscriminated( input, callback ) )
+      {
+        return true;
+      }
+      else
+      {
+        var discriminator = this.getDiscriminatorByType( forModel );
+
+        this.loadAllDiscriminated( isRelated, )
+      }
+    }
+  },
+
+  grabDiscriminated: function(input, callback)
+  {
+    if ( isObject( input ) )
+    {
+      var db = this.getDiscriminatorDatabase( input );
+
+      if ( db !== false )
+      {
+        db.grabModel( input, callack, this );
+
+        return true;
+      }
+    }
+
+    return true;
+  },
+
+  getDiscriminatorByType: function(model)
+  {
+    for (var discriminator in this.discriminators)
+    {
+      var type = this.discriminators[ discriminator ];
+
+      if ( model instanceof type )
+      {
+        return discriminator;
+      }
+    }
+
+    return false;
+  },
+
+  loadAllRelated: function(isRelated, callback)
+  {
+    if ( this.discriminated )
+    {
+      this.loadAllDiscriminated( isRelated, callback );
+    }
+    else
+    {
+      var relatedDatabase = this.model.Database;
+
+      relatedDatabase.ready( this.loadAllReady( isRelated, callback ), this );
+    }
+  },
+
+  loadAllReady: function(isRelated, callback)
+  {
+    return function(db)
+    {
+      var related = db.models.filter( isRelated );
+
+      callback.call( this, related );
+    };
+  },
+
+  loadAllDiscriminated: function(isRelated, callback)
+  {
+    var related = new NeuroMap();
+    var callbackContext = this;
+    var total = sizeof( this.discriminators );
+    var current = 0;
+
+    for (var discriminator in this.discriminators)
+    {
+      var type = this.discriminators[ discriminator ];
+      var db = type.Database;
+
+      db.ready(function(db)
+      {
+        db.models.filter( isRelated, related );
+
+        if ( ++current === total )
+        {
+          callback.call( callbackContext, related );
+        }
+      });
+    }
   }
 
 };

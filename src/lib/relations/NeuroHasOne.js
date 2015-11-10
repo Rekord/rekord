@@ -3,6 +3,8 @@ function NeuroHasOne()
   this.type = 'hasOne';
 }
 
+Neuro.Relations.hasOne = NeuroHasOne;
+
 extend( new NeuroRelation(), NeuroHasOne, 
 {
 
@@ -18,12 +20,14 @@ extend( new NeuroRelation(), NeuroHasOne,
   load: function(model)
   {
     var that = this;
+    var isRelated = this.isRelated( model );
     var relatedDatabase = this.model.Database;
     var initial = model[ this.name ];
 
     var relation = model.$relations[ this.name ] = 
     {
       initial: initial,
+      isRelated: isRelated,
       model: null,
       loaded: false,
       dirty: false,
@@ -45,7 +49,7 @@ extend( new NeuroRelation(), NeuroHasOne,
 
         Neuro.debug( Neuro.Events.HASONE_NINJA_SAVE, that, model, relation );
 
-        if ( !this.hasForeignKey( model, relation.model ) )
+        if ( !isRelated( relation.model ) )
         {
           this.clearModel( relation );
           this.clearForeignKey( model );
@@ -80,7 +84,7 @@ extend( new NeuroRelation(), NeuroHasOne,
       var related = relatedDatabase.parseModel( input );
       var relation = model.$relations[ this.name ];
 
-      if ( related && !this.hasForeignKey( model, related ) )
+      if ( related && !relation.isRelated( related ) )
       {
         this.clearModel( relation );
         this.setRelated( model, relation, related );
@@ -150,7 +154,7 @@ extend( new NeuroRelation(), NeuroHasOne,
     {
       var related = relation.model;  
 
-      if ( !this.hasForeignKey( model, related ) )
+      if ( !relation.isRelated( related ) )
       {
         // this.set( model, model[ this.local ] ) ?
       }
@@ -239,13 +243,16 @@ extend( new NeuroRelation(), NeuroHasOne,
     };
   },
 
-  hasForeignKey: function(model, related)
+  isRelated: function(model)
   {
     var relatedDatabase = this.model.Database;
     var local = this.local;
     var foreign = relatedDatabase.key;
 
-    return propsMatch( model, local, related, foreign );
+    return function hasForeignKey(related)
+    {
+      return propsMatch( model, local, related, foreign );
+    };
   },
 
   clearForeignKey: function(model)
@@ -282,5 +289,3 @@ extend( new NeuroRelation(), NeuroHasOne,
   }
 
 });
-
-Neuro.RELATIONS[ 'hasOne' ] = NeuroHasOne;

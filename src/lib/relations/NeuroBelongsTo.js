@@ -3,6 +3,8 @@ function NeuroBelongsTo()
   this.type = 'belongsTo';
 }
 
+Neuro.Relations.belongsTo = NeuroBelongsTo;
+
 extend( new NeuroRelation(), NeuroBelongsTo, 
 {
 
@@ -252,5 +254,3 @@ extend( new NeuroRelation(), NeuroBelongsTo,
   }
 
 });
-
-Neuro.RELATIONS[ 'belongsTo' ] = NeuroBelongsTo;

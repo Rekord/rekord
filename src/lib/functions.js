@@ -278,6 +278,27 @@ function diff(curr, old, props, comparator)
   return d;
 }
 
+function sizeof(x)
+{
+  if ( isArray(x) || isString(x) )
+  {
+    return x.length;
+  }
+  else if ( isObject(x) )
+  {
+    var properties = 0;
+
+    for (var prop in x)
+    {
+      properties++;
+    }
+
+    return properties;
+  }
+  
+  return 0;
+}
+
 function isEmpty(x)
 {
   if (x === null || x === void 0 || x === 0) 

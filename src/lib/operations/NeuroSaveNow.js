@@ -3,9 +3,12 @@ function NeuroSaveNow(model)
   this.reset( model );
 }
 
-NeuroSaveNow.prototype = new NeuroOperation( false, 'NeuroSaveNow' );
-
-NeuroSaveNow.prototype.run = function(db, model)
+extend( new NeuroOperation( false, 'NeuroSaveNow' ), NeuroSaveNow,
 {
-  db.store.put( model.$key(), model.$local, this.success(), this.failure() );
-};
+
+  run: function(db, model)
+  {
+    db.store.put( model.$key(), model.$local, this.success(), this.failure() );
+  }
+
+});

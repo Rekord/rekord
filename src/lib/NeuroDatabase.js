@@ -23,11 +23,12 @@ function NeuroDatabase(options)
 
   for (var relationType in options)
   {
-    if ( !(relationType in Neuro.RELATIONS) )
+    if ( !(relationType in Neuro.Relations) )
     {
       continue;
     }
-    var RelationClass = Neuro.RELATIONS[ relationType ];
+
+    var RelationClass = Neuro.Relations[ relationType ];
 
     if ( !(RelationClass.prototype instanceof NeuroRelation ) )
     {
@@ -47,6 +48,24 @@ function NeuroDatabase(options)
     }
   }
 }
+
+NeuroDatabase.Events = 
+{
+  NoLoad:       'no-load',
+  RemoteLoad:   'remote-load',
+  LocalLoad:    'local-load',
+  Updated:      'updated',
+  ModelAdded:   'model-added',
+  ModelUpdated: 'model-updated',
+  ModelRemoved: 'model-removed',
+  Loads:        'no-load remote-load local-load'
+};
+
+NeuroDatabase.Live = 
+{
+  Save:         'SAVE',
+  Remove:       'REMOVE'
+};
 
 NeuroDatabase.prototype =
 {
@@ -73,7 +92,7 @@ NeuroDatabase.prototype =
     {
       function onReadyRemove()
       {
-        db.off( 'local-load remote-load', onReady );
+        db.off( NeuroDatabase.Events.Loads, onReady );
       }
 
       function onReady()
@@ -92,7 +111,7 @@ NeuroDatabase.prototype =
         }
       }
 
-      db.on( 'local-load remote-load', onReady );
+      db.on( NeuroDatabase.Events.Loads, onReady );
     }
 
     return invoked;
@@ -314,7 +333,7 @@ NeuroDatabase.prototype =
   updated: function()
   {
     this.sort();
-    this.trigger( 'updated' );
+    this.trigger( NeuroDatabase.Events.Updated );
   },
 
   // Sets a revision comparision function for this database. It can be a field
@@ -423,14 +442,14 @@ NeuroDatabase.prototype =
 
       if ( conflicted )
       {
-        model.$trigger( 'partial-update', [encoded, conflicts] );
+        model.$trigger( NeuroModel.Events.PartialUpdate, [encoded, conflicts] );
       }
       else
       {
-        model.$trigger( 'full-update', [encoded, updated] );
+        model.$trigger( NeuroModel.Events.FullUpdate, [encoded, updated] );
       }
 
-      model.$trigger( 'remote-update', [encoded] );
+      model.$trigger( NeuroModel.Events.RemoteUpdate, [encoded] );
 
       if ( db.cache !== false )
       {
@@ -457,11 +476,11 @@ NeuroDatabase.prototype =
     if ( !db.models.has( key ) )
     {
       db.models.put( key, model );
-      db.trigger( 'model-added', [model] );
+      db.trigger( NeuroDatabase.Events.ModelAdded, [model] );
 
       if ( !fromStorage )
       {
-        model.$trigger( 'saved' ); 
+        model.$trigger( NeuroModel.Events.Saved ); 
       }
     }
 
@@ -480,17 +499,15 @@ NeuroDatabase.prototype =
 
         db.removeKey( model );
 
-        model.$trigger( 'detach' );
+        model.$trigger( NeuroModel.Events.Detach );
 
         return false;
       }
 
-      model.$trigger( 'remote-remove' );
-
       db.models.remove( key );
-      db.trigger( 'model-removed', [model] );
+      db.trigger( NeuroDatabase.Events.ModelRemoved, [model] );
 
-      model.$trigger('removed');
+      model.$trigger( NeuroModel.Events.RemoteAndRemove );
 
       Neuro.debug( Neuro.Events.REMOTE_REMOVE, db, model );
 
@@ -516,21 +533,19 @@ NeuroDatabase.prototype =
         db.removeKey( model );
         db.removeKey( model.$local );
 
-        model.$trigger( 'detach' );
+        model.$trigger( NeuroModel.Events.Detach );
 
         model.$addOperation( NeuroSaveNow );
      
         return false;
       }
 
-      model.$trigger( 'remote-remove' );
-
       model.$addOperation( NeuroRemoveNow );
 
       db.models.remove( key );
-      db.trigger( 'model-removed', [model] );
+      db.trigger( NeuroDatabase.Events.ModelRemoved, [model] );
 
-      model.$trigger('removed');
+      model.$trigger( NeuroModel.Events.RemoteAndRemove );
 
       Neuro.debug( Neuro.Events.REMOTE_REMOVE, db, model );
     }
@@ -579,11 +594,18 @@ NeuroDatabase.prototype =
       {
         db.refresh();
       }
+      else
+      {
+        db.initialized = true;
+        db.trigger( NeuroDatabase.Events.NoLoad, [db] );
+      }
 
       return;
     }
 
-    db.store.all(function(records, keys)
+    db.store.all( onLocalLoad, onLocalError );    
+
+    function onLocalLoad(records, keys)
     {
       Neuro.debug( Neuro.Events.LOCAL_LOAD, db, records );
 
@@ -634,7 +656,7 @@ NeuroDatabase.prototype =
       db.initialized = true;
       db.localLoaded = true;
 
-      db.trigger( 'local-load', [db] );
+      db.trigger( NeuroDatabase.Events.LocalLoad, [db] );
 
       db.updated();
 
@@ -642,7 +664,21 @@ NeuroDatabase.prototype =
       {
         db.refresh();
       }
-    });    
+    }
+
+    function onLocalError()
+    {
+      db.initialized = true;
+
+      if ( db.loadRemote !== false )
+      {
+        db.refresh();
+      }
+      else
+      {
+        db.trigger( NeuroDatabase.Events.NoLoad, [db] );
+      }
+    }
   },
 
   // Loads all data remotely
@@ -686,7 +722,7 @@ NeuroDatabase.prototype =
       db.initialized = true;
       db.remoteLoaded = true;
 
-      db.trigger( 'remote-load', [db] );
+      db.trigger( NeuroDatabase.Events.RemoteLoad, [db] );
 
       db.updated();
 
@@ -721,6 +757,9 @@ NeuroDatabase.prototype =
       else
       {
         Neuro.debug( Neuro.Events.REMOTE_LOAD_ERROR, db, status );
+
+        db.initialized = true;
+        db.trigger( NeuroDatabase.Events.NoLoad, [db] );
       }
     }
   
@@ -753,7 +792,7 @@ NeuroDatabase.prototype =
 
       switch (message.op) 
       {
-      case 'SAVE':
+      case NeuroDatabase.Live.Save:
 
         db.putRemoteData( encoded, key );
         db.updated();
@@ -761,7 +800,7 @@ NeuroDatabase.prototype =
         Neuro.debug( Neuro.Events.REALTIME_SAVE, db, message.model, key );
         break;
 
-      case 'REMOVE':
+      case NeuroDatabase.Live.Remove:
 
         if ( db.destroyLocalModel( key ) )
         {
@@ -810,16 +849,16 @@ NeuroDatabase.prototype =
     if ( !db.models.has( key ) )
     {
       db.models.put( key, model );
-      db.trigger( 'model-added', [model] );
+      db.trigger( NeuroDatabase.Events.ModelAdded, [model] );
       db.updated();
 
-      model.$trigger('created saved');
+      model.$trigger( NeuroModel.Events.CreateAndSave );
     }
     else
     {
-      db.trigger( 'model-updated', [model] );
+      db.trigger( NeuroDatabase.Events.ModelUpdated, [model] );
 
-      model.$trigger('updated saved');
+      model.$trigger( NeuroModel.Events.UpdateAndSave );
     }
 
     if ( db.cache === false )
@@ -844,10 +883,10 @@ NeuroDatabase.prototype =
     if ( db.models.has( key ) )
     {
       db.models.remove( key );
-      db.trigger( 'model-removed', [model] );
+      db.trigger( NeuroDatabase.Events.ModelRemoved, [model] );
       db.updated();
 
-      model.$trigger('removed');
+      model.$trigger( NeuroModel.Events.Removed );
     }
 
     // Mark as deleted right away
