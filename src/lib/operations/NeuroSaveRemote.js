@@ -75,16 +75,7 @@ extend( new NeuroOperation( false, 'NeuroSaveRemote' ), NeuroSaveRemote,
       {
         model.$pendingSave = true;
 
-        Neuro.once('online', function() 
-        {
-          if ( model.$pendingSave )
-          { 
-            model.$pendingSave = false;
-            model.$addOperation( NeuroSaveRemote );
-
-            Neuro.debug( Neuro.Events.SAVE_RESUME, operation, model );
-          }
-        });
+        Neuro.once( 'online', this.handleOnline, this );
       }
 
       Neuro.debug( Neuro.Events.SAVE_OFFLINE, this, model );
@@ -141,6 +132,19 @@ extend( new NeuroOperation( false, 'NeuroSaveRemote' ), NeuroSaveRemote,
       model: saving,
       key: this.key
     });
+  },
+
+  handleOnline: function()
+  {
+    var model = this.model;
+
+    if ( model.$pendingSave )
+    { 
+      model.$pendingSave = false;
+      model.$addOperation( NeuroSaveRemote );
+
+      Neuro.debug( Neuro.Events.SAVE_RESUME, this, model );
+    }
   }
 
 });

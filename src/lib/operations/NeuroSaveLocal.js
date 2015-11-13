@@ -16,6 +16,8 @@ extend( new NeuroOperation( false, 'NeuroSaveLocal' ), NeuroSaveLocal,
       return this.finish();
     }
 
+    // Fill the key if need be
+    var key = model.$key();
     var encoded = model.$toJSON( false );
 
     // If this model doesn't have a local copy yet - create it.
@@ -29,7 +31,7 @@ extend( new NeuroOperation( false, 'NeuroSaveLocal' ), NeuroSaveLocal,
       transfer( encoded, model.$local );
     }
 
-    db.store.put( model.$key(), model.$local, this.success(), this.failure() );
+    db.store.put( key, model.$local, this.success(), this.failure() );
   },
 
   onSuccess: function(key, encoded, previousValue)

@@ -92,6 +92,13 @@ function eventize(target, secret)
 
     return this;
   }
+
+  function after(events, callback, context)
+  {
+    onListeners( this, '$$after', events, callback, context );
+
+    return this;
+  }
   
   // Removes a listener from an array of listeners.
   function offListeners(listeners, event, callback)
@@ -142,6 +149,7 @@ function eventize(target, secret)
     {
       deleteProperty( this, '$$on' );
       deleteProperty( this, '$$once' );
+      deleteProperty( this, '$$after' );
     }
     else
     {
@@ -154,6 +162,7 @@ function eventize(target, secret)
         {
           deleteProperty( this.$$on, events[i] );
           deleteProperty( this.$$once, events[i] );
+          deleteProperty( this.$$after, events[i] );
         }
       }
       // Remove specific listener
@@ -163,6 +172,7 @@ function eventize(target, secret)
         {
           offListeners( this.$$on, events[i], callback );
           offListeners( this.$$once, events[i], callback );
+          offListeners( this.$$after, events[i], callback );
         }
       }
     }
@@ -221,6 +231,7 @@ function eventize(target, secret)
 
       triggerListeners( this.$$on, e, args, false );
       triggerListeners( this.$$once, e, args, true );
+      triggerListeners( this.$$after, e, args, false )
     }
 
     return this;
@@ -230,6 +241,7 @@ function eventize(target, secret)
   {
     target.$on = on;
     target.$once = once;
+    target.$after = after;
     target.$off = off;
     target.$trigger = trigger;
   }
@@ -237,6 +249,7 @@ function eventize(target, secret)
   {
     target.on = on;
     target.once = once;
+    target.after = after;
     target.off = off;
     target.trigger = trigger;
   }

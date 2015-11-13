@@ -350,7 +350,7 @@ NeuroRelation.prototype =
       {
         var discriminator = this.getDiscriminatorByType( forModel );
 
-        this.loadAllDiscriminated( isRelated, )
+        
       }
     }
   },

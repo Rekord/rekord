@@ -12,6 +12,9 @@ function NeuroDatabase(options)
   this.localLoaded = false;
   this.remoteLoaded = false;
 
+  this.remoteOperations = 0;
+  this.afterOnline = false;
+
   this.rest = Neuro.rest( this );
   this.store = Neuro.store( this );
   this.live = Neuro.live( this, this.handlePublish( this ) );
@@ -588,6 +591,11 @@ NeuroDatabase.prototype =
   {
     var db = this;
 
+    if ( db.loadRemote !== false && db.autoRefresh )
+    {
+      Neuro.after( 'online', db.onOnline, db );
+    }
+
     if ( db.cache === false )
     {
       if ( db.loadRemote !== false )
@@ -681,6 +689,33 @@ NeuroDatabase.prototype =
     }
   },
 
+  onOnline: function()
+  {
+    this.afterOnline = true;
+
+    if ( this.remoteOperations === 0 )
+    {
+      this.onRemoteRest();
+    }
+  },
+
+  onRemoteRest: function()
+  {
+    var db = this;
+
+    if ( db.autoRefresh && db.remoteLoaded )
+    {
+      if ( db.afterOnline )
+      {
+        db.afterOnline = false;
+        
+        Neuro.debug( Neuro.Events.AUTO_REFRESH, db );
+
+        db.refresh();
+      }
+    }
+  },
+
   // Loads all data remotely
   refresh: function()
   {
@@ -739,17 +774,7 @@ NeuroDatabase.prototype =
         {
           db.pendingRefresh = true;
 
-          Neuro.once('online', function()
-          {
-            Neuro.debug( Neuro.Events.REMOTE_LOAD_RESUME, db );
-
-            if ( db.pendingRefresh )
-            {
-              db.pendingRefresh = false;
-
-              db.refresh(); 
-            }
-          })
+          Neuro.once( 'online', db.onRefreshOnline, db );
         }
 
         Neuro.debug( Neuro.Events.REMOTE_LOAD_OFFLINE, db );
@@ -763,6 +788,20 @@ NeuroDatabase.prototype =
       }
     }
   
+  },
+
+  onRefreshOnline: function()
+  {
+    var db = this;
+
+    Neuro.debug( Neuro.Events.REMOTE_LOAD_RESUME, db );
+
+    if ( db.pendingRefresh )
+    {
+      db.pendingRefresh = false;
+
+      db.refresh(); 
+    }
   },
 
   // The reference to all of the models in the database

@@ -26,7 +26,6 @@ extend( new NeuroOperation( true, 'NeuroRemoveRemote' ), NeuroRemoveRemote,
 
   onFailure: function(data, status)
   {
-    var operation = this;
     var key = this.key;
     var model = this.model;
 
@@ -48,12 +47,7 @@ extend( new NeuroOperation( true, 'NeuroRemoveRemote' ), NeuroRemoveRemote,
       // If we are offline, wait until we're online again to resume the delete
       if (!Neuro.online) 
       {
-        Neuro.once('online', function() 
-        {
-          Neuro.debug( Neuro.Events.REMOVE_RESUME, operation, model );
-
-          model.$addOperation( NeuroRemoveRemote );
-        });
+        Neuro.once( 'online', this.handleOnline, this );
       }
 
       Neuro.debug( Neuro.Events.REMOVE_OFFLINE, this, model );
@@ -78,9 +72,16 @@ extend( new NeuroOperation( true, 'NeuroRemoveRemote' ), NeuroRemoveRemote,
       op: NeuroDatabase.Live.Remove,
       key: key
     });
+  },
+
+  handleOnline: function()
+  {
+    var model = this.model;
+
+    Neuro.debug( Neuro.Events.REMOVE_RESUME, this, model );
+
+    model.$addOperation( NeuroRemoveRemote );
   }
 
 });
-
-NeuroRemoveRemote.prototype = new NeuroOperation( true, 'NeuroRemoveRemote' );
 

@@ -29,6 +29,8 @@ NeuroOperation.prototype =
 
   execute: function()
   {
+    this.db.remoteOperations++;
+
     this.run( this.db, this.model );
   },
 
@@ -46,6 +48,13 @@ NeuroOperation.prototype =
       if ( this.model.$operation = this.next )
       {
         this.next.execute();
+      }
+
+      this.db.remoteOperations--;
+
+      if ( this.db.remoteOperations === 0 )
+      {
+        this.db.onRemoteRest();
       }
     }
 
@@ -101,19 +110,3 @@ NeuroOperation.prototype =
   }
 
 };
-
-/**
-
-$operation;
-
-$addOperation: function(OperationType) {
-  var operation = new OperationType( this );
-  if ( !this.$operation ) {
-    this.$operation = operation;
-    this.$operation.execute();
-  } else {
-    this.$operation.queue( operation );
-  }
-}
-
- */

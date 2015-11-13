@@ -10,6 +10,8 @@ extend( new NeuroOperation( true, 'NeuroRemoveNow' ), NeuroRemoveNow,
   {
     var key = model.$key();
 
+    model.$pendingSave = false;
+
     if ( db.models.has( key ) )
     {
       db.models.remove( key );

@@ -9,6 +9,7 @@ Neuro.Events = {
   CREATION: 0,                // options
 
   REST: 1,                    // options
+  AUTO_REFRESH: 73,           // 
 
   REMOTE_UPDATE: 2,           // encoded, NeuroModel
   REMOTE_CREATE: 3,           // encoded, NeuroModel
@@ -93,6 +94,6 @@ Neuro.Events = {
   BELONGSTO_POSTREMOVE: 69,    // NeuroModel, relation
   BELONGSTO_CLEAR_KEY: 70,     // NeuroModel, local
   BELONGSTO_UPDATE_KEY: 71,    // NeuroModel, local, NeuroModel, foreign
-  BELONGSTO_LOADED: 71         // NeuroModel, relation, [NeuroModel]
+  BELONGSTO_LOADED: 72         // NeuroModel, relation, [NeuroModel]
 
 };

@@ -90,16 +90,6 @@ function uuid()
     return (S4()+S4()+"-"+S4()+"-"+S4()+"-"+S4()+"-"+S4()+S4()+S4());
 }
 
-function extend(parent, child, override)
-{
-  child.prototype = parent;
-
-  for (var prop in override)
-  {
-    child.prototype[ prop ] = override[ prop ];
-  }
-}
-
 function propsMatch(test, testFields, expected, expectedFields)
 {
   if ( isString( testFields ) ) // && isString( expectedFields )
@@ -123,6 +113,11 @@ function propsMatch(test, testFields, expected, expectedFields)
   }
 
   return false;
+}
+
+function extend(parent, child, override)
+{
+  transfer( override, child.prototype = parent );
 }
 
 function transfer(from, to)
@@ -233,7 +228,8 @@ function copy(x, copyHidden)
     {
       c.push( copy(x[i]) );
     }
-    return x;
+
+    return c;
   }
   if (isFunction(x) || typeof x !== 'object' || x === null)
   {
@@ -245,7 +241,7 @@ function copy(x, copyHidden)
   }
   if (isRegExp(x))
   {
-    return new RegExp( x.source, x.toString().match(/[^\/]*$/)[0] );
+    return x;
   }
 
   var c = {};

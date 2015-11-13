@@ -93,16 +93,6 @@ function uuid()
     return (S4()+S4()+"-"+S4()+"-"+S4()+"-"+S4()+"-"+S4()+S4()+S4());
 }
 
-function extend(parent, child, override)
-{
-  child.prototype = parent;
-
-  for (var prop in override)
-  {
-    child.prototype[ prop ] = override[ prop ];
-  }
-}
-
 function propsMatch(test, testFields, expected, expectedFields)
 {
   if ( isString( testFields ) ) // && isString( expectedFields )
@@ -126,6 +116,11 @@ function propsMatch(test, testFields, expected, expectedFields)
   }
 
   return false;
+}
+
+function extend(parent, child, override)
+{
+  transfer( override, child.prototype = parent );
 }
 
 function transfer(from, to)
@@ -236,7 +231,8 @@ function copy(x, copyHidden)
     {
       c.push( copy(x[i]) );
     }
-    return x;
+
+    return c;
   }
   if (isFunction(x) || typeof x !== 'object' || x === null)
   {
@@ -248,7 +244,7 @@ function copy(x, copyHidden)
   }
   if (isRegExp(x))
   {
-    return new RegExp( x.source, x.toString().match(/[^\/]*$/)[0] );
+    return x;
   }
 
   var c = {};
@@ -538,6 +534,13 @@ function eventize(target, secret)
 
     return this;
   }
+
+  function after(events, callback, context)
+  {
+    onListeners( this, '$$after', events, callback, context );
+
+    return this;
+  }
   
   // Removes a listener from an array of listeners.
   function offListeners(listeners, event, callback)
@@ -588,6 +591,7 @@ function eventize(target, secret)
     {
       deleteProperty( this, '$$on' );
       deleteProperty( this, '$$once' );
+      deleteProperty( this, '$$after' );
     }
     else
     {
@@ -600,6 +604,7 @@ function eventize(target, secret)
         {
           deleteProperty( this.$$on, events[i] );
           deleteProperty( this.$$once, events[i] );
+          deleteProperty( this.$$after, events[i] );
         }
       }
       // Remove specific listener
@@ -609,6 +614,7 @@ function eventize(target, secret)
         {
           offListeners( this.$$on, events[i], callback );
           offListeners( this.$$once, events[i], callback );
+          offListeners( this.$$after, events[i], callback );
         }
       }
     }
@@ -667,6 +673,7 @@ function eventize(target, secret)
 
       triggerListeners( this.$$on, e, args, false );
       triggerListeners( this.$$once, e, args, true );
+      triggerListeners( this.$$after, e, args, false )
     }
 
     return this;
@@ -676,6 +683,7 @@ function eventize(target, secret)
   {
     target.$on = on;
     target.$once = once;
+    target.$after = after;
     target.$off = off;
     target.$trigger = trigger;
   }
@@ -683,6 +691,7 @@ function eventize(target, secret)
   {
     target.on = on;
     target.once = once;
+    target.after = after;
     target.off = off;
     target.trigger = trigger;
   }
@@ -771,6 +780,7 @@ Neuro.Events = {
   CREATION: 0,                // options
 
   REST: 1,                    // options
+  AUTO_REFRESH: 73,           // 
 
   REMOTE_UPDATE: 2,           // encoded, NeuroModel
   REMOTE_CREATE: 3,           // encoded, NeuroModel
@@ -855,7 +865,7 @@ Neuro.Events = {
   BELONGSTO_POSTREMOVE: 69,    // NeuroModel, relation
   BELONGSTO_CLEAR_KEY: 70,     // NeuroModel, local
   BELONGSTO_UPDATE_KEY: 71,    // NeuroModel, local, NeuroModel, foreign
-  BELONGSTO_LOADED: 71         // NeuroModel, relation, [NeuroModel]
+  BELONGSTO_LOADED: 72         // NeuroModel, relation, [NeuroModel]
 
 };
 
@@ -1034,6 +1044,9 @@ function NeuroDatabase(options)
 
   this.localLoaded = false;
   this.remoteLoaded = false;
+
+  this.remoteOperations = 0;
+  this.afterOnline = false;
 
   this.rest = Neuro.rest( this );
   this.store = Neuro.store( this );
@@ -1611,6 +1624,11 @@ NeuroDatabase.prototype =
   {
     var db = this;
 
+    if ( db.loadRemote !== false && db.autoRefresh )
+    {
+      Neuro.after( 'online', db.onOnline, db );
+    }
+
     if ( db.cache === false )
     {
       if ( db.loadRemote !== false )
@@ -1704,6 +1722,33 @@ NeuroDatabase.prototype =
     }
   },
 
+  onOnline: function()
+  {
+    this.afterOnline = true;
+
+    if ( this.remoteOperations === 0 )
+    {
+      this.onRemoteRest();
+    }
+  },
+
+  onRemoteRest: function()
+  {
+    var db = this;
+
+    if ( db.autoRefresh && db.remoteLoaded )
+    {
+      if ( db.afterOnline )
+      {
+        db.afterOnline = false;
+        
+        Neuro.debug( Neuro.Events.AUTO_REFRESH, db );
+
+        db.refresh();
+      }
+    }
+  },
+
   // Loads all data remotely
   refresh: function()
   {
@@ -1762,17 +1807,7 @@ NeuroDatabase.prototype =
         {
           db.pendingRefresh = true;
 
-          Neuro.once('online', function()
-          {
-            Neuro.debug( Neuro.Events.REMOTE_LOAD_RESUME, db );
-
-            if ( db.pendingRefresh )
-            {
-              db.pendingRefresh = false;
-
-              db.refresh(); 
-            }
-          })
+          Neuro.once( 'online', db.onRefreshOnline, db );
         }
 
         Neuro.debug( Neuro.Events.REMOTE_LOAD_OFFLINE, db );
@@ -1786,6 +1821,20 @@ NeuroDatabase.prototype =
       }
     }
   
+  },
+
+  onRefreshOnline: function()
+  {
+    var db = this;
+
+    Neuro.debug( Neuro.Events.REMOTE_LOAD_RESUME, db );
+
+    if ( db.pendingRefresh )
+    {
+      db.pendingRefresh = false;
+
+      db.refresh(); 
+    }
   },
 
   // The reference to all of the models in the database
@@ -2627,6 +2676,8 @@ NeuroOperation.prototype =
 
   execute: function()
   {
+    this.db.remoteOperations++;
+
     this.run( this.db, this.model );
   },
 
@@ -2644,6 +2695,13 @@ NeuroOperation.prototype =
       if ( this.model.$operation = this.next )
       {
         this.next.execute();
+      }
+
+      this.db.remoteOperations--;
+
+      if ( this.db.remoteOperations === 0 )
+      {
+        this.db.onRemoteRest();
       }
     }
 
@@ -2700,21 +2758,6 @@ NeuroOperation.prototype =
 
 };
 
-/**
-
-$operation;
-
-$addOperation: function(OperationType) {
-  var operation = new OperationType( this );
-  if ( !this.$operation ) {
-    this.$operation = operation;
-    this.$operation.execute();
-  } else {
-    this.$operation.queue( operation );
-  }
-}
-
- */
 function NeuroRemoveLocal(model)
 {
   this.reset( model );
@@ -2788,6 +2831,8 @@ extend( new NeuroOperation( true, 'NeuroRemoveNow' ), NeuroRemoveNow,
   {
     var key = model.$key();
 
+    model.$pendingSave = false;
+
     if ( db.models.has( key ) )
     {
       db.models.remove( key );
@@ -2830,7 +2875,6 @@ extend( new NeuroOperation( true, 'NeuroRemoveRemote' ), NeuroRemoveRemote,
 
   onFailure: function(data, status)
   {
-    var operation = this;
     var key = this.key;
     var model = this.model;
 
@@ -2852,12 +2896,7 @@ extend( new NeuroOperation( true, 'NeuroRemoveRemote' ), NeuroRemoveRemote,
       // If we are offline, wait until we're online again to resume the delete
       if (!Neuro.online) 
       {
-        Neuro.once('online', function() 
-        {
-          Neuro.debug( Neuro.Events.REMOVE_RESUME, operation, model );
-
-          model.$addOperation( NeuroRemoveRemote );
-        });
+        Neuro.once( 'online', this.handleOnline, this );
       }
 
       Neuro.debug( Neuro.Events.REMOVE_OFFLINE, this, model );
@@ -2882,11 +2921,18 @@ extend( new NeuroOperation( true, 'NeuroRemoveRemote' ), NeuroRemoveRemote,
       op: NeuroDatabase.Live.Remove,
       key: key
     });
+  },
+
+  handleOnline: function()
+  {
+    var model = this.model;
+
+    Neuro.debug( Neuro.Events.REMOVE_RESUME, this, model );
+
+    model.$addOperation( NeuroRemoveRemote );
   }
 
 });
-
-NeuroRemoveRemote.prototype = new NeuroOperation( true, 'NeuroRemoveRemote' );
 
 
 function NeuroSaveLocal(model)
@@ -2907,6 +2953,8 @@ extend( new NeuroOperation( false, 'NeuroSaveLocal' ), NeuroSaveLocal,
       return this.finish();
     }
 
+    // Fill the key if need be
+    var key = model.$key();
     var encoded = model.$toJSON( false );
 
     // If this model doesn't have a local copy yet - create it.
@@ -2920,7 +2968,7 @@ extend( new NeuroOperation( false, 'NeuroSaveLocal' ), NeuroSaveLocal,
       transfer( encoded, model.$local );
     }
 
-    db.store.put( model.$key(), model.$local, this.success(), this.failure() );
+    db.store.put( key, model.$local, this.success(), this.failure() );
   },
 
   onSuccess: function(key, encoded, previousValue)
@@ -3034,16 +3082,7 @@ extend( new NeuroOperation( false, 'NeuroSaveRemote' ), NeuroSaveRemote,
       {
         model.$pendingSave = true;
 
-        Neuro.once('online', function() 
-        {
-          if ( model.$pendingSave )
-          { 
-            model.$pendingSave = false;
-            model.$addOperation( NeuroSaveRemote );
-
-            Neuro.debug( Neuro.Events.SAVE_RESUME, operation, model );
-          }
-        });
+        Neuro.once( 'online', this.handleOnline, this );
       }
 
       Neuro.debug( Neuro.Events.SAVE_OFFLINE, this, model );
@@ -3100,6 +3139,19 @@ extend( new NeuroOperation( false, 'NeuroSaveRemote' ), NeuroSaveRemote,
       model: saving,
       key: this.key
     });
+  },
+
+  handleOnline: function()
+  {
+    var model = this.model;
+
+    if ( model.$pendingSave )
+    { 
+      model.$pendingSave = false;
+      model.$addOperation( NeuroSaveRemote );
+
+      Neuro.debug( Neuro.Events.SAVE_RESUME, this, model );
+    }
   }
 
 });
@@ -3443,6 +3495,23 @@ NeuroRelation.prototype =
     return false;
   },
 
+  grabModel: function(isRelated, forModel, input, callback)
+  {
+    if ( this.discriminated )
+    {
+      if ( this.grabDiscriminated( input, callback ) )
+      {
+        return true;
+      }
+      else
+      {
+        var discriminator = this.getDiscriminatorByType( forModel );
+
+        
+      }
+    }
+  },
+
   grabDiscriminated: function(input, callback)
   {
     if ( isObject( input ) )
@@ -3452,8 +3521,12 @@ NeuroRelation.prototype =
       if ( db !== false )
       {
         db.grabModel( input, callack, this );
+
+        return true;
       }
     }
+
+    return true;
   },
 
   getDiscriminatorByType: function(model)
@@ -3859,7 +3932,7 @@ extend( new NeuroRelation(), NeuroHasMany,
     } 
     else
     {
-      this.loadAllRelated( isRelated, this.handleLazyLoad( relation ) );
+      relatedDatabase.ready( this.handleLazyLoad( relation ), this );
     }
 
     // We only need to set the property once since the underlying array won't change.
@@ -4055,8 +4128,9 @@ extend( new NeuroRelation(), NeuroHasMany,
 
   handleLazyLoad: function(relation)
   {
-    return function (related)
+    return function (relatedDatabase)
     {
+      var related = relatedDatabase.models.filter( relation.isRelated );
       var models = related.values;
 
       this.bulk( relation, function()
@@ -4676,12 +4750,14 @@ extend( new NeuroRelation(), NeuroHasOne,
   load: function(model)
   {
     var that = this;
+    var isRelated = this.isRelated( model );
     var relatedDatabase = this.model.Database;
     var initial = model[ this.name ];
 
     var relation = model.$relations[ this.name ] = 
     {
       initial: initial,
+      isRelated: isRelated,
       model: null,
       loaded: false,
       dirty: false,
@@ -4703,7 +4779,7 @@ extend( new NeuroRelation(), NeuroHasOne,
 
         Neuro.debug( Neuro.Events.HASONE_NINJA_SAVE, that, model, relation );
 
-        if ( !this.hasForeignKey( model, relation.model ) )
+        if ( !isRelated( relation.model ) )
         {
           this.clearModel( relation );
           this.clearForeignKey( model );
@@ -4738,7 +4814,7 @@ extend( new NeuroRelation(), NeuroHasOne,
       var related = relatedDatabase.parseModel( input );
       var relation = model.$relations[ this.name ];
 
-      if ( related && !this.hasForeignKey( model, related ) )
+      if ( related && !relation.isRelated( related ) )
       {
         this.clearModel( relation );
         this.setRelated( model, relation, related );
@@ -4808,7 +4884,7 @@ extend( new NeuroRelation(), NeuroHasOne,
     {
       var related = relation.model;  
 
-      if ( !this.hasForeignKey( model, related ) )
+      if ( !relation.isRelated( related ) )
       {
         // this.set( model, model[ this.local ] ) ?
       }
@@ -4897,13 +4973,16 @@ extend( new NeuroRelation(), NeuroHasOne,
     };
   },
 
-  hasForeignKey: function(model, related)
+  isRelated: function(model)
   {
     var relatedDatabase = this.model.Database;
     var local = this.local;
     var foreign = relatedDatabase.key;
 
-    return propsMatch( model, local, related, foreign );
+    return function hasForeignKey(related)
+    {
+      return propsMatch( model, local, related, foreign );
+    };
   },
 
   clearForeignKey: function(model)

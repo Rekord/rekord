@@ -20,12 +20,23 @@ Neuro.live = (function()
 
     Neuro.debug( Neuro.Events.PUBSUB_CREATED, pubsub );
 
-    channel.onpublish = onPublish;
+    function handlePublish(message)
+    {
+      if ( !Neuro.forceOffline )
+      {
+        onPublish( message );
+      }
+    }
 
     function publish(message)
     {
-      channel.publish( message );
+      if ( !Neuro.forceOffline )
+      {
+        channel.publish( message );
+      }
     };
+
+    channel.onpublish = handlePublish;
 
     publish.pubsub = pubsub;
     publish.channel = channel;
