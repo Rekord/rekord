@@ -727,6 +727,18 @@ function Neuro(options)
   model.Database = database;
   model.Model = model;
 
+  model.all = function()
+  {
+    return database.getModels();
+  };
+
+  model.create = function(props)
+  {
+    var inst = new model( props );
+    inst.$save();
+    return inst;
+  };
+
   Neuro.cache[ options.name ] = model;
   Neuro.cache[ options.className ] = model;
 
@@ -1042,6 +1054,8 @@ function NeuroDatabase(options)
   this.initialized = false;
   this.pendingRefresh = false;
 
+  this.keySeparator = options.keySeparator || NeuroDatabase.Defaults.keySeparator;
+
   this.localLoaded = false;
   this.remoteLoaded = false;
 
@@ -1101,6 +1115,11 @@ NeuroDatabase.Live =
 {
   Save:         'SAVE',
   Remove:       'REMOVE'
+};
+
+NeuroDatabase.Defaults = 
+{
+  keySeparator: '/'
 };
 
 NeuroDatabase.prototype =
@@ -1261,7 +1280,7 @@ NeuroDatabase.prototype =
 
     if ( isArray( key ) )
     {
-      key = key.join( this.keySeparator || '/' );
+      key = key.join( this.keySeparator );
     }
     
     return key;
@@ -1316,20 +1335,7 @@ NeuroDatabase.prototype =
   // Builds a key from an array
   buildKeyFromArray: function(arr)
   {
-    var ks = this.keySeparator || '/';
-    var key = '';
-
-    for (var i = 0; i < arr.length; i++)
-    {
-      if (i > 0)
-      {
-        key += ks;
-      }
-
-      key += arr[ i ];
-    }
-
-    return key;
+    return arr.join( this.keySeparator );
   },
 
   // Gets the key from the given model
@@ -2184,6 +2190,13 @@ NeuroModel.prototype =
     {
       relation.unrelate( this, unrelated );
     }
+  },
+
+  $isRelated: function(prop, related)
+  {
+    var relation = this.$getRelation( prop );
+
+    return relation && relation.isRelated( this, related );
   },
 
   $getRelation: function(prop)
@@ -3272,6 +3285,11 @@ NeuroRelation.prototype =
 
   },
 
+  isRelated: function(model, input)
+  {
+
+  },
+
   get: function(model)
   {
 
@@ -3712,6 +3730,16 @@ extend( new NeuroRelation(), NeuroBelongsTo,
   },
 
   // same as HasOne
+  isRelated: function(model, input)
+  {
+    var relatedDatabase = this.model.Database;
+    var relation = model.$relations[ this.name ];
+    var related = relatedDatabase.parseModel( input );
+
+    return related === relation.model;
+  },
+
+  // same as HasOne
   setRelated: function(model, relation, related)
   {
     this.setModel( relation, related );
@@ -3865,6 +3893,7 @@ extend( new NeuroRelation(), NeuroHasMany,
     this.comparator = createComparator( options.comparator );
     this.cascadeRemove = !!options.cascadeRemove;
     this.cascadeSave = !!options.cascadeSave;
+    this.clearKey = this.ownsForeignKey();
 
     Neuro.debug( Neuro.Events.HASMANY_INIT, this );
   },
@@ -3873,7 +3902,7 @@ extend( new NeuroRelation(), NeuroHasMany,
   {
     var that = this;
     var relatedDatabase = this.model.Database;
-    var isRelated = this.isRelated( model );
+    var isRelated = this.isRelatedFactory( model );
     var initial = model[ this.name ];
  
     var relation = model.$relations[ this.name ] =
@@ -3917,6 +3946,25 @@ extend( new NeuroRelation(), NeuroHasMany,
 
     // When models are added to the related database, check if it's related to this model
     relatedDatabase.on( 'model-added', this.handleModelAdded( relation ), this );
+
+    // Add convenience methods to the underlying array
+    var related = relation.models.values;
+    var relationHandler = this;
+    
+    related.relate = function(input)
+    {
+      relationHandler.relate( model, input );
+    };
+    
+    related.unrelate = function(input)
+    {
+      relationHandler.unrelate( model, input );
+    };
+    
+    related.isRelated = function(input)
+    {
+      return relationHandler.isRelated( model, input );
+    };
     
     // If the model's initial value is an array, populate the relation from it!
     if ( isArray( initial ) )
@@ -4022,6 +4070,36 @@ extend( new NeuroRelation(), NeuroHasMany,
         this.removeModel( relation, all[ i ] );
       }
     }
+  },
+
+  isRelated: function(model, input)
+  {
+    var relatedDatabase = this.model.Database;
+    var relation = model.$relations[ this.name ];
+    var existing = relation.models;
+    
+    if ( this.isModelArray( input ) )
+    {
+      for (var i = 0; i < input.length; i++)
+      {
+        var related = relatedDatabase.parseModel( input[ i ] );
+
+        if ( related && !existing.has( related.$key() ) )
+        {
+          return false;
+        }
+      }
+
+      return input.length > 0;
+    }
+    else if ( isValue( input ) )
+    {
+      var related = relatedDatabase.parseModel( input );
+
+      return related && existing.has( related.$key() );
+    }
+
+    return false;
   },
 
   get: function(model)
@@ -4182,18 +4260,55 @@ extend( new NeuroRelation(), NeuroHasMany,
       related.$off( 'removed', relation.onRemoved );
       related.$off( 'saved remote-update', relation.onSaved );
 
-      this.clearForeignKey( related );
-
       if ( !alreadyRemoved && this.cascadeRemove )
       {
         related.$remove();
       }
 
+      this.clearForeignKey( related );
       this.sort( relation );
       this.checkSave( relation );
     }
 
     delete pending[ key ];
+  },
+
+  ownsForeignKey: function()
+  {
+    var foreign = this.foreign;
+    var relatedKey = this.model.Database.key;
+
+    if ( isString( foreign ) )
+    {
+      if ( isArray( relatedKey ) )
+      {
+        return indexOf( relatedKey, foreign ) === false;
+      }
+      else        
+      {
+        return relatedKey !== foreign;
+      }
+    }
+    else // if ( isArray( ))
+    {
+      if ( isArray( relatedKey ) )
+      {
+        for (var i = 0; i < foreign.length; i++)
+        {
+          if ( indexOf( relatedKey, foreign[ i ] ) !== false )
+          {
+            return false;
+          }
+        }
+        return true;
+      }
+      else
+      {
+        return indexOf( foreign, relatedKey ) === false;
+      }
+    }
+
+    return true;
   },
 
   updateForeignKey: function(model, related)
@@ -4206,9 +4321,12 @@ extend( new NeuroRelation(), NeuroHasMany,
 
   clearForeignKey: function(related)
   {
-    var foreign = this.foreign;
+    if ( this.clearKey )
+    {
+      var foreign = this.foreign;
 
-    this.clearFields( related, foreign );
+      this.clearFields( related, foreign );
+    }
   },
 
   isModelArray: function(input)
@@ -4235,14 +4353,14 @@ extend( new NeuroRelation(), NeuroHasMany,
     {
       if ( !isNumber( input[ i ] ) && !isString( input[ i ] ) )
       {
-        return false;
+        return true;
       }
     }
 
-    return true;
+    return false;
   },
 
-  isRelated: function(model)
+  isRelatedFactory: function(model)
   {
     var foreign = this.foreign;
     var local = model.$db.key;
@@ -4750,7 +4868,7 @@ extend( new NeuroRelation(), NeuroHasOne,
   load: function(model)
   {
     var that = this;
-    var isRelated = this.isRelated( model );
+    var isRelated = this.isRelatedFactory( model );
     var relatedDatabase = this.model.Database;
     var initial = model[ this.name ];
 
@@ -4849,6 +4967,15 @@ extend( new NeuroRelation(), NeuroHasOne,
       this.clearModel( relation );
       this.clearForeignKey( model );
     }
+  },
+
+  isRelated: function(model, input)
+  {
+    var relatedDatabase = this.model.Database;
+    var relation = model.$relations[ this.name ];
+    var related = relatedDatabase.parseModel( input );
+
+    return related === relation.model;
   },
 
   setRelated: function(model, relation, related)
@@ -4973,7 +5100,7 @@ extend( new NeuroRelation(), NeuroHasOne,
     };
   },
 
-  isRelated: function(model)
+  isRelatedFactory: function(model)
   {
     var relatedDatabase = this.model.Database;
     var local = this.local;

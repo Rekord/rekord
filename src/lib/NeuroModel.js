@@ -196,6 +196,13 @@ NeuroModel.prototype =
     }
   },
 
+  $isRelated: function(prop, related)
+  {
+    var relation = this.$getRelation( prop );
+
+    return relation && relation.isRelated( this, related );
+  },
+
   $getRelation: function(prop)
   {
     var databaseRelations = this.$db.relations;

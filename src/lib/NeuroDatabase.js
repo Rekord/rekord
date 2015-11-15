@@ -9,6 +9,8 @@ function NeuroDatabase(options)
   this.initialized = false;
   this.pendingRefresh = false;
 
+  this.keySeparator = options.keySeparator || NeuroDatabase.Defaults.keySeparator;
+
   this.localLoaded = false;
   this.remoteLoaded = false;
 
@@ -68,6 +70,11 @@ NeuroDatabase.Live =
 {
   Save:         'SAVE',
   Remove:       'REMOVE'
+};
+
+NeuroDatabase.Defaults = 
+{
+  keySeparator: '/'
 };
 
 NeuroDatabase.prototype =
@@ -228,7 +235,7 @@ NeuroDatabase.prototype =
 
     if ( isArray( key ) )
     {
-      key = key.join( this.keySeparator || '/' );
+      key = key.join( this.keySeparator );
     }
     
     return key;
@@ -283,20 +290,7 @@ NeuroDatabase.prototype =
   // Builds a key from an array
   buildKeyFromArray: function(arr)
   {
-    var ks = this.keySeparator || '/';
-    var key = '';
-
-    for (var i = 0; i < arr.length; i++)
-    {
-      if (i > 0)
-      {
-        key += ks;
-      }
-
-      key += arr[ i ];
-    }
-
-    return key;
+    return arr.join( this.keySeparator );
   },
 
   // Gets the key from the given model

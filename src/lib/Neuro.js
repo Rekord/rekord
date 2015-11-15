@@ -29,6 +29,18 @@ function Neuro(options)
   model.Database = database;
   model.Model = model;
 
+  model.all = function()
+  {
+    return database.getModels();
+  };
+
+  model.create = function(props)
+  {
+    var inst = new model( props );
+    inst.$save();
+    return inst;
+  };
+
   Neuro.cache[ options.name ] = model;
   Neuro.cache[ options.className ] = model;
 

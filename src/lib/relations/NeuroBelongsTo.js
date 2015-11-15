@@ -117,6 +117,16 @@ extend( new NeuroRelation(), NeuroBelongsTo,
   },
 
   // same as HasOne
+  isRelated: function(model, input)
+  {
+    var relatedDatabase = this.model.Database;
+    var relation = model.$relations[ this.name ];
+    var related = relatedDatabase.parseModel( input );
+
+    return related === relation.model;
+  },
+
+  // same as HasOne
   setRelated: function(model, relation, related)
   {
     this.setModel( relation, related );

@@ -115,6 +115,11 @@ NeuroRelation.prototype =
 
   },
 
+  isRelated: function(model, input)
+  {
+
+  },
+
   get: function(model)
   {
 

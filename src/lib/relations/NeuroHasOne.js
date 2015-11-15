@@ -20,7 +20,7 @@ extend( new NeuroRelation(), NeuroHasOne,
   load: function(model)
   {
     var that = this;
-    var isRelated = this.isRelated( model );
+    var isRelated = this.isRelatedFactory( model );
     var relatedDatabase = this.model.Database;
     var initial = model[ this.name ];
 
@@ -119,6 +119,15 @@ extend( new NeuroRelation(), NeuroHasOne,
       this.clearModel( relation );
       this.clearForeignKey( model );
     }
+  },
+
+  isRelated: function(model, input)
+  {
+    var relatedDatabase = this.model.Database;
+    var relation = model.$relations[ this.name ];
+    var related = relatedDatabase.parseModel( input );
+
+    return related === relation.model;
   },
 
   setRelated: function(model, relation, related)
@@ -243,7 +252,7 @@ extend( new NeuroRelation(), NeuroHasOne,
     };
   },
 
-  isRelated: function(model)
+  isRelatedFactory: function(model)
   {
     var relatedDatabase = this.model.Database;
     var local = this.local;
