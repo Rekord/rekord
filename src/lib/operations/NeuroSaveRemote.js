@@ -20,10 +20,13 @@ extend( new NeuroOperation( false, 'NeuroSaveRemote' ), NeuroSaveRemote,
     var key = this.key = model.$key();
 
     // The fields that have changed since last save
-    var saving = this.saving = model.$getChanges( true );
+    var encoded = this.encoded = model.$toJSON( true );
+    var changes = this.changes = model.$getChanges( encoded );
+    var saving = this.saving = db.fullSave ? encoded : changes;
+    var publishing = this.publishing = db.fullPublish ? encoded : changes;
 
     // If there's nothing to save, don't bother!
-    if ( isEmpty( saving ) )
+    if ( isEmpty( changes ) )
     {
       return this.finish();
     }
@@ -87,6 +90,7 @@ extend( new NeuroOperation( false, 'NeuroSaveRemote' ), NeuroSaveRemote,
     var db = this.db;
     var model = this.model;
     var saving = this.saving;
+    var publishing = this.publishing;
 
     // Check deleted one more time before updating model.
     if ( model.$deleted )
@@ -129,7 +133,7 @@ extend( new NeuroOperation( false, 'NeuroSaveRemote' ), NeuroSaveRemote,
 
     db.live({
       op: NeuroDatabase.Live.Save,
-      model: saving,
+      model: publishing,
       key: this.key
     });
   },

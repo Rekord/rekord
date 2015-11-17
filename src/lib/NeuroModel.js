@@ -315,10 +315,10 @@ NeuroModel.prototype =
     return !(this.$saved || this.$local);
   },
 
-  $getChanges: function()
+  $getChanges: function(alreadyEncoded)
   {
     var saved = this.$saved;
-    var encoded = this.$toJSON( true );
+    var encoded = alreadyEncoded || this.$toJSON( true );
     var fields = this.$db.fields;
 
     return saved ? diff( encoded, saved, fields, equals ) : encoded;
