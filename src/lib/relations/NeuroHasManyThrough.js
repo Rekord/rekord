@@ -1,23 +1,40 @@
-function NeuroHasMany()
+function NeuroHasManyThrough()
 {
-  this.type = 'hasMany';
+  this.type = 'hasManyThrough';
 }
 
-Neuro.Relations.hasMany = NeuroHasMany;
+Neuro.Relations.hasManyThrough = NeuroHasManyThrough;
 
-extend( new NeuroRelation(), NeuroHasMany, 
+extend( new NeuroRelation(), NeuroHasManyThrough, 
 {
 
   onInitialized: function(database, field, options)
   {
-    this.foreign = options.foreign || ( database.name + '_' + database.key );
+    var relatedDatabase = this.model.Database;
+
+    this.foreign = options.foreign || ( relatedDatabase.name + '_' + relatedDatabase.key );
+    this.local = options.local || ( database.name + '_' + database.key );
+
     this.comparator = createComparator( options.comparator );
     this.cascadeRemove = !!options.cascadeRemove;
     this.cascadeSave = !!options.cascadeSave;
-    this.clearKey = this.ownsForeignKey();
 
-    Neuro.debug( Neuro.Events.HASMANY_INIT, this );
-    
+    if ( !isNeuro( options.through ) )
+    {
+      Neuro.get( options.through, this.setThrough, this );
+    }
+    else
+    {
+      this.setThrough( options.through );
+    }
+
+    Neuro.debug( Neuro.Events.HASMANYTHRU_INIT, this );
+  },
+
+  setThrough: function(through)
+  {
+    this.through = through;
+
     this.finishInitialization();
   },
 
@@ -25,6 +42,7 @@ extend( new NeuroRelation(), NeuroHasMany,
   {
     var that = this;
     var relatedDatabase = this.model.Database;
+    var throughDatabase = this.through.Database;
     var isRelated = this.isRelatedFactory( model );
     var initial = model[ this.name ];
  
@@ -35,13 +53,14 @@ extend( new NeuroRelation(), NeuroHasMany,
       initial: initial,
       pending: {},
       models: new NeuroMap(),
+      throughs: new NeuroMap(),
       saving: false,
       delaySorting: false,
       delaySaving: false,
 
       onRemoved: function() // this = model removed
       {
-        that.removeModel( relation, this, true );
+        that.removeModel( relation, this );
       },
 
       onSaved: function() // this = model saved
@@ -51,15 +70,13 @@ extend( new NeuroRelation(), NeuroHasMany,
           return;
         }
 
-        if ( !isRelated( this ) )
-        {
-          that.removeModel( relation, this );
-        }
-        else
-        {
-          that.sort( relation );
-          that.checkSave( relation );
-        }
+        that.sort( relation );
+        that.checkSave( relation );
+      },
+
+      onThroughRemoved: function() // this = through removed
+      {
+        that.removeModelFromThrough( relation, this );
       }
 
     };
@@ -68,7 +85,7 @@ extend( new NeuroRelation(), NeuroHasMany,
     model.$key();
 
     // When models are added to the related database, check if it's related to this model
-    relatedDatabase.on( 'model-added', this.handleModelAdded( relation ), this );
+    throughDatabase.on( 'model-added', this.handleModelAdded( relation ), this );
 
     // Add convenience methods to the underlying array
     var related = relation.models.values;
@@ -87,7 +104,7 @@ extend( new NeuroRelation(), NeuroHasMany,
     {
       return that.isRelated( model, input );
     };
-    
+
     // If the model's initial value is an array, populate the relation from it!
     if ( isArray( initial ) )
     {
@@ -99,10 +116,10 @@ extend( new NeuroRelation(), NeuroHasMany,
         relation.pending[ key ] = true;
         relatedDatabase.grabModel( input, this.handleModel( relation ), this );
       }
-    } 
+    }
     else
     {
-      relatedDatabase.ready( this.handleLazyLoad( relation ), this );
+      throughDatabase.ready( this.handleLazyLoad( relation ), this );
     }
 
     // We only need to set the property once since the underlying array won't change.
@@ -276,7 +293,7 @@ extend( new NeuroRelation(), NeuroHasMany,
     {
       this.bulk( relation, function()
       {
-        var models = relation.models.values;
+        var models = relation.throughs.values;
 
         for (var i = 0; i < models.length; i++)
         {
@@ -301,11 +318,11 @@ extend( new NeuroRelation(), NeuroHasMany,
 
   handleModelAdded: function(relation)
   {
-    return function (related)
+    return function (through)
     {
-      if ( relation.isRelated( related ) )
+      if ( relation.isRelated( through ) )
       {
-        this.addModel( relation, related );
+        this.addModelFromThrough( relation, through );
       }
     };
   },
@@ -315,29 +332,35 @@ extend( new NeuroRelation(), NeuroHasMany,
     return function (related)
     {
       var pending = relation.pending;
-      var key = related.$key();
+      var relatedKey = related.$key();
 
-      if ( key in pending )
+      if ( relatedKey in pending )
       {
         this.addModel( relation, related, true );
 
-        delete pending[ key ];
+        delete pending[ relatedKey ];
       }
     };
   },
 
   handleLazyLoad: function(relation)
   {
-    return function (relatedDatabase)
+    return function (throughDatabase)
     {
-      var related = relatedDatabase.models.filter( relation.isRelated );
-      var models = related.values;
+      var throughsAll = throughDatabase.models;
+      var throughsRelated = throughsAll.filter( relation.isRelated );
+      var throughs = throughsRelated.values;
+
+      if ( throughs.length === 0 )
+      {
+        return;
+      }
 
       this.bulk( relation, function()
       {
-        for (var i = 0; i < models.length; i++)
+        for (var i = 0; i < throughs.length; i++)
         {
-          this.addModel( relation, models[ i ] );
+          this.addModelFromThrough( relation, throughs[ i ] );
         }
       });
     };
@@ -345,18 +368,81 @@ extend( new NeuroRelation(), NeuroHasMany,
 
   addModel: function(relation, related, skipCheck)
   {
-    var target = relation.models;
-    var key = related.$key();
-    var adding = !target.has( key );
+    var adding = this.finishAddModel( relation, related, skipCheck );
 
     if ( adding )
     {
-      target.put( key, related );
+      this.addThrough( relation, related );
+    }
+    
+    return adding;
+  },
+
+  addThrough: function(relation, related)
+  {
+    var throughDatabase = this.through.Database;
+    var throughKey = this.createThroughKey( relation, related );
+
+    throughDatabase.grabModel( throughKey, this.onAddThrough( relation ), this, false );
+  },
+
+  onAddThrough: function(relation)
+  {
+    var throughs = relation.throughs;
+
+    return function(through)
+    {
+      var key = through.$key();
+
+      if ( !throughs.has( key ) )
+      { 
+        throughs.put( key, through );
+
+        through.$on( 'removed', relation.onThroughRemoved );
+      }
+
+      through.$save();
+    };
+  },
+
+  addModelFromThrough: function(relation, through)
+  {
+    var relatedDatabase = this.model.Database;
+    var relatedKey = relatedDatabase.buildKey( through, this.foreign );
+
+    relatedDatabase.grabModel( relatedKey, this.onAddModelFromThrough( relation, through ), this );
+  },
+
+  onAddModelFromThrough: function(relation, through)
+  {
+    var throughs = relation.throughs;
+    var throughKey = through.$key();
+
+    return function(related)
+    {
+      if ( !throughs.has( throughKey ) )
+      {
+        throughs.put( throughKey, through );
+
+        through.$on( 'removed', relation.onThroughRemoved );
+      }
+
+      this.finishAddModel( relation, related );
+    };
+  },
+
+  finishAddModel: function(relation, related, skipCheck)
+  {
+    var relateds = relation.models;
+    var relatedKey = related.$key();
+    var adding = !relateds.has( relatedKey );
+
+    if ( adding )
+    {
+      relateds.put( relatedKey, related );
 
       related.$on( 'removed', relation.onRemoved );
       related.$on( 'saved remote-update', relation.onSaved );
-
-      this.updateForeignKey( relation.parent, related );
 
       this.sort( relation );
 
@@ -371,84 +457,65 @@ extend( new NeuroRelation(), NeuroHasMany,
 
   removeModel: function(relation, related, alreadyRemoved)
   {
-    var target = relation.models;
-    var pending = relation.pending;
-    var key = related.$key();
+    var relatedKey = related.$key();
 
-    if ( target.has( key ) )
+    if ( this.finishRemoveRelated( relation, relatedKey ) )
     {
-      target.remove( key );
+      this.removeThrough( relation, related, alreadyRemoved );
+    }
+  },
+
+  removeThrough: function(relation, related, alreadyRemoved)
+  {
+    var throughDatabase = this.through.Database;
+    var keyObject = this.createThroughKey( relation, related );
+    var key = throughDatabase.getKey( keyObject );
+    var throughs = relation.throughs;
+    var through = throughs.get( key );
+
+    if ( through )
+    {
+      through.$off( 'removed', relation.onThroughRemoved );
+      through.$remove();
+      
+      throughs.remove( key );
+    }
+  },
+
+  removeModelFromThrough: function(relation, through)
+  {
+    var relatedDatabase = this.model.Database;
+    var throughDatabase = this.through.Database;
+    var throughs = relation.throughs;
+    var throughKey = through.$key();
+    var relatedKey = relatedDatabase.buildKey( through, this.foreign );
+    
+    through.$off( 'removed', relation.onThroughRemoved );
+    throughs.remove( throughKey );
+
+    this.finishRemoveRelated( relation, relatedKey );
+  },
+
+  finishRemoveRelated: function(relation, relatedKey)
+  {
+    var pending = relation.pending;
+    var relateds = relation.models;
+    var related = relateds.get( relatedKey );
+
+    if ( related )
+    {
+      relateds.remove( relatedKey );
 
       related.$off( 'removed', relation.onRemoved );
       related.$off( 'saved remote-update', relation.onSaved );
 
-      if ( !alreadyRemoved && this.cascadeRemove )
-      {
-        related.$remove();
-      }
-
-      this.clearForeignKey( related );
       this.sort( relation );
       this.checkSave( relation );
     }
 
-    delete pending[ key ];
-  },
+    delete pending[ relatedKey ];
 
-  ownsForeignKey: function()
-  {
-    var foreign = this.foreign;
-    var relatedKey = this.model.Database.key;
-
-    if ( isString( foreign ) )
-    {
-      if ( isArray( relatedKey ) )
-      {
-        return indexOf( relatedKey, foreign ) === false;
-      }
-      else        
-      {
-        return relatedKey !== foreign;
-      }
-    }
-    else // if ( isArray( ))
-    {
-      if ( isArray( relatedKey ) )
-      {
-        for (var i = 0; i < foreign.length; i++)
-        {
-          if ( indexOf( relatedKey, foreign[ i ] ) !== false )
-          {
-            return false;
-          }
-        }
-        return true;
-      }
-      else
-      {
-        return indexOf( foreign, relatedKey ) === false;
-      }
-    }
-
-    return true;
-  },
-
-  updateForeignKey: function(model, related)
-  {
-    var foreign = this.foreign;
-    var local = model.$db.key;
-
-    this.updateFields( related, foreign, model, local );
-  },
-
-  clearForeignKey: function(related)
-  {
-    if ( this.clearKey )
-    {
-      var foreign = this.foreign;
-
-      this.clearFields( related, foreign );
-    }
+    return related;
   },
 
   isModelArray: function(input)
@@ -484,12 +551,12 @@ extend( new NeuroRelation(), NeuroHasMany,
 
   isRelatedFactory: function(model)
   {
-    var foreign = this.foreign;
-    var local = model.$db.key;
+    var foreign = model.$db.key;
+    var local = this.local;
 
-    return function(related)
+    return function(through)
     {
-      return propsMatch( related, foreign, model, local );
+      return propsMatch( through, local, model, foreign );
     };
   },
 
@@ -514,6 +581,46 @@ extend( new NeuroRelation(), NeuroHasMany,
 
       relation.parent.$trigger( 'relation-update', [this, relation] );
     }
+  },
+
+  createThroughKey: function(relation, related)
+  {
+    var model = relation.parent;
+    var modelDatabase = model.$db;
+    var relatedDatabase = this.model.Database;
+    var throughDatabase = this.through.Database;
+    var throughKey = throughDatabase.key;
+    var key = {};
+
+    for (var i = 0; i < throughKey.length; i++)
+    {
+      var prop = throughKey[ i ];
+
+      if ( prop === this.foreign )
+      {
+        key[ prop ] = related.$key();
+      }
+      else if ( prop === this.local )
+      {
+        key[ prop ] = model.$key();
+      }
+      else if ( isArray( this.foreign ) )
+      {
+        var keyIndex = indexOf( this.foreign, prop );
+        var keyProp = relatedDatabase.key[ keyIndex ];
+
+        key[ prop ] = related[ keyProp ];
+      }
+      else if ( isArray( this.local ) )
+      {
+        var keyIndex = indexOf( this.local, prop );
+        var keyProp = modelDatabase.key[ keyIndex ];
+
+        key[ prop ] = model[ keyProp ];
+      }
+    }
+
+    return key;
   }
 
 });

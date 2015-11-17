@@ -39,10 +39,12 @@ NeuroRelation.prototype =
     this.save = options.save || Neuro.Save.None;
     this.auto = !!options.auto;
     this.property = !!options.property;
+    this.pendingLoads = [];
+    this.initialized = false;
     this.discriminator = options.discriminator || 'discriminator';
     this.discriminators = options.discriminators || {};
     this.discriminated = !!options.discriminators;
-
+    
     var setNeuro = this.setNeuro( database, field, options );
 
     if ( !isNeuro( options.model ) )
@@ -91,6 +93,20 @@ NeuroRelation.prototype =
 
   },
 
+  finishInitialization: function()
+  {
+    this.initialized = true;
+
+    var pending = this.pendingLoads;
+
+    for (var i = 0; i < pending.length; i++)
+    {
+      this.handleLoad( pending[ i ] );
+    }
+
+    pending.length = 0;
+  },
+
   /**
    * Loads the model.$relation variable with what is necessary to get, set, 
    * relate, and unrelate models. If serialize is true, look at model[ name ]
@@ -102,7 +118,19 @@ NeuroRelation.prototype =
    */
   load: function(model)
   {
-    
+    if ( !this.initialized )
+    {
+      this.pendingLoads.push( model );
+    }
+    else
+    {
+      this.handleLoad( model );
+    }
+  },
+
+  handleLoad: function(model)
+  {
+
   },
 
   relate: function(model, input)

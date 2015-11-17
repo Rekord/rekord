@@ -15,9 +15,11 @@ extend( new NeuroRelation(), NeuroBelongsTo,
     this.local = options.local || ( relatedDatabase.name + '_' + relatedDatabase.key );
 
     Neuro.debug( Neuro.Events.BELONGSTO_INIT, this );
+
+    this.finishInitialization();
   },
 
-  load: function(model)
+  handleLoad: function(model)
   {
     var that = this;
     var relatedDatabase = this.model.Database;

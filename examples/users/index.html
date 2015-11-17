@@ -27,7 +27,7 @@
         <div class="nameds">
           <ul class="collection">
             <li class="collection-item animated" ng-repeat="u in ctrl.users track by u.id">
-              <named model="u"></named>
+              <named model="u" related="groups"></named>
             </li>
           </ul>
         </div>
@@ -51,7 +51,7 @@
         <div class="nameds">
           <ul class="collection">
             <li class="collection-item animated" ng-repeat="g in ctrl.groups track by g.id">
-              <named model="g"></named>
+              <named model="g" related="users"></named>
             </li>
           </ul>
         </div>
@@ -149,6 +149,14 @@
                 property: true
               }
             },
+            hasManyThrough: {
+              groups: {
+                model: 'Group',
+                through: 'UserGroup',
+                cascadeRemove: true,
+                property: true
+              }
+            },
             toString: function(user) {
               return user.name;
             }
@@ -214,6 +222,14 @@
                 property: true
               }
             },
+            hasManyThrough: {
+              users: {
+                model: 'User',
+                through: 'UserGroup',
+                cascadeRemove: true,
+                property: true
+              }
+            },
             toString: function(group) {
               return group.name;
             }
@@ -229,7 +245,8 @@
           return {
             restrict: 'E',
             scope: {
-              model: '='
+              model: '=',
+              related: '@'
             },
             templateUrl: 'named.html',
             link: function(scope, element, attrs) 
@@ -322,20 +339,17 @@
           {
             if ( !this.user || !this.group ) return false;
 
-            return this.user.userGroups.isRelated( [this.user.id, this.group.id] );
+            return this.user.groups.isRelated( this.group.id );
           };
 
           this.unrelate = function()
           {
-            this.user.userGroups.unrelate( [this.user.id, this.group.id] );
+            this.user.groups.unrelate( this.group.id );
           };
 
           this.relate = function()
           {
-            this.user.userGroups.relate(UserGroup.create({
-              user_id: this.user.id,
-              group_id: this.group.id
-            }));
+            this.user.groups.relate( this.group.id );
           };
 
           window.UserGroupController = this;

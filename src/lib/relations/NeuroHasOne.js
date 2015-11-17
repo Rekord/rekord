@@ -15,9 +15,11 @@ extend( new NeuroRelation(), NeuroHasOne,
     this.local = options.local || ( relatedDatabase.name + '_' + relatedDatabase.key );
 
     Neuro.debug( Neuro.Events.HASONE_INIT, this );
+    
+    this.finishInitialization();
   },
 
-  load: function(model)
+  handleLoad: function(model)
   {
     var that = this;
     var isRelated = this.isRelatedFactory( model );

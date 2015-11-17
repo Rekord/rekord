@@ -128,14 +128,14 @@ NeuroDatabase.prototype =
   },
 
   // Grab a model with the given input and notify the callback
-  grabModel: function(input, callback, context)
+  grabModel: function(input, callback, context, fromStorage)
   {
     var db = this;
     var callbackContext = context || db;
 
     function checkModel()
     {
-      var result = db.parseModel( input, true );
+      var result = db.parseModel( input, fromStorage !== false );
 
       if ( result !== false )
       {
@@ -167,10 +167,11 @@ NeuroDatabase.prototype =
   parseModel: function(input, fromStorage)
   {
     var db = this;
+    var hasRemote = db.remoteLoaded || db.loadRemote === false;
 
     if ( !isValue( input ) )
     {
-      return db.remoteLoaded ? null : false;
+      return hasRemote ? null : false;
     }
 
     if ( isNeuro( input ) )
@@ -202,7 +203,7 @@ NeuroDatabase.prototype =
     {
       return db.putRemoteData( input, undefined, undefined, fromStorage );
     }
-    else if ( db.remoteLoaded )
+    else if ( hasRemote )
     {
       return null;
     }
