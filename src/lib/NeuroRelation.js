@@ -109,7 +109,7 @@ NeuroRelation.prototype =
 
   /**
    * Loads the model.$relation variable with what is necessary to get, set, 
-   * relate, and unrelate models. If serialize is true, look at model[ name ]
+   * relate, and unrelate models. If property is true, look at model[ name ]
    * to load models/keys. If it contains values that don't exist or aren't 
    * actually related
    * 

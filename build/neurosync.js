@@ -467,6 +467,13 @@ function createComparator(comparator)
  */
 function eventize(target, secret)
 {
+
+  var CALLBACK_FUNCTION = 0;
+  var CALLBACK_CONTEXT = 1;
+  var CALLBACK_GROUP = 2;
+
+  var triggerId = 0;
+
   /**
    * **See:** {{#crossLink "Core/eventize:method"}}{{/crossLink}}
    * 
@@ -495,7 +502,7 @@ function eventize(target, secret)
         $this[ property ][ events[i] ] = [];
       }
       
-      $this[ property ][ events[i] ].push( [ callback, context || $this ] );
+      $this[ property ][ events[i] ].push( [ callback, context || $this, 0 ] );
     }
   };
   
@@ -551,7 +558,7 @@ function eventize(target, secret)
       
       for (var k = eventListeners.length - 1; k >= 0; k--)
       {
-        if (eventListeners[ k ][0] === callback)
+        if (eventListeners[ k ][ CALLBACK_FUNCTION ] === callback)
         {
           eventListeners.splice( k, 1 );
         }
@@ -628,28 +635,30 @@ function eventize(target, secret)
     if (listeners && event in listeners)
     {
       var eventListeners = listeners[ event ];
-      var max = eventListeners.length;
+      var triggerGroup = ++triggerId;
      
-      for (var i = 0; i < max; i++)
+      for (var i = 0; i < eventListeners.length; i++)
       {
         var callback = eventListeners[ i ];
 
         if ( callback )
         {
-          callback[0].apply( callback[1], args );  
+          if ( callback[ CALLBACK_GROUP ] !== triggerGroup )
+          {
+            callback[ CALLBACK_GROUP ] = triggerGroup;
+            callback[ CALLBACK_FUNCTION ].apply( callback[ CALLBACK_CONTEXT ], args );
+
+            if ( callback !== eventListeners[ i ] )
+            {
+              i = -1;
+            }
+          }
         }
       }
       
       if ( clear )
       {
-        if ( eventListeners.length !== max )
-        {
-          listeners[ event ] = eventListeners.slice( max );  
-        }
-        else
-        {
-          delete listeners[ event ];  
-        }
+        delete listeners[ event ];
       }
     }
   }
@@ -762,11 +771,13 @@ Neuro.get = function(name, callback, context)
     }
     else
     {
-      function checkNeuro(neuro)
+      function checkNeuro()
       {
-        if ( neuro.name === name || neuro.className === name )
+        var cached = Neuro.cache[ name ];
+
+        if ( cached )
         {
-          callback.call( callbackContext, neuro );
+          callback.call( callbackContext, cached );
 
           Neuro.off( 'initialized', checkNeuro );
         }
@@ -1187,7 +1198,7 @@ NeuroDatabase.prototype =
         callback.call( callbackContext, result );
       }
 
-      return result;
+      return result === null ? false : true;
     }
 
     if ( checkModel() )
@@ -2312,10 +2323,10 @@ NeuroModel.prototype =
     return !(this.$saved || this.$local);
   },
 
-  $getChanges: function()
+  $getChanges: function(alreadyEncoded)
   {
     var saved = this.$saved;
-    var encoded = this.$toJSON( true );
+    var encoded = alreadyEncoded || this.$toJSON( true );
     var fields = this.$db.fields;
 
     return saved ? diff( encoded, saved, fields, equals ) : encoded;
@@ -3041,10 +3052,13 @@ extend( new NeuroOperation( false, 'NeuroSaveRemote' ), NeuroSaveRemote,
     var key = this.key = model.$key();
 
     // The fields that have changed since last save
-    var saving = this.saving = model.$getChanges( true );
+    var encoded = this.encoded = model.$toJSON( true );
+    var changes = this.changes = model.$getChanges( encoded );
+    var saving = this.saving = db.fullSave ? encoded : changes;
+    var publishing = this.publishing = db.fullPublish ? encoded : changes;
 
     // If there's nothing to save, don't bother!
-    if ( isEmpty( saving ) )
+    if ( isEmpty( changes ) )
     {
       return this.finish();
     }
@@ -3108,6 +3122,7 @@ extend( new NeuroOperation( false, 'NeuroSaveRemote' ), NeuroSaveRemote,
     var db = this.db;
     var model = this.model;
     var saving = this.saving;
+    var publishing = this.publishing;
 
     // Check deleted one more time before updating model.
     if ( model.$deleted )
@@ -3150,7 +3165,7 @@ extend( new NeuroOperation( false, 'NeuroSaveRemote' ), NeuroSaveRemote,
 
     db.live({
       op: NeuroDatabase.Live.Save,
-      model: saving,
+      model: publishing,
       key: this.key
     });
   },
@@ -3280,7 +3295,7 @@ NeuroRelation.prototype =
 
   /**
    * Loads the model.$relation variable with what is necessary to get, set, 
-   * relate, and unrelate models. If serialize is true, look at model[ name ]
+   * relate, and unrelate models. If property is true, look at model[ name ]
    * to load models/keys. If it contains values that don't exist or aren't 
    * actually related
    * 
@@ -3704,7 +3719,7 @@ extend( new NeuroRelation(), NeuroBelongsTo,
     {
       Neuro.debug( Neuro.Events.BELONGSTO_INITIAL, this, model, initial );
 
-      relatedDatabase.grabModel( initial, this.handleLoad( model, relation ), this );      
+      relatedDatabase.grabModel( initial, this.handleModel( model, relation ), this );      
     }
   },
 
@@ -3836,7 +3851,7 @@ extend( new NeuroRelation(), NeuroBelongsTo,
   },
 
   // same as HasOne
-  handleLoad: function(model, relation)
+  handleModel: function(model, relation)
   {
     return function(related) 
     {
@@ -5125,7 +5140,7 @@ extend( new NeuroRelation(), NeuroHasOne,
     {
       Neuro.debug( Neuro.Events.HASONE_INITIAL, this, model, initial );
 
-      relatedDatabase.grabModel( initial, this.handleLoad( model, relation ), this );      
+      relatedDatabase.grabModel( initial, this.handleModel( model, relation ), this );      
     }
   },
 
@@ -5284,7 +5299,7 @@ extend( new NeuroRelation(), NeuroHasOne,
     Neuro.debug( Neuro.Events.HASONE_SET_MODEL, this, relation );
   },
 
-  handleLoad: function(model, relation)
+  handleModel: function(model, relation)
   {
     return function(related) 
     {

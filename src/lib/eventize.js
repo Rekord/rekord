@@ -25,6 +25,13 @@
  */
 function eventize(target, secret)
 {
+
+  var CALLBACK_FUNCTION = 0;
+  var CALLBACK_CONTEXT = 1;
+  var CALLBACK_GROUP = 2;
+
+  var triggerId = 0;
+
   /**
    * **See:** {{#crossLink "Core/eventize:method"}}{{/crossLink}}
    * 
@@ -53,7 +60,7 @@ function eventize(target, secret)
         $this[ property ][ events[i] ] = [];
       }
       
-      $this[ property ][ events[i] ].push( [ callback, context || $this ] );
+      $this[ property ][ events[i] ].push( [ callback, context || $this, 0 ] );
     }
   };
   
@@ -109,7 +116,7 @@ function eventize(target, secret)
       
       for (var k = eventListeners.length - 1; k >= 0; k--)
       {
-        if (eventListeners[ k ][0] === callback)
+        if (eventListeners[ k ][ CALLBACK_FUNCTION ] === callback)
         {
           eventListeners.splice( k, 1 );
         }
@@ -186,28 +193,30 @@ function eventize(target, secret)
     if (listeners && event in listeners)
     {
       var eventListeners = listeners[ event ];
-      var max = eventListeners.length;
+      var triggerGroup = ++triggerId;
      
-      for (var i = 0; i < max; i++)
+      for (var i = 0; i < eventListeners.length; i++)
       {
         var callback = eventListeners[ i ];
 
         if ( callback )
         {
-          callback[0].apply( callback[1], args );  
+          if ( callback[ CALLBACK_GROUP ] !== triggerGroup )
+          {
+            callback[ CALLBACK_GROUP ] = triggerGroup;
+            callback[ CALLBACK_FUNCTION ].apply( callback[ CALLBACK_CONTEXT ], args );
+
+            if ( callback !== eventListeners[ i ] )
+            {
+              i = -1;
+            }
+          }
         }
       }
       
       if ( clear )
       {
-        if ( eventListeners.length !== max )
-        {
-          listeners[ event ] = eventListeners.slice( max );  
-        }
-        else
-        {
-          delete listeners[ event ];  
-        }
+        delete listeners[ event ];
       }
     }
   }

@@ -142,7 +142,7 @@ NeuroDatabase.prototype =
         callback.call( callbackContext, result );
       }
 
-      return result;
+      return result === null ? false : true;
     }
 
     if ( checkModel() )

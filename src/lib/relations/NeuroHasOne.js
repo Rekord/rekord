@@ -70,7 +70,7 @@ extend( new NeuroRelation(), NeuroHasOne,
     {
       Neuro.debug( Neuro.Events.HASONE_INITIAL, this, model, initial );
 
-      relatedDatabase.grabModel( initial, this.handleLoad( model, relation ), this );      
+      relatedDatabase.grabModel( initial, this.handleModel( model, relation ), this );      
     }
   },
 
@@ -229,7 +229,7 @@ extend( new NeuroRelation(), NeuroHasOne,
     Neuro.debug( Neuro.Events.HASONE_SET_MODEL, this, relation );
   },
 
-  handleLoad: function(model, relation)
+  handleModel: function(model, relation)
   {
     return function(related) 
     {

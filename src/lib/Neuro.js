@@ -64,11 +64,13 @@ Neuro.get = function(name, callback, context)
     }
     else
     {
-      function checkNeuro(neuro)
+      function checkNeuro()
       {
-        if ( neuro.name === name || neuro.className === name )
+        var cached = Neuro.cache[ name ];
+
+        if ( cached )
         {
-          callback.call( callbackContext, neuro );
+          callback.call( callbackContext, cached );
 
           Neuro.off( 'initialized', checkNeuro );
         }

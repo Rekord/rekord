@@ -62,7 +62,7 @@ extend( new NeuroRelation(), NeuroBelongsTo,
     {
       Neuro.debug( Neuro.Events.BELONGSTO_INITIAL, this, model, initial );
 
-      relatedDatabase.grabModel( initial, this.handleLoad( model, relation ), this );      
+      relatedDatabase.grabModel( initial, this.handleModel( model, relation ), this );      
     }
   },
 
@@ -194,7 +194,7 @@ extend( new NeuroRelation(), NeuroBelongsTo,
   },
 
   // same as HasOne
-  handleLoad: function(model, relation)
+  handleModel: function(model, relation)
   {
     return function(related) 
     {

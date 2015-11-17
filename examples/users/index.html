@@ -140,6 +140,7 @@
               updated_at: Date.now,
               created_at: Date.now
             },
+            comparator: '-created_at',
             loadRelations: true,
             hasMany: {
               userGroups: {
@@ -174,6 +175,7 @@
             className: 'UserGroup',
             api: RESTBASE + 'user_group/',
             autoRefresh: true,
+            fullSave: true,
             key: ['user_id', 'group_id'],
             fields: ['user_id', 'group_id', 'created_at'],
             defaults: {
@@ -213,6 +215,7 @@
               updated_at: Date.now,
               created_at: Date.now
             },
+            comparator: '-created_at',
             loadRelations: true,
             hasMany: {
               userGroups: {
