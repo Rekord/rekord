@@ -16,7 +16,7 @@ extend( new NeuroOperation( true, 'NeuroRemoveRemote' ), NeuroRemoveRemote,
     this.key = model.$key();
 
     // Make the REST call to remove the model
-    db.rest( 'DELETE', model, undefined, this.success(), this.failure() );
+    db.rest.remove( model, this.success(), this.failure() );
   },
 
   onSuccess: function(data)

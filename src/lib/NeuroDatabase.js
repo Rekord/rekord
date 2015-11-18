@@ -715,8 +715,8 @@ NeuroDatabase.prototype =
   refresh: function()
   {
     var db = this;
-    
-    db.rest( 'GET', undefined, undefined, onModels, onLoadError );
+
+    db.rest.all( onModels, onLoadError );
     
     function onModels(models) 
     {

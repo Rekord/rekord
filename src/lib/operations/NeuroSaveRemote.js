@@ -32,7 +32,14 @@ extend( new NeuroOperation( false, 'NeuroSaveRemote' ), NeuroSaveRemote,
     }
 
     // Make the REST call to save the model
-    db.rest( model.$saved ? 'PUT' : 'POST', model, saving, this.success(), this.failure() );
+    if ( model.$saved )
+    {
+      db.rest.update( model, saving, this.success(), this.failure() );
+    }
+    else
+    {
+      db.rest.create( model, saving, this.success(), this.failure() );
+    }
   },
 
   onSuccess: function(data)

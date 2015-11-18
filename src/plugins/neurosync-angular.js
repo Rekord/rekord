@@ -13,23 +13,19 @@
 
   function NeuroFactory($http)
   {
+
     Neuro.rest = function(database)
     {
-      return function(method, model, data, success, failure) 
-      {
-        var options = {
-          method: method,
-          data: data,
-          url: (!model || method === 'POST') ? database.api : database.api + model.$key()
-        };
 
-        Neuro.debug( Neuro.Events.REST, this, options.method, options.url, options.data );
+      function execute( method, data, url, success, failure, offlineValue )
+      {
+        Neuro.debug( Neuro.Events.REST, this, method, url, data );
 
         if ( Neuro.forceOffline )
         {
-          failure( {}, 0 );
-        } 
-        else 
+          failure( offlineValue, 0 );
+        }
+        else
         {
           function onRestSuccess(response) 
           {
@@ -41,9 +37,36 @@
             failure( response.data, response.status );
           }
 
+          var options = 
+          {
+            method: method,
+            data: data,
+            url: url
+          };
+
           $http( options ).then( onRestSuccess, onRestError );
-        }            
+        }
+      }
+      
+      return {
+        all: function( success, failure )
+        {
+          execute( 'GET', undefined, database.api, success, failure, [] );
+        },
+        create: function( model, encoded, success, failure )
+        {
+          execute( 'POST', encoded, database.api, success, failure, {} );
+        },
+        update: function( model, encoded, success, failure )
+        {
+          execute( 'PUT', encoded, database.api + model.$key(), success, failure, {} );
+        },
+        remove: function( model, success, failure )
+        {
+          execute( 'DELETE', undefined, database.api + model.$key(), success, failure, {} );
+        }
       };
+
     };
 
     var Neuro_debug = Neuro.debug;

@@ -896,13 +896,39 @@ Neuro.Events = {
 
 Neuro.rest = function(database)
 {
-  return function (method, model, data, success, failure)
-  {
+  
+  return {
+
+    // success ( data[] )
+    // failure ( data[], status )
+    all: function( success, failure )
+    {
+      failure( [], 0 );
+    },
+
     // success ( data )
     // failure ( data, status )
-    
-    failure( {}, 0 );
+    create: function( model, encoded, success, failure )
+    {
+      failure( null, 0 );
+    },
+
+    // success ( data )
+    // failure ( data, status )
+    update: function( model, encoded, success, failure )
+    {
+      failure( {}, 0 );
+    },
+
+    // success ( data )
+    // failure ( data, status )
+    remove: function( model, success, failure )
+    {
+      failure( {}, 0 );
+    }
+
   };
+
 };
 /**
  * A factory function for returning an object capable of storing objects for
@@ -1771,8 +1797,8 @@ NeuroDatabase.prototype =
   refresh: function()
   {
     var db = this;
-    
-    db.rest( 'GET', undefined, undefined, onModels, onLoadError );
+
+    db.rest.all( onModels, onLoadError );
     
     function onModels(models) 
     {
@@ -2890,7 +2916,7 @@ extend( new NeuroOperation( true, 'NeuroRemoveRemote' ), NeuroRemoveRemote,
     this.key = model.$key();
 
     // Make the REST call to remove the model
-    db.rest( 'DELETE', model, undefined, this.success(), this.failure() );
+    db.rest.remove( model, this.success(), this.failure() );
   },
 
   onSuccess: function(data)
@@ -3064,7 +3090,14 @@ extend( new NeuroOperation( false, 'NeuroSaveRemote' ), NeuroSaveRemote,
     }
 
     // Make the REST call to save the model
-    db.rest( model.$saved ? 'PUT' : 'POST', model, saving, this.success(), this.failure() );
+    if ( model.$saved )
+    {
+      db.rest.update( model, saving, this.success(), this.failure() );
+    }
+    else
+    {
+      db.rest.create( model, saving, this.success(), this.failure() );
+    }
   },
 
   onSuccess: function(data)
