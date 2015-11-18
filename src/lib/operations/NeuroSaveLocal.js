@@ -36,11 +36,17 @@ extend( new NeuroOperation( false, 'NeuroSaveLocal' ), NeuroSaveLocal,
 
   onSuccess: function(key, encoded, previousValue)
   {
+    var db = this.db;
     var model = this.model;
 
     Neuro.debug( Neuro.Events.SAVE_LOCAL, this, model );
 
     this.tryNext( NeuroSaveRemote );
+
+    if ( db.cachePending )
+    {
+      db.store.remove( model.$key() );
+    }
   },
 
   onFailure: function(e)

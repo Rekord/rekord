@@ -1,4 +1,4 @@
-(function (app)
+(function (app, undefined)
 {
 
   var NeuroSettings = {

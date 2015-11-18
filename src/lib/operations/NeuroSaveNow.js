@@ -8,7 +8,14 @@ extend( new NeuroOperation( false, 'NeuroSaveNow' ), NeuroSaveNow,
 
   run: function(db, model)
   {
-    db.store.put( model.$key(), model.$local, this.success(), this.failure() );
+    if ( db.cachePending && db.cache !== false )
+    {
+      this.finish();
+    }
+    else
+    {
+      db.store.put( model.$key(), model.$local, this.success(), this.failure() );
+    }
   }
 
 });

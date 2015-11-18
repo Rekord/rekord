@@ -2809,6 +2809,22 @@ NeuroOperation.prototype =
 
 };
 
+function NeuroRemoveCache(model)
+{
+  this.reset( model );
+}
+
+extend( new NeuroOperation( true, 'NeuroRemoveCache' ), NeuroRemoveCache,
+{
+
+  run: function(db, model)
+  {
+    model.$pendingSave = false;
+
+    db.store.remove( model.$key(), this.success(), this.failure() );
+  }
+
+});
 function NeuroRemoveLocal(model)
 {
   this.reset( model );
@@ -3024,11 +3040,17 @@ extend( new NeuroOperation( false, 'NeuroSaveLocal' ), NeuroSaveLocal,
 
   onSuccess: function(key, encoded, previousValue)
   {
+    var db = this.db;
     var model = this.model;
 
     Neuro.debug( Neuro.Events.SAVE_LOCAL, this, model );
 
     this.tryNext( NeuroSaveRemote );
+
+    if ( db.cachePending )
+    {
+      db.store.remove( model.$key() );
+    }
   },
 
   onFailure: function(e)
@@ -3052,7 +3074,14 @@ extend( new NeuroOperation( false, 'NeuroSaveNow' ), NeuroSaveNow,
 
   run: function(db, model)
   {
-    db.store.put( model.$key(), model.$local, this.success(), this.failure() );
+    if ( db.cachePending && db.cache !== false )
+    {
+      this.finish();
+    }
+    else
+    {
+      db.store.put( model.$key(), model.$local, this.success(), this.failure() );
+    }
   }
 
 });
@@ -3201,6 +3230,11 @@ extend( new NeuroOperation( false, 'NeuroSaveRemote' ), NeuroSaveRemote,
       model: publishing,
       key: this.key
     });
+
+    if ( db.cachePending && db.cache !== false )
+    {
+      this.insertNext( NeuroRemoveCache );
+    }
   },
 
   handleOnline: function()

@@ -143,6 +143,11 @@ extend( new NeuroOperation( false, 'NeuroSaveRemote' ), NeuroSaveRemote,
       model: publishing,
       key: this.key
     });
+
+    if ( db.cachePending && db.cache !== false )
+    {
+      this.insertNext( NeuroRemoveCache );
+    }
   },
 
   handleOnline: function()
