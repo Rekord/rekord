@@ -1,0 +1,57 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Socket.IO PubSub</title>
+  </head>
+  <body>
+    
+    <div id="channel"></div>
+    <input id="message">
+    <button id="send">Send</button>
+    
+    <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
+    <script src="https://code.jquery.com/jquery-1.11.2.js"></script>
+    <script src="../pubsub-client.js"></script>
+    <script>
+    
+      var host = 'http://localhost:3000';
+      var channel = 'CHAT';
+      var username = prompt('Your Name');
+    
+      var pubsub = new PubSub(host); 
+      var channel = pubsub.subscribe(channel, username);
+
+      var sendMessage = function() {
+        var message = $('#message');
+        if (message.val()) {
+          channel.publish({
+            user: username,
+            text: message.val()
+          });
+          message.val('');
+        }
+      };
+      
+      channel.onjoin = function(user) {
+        $('#channel').append(user + ' joined.<br/>');
+      };
+      
+      channel.onleave = function(user) {
+        $('#channel').append(user + ' left.<br/>');
+      };
+      
+      channel.onpublish = function(msg) {
+        $('#channel').append(msg.user + ': ' + msg.text + '<br/>');
+      };
+      
+      $('#send').click( sendMessage );
+        
+      $('#message').keyup(function(e) {
+        if ( e.keyCode == 13 ) {
+          sendMessage();
+        }
+      });
+      
+    </script>
+  </body>
+</html>

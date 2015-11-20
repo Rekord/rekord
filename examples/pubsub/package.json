@@ -1,0 +1,11 @@
+{
+  "name": "pubsub",
+  "version": "0.0.1",
+  "description": "pubsub with Socket.io",
+  "dependencies": {
+    "body-parser": "~1.0.1",
+    "express": "^4.10.2",
+    "node-uuid": "^1.4.3",
+    "socket.io": "^1.2.1"
+  }
+}
