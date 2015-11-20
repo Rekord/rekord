@@ -11,7 +11,7 @@ extend( new NeuroRelation(), NeuroHasMany,
   onInitialized: function(database, field, options)
   {
     this.foreign = options.foreign || ( database.name + '_' + database.key );
-    this.comparator = createComparator( options.comparator );
+    this.comparator = createComparator( options.comparator, options.comparatorNullsFirst );
     this.cascadeRemove = !!options.cascadeRemove;
     this.cascadeSave = !!options.cascadeSave;
     this.clearKey = this.ownsForeignKey();

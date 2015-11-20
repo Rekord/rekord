@@ -15,7 +15,7 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
     this.foreign = options.foreign || ( relatedDatabase.name + '_' + relatedDatabase.key );
     this.local = options.local || ( database.name + '_' + database.key );
 
-    this.comparator = createComparator( options.comparator );
+    this.comparator = createComparator( options.comparator, options.comparatorNullsFirst );
     this.cascadeRemove = !!options.cascadeRemove;
     this.cascadeSave = !!options.cascadeSave;
 

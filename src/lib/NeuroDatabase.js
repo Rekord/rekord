@@ -21,7 +21,7 @@ function NeuroDatabase(options)
   this.store = Neuro.store( this );
   this.live = Neuro.live( this, this.handlePublish( this ) );
 
-  this.setComparator( this.comparator );
+  this.setComparator( this.comparator, this.comparatorNullsFirst );
   this.setRevision( this.revision );
 
   this.relations = {};
@@ -361,9 +361,9 @@ NeuroDatabase.prototype =
 
   // Sets a comparator for this database. It can be a field name, a field name
   // with a minus in the front to sort in reverse, or a comparator function.
-  setComparator: function(comparator)
+  setComparator: function(comparator, nullsFirst)
   {
-    this.comparatorFunction = createComparator( comparator );
+    this.comparatorFunction = createComparator( comparator, nullsFirst );
   },
 
   // Sorts the database if it isn't sorted.

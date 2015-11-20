@@ -65,7 +65,7 @@ function isTruthy(x)
 
 function isValue(x)
 {
-  return x !== undefined && x !== null;
+  return !!(x !== undefined && x !== null);
 }
 
 function indexOf(arr, x, comparator)
@@ -386,12 +386,21 @@ function compareNumbers(a, b)
   return (a === b ? 0 : (a < b ? -1 : 1));
 }
 
-function compare(a, b)
+function compare(a, b, nullsFirst)
 {
   if (a == b) 
   {
     return 0;
   }
+
+  var av = isValue( a );
+  var bv = isValue( b );
+
+  if (av !== bv)
+  {
+    return (av && !nullsFirst) || (bv && nullsFirst) ? -1 : 1;
+  }
+
   if (isDate(a)) 
   {
     a = a.getTime();
@@ -412,7 +421,7 @@ function compare(a, b)
   return (a + '').localeCompare(b + '');
 }
 
-function createComparator(comparator)
+function createComparator(comparator, nullsFirst)
 {
   if ( isFunction( comparator ) )
   {
@@ -426,14 +435,20 @@ function createComparator(comparator)
 
       return function compareObjects(a, b)
       {
-        return compare( b[ comparator ], a[ comparator ] );
+        var av = isValue( a ) ? a[ comparator ] : a;
+        var bv = isValue( b ) ? b[ comparator ] : b; 
+
+        return compare( bv, av, nullsFirst );
       };
     }
     else
     {
       return function compareObjects(a, b)
       {
-        return compare( a[ comparator ], b[ comparator ] );
+        var av = isValue( a ) ? a[ comparator ] : a;
+        var bv = isValue( b ) ? b[ comparator ] : b; 
+
+        return compare( av, bv, nullsFirst );
       };
     }
   }
@@ -1103,7 +1118,7 @@ function NeuroDatabase(options)
   this.store = Neuro.store( this );
   this.live = Neuro.live( this, this.handlePublish( this ) );
 
-  this.setComparator( this.comparator );
+  this.setComparator( this.comparator, this.comparatorNullsFirst );
   this.setRevision( this.revision );
 
   this.relations = {};
@@ -1443,9 +1458,9 @@ NeuroDatabase.prototype =
 
   // Sets a comparator for this database. It can be a field name, a field name
   // with a minus in the front to sort in reverse, or a comparator function.
-  setComparator: function(comparator)
+  setComparator: function(comparator, nullsFirst)
   {
-    this.comparatorFunction = createComparator( comparator );
+    this.comparatorFunction = createComparator( comparator, nullsFirst );
   },
 
   // Sorts the database if it isn't sorted.
@@ -4003,7 +4018,7 @@ extend( new NeuroRelation(), NeuroHasMany,
   onInitialized: function(database, field, options)
   {
     this.foreign = options.foreign || ( database.name + '_' + database.key );
-    this.comparator = createComparator( options.comparator );
+    this.comparator = createComparator( options.comparator, options.comparatorNullsFirst );
     this.cascadeRemove = !!options.cascadeRemove;
     this.cascadeSave = !!options.cascadeSave;
     this.clearKey = this.ownsForeignKey();
@@ -4526,7 +4541,7 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
     this.foreign = options.foreign || ( relatedDatabase.name + '_' + relatedDatabase.key );
     this.local = options.local || ( database.name + '_' + database.key );
 
-    this.comparator = createComparator( options.comparator );
+    this.comparator = createComparator( options.comparator, options.comparatorNullsFirst );
     this.cascadeRemove = !!options.cascadeRemove;
     this.cascadeSave = !!options.cascadeSave;
 

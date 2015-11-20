@@ -62,7 +62,7 @@ function isTruthy(x)
 
 function isValue(x)
 {
-  return x !== undefined && x !== null;
+  return !!(x !== undefined && x !== null);
 }
 
 function indexOf(arr, x, comparator)
@@ -383,12 +383,21 @@ function compareNumbers(a, b)
   return (a === b ? 0 : (a < b ? -1 : 1));
 }
 
-function compare(a, b)
+function compare(a, b, nullsFirst)
 {
   if (a == b) 
   {
     return 0;
   }
+
+  var av = isValue( a );
+  var bv = isValue( b );
+
+  if (av !== bv)
+  {
+    return (av && !nullsFirst) || (bv && nullsFirst) ? -1 : 1;
+  }
+
   if (isDate(a)) 
   {
     a = a.getTime();
@@ -409,7 +418,7 @@ function compare(a, b)
   return (a + '').localeCompare(b + '');
 }
 
-function createComparator(comparator)
+function createComparator(comparator, nullsFirst)
 {
   if ( isFunction( comparator ) )
   {
@@ -423,14 +432,20 @@ function createComparator(comparator)
 
       return function compareObjects(a, b)
       {
-        return compare( b[ comparator ], a[ comparator ] );
+        var av = isValue( a ) ? a[ comparator ] : a;
+        var bv = isValue( b ) ? b[ comparator ] : b; 
+
+        return compare( bv, av, nullsFirst );
       };
     }
     else
     {
       return function compareObjects(a, b)
       {
-        return compare( a[ comparator ], b[ comparator ] );
+        var av = isValue( a ) ? a[ comparator ] : a;
+        var bv = isValue( b ) ? b[ comparator ] : b; 
+
+        return compare( av, bv, nullsFirst );
       };
     }
   }
