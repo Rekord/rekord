@@ -11,7 +11,7 @@ extend( new NeuroOperation( false, 'NeuroSaveRemote' ), NeuroSaveRemote,
     // If the model is deleted, return immediately!
     if ( model.$deleted )
     {
-      Neuro.debug( Neuro.Events.SAVE_REMOTE_DELETED, this, model );
+      Neuro.debug( Neuro.Debugs.SAVE_REMOTE_DELETED, model );
 
       return this.finish();
     }
@@ -46,7 +46,7 @@ extend( new NeuroOperation( false, 'NeuroSaveRemote' ), NeuroSaveRemote,
   {
     var model = this.model;
 
-    Neuro.debug( Neuro.Events.SAVE_REMOTE, this, model );
+    Neuro.debug( Neuro.Debugs.SAVE_REMOTE, model );
 
     this.handleData( data );
   },
@@ -60,20 +60,20 @@ extend( new NeuroOperation( false, 'NeuroSaveRemote' ), NeuroSaveRemote,
     // A non-zero status means a real problem occurred
     if ( status === 409 ) // 409 Conflict
     {
-      Neuro.debug( Neuro.Events.SAVE_CONFLICT, this, data, model );
+      Neuro.debug( Neuro.Debugs.SAVE_CONFLICT, model, data );
 
       // Update the model with the data saved and returned
       this.handleData( data, model, this.db );
     }
     else if ( status === 410 || status === 404 ) // 410 Gone, 404 Not Found
     {
-      Neuro.debug( Neuro.Events.SAVE_UPDATE_FAIL, this, model );
+      Neuro.debug( Neuro.Debugs.SAVE_UPDATE_FAIL, model );
 
       this.insertNext( NeuroRemoveNow );
     }
     else if ( status !== 0 ) 
     {          
-      Neuro.debug( Neuro.Events.SAVE_ERROR, this, model, status );
+      Neuro.debug( Neuro.Debugs.SAVE_ERROR, model, status );
     } 
     else 
     {
@@ -88,7 +88,7 @@ extend( new NeuroOperation( false, 'NeuroSaveRemote' ), NeuroSaveRemote,
         Neuro.once( 'online', this.handleOnline, this );
       }
 
-      Neuro.debug( Neuro.Events.SAVE_OFFLINE, this, model );
+      Neuro.debug( Neuro.Debugs.SAVE_OFFLINE, model );
     }
   },
 
@@ -102,7 +102,7 @@ extend( new NeuroOperation( false, 'NeuroSaveRemote' ), NeuroSaveRemote,
     // Check deleted one more time before updating model.
     if ( model.$deleted )
     {
-      Neuro.debug( Neuro.Events.SAVE_REMOTE_DELETED, this, model, data );
+      Neuro.debug( Neuro.Debugs.SAVE_REMOTE_DELETED, model, data );
 
       return;
     }
@@ -116,7 +116,7 @@ extend( new NeuroOperation( false, 'NeuroSaveRemote' ), NeuroSaveRemote,
       }
     }
 
-    Neuro.debug( Neuro.Events.SAVE_VALUES, this, saving, model );
+    Neuro.debug( Neuro.Debugs.SAVE_VALUES, model, saving );
 
     // If the model hasn't been saved before - create the record where the 
     // local and model point to the same object.
@@ -136,7 +136,7 @@ extend( new NeuroOperation( false, 'NeuroSaveRemote' ), NeuroSaveRemote,
     db.putRemoteData( saving, this.key, model );
 
     // Publish saved data to everyone else
-    Neuro.debug( Neuro.Events.SAVE_PUBLISH, this, saving, model );
+    Neuro.debug( Neuro.Debugs.SAVE_PUBLISH, model, publishing );
 
     db.live({
       op: NeuroDatabase.Live.Save,
@@ -159,7 +159,7 @@ extend( new NeuroOperation( false, 'NeuroSaveRemote' ), NeuroSaveRemote,
       model.$pendingSave = false;
       model.$addOperation( NeuroSaveRemote );
 
-      Neuro.debug( Neuro.Events.SAVE_RESUME, this, model );
+      Neuro.debug( Neuro.Debugs.SAVE_RESUME, model );
     }
   }
 

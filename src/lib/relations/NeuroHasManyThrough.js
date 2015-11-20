@@ -28,7 +28,7 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
       this.setThrough( options.through );
     }
 
-    Neuro.debug( Neuro.Events.HASMANYTHRU_INIT, this );
+    Neuro.debug( Neuro.Debugs.HASMANYTHRU_INIT, this );
   },
 
   setThrough: function(through)
@@ -60,6 +60,8 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
 
       onRemoved: function() // this = model removed
       {
+        Neuro.debug( Neuro.Debugs.HASMANYTHRU_NINJA_REMOVE, that, model, this, relation );
+
         that.removeModel( relation, this );
       },
 
@@ -70,12 +72,16 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
           return;
         }
 
+        Neuro.debug( Neuro.Debugs.HASMANYTHRU_NINJA_SAVE, that, model, this, relation );
+
         that.sort( relation );
         that.checkSave( relation );
       },
 
       onThroughRemoved: function() // this = through removed
       {
+        Neuro.debug( Neuro.Debugs.HASMANYTHRU_NINJA_THRU_REMOVE, that, model, this, relation );
+
         that.removeModelFromThrough( relation, this );
       }
 
@@ -108,6 +114,8 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
     // If the model's initial value is an array, populate the relation from it!
     if ( isArray( initial ) )
     {
+      Neuro.debug( Neuro.Debugs.HASMANYTHRU_INITIAL, this, model, relation, initial );
+
       for (var i = 0; i < initial.length; i++)
       {
         var input = initial[ i ];
@@ -119,6 +127,8 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
     }
     else
     {
+      Neuro.debug( Neuro.Debugs.HASMANYTHRU_INITIAL_PULLED, this, model, relation );
+
       throughDatabase.ready( this.handleLazyLoad( relation ), this );
     }
 
@@ -265,6 +275,8 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
 
     if ( relation && this.cascadeSave )
     {
+      Neuro.debug( Neuro.Debugs.HASMANYTHRU_PRESAVE, this, model, relation );
+
       relation.saving = true;
       relation.delaySaving = true;
 
@@ -291,6 +303,8 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
 
     if ( relation && this.cascadeRemove )
     {
+      Neuro.debug( Neuro.Debugs.HASMANYTHRU_PREREMOVE, this, model, relation );
+
       this.bulk( relation, function()
       {
         var models = relation.throughs.values;
@@ -311,6 +325,8 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
     {
       if ( this.store === Neuro.Store.Model || this.save === Neuro.Save.Model )
       {
+        Neuro.debug( Neuro.Debugs.HASMANYTHRU_AUTO_SAVE, this, relation );
+
         relation.parent.$save();
       }
     }
@@ -322,6 +338,8 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
     {
       if ( relation.isRelated( through ) )
       {
+        Neuro.debug( Neuro.Debugs.HASMANYTHRU_NINJA_ADD, this, relation, through );
+
         this.addModelFromThrough( relation, through );
       }
     };
@@ -336,6 +354,8 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
 
       if ( relatedKey in pending )
       {
+        Neuro.debug( Neuro.Debugs.HASMANYTHRU_INITIAL_GRABBED, this, relation, related );
+
         this.addModel( relation, related, true );
 
         delete pending[ relatedKey ];
@@ -355,6 +375,8 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
       {
         return;
       }
+
+      Neuro.debug( Neuro.Debugs.HASMANYTHRU_LAZY_LOAD, this, relation, throughs );
 
       this.bulk( relation, function()
       {
@@ -392,16 +414,7 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
 
     return function(through)
     {
-      var key = through.$key();
-
-      if ( !throughs.has( key ) )
-      { 
-        throughs.put( key, through );
-
-        through.$on( 'removed', relation.onThroughRemoved );
-      }
-
-      through.$save();
+      this.finishAddThrough( relation, through, true );
     };
   },
 
@@ -415,20 +428,31 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
 
   onAddModelFromThrough: function(relation, through)
   {
+    return function(related)
+    {
+      this.finishAddThrough( relation, through );
+      this.finishAddModel( relation, related );
+    };
+  },
+
+  finishAddThrough: function(relation, through, callSave)
+  {
     var throughs = relation.throughs;
     var throughKey = through.$key();
 
-    return function(related)
+    if ( !throughs.has( throughKey ) )
     {
-      if ( !throughs.has( throughKey ) )
+      Neuro.debug( Neuro.Debugs.HASMANYTHRU_THRU_ADD, this, relation, through );
+
+      throughs.put( throughKey, through );
+
+      through.$on( 'removed', relation.onThroughRemoved );
+
+      if ( callSave )
       {
-        throughs.put( throughKey, through );
-
-        through.$on( 'removed', relation.onThroughRemoved );
+        through.$save();
       }
-
-      this.finishAddModel( relation, related );
-    };
+    }
   },
 
   finishAddModel: function(relation, related, skipCheck)
@@ -439,6 +463,8 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
 
     if ( adding )
     {
+      Neuro.debug( Neuro.Debugs.HASMANYTHRU_ADD, this, relation, related );
+
       relateds.put( relatedKey, related );
 
       related.$on( 'removed', relation.onRemoved );
@@ -473,27 +499,42 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
     var throughs = relation.throughs;
     var through = throughs.get( key );
 
-    if ( through )
-    {
-      through.$off( 'removed', relation.onThroughRemoved );
-      through.$remove();
-      
-      throughs.remove( key );
-    }
+    this.finishRemoveThrough( relation, through, related, true );
   },
 
   removeModelFromThrough: function(relation, through)
   {
     var relatedDatabase = this.model.Database;
-    var throughDatabase = this.through.Database;
-    var throughs = relation.throughs;
-    var throughKey = through.$key();
     var relatedKey = relatedDatabase.buildKey( through, this.foreign );
     
-    through.$off( 'removed', relation.onThroughRemoved );
-    throughs.remove( throughKey );
+    if ( this.finishRemoveThrough( relation, through ) )
+    {
+      this.finishRemoveRelated( relation, relatedKey );
+    }
+  },
 
-    this.finishRemoveRelated( relation, relatedKey );
+  finishRemoveThrough: function(relation, through, related, callRemove)
+  {
+    var removing = !!through;
+
+    if ( removing )
+    {
+      Neuro.debug( Neuro.Debugs.HASMANYTHRU_THRU_REMOVE, this, relation, through, related );
+
+      var throughs = relation.throughs;
+      var throughKey = through.$key();
+
+      through.$off( 'removed', relation.onThroughRemoved );
+
+      if ( callRemove )
+      {
+        through.$remove();
+      }
+
+      throughs.remove( throughKey );
+    }
+
+    return removing;
   },
 
   finishRemoveRelated: function(relation, relatedKey)
@@ -504,6 +545,8 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
 
     if ( related )
     {
+      Neuro.debug( Neuro.Debugs.HASMANYTHRU_REMOVE, this, relation, related );
+
       relateds.remove( relatedKey );
 
       related.$off( 'removed', relation.onRemoved );
@@ -576,6 +619,8 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
     {
       if ( !related.isSorted( this.comparator ) )
       {
+        Neuro.debug( Neuro.Debugs.HASMANYTHRU_SORT, this, relation );
+
         related.sort( this.comparator );
       }
 

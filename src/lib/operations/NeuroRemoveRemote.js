@@ -31,13 +31,13 @@ extend( new NeuroOperation( true, 'NeuroRemoveRemote' ), NeuroRemoveRemote,
 
     if ( status === 404 || status === 410 )
     {
-      Neuro.debug( Neuro.Events.REMOVE_MISSING, this, key, model );
+      Neuro.debug( Neuro.Debugs.REMOVE_MISSING, model, key );
 
       this.finishRemove();
     }
     else if ( status !== 0 ) 
     {
-      Neuro.debug( Neuro.Events.REMOVE_ERROR, this, status, key, model );
+      Neuro.debug( Neuro.Debugs.REMOVE_ERROR, model, status, key );
     } 
     else 
     {
@@ -50,7 +50,7 @@ extend( new NeuroOperation( true, 'NeuroRemoveRemote' ), NeuroRemoveRemote,
         Neuro.once( 'online', this.handleOnline, this );
       }
 
-      Neuro.debug( Neuro.Events.REMOVE_OFFLINE, this, model );
+      Neuro.debug( Neuro.Debugs.REMOVE_OFFLINE, model );
     }
   },
 
@@ -60,13 +60,13 @@ extend( new NeuroOperation( true, 'NeuroRemoveRemote' ), NeuroRemoveRemote,
     var key = this.key;
     var model = this.model;
 
-    Neuro.debug( Neuro.Events.REMOVE_REMOTE, this, key, model );
+    Neuro.debug( Neuro.Debugs.REMOVE_REMOTE, model, key );
 
     // Remove from local storage now
     this.insertNext( NeuroRemoveNow );
 
     // Publish REMOVE
-    Neuro.debug( Neuro.Events.REMOVE_PUBLISH, this, key, model );
+    Neuro.debug( Neuro.Debugs.REMOVE_PUBLISH, model, key );
 
     db.live({
       op: NeuroDatabase.Live.Remove,
@@ -78,7 +78,7 @@ extend( new NeuroOperation( true, 'NeuroRemoveRemote' ), NeuroRemoveRemote,
   {
     var model = this.model;
 
-    Neuro.debug( Neuro.Events.REMOVE_RESUME, this, model );
+    Neuro.debug( Neuro.Debugs.REMOVE_RESUME, model );
 
     model.$addOperation( NeuroRemoveRemote );
   }

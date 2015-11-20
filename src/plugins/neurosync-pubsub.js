@@ -18,7 +18,7 @@ Neuro.live = (function()
     var pubsub = get( database.pubsub );
     var channel = pubsub.subscribe( database.channel, database.token );
 
-    Neuro.debug( Neuro.Events.PUBSUB_CREATED, pubsub );
+    Neuro.debug( Neuro.Debugs.PUBSUB_CREATED, pubsub );
 
     function handlePublish(message)
     {

@@ -14,7 +14,7 @@ extend( new NeuroRelation(), NeuroHasOne,
 
     this.local = options.local || ( relatedDatabase.name + '_' + relatedDatabase.key );
 
-    Neuro.debug( Neuro.Events.HASONE_INIT, this );
+    Neuro.debug( Neuro.Debugs.HASONE_INIT, this );
     
     this.finishInitialization();
   },
@@ -37,7 +37,7 @@ extend( new NeuroRelation(), NeuroHasOne,
 
       onRemoved: function() 
       {
-        Neuro.debug( Neuro.Events.HASONE_NINJA_REMOVE, that, model, relation );
+        Neuro.debug( Neuro.Debugs.HASONE_NINJA_REMOVE, that, model, relation );
 
         this.clearModel( relation, true );
         this.clearForeignKey( model );
@@ -49,7 +49,7 @@ extend( new NeuroRelation(), NeuroHasOne,
           return;
         }
 
-        Neuro.debug( Neuro.Events.HASONE_NINJA_SAVE, that, model, relation );
+        Neuro.debug( Neuro.Debugs.HASONE_NINJA_SAVE, that, model, relation );
 
         if ( !isRelated( relation.model ) )
         {
@@ -63,12 +63,12 @@ extend( new NeuroRelation(), NeuroHasOne,
     {
       initial = pull( model, this.local );
 
-      Neuro.debug( Neuro.Events.HASONE_INITIAL_PULLED, this, model, initial );
+      Neuro.debug( Neuro.Debugs.HASONE_INITIAL_PULLED, this, model, initial );
     }
 
     if ( !isEmpty( initial ) )
     {
-      Neuro.debug( Neuro.Events.HASONE_INITIAL, this, model, initial );
+      Neuro.debug( Neuro.Debugs.HASONE_INITIAL, this, model, initial );
 
       relatedDatabase.grabModel( initial, this.handleModel( model, relation ), this );      
     }
@@ -172,7 +172,7 @@ extend( new NeuroRelation(), NeuroHasOne,
 
       if ( relation.dirty || related.$hasChanges() )
       {
-        Neuro.debug( Neuro.Events.HASONE_PRESAVE, this, model, relation );
+        Neuro.debug( Neuro.Debugs.HASONE_PRESAVE, this, model, relation );
 
         relation.saving = true;
         related.$save();
@@ -190,7 +190,7 @@ extend( new NeuroRelation(), NeuroHasOne,
     {
       if ( this.cascade !== false )
       {
-        Neuro.debug( Neuro.Events.HASONE_POSTREMOVE, this, model, relation );
+        Neuro.debug( Neuro.Debugs.HASONE_POSTREMOVE, this, model, relation );
 
         this.clearModel( relation );
       }
@@ -201,7 +201,7 @@ extend( new NeuroRelation(), NeuroHasOne,
   {
     if ( relation.model )
     {
-      Neuro.debug( Neuro.Events.HASONE_CLEAR_MODEL, this, relation );
+      Neuro.debug( Neuro.Debugs.HASONE_CLEAR_MODEL, this, relation );
 
       relation.model.$off( 'saved', relation.onSaved );
       relation.model.$off( 'removed', relation.onRemoved );
@@ -226,14 +226,14 @@ extend( new NeuroRelation(), NeuroHasOne,
     relation.dirty = true;
     relation.loaded = true;
 
-    Neuro.debug( Neuro.Events.HASONE_SET_MODEL, this, relation );
+    Neuro.debug( Neuro.Debugs.HASONE_SET_MODEL, this, relation );
   },
 
   handleModel: function(model, relation)
   {
     return function(related) 
     {
-      Neuro.debug( Neuro.Events.HASONE_LOADED, this, model, relation, related );
+      Neuro.debug( Neuro.Debugs.HASONE_LOADED, this, model, relation, related );
 
       if ( relation.loaded === false ) 
       {
@@ -270,7 +270,7 @@ extend( new NeuroRelation(), NeuroHasOne,
   {
     var local = this.local;
 
-    Neuro.debug( Neuro.Events.HASONE_CLEAR_KEY, this, model, local );
+    Neuro.debug( Neuro.Debugs.HASONE_CLEAR_KEY, this, model, local );
 
     this.clearFields( model, local );
   },
@@ -281,7 +281,7 @@ extend( new NeuroRelation(), NeuroHasOne,
     var local = this.local;
     var foreign = relatedDatabase.key;
 
-    Neuro.debug( Neuro.Events.HASONE_UPDATE_KEY, this, model, local, related, foreign );
+    Neuro.debug( Neuro.Debugs.HASONE_UPDATE_KEY, this, model, local, related, foreign );
 
     this.updateFields( model, local, related, foreign );
   },

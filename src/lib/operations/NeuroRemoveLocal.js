@@ -13,7 +13,7 @@ extend( new NeuroOperation( true, 'NeuroRemoveLocal' ), NeuroRemoveLocal,
     // If there is no local there's nothing to remove from anywhere!
     if ( !model.$local )
     {
-      Neuro.debug( Neuro.Events.REMOVE_LOCAL_NONE, model );
+      Neuro.debug( Neuro.Debugs.REMOVE_LOCAL_NONE, model );
 
       return this.finish();
     }
@@ -28,7 +28,7 @@ extend( new NeuroOperation( true, 'NeuroRemoveLocal' ), NeuroRemoveLocal,
     }
     else
     {
-      Neuro.debug( Neuro.Events.REMOVE_LOCAL_UNSAVED, model );
+      Neuro.debug( Neuro.Debugs.REMOVE_LOCAL_UNSAVED, model );
 
       db.store.remove( key, this.success(), this.failure() );
     }
@@ -38,7 +38,7 @@ extend( new NeuroOperation( true, 'NeuroRemoveLocal' ), NeuroRemoveLocal,
   {
     var model = this.model;
 
-    Neuro.debug( Neuro.Events.REMOVE_LOCAL, model );
+    Neuro.debug( Neuro.Debugs.REMOVE_LOCAL, model );
 
     if ( model.$saved )
     {
@@ -50,7 +50,7 @@ extend( new NeuroOperation( true, 'NeuroRemoveLocal' ), NeuroRemoveLocal,
   {
     var model = this.model;
 
-    Neuro.debug( Neuro.Events.REMOVE_LOCAL_ERROR, model, e );
+    Neuro.debug( Neuro.Debugs.REMOVE_LOCAL_ERROR, model, e );
 
     if ( model.$saved )
     {

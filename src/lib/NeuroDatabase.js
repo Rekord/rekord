@@ -396,7 +396,7 @@ NeuroDatabase.prototype =
 
       if ( revisionCompare !== false && revisionCompare > 0 )
       {
-        Neuro.debug( Neuro.Events.SAVE_OLD_REVISION, db, model, encoded );
+        Neuro.debug( Neuro.Debugs.SAVE_OLD_REVISION, db, model, encoded );
 
         return;
       }
@@ -507,7 +507,7 @@ NeuroDatabase.prototype =
 
       model.$trigger( NeuroModel.Events.RemoteAndRemove );
 
-      Neuro.debug( Neuro.Events.REMOTE_REMOVE, db, model );
+      Neuro.debug( Neuro.Debugs.REMOTE_REMOVE, db, model );
 
       return true;
     }
@@ -545,7 +545,7 @@ NeuroDatabase.prototype =
 
       model.$trigger( NeuroModel.Events.RemoteAndRemove );
 
-      Neuro.debug( Neuro.Events.REMOTE_REMOVE, db, model );
+      Neuro.debug( Neuro.Debugs.REMOTE_REMOVE, db, model );
     }
     else
     {
@@ -553,7 +553,7 @@ NeuroDatabase.prototype =
       {
         if (removedValue) 
         {
-          Neuro.debug( Neuro.Events.REMOTE_REMOVE, db, removedValue );
+          Neuro.debug( Neuro.Debugs.REMOTE_REMOVE, db, removedValue );
         }
       });
 
@@ -610,7 +610,7 @@ NeuroDatabase.prototype =
 
     function onLocalLoad(records, keys)
     {
-      Neuro.debug( Neuro.Events.LOCAL_LOAD, db, records );
+      Neuro.debug( Neuro.Debugs.LOCAL_LOAD, db, records );
 
       db.models.reset();
 
@@ -625,7 +625,7 @@ NeuroDatabase.prototype =
 
         if ( encoded.$deleted )
         {
-          Neuro.debug( Neuro.Events.LOCAL_RESUME_DELETE, db, model );
+          Neuro.debug( Neuro.Debugs.LOCAL_RESUME_DELETE, db, model );
 
           model.$addOperation( NeuroRemoveRemote );
         }
@@ -633,13 +633,13 @@ NeuroDatabase.prototype =
         {
           if ( !encoded.$saved )
           {
-            Neuro.debug( Neuro.Events.LOCAL_RESUME_SAVE, db, model );
+            Neuro.debug( Neuro.Debugs.LOCAL_RESUME_SAVE, db, model );
 
             model.$addOperation( NeuroSaveRemote );
           }
           else
           {
-            Neuro.debug( Neuro.Events.LOCAL_LOAD_SAVED, db, model );
+            Neuro.debug( Neuro.Debugs.LOCAL_LOAD_SAVED, db, model );
 
             model.$local.$saved = model.$saved;
           }
@@ -704,7 +704,7 @@ NeuroDatabase.prototype =
       {
         db.afterOnline = false;
         
-        Neuro.debug( Neuro.Events.AUTO_REFRESH, db );
+        Neuro.debug( Neuro.Debugs.AUTO_REFRESH, db );
 
         db.refresh();
       }
@@ -742,7 +742,7 @@ NeuroDatabase.prototype =
 
           if ( old.$saved )
           {
-            Neuro.debug( Neuro.Events.REMOTE_LOAD_REMOVE, db, k );
+            Neuro.debug( Neuro.Debugs.REMOTE_LOAD_REMOVE, db, k );
 
             db.destroyLocalModel( k );
           }
@@ -756,7 +756,7 @@ NeuroDatabase.prototype =
 
       db.updated();
 
-      Neuro.debug( Neuro.Events.REMOTE_LOAD, db, models );
+      Neuro.debug( Neuro.Debugs.REMOTE_LOAD, db, models );
     }
 
     function onLoadError(models, status) 
@@ -772,11 +772,11 @@ NeuroDatabase.prototype =
           Neuro.once( 'online', db.onRefreshOnline, db );
         }
 
-        Neuro.debug( Neuro.Events.REMOTE_LOAD_OFFLINE, db );
+        Neuro.debug( Neuro.Debugs.REMOTE_LOAD_OFFLINE, db );
       }
       else
       {
-        Neuro.debug( Neuro.Events.REMOTE_LOAD_ERROR, db, status );
+        Neuro.debug( Neuro.Debugs.REMOTE_LOAD_ERROR, db, status );
 
         db.initialized = true;
         db.trigger( NeuroDatabase.Events.NoLoad, [db] );
@@ -789,7 +789,7 @@ NeuroDatabase.prototype =
   {
     var db = this;
 
-    Neuro.debug( Neuro.Events.REMOTE_LOAD_RESUME, db );
+    Neuro.debug( Neuro.Debugs.REMOTE_LOAD_RESUME, db );
 
     if ( db.pendingRefresh )
     {
@@ -831,7 +831,7 @@ NeuroDatabase.prototype =
         db.putRemoteData( encoded, key );
         db.updated();
 
-        Neuro.debug( Neuro.Events.REALTIME_SAVE, db, message.model, key );
+        Neuro.debug( Neuro.Debugs.REALTIME_SAVE, db, message.model, key );
         break;
 
       case NeuroDatabase.Live.Remove:
@@ -841,7 +841,7 @@ NeuroDatabase.prototype =
           db.updated(); 
         }
 
-        Neuro.debug( Neuro.Events.REALTIME_REMOVE, db, key );
+        Neuro.debug( Neuro.Debugs.REALTIME_REMOVE, db, key );
         break;
       }
     };
@@ -874,7 +874,7 @@ NeuroDatabase.prototype =
     // If the model is deleted, return immediately!
     if ( model.$deleted )
     {
-      Neuro.debug( Neuro.Events.SAVE_DELETED, db, model );
+      Neuro.debug( Neuro.Debugs.SAVE_DELETED, db, model );
 
       return;
     }
@@ -930,7 +930,7 @@ NeuroDatabase.prototype =
     // TODO Add Debug here?
     if ( model.$pendingSave )
     {
-      Neuro.debug( Neuro.Events.REMOVE_CANCEL_SAVE, db, model );
+      Neuro.debug( Neuro.Debugs.REMOVE_CANCEL_SAVE, db, model );
 
       model.$pendingSave = false; 
     }

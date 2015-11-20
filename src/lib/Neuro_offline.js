@@ -8,16 +8,16 @@ Neuro.forceOffline = false;
 Neuro.setOnline = function()
 {
   Neuro.online = true;
-  Neuro.debug( Neuro.Events.ONLINE );
-  Neuro.trigger('online');
+  Neuro.debug( Neuro.Debugs.ONLINE );
+  Neuro.trigger( Neuro.Events.Online );
 };
 
 // Set network status to offline and notify all listeners
 Neuro.setOffline = function()
 {
   Neuro.online = false;
-  Neuro.debug( Neuro.Events.OFFLINE );
-  Neuro.trigger('offline');
+  Neuro.debug( Neuro.Debugs.OFFLINE );
+  Neuro.trigger( Neuro.Events.Offline );
 };
 
 // This must be called manually - this will try to use built in support for 
@@ -26,8 +26,8 @@ Neuro.listenToNetworkStatus = function()
 {
   if (window.addEventListener) 
   {
-    window.addEventListener( 'online', Neuro.setOnline, false );
-    window.addEventListener( 'offline', Neuro.setOffline, false );
+    window.addEventListener( Neuro.Events.Online, Neuro.setOnline, false );
+    window.addEventListener( Neuro.Events.Offline, Neuro.setOffline, false );
   } 
   else 
   {

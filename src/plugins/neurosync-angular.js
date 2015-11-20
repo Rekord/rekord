@@ -19,7 +19,7 @@
 
       function execute( method, data, url, success, failure, offlineValue )
       {
-        Neuro.debug( Neuro.Events.REST, this, method, url, data );
+        Neuro.debug( Neuro.Debugs.REST, this, method, url, data );
 
         if ( Neuro.forceOffline )
         {
@@ -79,7 +79,7 @@
       }
     };
 
-    Neuro.Events.ScopeEval = 100000;
+    Neuro.Debugs.ScopeEval = 100000;
 
     Neuro.listenToNetworkStatus();
 

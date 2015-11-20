@@ -4,7 +4,7 @@ Neuro.debug = function(event, source)  /*, data.. */
   // up to the user
 };
 
-Neuro.Events = {
+Neuro.Debugs = {
 
   CREATION: 0,                // options
 
@@ -90,10 +90,43 @@ Neuro.Events = {
   BELONGSTO_INITIAL: 65,       // NeuroModel, initial
   BELONGSTO_CLEAR_MODEL: 66,   // relation
   BELONGSTO_SET_MODEL: 67,     // relation
-  BELONGSTO_PRESAVE: 68,       // NeuroModel, relation
   BELONGSTO_POSTREMOVE: 69,    // NeuroModel, relation
   BELONGSTO_CLEAR_KEY: 70,     // NeuroModel, local
   BELONGSTO_UPDATE_KEY: 71,    // NeuroModel, local, NeuroModel, foreign
-  BELONGSTO_LOADED: 72         // NeuroModel, relation, [NeuroModel]
+  BELONGSTO_LOADED: 72,        // NeuroModel, relation, [NeuroModel]
+
+  HASMANY_INIT: 74,             // NeuroHasMany
+  HASMANY_NINJA_REMOVE: 75,     // NeuroModel, NeuroModel, relation
+  HASMANY_NINJA_SAVE: 76,       // NeuroModel, NeuroModel, relation
+  HASMANY_INITIAL: 77,          // NeuroModel, relation, initial
+  HASMANY_INITIAL_PULLED: 78,   // NeuroModel, relation
+  HASMANY_REMOVE: 79,           // relation, NeuroModel
+  HASMANY_SORT: 80,             // relation
+  HASMANY_ADD: 81,              // relation, NeuroModel
+  HASMANY_LAZY_LOAD: 82,        // relation, NeuroModel[]
+  HASMANY_INITIAL_GRABBED: 83,  // relation, NeuroModel
+  HASMANY_NINJA_ADD: 84,        // relation, NeuroModel
+  HASMANY_AUTO_SAVE: 85,        // relation
+  HASMANY_PREREMOVE: 86,        // NeuroModel, relation
+  HASMANY_POSTSAVE: 87,         // NeuroModel, relation
+
+  HASMANYTHRU_INIT: 88,             // NeuroHasMany
+  HASMANYTHRU_NINJA_REMOVE: 89,     // NeuroModel, NeuroModel, relation
+  HASMANYTHRU_NINJA_SAVE: 90,       // NeuroModel, NeuroModel, relation
+  HASMANYTHRU_NINJA_THRU_REMOVE: 91,// NeuroModel, NeuroModel, relation
+  HASMANYTHRU_INITIAL: 92,          // NeuroModel, relation, initial
+  HASMANYTHRU_INITIAL_PULLED: 93,   // NeuroModel, relation
+  HASMANYTHRU_REMOVE: 94,           // relation, NeuroModel
+  HASMANYTHRU_SORT: 95,             // relation
+  HASMANYTHRU_ADD: 96,              // relation, NeuroModel
+  HASMANYTHRU_LAZY_LOAD: 97,        // relation, NeuroModel[]
+  HASMANYTHRU_INITIAL_GRABBED: 98,  // relation, NeuroModel
+  HASMANYTHRU_NINJA_ADD: 99,        // relation, NeuroModel
+  HASMANYTHRU_AUTO_SAVE: 100,       // relation
+  HASMANYTHRU_PREREMOVE: 101,       // NeuroModel, relation
+  HASMANYTHRU_POSTSAVE: 102,        // NeuroModel, relation  
+  HASMANYTHRU_THRU_ADD: 103,        // relation, NeuroModel
+  HASMANYTHRU_THRU_REMOVE: 68       // relation, NeuroModel, NeuroModel
+
 
 };

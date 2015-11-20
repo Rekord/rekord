@@ -11,7 +11,7 @@ extend( new NeuroOperation( false, 'NeuroSaveLocal' ), NeuroSaveLocal,
     // If the model is deleted, return immediately!
     if ( model.$deleted )
     {
-      Neuro.debug( Neuro.Events.SAVE_LOCAL_DELETED, this, model );
+      Neuro.debug( Neuro.Debugs.SAVE_LOCAL_DELETED, model );
 
       return this.finish();
     }
@@ -39,21 +39,16 @@ extend( new NeuroOperation( false, 'NeuroSaveLocal' ), NeuroSaveLocal,
     var db = this.db;
     var model = this.model;
 
-    Neuro.debug( Neuro.Events.SAVE_LOCAL, this, model );
+    Neuro.debug( Neuro.Debugs.SAVE_LOCAL, model );
 
     this.tryNext( NeuroSaveRemote );
-
-    if ( db.cachePending )
-    {
-      db.store.remove( model.$key() );
-    }
   },
 
   onFailure: function(e)
   {
     var model = this.model;
 
-    Neuro.debug( Neuro.Events.SAVE_LOCAL_ERROR, this, model, e );
+    Neuro.debug( Neuro.Debugs.SAVE_LOCAL_ERROR, model, e );
 
     this.tryNext( NeuroSaveRemote );
   }

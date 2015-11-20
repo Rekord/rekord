@@ -28,6 +28,7 @@
     10: 'Model deleted locally, resuming remote deletion',
     11: 'Model loaded but not saved, resuming save',
     12: 'Model loaded',
+    73: 'Auto-refresh',
     /**/
     /* Real-time */
     13: 'Real-time save',
@@ -95,9 +96,54 @@
     59: 'Set key',
     60: 'Loaded',
     /**/
+    /* Belongs To Relationship */
     61: 'Initialized',
     62: 'Model ninja removed',
-    63: 'Model ninja saved'
+    63: 'Model ninja saved',
+    64: 'Initial pulled from model',
+    65: 'Initial value loaded',
+    66: 'Relation cleared',
+    67: 'Relation set',
+    69: 'Post-remove',
+    70: 'Clear key',
+    71: 'Set key',
+    72: 'Loaded',
+    /**/
+    /* Has Many Relationship */
+    74: 'Initialized',
+    75: 'Model ninja removed',
+    76: 'Model ninja saved',
+    77: 'Initial value loaded',
+    78: 'Initial pulled from model',
+    79: 'Model removed',
+    80: 'Models sorted',
+    81: 'Model added',
+    82: 'Models lazily loaded',
+    83: 'Model grabbed based on initial',
+    84: 'Model ninja added',
+    85: 'Auto-saving',
+    86: 'Pre-remove',
+    87: 'Post-save',
+    /**/
+    /* Has Many Through Relationship */
+    88: 'Initialized',
+    89: 'Model ninja removed',
+    90: 'Model ninja saved',
+    91: 'Through ninja removed',
+    92: 'Initial value loaded',
+    93: 'Initial pulled from model',
+    94: 'Model removed',
+    95: 'Models sorted',
+    96: 'Model added',
+    97: 'Models lazily loaded',
+    98: 'Model grabbed based on initial',
+    99: 'Model ninja added',
+    100:'Auto-saving',
+    101:'Pre-remove',
+    102:'Post-save',
+    103:'Through added',
+    68: 'Through removed'
+    /**/
   };
 
   function getContext(x) 
@@ -124,6 +170,13 @@
 
   function findContext(that, args) 
   {
+    var c = getContext( that );
+
+    if (c !== false) 
+    {
+      return c;
+    }
+
     for (var i = 0; i < args.length; i++) 
     {
       var c = getContext( args[i] );
@@ -132,13 +185,6 @@
       {
         return c;
       }
-    }
-
-    var c = getContext( that );
-
-    if (c !== false) 
-    {
-      return c;
     }
 
     return '[Neuro] ';

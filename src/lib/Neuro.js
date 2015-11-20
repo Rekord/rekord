@@ -24,7 +24,7 @@ function Neuro(options)
   database.model = model;
   database.init();
 
-  Neuro.debug( Neuro.Events.CREATION, database, options );
+  Neuro.debug( Neuro.Debugs.CREATION, database, options );
 
   model.Database = database;
   model.Model = model;
@@ -44,10 +44,17 @@ function Neuro(options)
   Neuro.cache[ options.name ] = model;
   Neuro.cache[ options.className ] = model;
 
-  Neuro.trigger( 'initialized', [model] );
+  Neuro.trigger( Neuro.Events.Initialized, [model] );
 
   return model;
 }
+
+Neuro.Events = 
+{
+  Initialized:  'initialized',
+  Online:       'online',
+  Offline:      'offline'
+};
 
 Neuro.cache = {};
 
@@ -72,11 +79,11 @@ Neuro.get = function(name, callback, context)
         {
           callback.call( callbackContext, cached );
 
-          Neuro.off( 'initialized', checkNeuro );
+          Neuro.off( Neuro.Events.Initialized, checkNeuro );
         }
       }
 
-      Neuro.on( 'initialized', checkNeuro );
+      Neuro.on( Neuro.Events.Initialized, checkNeuro );
     }
   }
 

@@ -16,8 +16,8 @@ extend( new NeuroRelation(), NeuroHasMany,
     this.cascadeSave = !!options.cascadeSave;
     this.clearKey = this.ownsForeignKey();
 
-    Neuro.debug( Neuro.Events.HASMANY_INIT, this );
-    
+    Neuro.debug( Neuro.Debugs.HASMANY_INIT, this );
+
     this.finishInitialization();
   },
 
@@ -41,6 +41,8 @@ extend( new NeuroRelation(), NeuroHasMany,
 
       onRemoved: function() // this = model removed
       {
+        Neuro.debug( Neuro.Debugs.HASMANY_NINJA_REMOVE, that, model, this, relation );
+
         that.removeModel( relation, this, true );
       },
 
@@ -50,6 +52,8 @@ extend( new NeuroRelation(), NeuroHasMany,
         {
           return;
         }
+
+        Neuro.debug( Neuro.Debugs.HASMANY_NINJA_SAVE, that, model, this, relation );
 
         if ( !isRelated( this ) )
         {
@@ -91,6 +95,8 @@ extend( new NeuroRelation(), NeuroHasMany,
     // If the model's initial value is an array, populate the relation from it!
     if ( isArray( initial ) )
     {
+      Neuro.debug( Neuro.Debugs.HASMANY_INITIAL, this, model, relation, initial );
+
       for (var i = 0; i < initial.length; i++)
       {
         var input = initial[ i ];
@@ -102,6 +108,8 @@ extend( new NeuroRelation(), NeuroHasMany,
     } 
     else
     {
+      Neuro.debug( Neuro.Debugs.HASMANY_INITIAL_PULLED, this, model, relation );
+
       relatedDatabase.ready( this.handleLazyLoad( relation ), this );
     }
 
@@ -122,6 +130,8 @@ extend( new NeuroRelation(), NeuroHasMany,
     this.sort( relation );
     this.checkSave( relation );
   },
+
+  // TODO set
 
   relate: function(model, input)
   {
@@ -248,6 +258,8 @@ extend( new NeuroRelation(), NeuroHasMany,
 
     if ( relation && this.cascadeSave )
     {
+      Neuro.debug( Neuro.Debugs.HASMANY_POSTSAVE, this, model, relation );
+
       relation.saving = true;
       relation.delaySaving = true;
 
@@ -274,6 +286,8 @@ extend( new NeuroRelation(), NeuroHasMany,
 
     if ( relation && this.cascadeRemove )
     {
+      Neuro.debug( Neuro.Debugs.HASMANY_PREREMOVE, this, model, relation );
+
       this.bulk( relation, function()
       {
         var models = relation.models.values;
@@ -294,6 +308,8 @@ extend( new NeuroRelation(), NeuroHasMany,
     {
       if ( this.store === Neuro.Store.Model || this.save === Neuro.Save.Model )
       {
+        Neuro.debug( Neuro.Debugs.HASMANY_AUTO_SAVE, this, relation );
+
         relation.parent.$save();
       }
     }
@@ -305,6 +321,8 @@ extend( new NeuroRelation(), NeuroHasMany,
     {
       if ( relation.isRelated( related ) )
       {
+        Neuro.debug( Neuro.Debugs.HASMANY_NINJA_ADD, this, relation, related );
+
         this.addModel( relation, related );
       }
     };
@@ -319,6 +337,8 @@ extend( new NeuroRelation(), NeuroHasMany,
 
       if ( key in pending )
       {
+        Neuro.debug( Neuro.Debugs.HASMANY_INITIAL_GRABBED, this, relation, related );
+
         this.addModel( relation, related, true );
 
         delete pending[ key ];
@@ -332,6 +352,8 @@ extend( new NeuroRelation(), NeuroHasMany,
     {
       var related = relatedDatabase.models.filter( relation.isRelated );
       var models = related.values;
+
+      Neuro.debug( Neuro.Debugs.HASMANY_LAZY_LOAD, this, relation, models );
 
       this.bulk( relation, function()
       {
@@ -350,7 +372,9 @@ extend( new NeuroRelation(), NeuroHasMany,
     var adding = !target.has( key );
 
     if ( adding )
-    {
+    { 
+      Neuro.debug( Neuro.Debugs.HASMANY_ADD, this, relation, related );
+
       target.put( key, related );
 
       related.$on( 'removed', relation.onRemoved );
@@ -377,6 +401,8 @@ extend( new NeuroRelation(), NeuroHasMany,
 
     if ( target.has( key ) )
     {
+      Neuro.debug( Neuro.Debugs.HASMANY_REMOVE, this, relation, related );
+
       target.remove( key );
 
       related.$off( 'removed', relation.onRemoved );
@@ -509,6 +535,8 @@ extend( new NeuroRelation(), NeuroHasMany,
     {
       if ( !related.isSorted( this.comparator ) )
       {
+        Neuro.debug( Neuro.Debugs.HASMANY_SORT, this, relation );
+
         related.sort( this.comparator );
       }
 
