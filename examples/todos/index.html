@@ -8,7 +8,10 @@
     <div ng-controller="TodoController as ctrl">
 
       <!-- Online status -->
-      <div style="float:right">{{ ctrl.status }}</div>
+      <div style="float:right">
+        <a href="#" ng-hide="ctrl.isOnline()" ng-click="ctrl.setOnline(true)">Go Online</a>
+        <a href="#" ng-show="ctrl.isOnline()" ng-click="ctrl.setOnline(false)">Go Offline</a>
+      </div>
 
       <!-- New Todo -->
       <input type="text" ng-model="ctrl.todo.name" ng-enter="ctrl.addTodo()">
@@ -26,6 +29,7 @@
     <script src="http://rawgit.com/ClickerMonkey/storkjs/master/build/stork.min.js"></script>
     <script src="../pubsub/pubsub-client.js"></script>
 
+    <script src="../../build/neurosync.js"></script>
     <script src="../../build/plugins/neurosync-pubsub.min.js"></script>
     <script src="../../build/plugins/neurosync-stork.min.js"></script>
     <script src="../../build/plugins/neurosync-debug.min.js"></script>
@@ -45,28 +49,7 @@
 
         .value('RESTBASE', 'http://localhost:8080/api/')
 
-        .factory('Accessible', function(Neuro, PUBSUB, RESTBASE)
-        {
-          var Accessible = Neuro({
-            name: 'accessible',
-            className: 'Accessible',
-            api: RESTBASE + 'accessible/',
-            pubsub: PUBSUB,
-            channel: 'accessibles',
-            token: 'root',
-            key: 'id',
-            fields: ['id', 'users'],
-            defaults: {
-              users: []
-            }
-          });
-
-          window.Accessible = Accessible;
-
-          return Accessible;
-        })
-
-        .factory('Todo', function(Neuro, Accessible, PUBSUB, RESTBASE)
+        .factory('Todo', function(Neuro, PUBSUB, RESTBASE)
         {
           var Todo = Neuro({
             name: 'todos',
@@ -76,25 +59,13 @@
             channel: 'todos',
             token: 'root',
             key: 'id',
-            fields: ['id', 'name', 'done', 'created_at', 'updated_at', 'accessible_id'],
+            fields: ['id', 'name', 'done', 'created_at', 'updated_at'],
             defaults: {
               done: false,
               created_at: Date.now,
-              updated_at: Date.now,
-              accessible: Accessible
+              updated_at: Date.now
             },
-            comparator: '-created_at',
-
-            loadRelations: true,
-            hasOne: {
-              accessible: {
-                model: Accessible,
-                auto: true
-                // local: 'accessible_id'
-                // store: Neuro.Store.None
-                // save: Neuro.Save.None
-              }
-            }
+            comparator: '-created_at'
           });
 
           window.Todo = Todo;
@@ -141,24 +112,25 @@
           }
         })
 
-        .controller('TodoController', function($scope, Neuro, Todo)
+        .controller('TodoController', function($scope, Neuro, Todo, NeuroBind)
         {
-          this.status = Neuro.online ? 'Online' : 'Offline';
-          this.todos = Todo.Database.getModels();
+          NeuroBind( $scope, Todo );
+
+          this.todos = Todo.all();
+
+          this.isOnline = function() {
+            return !Neuro.forceOffline;
+          };
+          this.setOnline = function(online) {
+            Neuro.forceOffline = !online;
+            Neuro.checkNetworkStatus();
+          };
 
           this.newTodo = function() {
             this.todo = new Todo({
               name: '',
               done: false
             });
-          };
-
-          this.setStatus = function(value) {
-            return function() {
-              $scope.$evalAsync(function() {
-                $scope.status = value;
-              });
-            };
           };
 
           this.addTodo = function() {
@@ -172,13 +144,6 @@
           };
 
           this.newTodo();
-
-          Neuro.on('online', this.setStatus('Online'));
-          Neuro.on('offline', this.setStatus('Offline'));
-
-          Todo.Database.on('updated', function() {
-            $scope.$evalAsync();
-          });
 
           window.TodoController = this;
         })

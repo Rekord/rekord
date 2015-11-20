@@ -13,7 +13,10 @@
       <div ng-controller="TaskController as ctrl">
 
         <!-- Online status -->
-        <div style="float:right">{{ ctrl.status }}</div>
+        <div style="float:right">
+          <a href="#" ng-hide="ctrl.isOnline()" ng-click="ctrl.setOnline(true)">Go Online</a>
+          <a href="#" ng-show="ctrl.isOnline()" ng-click="ctrl.setOnline(false)">Go Offline</a>
+        </div>
 
         <!-- New Task List -->
         <div class="row">
@@ -85,8 +88,6 @@
           var Task = Neuro({
             name: 'task',
             className: 'Task',
-            // cache: false,               // Don't store locally, tasks are stored directly on TaskLists
-            // loadRemote: false,          // We also don't need to load them remotely, we have them on the TaskLists
             api: RESTBASE + 'task/',
             pubsub: PUBSUB,
             channel: 'tasks',
@@ -125,7 +126,7 @@
             token: 'root',
             key: 'id',
             autoRefresh: true,
-            fields: ['id', 'name', 'updated_at', 'created_at'/*, 'tasks'*/],
+            fields: ['id', 'name', 'updated_at', 'created_at'],
             comparator: '-created_at',
             defaults: {
               updated_at: Date.now,
@@ -136,8 +137,6 @@
               tasks: {
                 model: 'Task',
                 property: true,
-                // save: Neuro.Save.Model,
-                // store: Neuro.Store.Model,
                 cascadeRemove: true,
                 comparator: function(a, b) {
                   return -Neuro.compare( a.finished_at, b.finished_at ) ||
@@ -188,15 +187,15 @@
                 scope.model.$remove();
               };
               scope.clear = function() {
-                scope.model.$unrelate('tasks');
+                scope.model.tasks.unrelate();
               };
               scope.addTask = function() {
                 if (!scope.task.name) return;
-                scope.model.$relate('tasks', scope.task);
                 scope.task.$save({
                   updated_at: Date.now(),
                   created_at: Date.now()
                 });
+                scope.model.tasks.relate( scope.task );
                 scope.newTask();
               }; 
 
@@ -252,8 +251,15 @@
         {
           NeuroBind( $scope, TaskList );
 
-          this.status = Neuro.online ? 'Online' : 'Offline';
-          this.taskLists = TaskList.Database.getModels();
+          this.taskLists = TaskList.all();
+
+          this.isOnline = function() {
+            return !Neuro.forceOffline;
+          };
+          this.setOnline = function(online) {
+            Neuro.forceOffline = !online;
+            Neuro.checkNetworkStatus();
+          };
 
           this.newTaskList = function() {
             this.taskList = new TaskList({
@@ -271,17 +277,6 @@
           };
 
           this.newTaskList();
-
-          this.setStatus = function(value) {
-            return function() {
-              $scope.$evalAsync(function() {
-                $scope.status = value;
-              });
-            };
-          };
-
-          Neuro.on('online', this.setStatus('Online'));
-          Neuro.on('offline', this.setStatus('Offline'));
 
           window.TaskController = this;
         })
