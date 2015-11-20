@@ -127,7 +127,10 @@ NeuroModel.prototype =
   {
     if ( isObject( props ) )
     {
-      transfer( props, this );
+      for (var prop in props)
+      {
+        this.$set( prop, props[ prop ] );
+      }
     }
     else if ( isString( props ) )
     {

@@ -17,7 +17,7 @@ Neuro.rest = function(database)
     // failure ( data, status )
     create: function( model, encoded, success, failure )
     {
-      failure( null, 0 );
+      failure( {}, 0 );
     },
 
     // success ( data )

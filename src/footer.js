@@ -7,6 +7,7 @@
   global.Neuro.Database = NeuroDatabase;
   global.Neuro.Relation = NeuroRelation;
   global.Neuro.Operation = NeuroOperation;
+  global.Neuro.Map = NeuroMap;
 
   /* Utility Functions */
   global.Neuro.uuid = uuid;

@@ -1,18 +1,4 @@
 
-/*
-new Neuro({
-  name: 'name',
-  api: 'http://api/name',
-  pubsub: 'http://url:port',
-  channel: 'houseid',
-  token: 'userid',
-  key: 'id',
-  fields: ['id', 'name', 'updated_at'],
-//  encode: function() {},
-//  decode: function() {}
-});
-*/
-
 function Neuro(options)
 {
   var database = new NeuroDatabase( options );

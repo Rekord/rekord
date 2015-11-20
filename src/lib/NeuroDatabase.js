@@ -927,7 +927,6 @@ NeuroDatabase.prototype =
     model.$deleted = true;
 
     // If we're offline and we have a pending save - cancel the pending save.
-    // TODO Add Debug here?
     if ( model.$pendingSave )
     {
       Neuro.debug( Neuro.Debugs.REMOVE_CANCEL_SAVE, db, model );
