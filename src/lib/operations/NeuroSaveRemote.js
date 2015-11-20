@@ -122,7 +122,7 @@ extend( new NeuroOperation( false, 'NeuroSaveRemote' ), NeuroSaveRemote,
     // local and model point to the same object.
     if ( !model.$saved )
     {
-      if ( db.cache === false )
+      if ( !db.cache )
       {
         model.$saved = {};
       }
@@ -144,7 +144,7 @@ extend( new NeuroOperation( false, 'NeuroSaveRemote' ), NeuroSaveRemote,
       key: this.key
     });
 
-    if ( db.cachePending && db.cache !== false )
+    if ( db.cachePending && db.cache )
     {
       this.insertNext( NeuroRemoveCache );
     }

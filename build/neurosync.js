@@ -140,6 +140,30 @@ function swap(a, i, k)
   a[ k ] = t;
 }
 
+function applyOptions( target, options, defaults )
+{
+  for (var prop in defaults)
+  {
+    var defaultValue = defaults[ prop ];
+    var option = options[ prop ];
+
+    if ( !option && defaultValue === undefined )
+    {
+      throw ( prop + ' is a required option' );
+    }
+    else if ( isValue( option ) )
+    {
+      target[ prop ] = option;
+    }
+    else
+    {
+      target[ prop ] = copy( defaultValue );
+    }
+  }
+
+  target.options = options;
+}
+
 function evaluate(x)
 {
   if ( !isValue( x ) )
@@ -219,7 +243,7 @@ function clean(x)
 
 function copy(x, copyHidden)
 {
-  if (x === void 0)
+  if (x === undefined)
   {
     return x;
   }
@@ -721,20 +745,6 @@ function eventize(target, secret)
   }
 };
 
-/*
-new Neuro({
-  name: 'name',
-  api: 'http://api/name',
-  pubsub: 'http://url:port',
-  channel: 'houseid',
-  token: 'userid',
-  key: 'id',
-  fields: ['id', 'name', 'updated_at'],
-//  encode: function() {},
-//  decode: function() {}
-});
-*/
-
 function Neuro(options)
 {
   var database = new NeuroDatabase( options );
@@ -965,7 +975,7 @@ Neuro.rest = function(database)
     // failure ( data, status )
     create: function( model, encoded, success, failure )
     {
-      failure( null, 0 );
+      failure( {}, 0 );
     },
 
     // success ( data )
@@ -1139,28 +1149,41 @@ Neuro.checkNetworkStatus = function()
 
 function NeuroDatabase(options)
 {  
-  transfer( options, this );
+  var defaults = NeuroDatabase.Defaults;
 
+  // Apply the options to this database!
+  applyOptions( this, options, defaults );
+
+  // Apply options not specified in defaults
+  for (var prop in options)
+  {
+    if ( !(prop in defaults) )
+    {
+      this[ prop ] = options[ prop ];
+    }
+  }
+
+  // Properties
   this.models = new NeuroMap();
-
+  this.className = this.className || this.name;
   this.initialized = false;
   this.pendingRefresh = false;
-
-  this.keySeparator = options.keySeparator || NeuroDatabase.Defaults.keySeparator;
-
   this.localLoaded = false;
   this.remoteLoaded = false;
-
   this.remoteOperations = 0;
   this.afterOnline = false;
 
-  this.rest = Neuro.rest( this );
-  this.store = Neuro.store( this );
-  this.live = Neuro.live( this, this.handlePublish( this ) );
+  // Services
+  this.rest   = Neuro.rest( this );
+  this.store  = Neuro.store( this );
+  this.live   = Neuro.live( this, this.handlePublish( this ) );
 
+  // Functions
   this.setComparator( this.comparator, this.comparatorNullsFirst );
   this.setRevision( this.revision );
+  this.setToString( this.toString );
 
+  // Relations
   this.relations = {};
 
   for (var relationType in options)
@@ -1211,17 +1234,29 @@ NeuroDatabase.Live =
 
 NeuroDatabase.Defaults = 
 {
-  keySeparator: '/'
+  name:                 undefined, // required
+  className:            null, // defaults to name
+  key:                  'id',
+  keySeparator:         '/',
+  fields:               undefined, // required
+  defaults:             {},
+  comparator:           null,
+  comparatorNullsFirst: null,
+  revision:             null,
+  loadRelations:        true,
+  loadRemote:           true,
+  autoRefresh:          true,
+  cache:                true,
+  cachePending:         true,
+  fullSave:             false,
+  fullPublish:          false,
+  encode:               function(data) { return data; },
+  decode:               function(rawData) { return rawData; },
+  toString:             function(model) { return model.$key() }
 };
 
 NeuroDatabase.prototype =
 {
-
-  //
-  toString: function(model) 
-  {
-    return '';
-  },
 
   // Notifies a callback when the database has loaded (either locally or remotely).
   ready: function(callback, context, persistent)
@@ -1304,7 +1339,7 @@ NeuroDatabase.prototype =
   parseModel: function(input, fromStorage)
   {
     var db = this;
-    var hasRemote = db.remoteLoaded || db.loadRemote === false;
+    var hasRemote = db.remoteLoaded || !db.loadRemote;
 
     if ( !isValue( input ) )
     {
@@ -1503,6 +1538,28 @@ NeuroDatabase.prototype =
     this.comparatorFunction = createComparator( comparator, nullsFirst );
   },
 
+  setToString: function(toString)
+  {
+    if ( isFunction( toString ) )
+    {
+      this.toString = toString;
+    }
+    else if ( isString( toString ) )
+    {
+      this.toString = function(model)
+      {
+        return isValue( model ) ? model[ toString ] : model;
+      };
+    }
+    else
+    {
+      this.toString = function(model)
+      {
+        return model.$key();
+      };
+    }
+  },
+
   // Sorts the database if it isn't sorted.
   sort: function()
   {
@@ -1561,7 +1618,7 @@ NeuroDatabase.prototype =
           model[ prop ] = decoded[ prop ];
           updated[ prop ] = encoded[ prop ];
 
-          if ( db.cache !== false )
+          if ( db.cache )
           {
             model.$local[ prop ] = encoded[ prop ];
           }
@@ -1586,7 +1643,7 @@ NeuroDatabase.prototype =
 
       model.$trigger( NeuroModel.Events.RemoteUpdate, [encoded] );
 
-      if ( db.cache !== false )
+      if ( db.cache )
       {
         model.$addOperation( NeuroSaveNow ); 
       }
@@ -1595,7 +1652,7 @@ NeuroDatabase.prototype =
     {
       model = db.instantiate( decoded, fromStorage );
 
-      if ( db.cache !== false )
+      if ( db.cache )
       {
         model.$local = encoded;
         model.$saved = model.$local.$saved = copy( encoded );
@@ -1707,7 +1764,7 @@ NeuroDatabase.prototype =
     var db = this;
     var model = db.models.get( key );
 
-    if ( db.cache === false )
+    if ( !db.cache )
     {
       return db.destroyLocalUncachedModel( model, key );
     }
@@ -1723,14 +1780,14 @@ NeuroDatabase.prototype =
   {
     var db = this;
 
-    if ( db.loadRemote !== false && db.autoRefresh )
+    if ( db.loadRemote && db.autoRefresh )
     {
       Neuro.after( 'online', db.onOnline, db );
     }
 
-    if ( db.cache === false )
+    if ( !db.cache )
     {
-      if ( db.loadRemote !== false )
+      if ( db.loadRemote )
       {
         db.refresh();
       }
@@ -1800,7 +1857,7 @@ NeuroDatabase.prototype =
 
       db.updated();
 
-      if ( db.loadRemote !== false )
+      if ( db.loadRemote )
       {
         db.refresh();
       }
@@ -1810,7 +1867,7 @@ NeuroDatabase.prototype =
     {
       db.initialized = true;
 
-      if ( db.loadRemote !== false )
+      if ( db.loadRemote )
       {
         db.refresh();
       }
@@ -1990,18 +2047,6 @@ NeuroDatabase.prototype =
     return new this.model( data, fromStorage );
   },
 
-  // Converts properties in data into their storable form
-  encode: function(data)
-  {
-    return data;
-  },
-
-  // Converts properties in rawData from their storable form to their desired
-  decode: function(rawData)
-  {
-    return rawData;
-  },
-
   // Save the model
   save: function(model)
   {
@@ -2032,7 +2077,7 @@ NeuroDatabase.prototype =
       model.$trigger( NeuroModel.Events.UpdateAndSave );
     }
 
-    if ( db.cache === false )
+    if ( !db.cache )
     {
       // Save remotely
       model.$addOperation( NeuroSaveRemote );
@@ -2064,7 +2109,6 @@ NeuroDatabase.prototype =
     model.$deleted = true;
 
     // If we're offline and we have a pending save - cancel the pending save.
-    // TODO Add Debug here?
     if ( model.$pendingSave )
     {
       Neuro.debug( Neuro.Debugs.REMOVE_CANCEL_SAVE, db, model );
@@ -2072,7 +2116,7 @@ NeuroDatabase.prototype =
       model.$pendingSave = false; 
     }
 
-    if ( db.cache === false )
+    if ( !db.cache )
     {
       // Remove remotely
       model.$addOperation( NeuroRemoveRemote );
@@ -2216,7 +2260,10 @@ NeuroModel.prototype =
   {
     if ( isObject( props ) )
     {
-      transfer( props, this );
+      for (var prop in props)
+      {
+        this.$set( prop, props[ prop ] );
+      }
     }
     else if ( isString( props ) )
     {
@@ -3124,7 +3171,7 @@ extend( new NeuroOperation( false, 'NeuroSaveNow' ), NeuroSaveNow,
 
   run: function(db, model)
   {
-    if ( db.cachePending && db.cache !== false )
+    if ( db.cachePending && db.cache )
     {
       this.finish();
     }
@@ -3259,7 +3306,7 @@ extend( new NeuroOperation( false, 'NeuroSaveRemote' ), NeuroSaveRemote,
     // local and model point to the same object.
     if ( !model.$saved )
     {
-      if ( db.cache === false )
+      if ( !db.cache )
       {
         model.$saved = {};
       }
@@ -3281,7 +3328,7 @@ extend( new NeuroOperation( false, 'NeuroSaveRemote' ), NeuroSaveRemote,
       key: this.key
     });
 
-    if ( db.cachePending && db.cache !== false )
+    if ( db.cachePending && db.cache )
     {
       this.insertNext( NeuroRemoveCache );
     }
@@ -3301,14 +3348,13 @@ extend( new NeuroOperation( false, 'NeuroSaveRemote' ), NeuroSaveRemote,
   }
 
 });
+
 function NeuroRelation()
 {
 
 }
 
-Neuro.Relations = {
-
-};
+Neuro.Relations = {};
 
 Neuro.Store = {
   None: 0,
@@ -3322,8 +3368,22 @@ Neuro.Save = {
   Model: 4
 };
 
+NeuroRelation.Defaults = 
+{
+  model:      undefined,
+  store:      Neuro.Store.None,
+  save:       Neuro.Save.None,
+  auto:       true,
+  property:   true
+};
+
 NeuroRelation.prototype =
 {
+
+  getDefaults: function(database, field, options)
+  {
+    return NeuroRelation.Defaults;
+  },
 
   /**
    * Initializes this relation with the given database, field, and options.
@@ -3335,15 +3395,14 @@ NeuroRelation.prototype =
    */
   init: function(database, field, options)
   {
+    applyOptions( this, options, this.getDefaults( database, field, options ) );
+
     this.database = database;
     this.name = field;
     this.options = options;
-    this.store = options.store || Neuro.Store.None;
-    this.save = options.save || Neuro.Save.None;
-    this.auto = !!options.auto;
-    this.property = !!options.property;
     this.pendingLoads = [];
     this.initialized = false;
+
     this.discriminator = options.discriminator || 'discriminator';
     this.discriminators = options.discriminators || {};
     this.discriminated = !!options.discriminators;
@@ -3779,14 +3838,29 @@ function NeuroBelongsTo()
 
 Neuro.Relations.belongsTo = NeuroBelongsTo;
 
+NeuroBelongsTo.Defaults = 
+{
+  model:      undefined,
+  store:      Neuro.Store.None,
+  save:       Neuro.Save.None,
+  auto:       true,
+  property:   true,
+  local:      null
+};
+
 extend( new NeuroRelation(), NeuroBelongsTo, 
 {
+
+  getDefaults: function(database, field, options)
+  {
+    return NeuroBelongsTo.Defaults;
+  },
 
   onInitialized: function(database, field, options)
   {
     var relatedDatabase = this.model.Database;
 
-    this.local = options.local || ( relatedDatabase.name + '_' + relatedDatabase.key );
+    this.local = this.local || ( relatedDatabase.name + '_' + relatedDatabase.key );
 
     Neuro.debug( Neuro.Debugs.BELONGSTO_INIT, this );
 
@@ -4047,15 +4121,32 @@ function NeuroHasMany()
 
 Neuro.Relations.hasMany = NeuroHasMany;
 
+NeuroHasMany.Defaults = 
+{
+  model:                undefined,
+  store:                Neuro.Store.None,
+  save:                 Neuro.Save.None,
+  auto:                 true,
+  property:             true,
+  foreign:              null,
+  comparator:           null,
+  comparatorNullsFirst: false,
+  cascadeRemove:        true,
+  cascadeSave:          true
+};
+
 extend( new NeuroRelation(), NeuroHasMany, 
 {
 
+  getDefaults: function(database, field, options)
+  {
+    return NeuroHasMany.Defaults;
+  },
+
   onInitialized: function(database, field, options)
   {
-    this.foreign = options.foreign || ( database.name + '_' + database.key );
-    this.comparator = createComparator( options.comparator, options.comparatorNullsFirst );
-    this.cascadeRemove = !!options.cascadeRemove;
-    this.cascadeSave = !!options.cascadeSave;
+    this.foreign = this.foreign || ( database.name + '_' + database.key );
+    this.comparator = createComparator( this.comparator, this.comparatorNullsFirst );
     this.clearKey = this.ownsForeignKey();
 
     Neuro.debug( Neuro.Debugs.HASMANY_INIT, this );
@@ -4594,19 +4685,37 @@ function NeuroHasManyThrough()
 
 Neuro.Relations.hasManyThrough = NeuroHasManyThrough;
 
+NeuroHasManyThrough.Defaults = 
+{
+  model:                undefined,
+  store:                Neuro.Store.None,
+  save:                 Neuro.Save.None,
+  auto:                 true,
+  property:             true,
+  through:              undefined,
+  local:                null,
+  foreign:              null,
+  comparator:           null,
+  comparatorNullsFirst: false,
+  cascadeRemove:        true,
+  cascadeSave:          false
+};
+
 extend( new NeuroRelation(), NeuroHasManyThrough, 
 {
+
+  getDefaults: function(database, field, options)
+  {
+    return NeuroHasManyThrough.Defaults;
+  },
 
   onInitialized: function(database, field, options)
   {
     var relatedDatabase = this.model.Database;
 
-    this.foreign = options.foreign || ( relatedDatabase.name + '_' + relatedDatabase.key );
-    this.local = options.local || ( database.name + '_' + database.key );
-
-    this.comparator = createComparator( options.comparator, options.comparatorNullsFirst );
-    this.cascadeRemove = !!options.cascadeRemove;
-    this.cascadeSave = !!options.cascadeSave;
+    this.foreign = this.foreign || ( relatedDatabase.name + '_' + relatedDatabase.key );
+    this.local = this.local || ( database.name + '_' + database.key );
+    this.comparator = createComparator( this.comparator, this.comparatorNullsFirst );
 
     if ( !isNeuro( options.through ) )
     {
@@ -5265,14 +5374,29 @@ function NeuroHasOne()
 
 Neuro.Relations.hasOne = NeuroHasOne;
 
+NeuroHasOne.Defaults = 
+{
+  model:      undefined,
+  store:      Neuro.Store.None,
+  save:       Neuro.Save.None,
+  auto:       true,
+  property:   true,
+  local:      null
+}
+
 extend( new NeuroRelation(), NeuroHasOne, 
 {
+
+  getDefaults: function(database, field, options)
+  {
+    return NeuroHasOne.Defaults;
+  },
 
   onInitialized: function(database, field, options)
   {
     var relatedDatabase = this.model.Database;
 
-    this.local = options.local || ( relatedDatabase.name + '_' + relatedDatabase.key );
+    this.local = this.local || ( relatedDatabase.name + '_' + relatedDatabase.key );
 
     Neuro.debug( Neuro.Debugs.HASONE_INIT, this );
     
@@ -5569,6 +5693,7 @@ extend( new NeuroRelation(), NeuroHasOne,
   global.Neuro.Database = NeuroDatabase;
   global.Neuro.Relation = NeuroRelation;
   global.Neuro.Operation = NeuroOperation;
+  global.Neuro.Map = NeuroMap;
 
   /* Utility Functions */
   global.Neuro.uuid = uuid;

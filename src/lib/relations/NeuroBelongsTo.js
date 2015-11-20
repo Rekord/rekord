@@ -5,14 +5,29 @@ function NeuroBelongsTo()
 
 Neuro.Relations.belongsTo = NeuroBelongsTo;
 
+NeuroBelongsTo.Defaults = 
+{
+  model:      undefined,
+  store:      Neuro.Store.None,
+  save:       Neuro.Save.None,
+  auto:       true,
+  property:   true,
+  local:      null
+};
+
 extend( new NeuroRelation(), NeuroBelongsTo, 
 {
+
+  getDefaults: function(database, field, options)
+  {
+    return NeuroBelongsTo.Defaults;
+  },
 
   onInitialized: function(database, field, options)
   {
     var relatedDatabase = this.model.Database;
 
-    this.local = options.local || ( relatedDatabase.name + '_' + relatedDatabase.key );
+    this.local = this.local || ( relatedDatabase.name + '_' + relatedDatabase.key );
 
     Neuro.debug( Neuro.Debugs.BELONGSTO_INIT, this );
 

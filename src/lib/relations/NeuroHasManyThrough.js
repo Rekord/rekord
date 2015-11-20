@@ -5,19 +5,37 @@ function NeuroHasManyThrough()
 
 Neuro.Relations.hasManyThrough = NeuroHasManyThrough;
 
+NeuroHasManyThrough.Defaults = 
+{
+  model:                undefined,
+  store:                Neuro.Store.None,
+  save:                 Neuro.Save.None,
+  auto:                 true,
+  property:             true,
+  through:              undefined,
+  local:                null,
+  foreign:              null,
+  comparator:           null,
+  comparatorNullsFirst: false,
+  cascadeRemove:        true,
+  cascadeSave:          false
+};
+
 extend( new NeuroRelation(), NeuroHasManyThrough, 
 {
+
+  getDefaults: function(database, field, options)
+  {
+    return NeuroHasManyThrough.Defaults;
+  },
 
   onInitialized: function(database, field, options)
   {
     var relatedDatabase = this.model.Database;
 
-    this.foreign = options.foreign || ( relatedDatabase.name + '_' + relatedDatabase.key );
-    this.local = options.local || ( database.name + '_' + database.key );
-
-    this.comparator = createComparator( options.comparator, options.comparatorNullsFirst );
-    this.cascadeRemove = !!options.cascadeRemove;
-    this.cascadeSave = !!options.cascadeSave;
+    this.foreign = this.foreign || ( relatedDatabase.name + '_' + relatedDatabase.key );
+    this.local = this.local || ( database.name + '_' + database.key );
+    this.comparator = createComparator( this.comparator, this.comparatorNullsFirst );
 
     if ( !isNeuro( options.through ) )
     {

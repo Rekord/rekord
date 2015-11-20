@@ -1,11 +1,10 @@
+
 function NeuroRelation()
 {
 
 }
 
-Neuro.Relations = {
-
-};
+Neuro.Relations = {};
 
 Neuro.Store = {
   None: 0,
@@ -19,8 +18,22 @@ Neuro.Save = {
   Model: 4
 };
 
+NeuroRelation.Defaults = 
+{
+  model:      undefined,
+  store:      Neuro.Store.None,
+  save:       Neuro.Save.None,
+  auto:       true,
+  property:   true
+};
+
 NeuroRelation.prototype =
 {
+
+  getDefaults: function(database, field, options)
+  {
+    return NeuroRelation.Defaults;
+  },
 
   /**
    * Initializes this relation with the given database, field, and options.
@@ -32,15 +45,14 @@ NeuroRelation.prototype =
    */
   init: function(database, field, options)
   {
+    applyOptions( this, options, this.getDefaults( database, field, options ) );
+
     this.database = database;
     this.name = field;
     this.options = options;
-    this.store = options.store || Neuro.Store.None;
-    this.save = options.save || Neuro.Save.None;
-    this.auto = !!options.auto;
-    this.property = !!options.property;
     this.pendingLoads = [];
     this.initialized = false;
+
     this.discriminator = options.discriminator || 'discriminator';
     this.discriminators = options.discriminators || {};
     this.discriminated = !!options.discriminators;

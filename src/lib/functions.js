@@ -137,6 +137,30 @@ function swap(a, i, k)
   a[ k ] = t;
 }
 
+function applyOptions( target, options, defaults )
+{
+  for (var prop in defaults)
+  {
+    var defaultValue = defaults[ prop ];
+    var option = options[ prop ];
+
+    if ( !option && defaultValue === undefined )
+    {
+      throw ( prop + ' is a required option' );
+    }
+    else if ( isValue( option ) )
+    {
+      target[ prop ] = option;
+    }
+    else
+    {
+      target[ prop ] = copy( defaultValue );
+    }
+  }
+
+  target.options = options;
+}
+
 function evaluate(x)
 {
   if ( !isValue( x ) )
@@ -216,7 +240,7 @@ function clean(x)
 
 function copy(x, copyHidden)
 {
-  if (x === void 0)
+  if (x === undefined)
   {
     return x;
   }

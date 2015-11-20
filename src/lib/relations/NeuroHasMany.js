@@ -5,15 +5,32 @@ function NeuroHasMany()
 
 Neuro.Relations.hasMany = NeuroHasMany;
 
+NeuroHasMany.Defaults = 
+{
+  model:                undefined,
+  store:                Neuro.Store.None,
+  save:                 Neuro.Save.None,
+  auto:                 true,
+  property:             true,
+  foreign:              null,
+  comparator:           null,
+  comparatorNullsFirst: false,
+  cascadeRemove:        true,
+  cascadeSave:          true
+};
+
 extend( new NeuroRelation(), NeuroHasMany, 
 {
 
+  getDefaults: function(database, field, options)
+  {
+    return NeuroHasMany.Defaults;
+  },
+
   onInitialized: function(database, field, options)
   {
-    this.foreign = options.foreign || ( database.name + '_' + database.key );
-    this.comparator = createComparator( options.comparator, options.comparatorNullsFirst );
-    this.cascadeRemove = !!options.cascadeRemove;
-    this.cascadeSave = !!options.cascadeSave;
+    this.foreign = this.foreign || ( database.name + '_' + database.key );
+    this.comparator = createComparator( this.comparator, this.comparatorNullsFirst );
     this.clearKey = this.ownsForeignKey();
 
     Neuro.debug( Neuro.Debugs.HASMANY_INIT, this );

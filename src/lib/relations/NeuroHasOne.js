@@ -5,14 +5,29 @@ function NeuroHasOne()
 
 Neuro.Relations.hasOne = NeuroHasOne;
 
+NeuroHasOne.Defaults = 
+{
+  model:      undefined,
+  store:      Neuro.Store.None,
+  save:       Neuro.Save.None,
+  auto:       true,
+  property:   true,
+  local:      null
+}
+
 extend( new NeuroRelation(), NeuroHasOne, 
 {
+
+  getDefaults: function(database, field, options)
+  {
+    return NeuroHasOne.Defaults;
+  },
 
   onInitialized: function(database, field, options)
   {
     var relatedDatabase = this.model.Database;
 
-    this.local = options.local || ( relatedDatabase.name + '_' + relatedDatabase.key );
+    this.local = this.local || ( relatedDatabase.name + '_' + relatedDatabase.key );
 
     Neuro.debug( Neuro.Debugs.HASONE_INIT, this );
     
