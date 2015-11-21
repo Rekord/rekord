@@ -243,10 +243,11 @@ function clean(x)
 
 function copy(x, copyHidden)
 {
-  if (x === undefined)
+  if (x === null || x === undefined || typeof x !== 'object' || isFunction(x) || isRegExp(x))
   {
     return x;
   }
+
   if (isArray(x)) 
   {
     var c = [];
@@ -258,17 +259,10 @@ function copy(x, copyHidden)
 
     return c;
   }
-  if (isFunction(x) || typeof x !== 'object' || x === null)
-  {
-    return x;
-  }
+
   if (isDate(x))
   {
     return new Date( x.getTime() );
-  }
-  if (isRegExp(x))
-  {
-    return x;
   }
 
   var c = {};
@@ -386,14 +380,14 @@ function equals(a, b)
 
   if (at === 'object') {
     for (var p in a) {
-      if (p.charAt(0) !== '$' || !isFunction(a[p])) {
+      if (p.charAt(0) !== '$' && !isFunction(a[p])) {
         if (!(p in b) || !equals(a[p], b[p])) {
           return false;
         }
       }
     }
     for (var p in b) {
-      if (p.charAt(0) !== '$' || !isFunction(b[p])) {
+      if (p.charAt(0) !== '$' && !isFunction(b[p])) {
         if (!(p in a)) {
           return false;
         }
@@ -462,7 +456,7 @@ function createComparator(comparator, nullsFirst)
         var av = isValue( a ) ? a[ comparator ] : a;
         var bv = isValue( b ) ? b[ comparator ] : b; 
 
-        return compare( bv, av, nullsFirst );
+        return compare( bv, av, !nullsFirst );
       };
     }
     else
@@ -475,6 +469,27 @@ function createComparator(comparator, nullsFirst)
         return compare( av, bv, nullsFirst );
       };
     }
+  }
+  else if ( isArray( comparator ) )
+  {
+    var parsed = [];
+
+    for (var i = 0; i < comparator.length; i++)
+    {
+      parsed[ i ] = createComparator( comparator[ i ], nullsFirst );
+    }
+
+    return function compareObjectsCascade(a, b)
+    {
+      var d = 0;
+
+      for (var i = 0; i < parsed.length && d === 0; i++)
+      {
+        d = parsed[ i ]( a, b );
+      }
+
+      return d;
+    };
   }
 
   return null;
@@ -5698,6 +5713,7 @@ extend( new NeuroRelation(), NeuroHasOne,
   /* Utility Functions */
   global.Neuro.uuid = uuid;
   global.Neuro.indexOf = indexOf;
+  global.Neuro.propsMatch = propsMatch;
   global.Neuro.extend = extend;
   global.Neuro.transfer = transfer;
   global.Neuro.swap = swap;
@@ -5705,6 +5721,7 @@ extend( new NeuroRelation(), NeuroHasOne,
   global.Neuro.pull = pull;
   global.Neuro.copy = copy;
   global.Neuro.diff = diff;
+  global.Neuro.sizeof = sizeof;
   global.Neuro.isEmpty = isEmpty;
   global.Neuro.compare = compare;
   global.Neuro.equals = equals;

@@ -12,6 +12,7 @@
   /* Utility Functions */
   global.Neuro.uuid = uuid;
   global.Neuro.indexOf = indexOf;
+  global.Neuro.propsMatch = propsMatch;
   global.Neuro.extend = extend;
   global.Neuro.transfer = transfer;
   global.Neuro.swap = swap;
@@ -19,6 +20,7 @@
   global.Neuro.pull = pull;
   global.Neuro.copy = copy;
   global.Neuro.diff = diff;
+  global.Neuro.sizeof = sizeof;
   global.Neuro.isEmpty = isEmpty;
   global.Neuro.compare = compare;
   global.Neuro.equals = equals;

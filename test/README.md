@@ -2,20 +2,23 @@
 
 ### Neuro functions
 
-- [ ] get
-- [ ] indexOf
-- [ ] extend
-- [ ] transfer
-- [ ] swap
-- [ ] grab
-- [ ] pull
-- [ ] copy
-- [ ] diff
-- [ ] isEmpty
-- [ ] compare
-- [ ] equals
-- [ ] equalsStrict
-- [ ] createComparator
+- [x] get
+- [x] uuid
+- [x] indexOf
+- [x] propsMatch
+- [x] extend
+- [x] transfer
+- [x] swap
+- [x] grab
+- [x] pull
+- [x] copy
+- [x] diff
+- [x] sizeof
+- [x] isEmpty
+- [x] compare
+- [x] equals
+- [x] equalsStrict
+- [x] createComparator
 
 ### Neuro options
 
