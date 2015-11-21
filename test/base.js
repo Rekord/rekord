@@ -1,3 +1,40 @@
+
+// Extra Assertions
+
+function isInstance(model, Class, message)
+{
+  ok( model instanceof Class, message );
+}
+
+function isType(value, type, message)
+{
+  strictEqual( typeof value, type, message );
+}
+
+function hasModel(neuro, key, model, message)
+{
+  strictEqual( neuro.Database.getModel( key ), model, message );
+}
+
+// Utility Methods
+
+function offline()
+{
+  Neuro.setOffline();
+  Neuro.forceOffline = true;
+}
+
+function online()
+{
+  Neuro.forceOffline = false;
+  Neuro.setOnline();
+}
+
+function noline()
+{
+  Neuro.off( 'online offline' );
+}
+
 // Neuro.store."database name".(put|remove|all)
 
 Neuro.store = function(database)
@@ -85,25 +122,26 @@ Neuro.live = function(database, onPublish)
 
   live.onPublish = onPublish;
 
-  return live.handleMessage;
+  return live.handleMessage();
 };
 
 function TestLive(database, onPublish)
 {
   this.database = database;
   this.onPublish = onPublish;
+  this.onHandleMessage
 }
 
 TestLive.prototype = 
 {
-  save: function(input)
+  save: function(data)
   {
-    var model = this.database.parseModel( input );
+    var key = this.database.buildKeyFromInput( data );
 
     this.onPublish({
-      op: NeuroDatabase.Live.Save,
-      model: model,
-      key: model.$key()
+      op: Neuro.Database.Live.Save,
+      model: data,
+      key: key
     });
   },
   remove: function(input)
@@ -111,13 +149,21 @@ TestLive.prototype =
     var key = this.database.buildKeyFromInput( input );
 
     this.onPublish({
-      op: NeuroDatabase.Live.Remove,
+      op: Neuro.Database.Live.Remove,
       key: key
     });
   },
-  handleMessage: function(message)
+  handleMessage: function()
   {
-    // nothing
+    var live = this;
+
+    return function (message)
+    {
+      if ( live.onHandleMessage )
+      {
+        live.onHandleMessage( message );
+      }
+    };
   }
 };
 
@@ -141,10 +187,22 @@ function TestRest()
   this.status = 200;
   this.returnValue = false;
   this.delay = 0;
+  this.lastArguments = [];
 }
 
 TestRest.prototype =
 {
+  checkNetworkStatus: function(failure, returnValue)
+  {
+    var offline = !Neuro.online || Neuro.forceOffline;
+
+    if ( offline )
+    {
+      failure( this.returnValue || returnValue, 0 );
+    }
+
+    return !offline;
+  },
   finishDelayed: function(success, failure, returnValue)
   {
     var rest = this;
@@ -175,22 +233,38 @@ TestRest.prototype =
   },
   create: function(model, encoded, success, failure)
   {
-    this.map.put( model.$key(), encoded );
-    this.finishDelayed( success, failure, {} );
+    this.lastArguments = Array.prototype.slice.call( arguments );
+    if ( this.checkNetworkStatus( failure, {} ) )
+    {
+      this.map.put( model.$key(), encoded );
+      this.finishDelayed( success, failure, {} );
+    }
   },
   update: function(model, encoded, success, failure)
   {
-    var existing = this.map.get( model.$key() );
-    Neuro.transfer( encoded, existing );
-    this.finishDelayed( success, failure, {} );
+    this.lastArguments = Array.prototype.slice.call( arguments );
+    if ( this.checkNetworkStatus( failure, {} ) )
+    {
+      var existing = this.map.get( model.$key() );
+      Neuro.transfer( encoded, existing );
+      this.finishDelayed( success, failure, {} );
+    }
   },
   remove: function(model, success, failure)
   {
-    this.map.remove( model.$key() );
-    this.finishDelayed( success, failure, {} );
+    this.lastArguments = Array.prototype.slice.call( arguments );
+    if ( this.checkNetworkStatus( failure, {} ) )
+    {
+      this.map.remove( model.$key() );
+      this.finishDelayed( success, failure, {} );
+    }
   },
   all: function(success, failure)
   {
-    this.finishDelayed( success, failure, this.map.values );
+    this.lastArguments = Array.prototype.slice.call( arguments );
+    if ( this.checkNetworkStatus( failure, [] ) )
+    {
+      this.finishDelayed( success, failure, this.map.values );
+    }
   }
 };

@@ -159,6 +159,16 @@ function applyOptions( target, options, defaults )
   target.options = options;
 }
 
+function ClassNameReplacer(match)
+{
+  return match.length === 1 ? match.toUpperCase() : match.charAt(1).toUpperCase(); 
+}
+
+function toClassName(name)
+{
+  return name.replace( /(^.|_.)/g, ClassNameReplacer );
+};
+
 function evaluate(x)
 {
   if ( !isValue( x ) )

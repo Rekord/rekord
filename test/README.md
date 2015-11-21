@@ -22,25 +22,25 @@
 
 ### Neuro options
 
-- [ ] key
-- [ ] keySeparator
-- [ ] fields
-- [ ] defaults
-- [ ] name
-- [ ] className
-- [ ] comparator
-- [ ] comparatorNullsFirst
-- [ ] revision
+- [x] key
+- [x] keySeparator
+- [x] fields
+- [x] defaults
+- [x] name
+- [x] className
+- [x] comparator
+- [x] comparatorNullsFirst
+- [x] revision
 - [ ] loadRelations
-- [ ] loadRemote
-- [ ] autoRefresh
-- [ ] cache
-- [ ] cachePending
-- [ ] fullSave
-- [ ] fullPublish
+- [x] loadRemote
+- [x] autoRefresh
+- [x] cache
+- [x] cachePending
+- [x] fullSave
+- [x] fullPublish
 - [ ] relations
-- [ ] toString
-- [ ] encode/decode
+- [x] toString
+- [x] encode/decode
 
 ### Neuro instance functions
 

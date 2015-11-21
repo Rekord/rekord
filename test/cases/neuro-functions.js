@@ -84,12 +84,12 @@ test( 'Neuro.extend', function(assert)
   var p = new Parent();
   strictEqual( p.foo(), 1 );
   strictEqual( p.bar(), 2 );
-  ok( p instanceof Parent );
+  isInstance( p, Parent );
 
   var c = new Child();
   strictEqual( c.foo(), 1 );
   strictEqual( c.bar(), 3 );
-  ok( c instanceof Parent );
+  isInstance( c, Parent );
 });
 
 test( 'Neuro.transfer', function(assert)
@@ -279,6 +279,10 @@ test( 'Neuro.isEmpty', function(assert)
 
 test( 'Neuro.compare', function(assert)
 {
+  var d0 = new Date();
+  var d1 = new Date();
+  var d2 = Date.now();
+
   strictEqual( Neuro.compare( 1, 1 ), 0, 'okay - equivalent values' );
   strictEqual( Neuro.compare( 1, '1' ), 0 );
   strictEqual( Neuro.compare( [], [] ), 0 );
@@ -287,8 +291,8 @@ test( 'Neuro.compare', function(assert)
   strictEqual( Neuro.compare( null, null ), 0 );
   strictEqual( Neuro.compare( void 0, void 0 ), 0 );
   strictEqual( Neuro.compare( '3,4,5', [3,4,5] ), 0 );
-  strictEqual( Neuro.compare( new Date(), new Date() ), 0 );
-  strictEqual( Neuro.compare( new Date(), Date.now() ), 0 );
+  strictEqual( Neuro.compare( d0, d1 ), 0 );
+  strictEqual( Neuro.compare( d0, d2 ), 0 );
 
   strictEqual( Neuro.compare( 1, 2 ), -1, 'okay - numbers' );
   strictEqual( Neuro.compare( 2, 1 ), +1 );

@@ -3,7 +3,7 @@ function Neuro(options)
 {
   var database = new NeuroDatabase( options );
 
-  var model = new Function('return function ' + options.className + '(props, exists) { this.$init( props, exists ) }')();
+  var model = new Function('return function ' + database.className + '(props, exists) { this.$init( props, exists ) }')();
 
   model.prototype = new NeuroModel( database );
 

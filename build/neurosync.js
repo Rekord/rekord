@@ -1,8 +1,6 @@
 (function(global, undefined)
 {
 
-
-
 function isDefined(x)
 {
   return x !== undefined;
@@ -163,6 +161,16 @@ function applyOptions( target, options, defaults )
 
   target.options = options;
 }
+
+function ClassNameReplacer(match)
+{
+  return match.length === 1 ? match.toUpperCase() : match.charAt(1).toUpperCase(); 
+}
+
+function toClassName(name)
+{
+  return name.replace( /(^.|_.)/g, ClassNameReplacer );
+};
 
 function evaluate(x)
 {
@@ -764,7 +772,7 @@ function Neuro(options)
 {
   var database = new NeuroDatabase( options );
 
-  var model = new Function('return function ' + options.className + '(props, exists) { this.$init( props, exists ) }')();
+  var model = new Function('return function ' + database.className + '(props, exists) { this.$init( props, exists ) }')();
 
   model.prototype = new NeuroModel( database );
 
@@ -1180,7 +1188,7 @@ function NeuroDatabase(options)
 
   // Properties
   this.models = new NeuroMap();
-  this.className = this.className || this.name;
+  this.className = this.className || toClassName( this.name );
   this.initialized = false;
   this.pendingRefresh = false;
   this.localLoaded = false;
@@ -1262,7 +1270,7 @@ NeuroDatabase.Defaults =
   loadRemote:           true,
   autoRefresh:          true,
   cache:                true,
-  cachePending:         true,
+  cachePending:         false,
   fullSave:             false,
   fullPublish:          false,
   encode:               function(data) { return data; },
@@ -1534,7 +1542,7 @@ NeuroDatabase.prototype =
     {
       this.revisionFunction = function(a, b)
       {
-        return (revision in a && revision in b) ? (a[ revision ] - b[ revision ]) : false;
+        return (revision in a && revision in b) ? (compare( a[ revision ], b[ revision ] )) : false;
       };
     }
     else
@@ -1607,7 +1615,7 @@ NeuroDatabase.prototype =
       {
         Neuro.debug( Neuro.Debugs.SAVE_OLD_REVISION, db, model, encoded );
 
-        return;
+        return model;
       }
     }
 
@@ -1934,9 +1942,13 @@ NeuroDatabase.prototype =
       for (var i = 0; i < models.length; i++)
       {
         var model = db.putRemoteData( models[ i ] );
-        var key = model.$key();
 
-        mapped[ key ] = model;
+        if ( model )
+        {
+          var key = model.$key();
+
+          mapped[ key ] = model; 
+        }
       }
 
       var keys = db.models.keys;
@@ -2497,6 +2509,11 @@ NeuroModel.prototype =
     }
 
     return false;
+  },
+
+  toString: function()
+  {
+    return this.$db.className + ' ' + JSON.stringify( this.$toJSON() );
   }
 
 };

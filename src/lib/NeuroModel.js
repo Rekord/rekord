@@ -349,6 +349,11 @@ NeuroModel.prototype =
     }
 
     return false;
+  },
+
+  toString: function()
+  {
+    return this.$db.className + ' ' + JSON.stringify( this.$toJSON() );
   }
 
 };
