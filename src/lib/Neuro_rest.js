@@ -10,28 +10,28 @@ Neuro.rest = function(database)
     // failure ( data[], status )
     all: function( success, failure )
     {
-      failure( [], 0 );
+      success( [], 200 );
     },
 
     // success ( data )
     // failure ( data, status )
     create: function( model, encoded, success, failure )
     {
-      failure( {}, 0 );
+      success( {}, 200 );
     },
 
     // success ( data )
     // failure ( data, status )
     update: function( model, encoded, success, failure )
     {
-      failure( {}, 0 );
+      success( {}, 200 );
     },
 
     // success ( data )
     // failure ( data, status )
     remove: function( model, success, failure )
     {
-      failure( {}, 0 );
+      success( {}, 200 );
     }
 
   };

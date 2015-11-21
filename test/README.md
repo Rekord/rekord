@@ -49,18 +49,18 @@
 
 ### Neuro.Database instance functions
 
-- [ ] parseModel
-- [ ] removeKey
-- [ ] buildKey
-- [ ] buildKeys
-- [ ] buildKeyFromInput
-- [ ] buildKeyFromArray
-- [ ] hasFields
-- [ ] setRevision
-- [ ] sort
-- [ ] setComparator
-- [ ] refresh
-- [ ] getModel
+- [x] parseModel
+- [x] removeKey
+- [x] buildKey
+- [x] buildKeys
+- [x] buildKeyFromInput
+- [x] buildKeyFromArray
+- [x] hasFields
+- [x] setRevision
+- [x] sort
+- [x] setComparator
+- [x] refresh
+- [x] getModel
 
 ### Neuro.Model instance functions
 

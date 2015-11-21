@@ -29,7 +29,7 @@ Neuro.store = function(database)
      */
     put: function(key, record, success, failure) 
     { 
-      // implement
+      success( key, record );
     },
 
     /**
@@ -48,7 +48,7 @@ Neuro.store = function(database)
      */
     remove: function(key, success, failure) 
     {
-      // implement
+      success( key, record );
     },
 
     /**
@@ -62,7 +62,7 @@ Neuro.store = function(database)
      */
     all: function(success, failure) 
     {
-      // implement
+      success( [], [] );
     }
 
   };

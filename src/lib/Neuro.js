@@ -1,6 +1,11 @@
 
 function Neuro(options)
 {
+  if ( options.name in Neuro.cache )
+  {
+    return Neuro.cache[ options.name ];
+  }
+
   var database = new NeuroDatabase( options );
 
   var model = new Function('return function ' + database.className + '(props, exists) { this.$init( props, exists ) }')();
