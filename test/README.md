@@ -44,8 +44,8 @@
 
 ### Neuro instance functions
 
-- [ ] all
-- [ ] create
+- [x] all
+- [x] create
 
 ### Neuro.Database instance functions
 
