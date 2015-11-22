@@ -129,7 +129,7 @@ function TestLive(database, onPublish)
 {
   this.database = database;
   this.onPublish = onPublish;
-  this.onHandleMessage
+  this.onHandleMessage = null;
 }
 
 TestLive.prototype = 

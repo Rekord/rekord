@@ -107,8 +107,8 @@
 
 ### Neuro live
 
-- [ ] live saving
-- [ ] live removing
+- [x] live saving
+- [x] live removing
 
 ### Neuro hasOne options
 
@@ -118,6 +118,7 @@
 - [ ] auto
 - [ ] property
 - [ ] local
+- [ ] cascade
 
 ### Neuro hasOne
 
@@ -142,6 +143,7 @@
 - [ ] auto
 - [ ] property
 - [ ] local
+- [ ] cascade
 
 ### Neuro belongsTo
 
