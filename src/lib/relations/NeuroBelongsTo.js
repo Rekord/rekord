@@ -61,14 +61,25 @@ extend( new NeuroRelation(), NeuroBelongsTo,
         {
           model.$remove();
         }
+        else
+        {
+          this.clearRelated( relation );
+        }
       },
       onSaved: function() 
       {
         Neuro.debug( Neuro.Debugs.BELONGSTO_NINJA_SAVE, that, model, relation );
 
-        if ( !isRelated( relation.model ) && this.cascade !== false )
+        if ( !isRelated( relation.model ) )
         {
-          model.$remove();
+          if ( this.cascade )
+          {
+            model.$remove(); 
+          }
+          else
+          {
+            this.clearRelated( relation );   
+          }
         }
       }
     };
@@ -137,9 +148,7 @@ extend( new NeuroRelation(), NeuroBelongsTo,
 
     if ( !related || relation.model === related )
     {
-      this.clearModel( relation );
-      this.clearForeignKey( model );
-      this.setProperty( relation );
+      this.clearRelated( relation );
     }
   },
 
@@ -158,6 +167,13 @@ extend( new NeuroRelation(), NeuroBelongsTo,
   {
     this.setModel( relation, related );
     this.updateForeignKey( relation.parent, related );
+    this.setProperty( relation );
+  },
+
+  clearRelated: function(relation)
+  {
+    this.clearModel( relation );
+    this.clearForeignKey( relation.parent );
     this.setProperty( relation );
   },
 
@@ -190,6 +206,7 @@ extend( new NeuroRelation(), NeuroBelongsTo,
       Neuro.debug( Neuro.Debugs.BELONGSTO_POSTREMOVE, this, model, relation );
 
       this.clearModel( relation );
+      this.setProperty( relation );
 
       model.$off( NeuroModel.Events.KeyUpdate, relation.onKeyUpdate );
     }
