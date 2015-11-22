@@ -58,6 +58,7 @@ extend( new NeuroRelation(), NeuroHasOne,
 
         this.clearModel( relation, true );
         this.clearForeignKey( model );
+        this.setProperty( relation );
       },
       onSaved: function() 
       {
@@ -72,6 +73,7 @@ extend( new NeuroRelation(), NeuroHasOne,
         {
           this.clearModel( relation );
           this.clearForeignKey( model );
+          this.setProperty( relation );
         }
       }
     };
@@ -137,6 +139,7 @@ extend( new NeuroRelation(), NeuroHasOne,
     {
       this.clearModel( relation );
       this.clearForeignKey( model );
+      this.setProperty( relation );
     }
   },
 

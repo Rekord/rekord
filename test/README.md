@@ -122,18 +122,19 @@
 
 ### Neuro hasOne
 
-- [ ] no initial value
-- [ ] initial value
-- [ ] ninja remove
-- [ ] ninja save
-- [ ] set
-- [ ] relate
-- [ ] unrelate
-- [ ] isRelated
-- [ ] get
-- [ ] encode
-- [ ] cascade save
-- [ ] cascade remove
+- [x] no initial value
+- [x] initial value
+- [x] initial foreign key
+- [x] ninja remove
+- [x] ninja save
+- [x] set
+- [x] relate
+- [x] unrelate
+- [x] isRelated
+- [x] get
+- [x] encode
+- [x] cascade remove
+- [x] more than one hasOne relationship
 
 ### Neuro belongsTo options
 

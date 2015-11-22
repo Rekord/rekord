@@ -139,6 +139,7 @@ extend( new NeuroRelation(), NeuroBelongsTo,
     {
       this.clearModel( relation );
       this.clearForeignKey( model );
+      this.setProperty( relation );
     }
   },
 
@@ -196,12 +197,14 @@ extend( new NeuroRelation(), NeuroBelongsTo,
 
   clearModel: function(relation)
   {
-    if ( relation.model )
+    var related = relation.model;
+
+    if ( related )
     {
       Neuro.debug( Neuro.Debugs.BELONGSTO_CLEAR_MODEL, this, relation );
 
-      relation.model.$off( NeuroModel.Events.Saved, relation.onSaved );
-      relation.model.$off( NeuroModel.Events.Removed, relation.onRemoved );
+      related.$off( NeuroModel.Events.Saved, relation.onSaved );
+      related.$off( NeuroModel.Events.Removed, relation.onRemoved );
 
       relation.model = null;
       relation.loaded = true;

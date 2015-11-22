@@ -2,13 +2,10 @@ module( 'Neuro hasOne options' );
 
 test( 'model string', function(assert)
 {
-  var User = Neuro({
-    name: 'hasOne_model_string_user',
-    fields: ['id', 'name']
-  });
+  var prefix = 'hasOne_model_string_';
 
   var Task = Neuro({
-    name: 'hasOne_model_string_task',
+    name: prefix + 'task',
     fields: ['id', 'name', 'created_by'],
     hasOne: {
       creator: {
@@ -18,18 +15,25 @@ test( 'model string', function(assert)
     }
   });
 
+  var User = Neuro({
+    name: prefix + 'user',
+    fields: ['id', 'name']
+  });
+
   strictEqual( Task.Database.relations.creator.model, User );
 });
 
 test( 'model reference', function(assert)
 {
+  var prefix = 'hasOne_model_reference_';
+
   var User = Neuro({
-    name: 'hasOne_model_ref_user',
+    name: prefix + 'user',
     fields: ['id', 'name']
   });
 
   var Task = Neuro({
-    name: 'hasOne_model_ref_task',
+    name: prefix + 'task',
     fields: ['id', 'name', 'created_by'],
     hasOne: {
       creator: {
@@ -44,13 +48,15 @@ test( 'model reference', function(assert)
 
 test( 'store none', function(assert)
 {
+  var prefix = 'hasOne_store_none_';
+
   var User = Neuro({
-    name: 'hasOne_store_none_user',
+    name: prefix + 'user',
     fields: ['id', 'name']
   });
 
   var Task = Neuro({
-    name: 'hasOne_store_none_task',
+    name: prefix + 'task',
     fields: ['id', 'name', 'created_by'],
     hasOne: {
       creator: {
@@ -83,13 +89,15 @@ test( 'store none', function(assert)
 
 test( 'store model', function(assert)
 {
+  var prefix = 'hasOne_store_model_';
+
   var User = Neuro({
-    name: 'hasOne_store_model_user',
+    name: prefix + 'user',
     fields: ['id', 'name']
   });
 
   var Task = Neuro({
-    name: 'hasOne_store_model_task',
+    name: prefix + 'task',
     fields: ['id', 'name', 'created_by'],
     hasOne: {
       creator: {
@@ -123,13 +131,15 @@ test( 'store model', function(assert)
 
 test( 'store key', function(assert)
 {
+  var prefix = 'hasOne_store_key_';
+
   var User = Neuro({
-    name: 'hasOne_store_key_user',
+    name: prefix + 'user',
     fields: ['id', 'name']
   });
 
   var Task = Neuro({
-    name: 'hasOne_store_key_task',
+    name: prefix + 'task',
     fields: ['id', 'name', 'created_by'],
     hasOne: {
       creator: {
@@ -163,14 +173,16 @@ test( 'store key', function(assert)
 
 test( 'store keys', function(assert)
 {
+  var prefix = 'hasOne_store_keys_';
+
   var User = Neuro({
-    name: 'hasOne_store_keys_user',
+    name: prefix + 'user',
     key: ['id', 'house_id'],
     fields: ['id', 'house_id', 'name']
   });
 
   var Task = Neuro({
-    name: 'hasOne_store_keys_task',
+    name: prefix + 'task',
     fields: ['id', 'name', 'created_by', 'created_by_house'],
     hasOne: {
       creator: {
@@ -204,13 +216,15 @@ test( 'store keys', function(assert)
 
 test( 'save none', function(assert)
 {
+  var prefix = 'hasOne_save_none_';
+
   var User = Neuro({
-    name: 'hasOne_save_none_user',
+    name: prefix + 'user',
     fields: ['id', 'name']
   });
 
   var Task = Neuro({
-    name: 'hasOne_save_none_task',
+    name: prefix + 'task',
     fields: ['id', 'name', 'created_by'],
     hasOne: {
       creator: {
@@ -243,13 +257,15 @@ test( 'save none', function(assert)
 
 test( 'save model', function(assert)
 {
+  var prefix = 'hasOne_save_model_';
+
   var User = Neuro({
-    name: 'hasOne_save_model_user',
+    name: prefix + 'user',
     fields: ['id', 'name']
   });
 
   var Task = Neuro({
-    name: 'hasOne_save_model_task',
+    name: prefix + 'task',
     fields: ['id', 'name', 'created_by'],
     hasOne: {
       creator: {
@@ -284,13 +300,15 @@ test( 'save model', function(assert)
 
 test( 'auto true', function(assert)
 {
+  var prefix = 'hasOne_auto_true_';
+
   var User = Neuro({
-    name: 'hasOne_auto_true_user',
+    name: prefix + 'user',
     fields: ['id', 'name']
   });
 
   var Task = Neuro({
-    name: 'hasOne_auto_true_task',
+    name: prefix + 'task',
     fields: ['id', 'name', 'created_by'],
     hasOne: {
       creator: {
@@ -316,13 +334,15 @@ test( 'auto true', function(assert)
 
 test( 'auto false', function(assert)
 {
+  var prefix = 'hasOne_auto_false_';
+
   var User = Neuro({
-    name: 'hasOne_auto_false_user',
+    name: prefix + 'user',
     fields: ['id', 'name']
   });
 
   var Task = Neuro({
-    name: 'hasOne_auto_false_task',
+    name: prefix + 'task',
     fields: ['id', 'name', 'created_by'],
     hasOne: {
       creator: {
@@ -350,13 +370,15 @@ test( 'auto false', function(assert)
 
 test( 'property true', function(assert)
 {
+  var prefix = 'hasOne_property_true_';
+
   var User = Neuro({
-    name: 'hasOne_property_true_user',
+    name: prefix + 'user',
     fields: ['id', 'name']
   });
 
   var Task = Neuro({
-    name: 'hasOne_property_true_task',
+    name: prefix + 'task',
     fields: ['id', 'name', 'created_by'],
     hasOne: {
       creator: {
@@ -386,13 +408,15 @@ test( 'property true', function(assert)
 
 test( 'property false', function(assert)
 {
+  var prefix = 'hasOne_property_false_';
+
   var User = Neuro({
-    name: 'hasOne_property_false_user',
+    name: prefix + 'user',
     fields: ['id', 'name']
   });
 
   var Task = Neuro({
-    name: 'hasOne_property_false_task',
+    name: prefix + 'task',
     fields: ['id', 'name', 'created_by'],
     hasOne: {
       creator: {
@@ -411,13 +435,15 @@ test( 'property false', function(assert)
 
 test( 'local default', function(assert)
 {
+  var prefix = 'hasOne_local_default_';
+
   var User = Neuro({
-    name: 'hasOne_local_default_user',
+    name: prefix + 'user',
     fields: ['id', 'name']
   });
 
   var Task = Neuro({
-    name: 'hasOne_local_default_task',
+    name: prefix + 'task',
     fields: ['id', 'name', 'hasOne_local_default_user_id'],
     hasOne: {
       creator: {
@@ -434,13 +460,15 @@ test( 'local default', function(assert)
 
 test( 'local custom', function(assert)
 {
+  var prefix = 'hasOne_local_custom_';
+
   var User = Neuro({
-    name: 'hasOne_local_custom_user',
+    name: prefix + 'user',
     fields: ['id', 'name']
   });
 
   var Task = Neuro({
-    name: 'hasOne_local_custom_task',
+    name: prefix + 'task',
     fields: ['id', 'name', 'created_by'],
     hasOne: {
       creator: {
@@ -458,13 +486,15 @@ test( 'local custom', function(assert)
 
 test( 'cascade true', function(assert)
 { 
+  var prefix = 'hasOne_cascade_true_';
+
   var User = Neuro({
-    name: 'hasOne_cascade_true_user',
+    name: prefix + 'user',
     fields: ['id', 'name']
   });
 
   var Task = Neuro({
-    name: 'hasOne_cascade_true_task',
+    name: prefix + 'task',
     fields: ['id', 'name', 'created_by'],
     hasOne: {
       creator: {
@@ -491,13 +521,15 @@ test( 'cascade true', function(assert)
 
 test( 'cascade false', function(assert)
 {
+  var prefix = 'hasOne_cascade_false_';
+
   var User = Neuro({
-    name: 'hasOne_cascade_false_user',
+    name: prefix + 'user',
     fields: ['id', 'name']
   });
 
   var Task = Neuro({
-    name: 'hasOne_cascade_false_task',
+    name: prefix + 'task',
     fields: ['id', 'name', 'created_by'],
     hasOne: {
       creator: {
