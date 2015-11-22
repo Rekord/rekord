@@ -97,13 +97,13 @@
 
 ### Neuro.Model remove cases
 
-- [ ] delete while in the middle of save
-- [ ] delete with cache:false should go right to remote
-- [ ] delete local when it hasn't been saved locally
-- [ ] delete when it hasn't been saved remotely
-- [ ] delete while remotely removed (404/410)
-- [ ] delete with unexpected status code shouldn't remove from local storage
-- [ ] delete while offline, resume delete online
+- [x] delete while in the middle of save
+- [x] delete with cache:false should go right to remote
+- [x] delete local when it hasn't been saved locally
+- [x] delete when it hasn't been saved remotely
+- [x] delete while remotely removed (404/410)
+- [x] delete with unexpected status code shouldn't remove from local storage
+- [x] delete while offline, resume delete online
 
 ### Neuro live
 

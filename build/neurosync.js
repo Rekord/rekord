@@ -3098,7 +3098,7 @@ extend( new NeuroOperation( true, 'NeuroRemoveRemote' ), NeuroRemoveRemote,
     else if ( status !== 0 ) 
     {
       Neuro.debug( Neuro.Debugs.REMOVE_ERROR, model, status, key );
-    } 
+    }
     else 
     {
       // Looks like we're offline!
