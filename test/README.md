@@ -64,23 +64,23 @@
 
 ### Neuro.Model instance functions
 
-- [ ] *constructor*
-- [ ] $reset
-- [ ] $set (object, property, relation)
-- [ ] $get (array, object, property, relation)
-- [ ] $relate
-- [ ] $unrelate
-- [ ] $isRelated
-- [ ] $getRelation
-- [ ] $save
-- [ ] $remove
-- [ ] $exists
-- [ ] $key
-- [ ] $keys
-- [ ] $isSaved
-- [ ] $isSavedLocally
-- [ ] $getChanges
-- [ ] $hasChanges
+- [x] *constructor*
+- [x] $reset
+- [x] $set (object, property, relation)
+- [x] $get (array, object, property, relation)
+- [x] $relate
+- [x] $unrelate
+- [x] $isRelated
+- [x] $getRelation
+- [x] $save
+- [x] $remove
+- [x] $exists
+- [x] $key
+- [x] $keys
+- [x] $isSaved
+- [x] $isSavedLocally
+- [x] $getChanges
+- [x] $hasChanges
 
 ### Neuro.Model save cases
 

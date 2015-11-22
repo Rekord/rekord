@@ -89,7 +89,7 @@ extend( new NeuroRelation(), NeuroHasMany,
     model.$key();
 
     // When models are added to the related database, check if it's related to this model
-    relatedDatabase.on( 'model-added', this.handleModelAdded( relation ), this );
+    relatedDatabase.on( NeuroDatabase.Events.ModelAdded, this.handleModelAdded( relation ), this );
 
     // Add convenience methods to the underlying array
     var related = relation.models.values;
@@ -394,8 +394,8 @@ extend( new NeuroRelation(), NeuroHasMany,
 
       target.put( key, related );
 
-      related.$on( 'removed', relation.onRemoved );
-      related.$on( 'saved remote-update', relation.onSaved );
+      related.$on( NeuroModel.Events.Removed, relation.onRemoved );
+      related.$on( NeuroModel.Events.SavedRemoteUpdate, relation.onSaved );
 
       this.updateForeignKey( relation.parent, related );
 
@@ -422,8 +422,8 @@ extend( new NeuroRelation(), NeuroHasMany,
 
       target.remove( key );
 
-      related.$off( 'removed', relation.onRemoved );
-      related.$off( 'saved remote-update', relation.onSaved );
+      related.$off( NeuroModel.Events.Removed, relation.onRemoved );
+      related.$off( NeuroModel.Events.SavedRemoteUpdate, relation.onSaved );
 
       if ( !alreadyRemoved && this.cascadeRemove )
       {
@@ -557,7 +557,7 @@ extend( new NeuroRelation(), NeuroHasMany,
         related.sort( this.comparator );
       }
 
-      relation.parent.$trigger( 'relation-update', [this, relation] );
+      relation.parent.$trigger( NeuroModel.Events.RelationUpdate, [this, relation] );
     }
   }
 

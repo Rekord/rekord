@@ -45,10 +45,13 @@ NeuroModel.Events =
   Detach:           'detach',
   CreateAndSave:    'created saved',
   UpdateAndSave:    'updated saved',
+  KeyUpdate:        'key-update',
+  RelationUpdate:   'relation-update',
   Removed:          'removed',
   RemoteUpdate:     'remote-update',
   RemoteRemove:     'remote-remove',
-  RemoteAndRemove:  'remote-remove removed'
+  RemoteAndRemove:  'remote-remove removed',
+  SavedRemoteUpdate:'saved remote-update'
 };
 
 NeuroModel.prototype =

@@ -12,7 +12,8 @@ NeuroBelongsTo.Defaults =
   save:       Neuro.Save.None,
   auto:       true,
   property:   true,
-  local:      null
+  local:      null,
+  cascade:    true
 };
 
 extend( new NeuroRelation(), NeuroBelongsTo, 
@@ -37,20 +38,26 @@ extend( new NeuroRelation(), NeuroBelongsTo,
   handleLoad: function(model)
   {
     var that = this;
+    var isRelated = this.isRelatedFactory( model );
+    var onKeyUpdate = this.handleKeyUpdate();
     var relatedDatabase = this.model.Database;
     var initial = model[ this.name ];
 
     var relation = model.$relations[ this.name ] = 
     {
+      parent: model,
       initial: initial,
+      isRelated: isRelated,
       model: null,
       loaded: false,
+
+      onKeyUpdate: onKeyUpdate,
 
       onRemoved: function() 
       {
         Neuro.debug( Neuro.Debugs.BELONGSTO_NINJA_REMOVE, that, model, relation );
 
-        if ( this.cascade !== false )
+        if ( this.cascade )
         {
           model.$remove();
         }
@@ -59,12 +66,14 @@ extend( new NeuroRelation(), NeuroBelongsTo,
       {
         Neuro.debug( Neuro.Debugs.BELONGSTO_NINJA_SAVE, that, model, relation );
 
-        if ( !this.hasForeignKey( model, relation.model ) && this.cascade !== false )
+        if ( !isRelated( relation.model ) && this.cascade !== false )
         {
           model.$remove();
         }
       }
     };
+
+    model.$on( NeuroModel.Events.KeyUpdate, relation.onKeyUpdate, this );
 
     if ( isEmpty( initial ) && relatedDatabase.hasFields( model, this.local, isValue ) )
     {
@@ -77,7 +86,7 @@ extend( new NeuroRelation(), NeuroBelongsTo,
     {
       Neuro.debug( Neuro.Debugs.BELONGSTO_INITIAL, this, model, initial );
 
-      relatedDatabase.grabModel( initial, this.handleModel( model, relation ), this );      
+      relatedDatabase.grabModel( initial, this.handleModel( relation ), this );
     }
   },
 
@@ -94,10 +103,10 @@ extend( new NeuroRelation(), NeuroBelongsTo,
       var related = relatedDatabase.parseModel( input );
       var relation = model.$relations[ this.name ];
 
-      if ( related && !this.hasForeignKey( model, related ) )
+      if ( related && !relation.isRelated( related ) )
       {
         this.clearModel( relation );
-        this.setRelated( model, relation, related );
+        this.setRelated( relation, related );
       }
     }
   },
@@ -114,7 +123,7 @@ extend( new NeuroRelation(), NeuroBelongsTo,
       if ( relation.model !== related )
       {
         this.clearModel( relation );
-        this.setRelated( model, relation, related );
+        this.setRelated( relation, related );
       }
     }
   },
@@ -144,11 +153,11 @@ extend( new NeuroRelation(), NeuroBelongsTo,
   },
 
   // same as HasOne
-  setRelated: function(model, relation, related)
+  setRelated: function(relation, related)
   {
     this.setModel( relation, related );
-    this.updateForeignKey( model, related );
-    this.setProperty( model, relation );
+    this.updateForeignKey( relation.parent, related );
+    this.setProperty( relation );
   },
 
   // same as HasOne
@@ -180,6 +189,8 @@ extend( new NeuroRelation(), NeuroBelongsTo,
       Neuro.debug( Neuro.Debugs.BELONGSTO_POSTREMOVE, this, model, relation );
 
       this.clearModel( relation );
+
+      model.$off( NeuroModel.Events.KeyUpdate, relation.onKeyUpdate );
     }
   },
 
@@ -189,59 +200,62 @@ extend( new NeuroRelation(), NeuroBelongsTo,
     {
       Neuro.debug( Neuro.Debugs.BELONGSTO_CLEAR_MODEL, this, relation );
 
-      relation.model.$off( 'saved', relation.onSaved );
-      relation.model.$off( 'removed', relation.onRemoved );
+      relation.model.$off( NeuroModel.Events.Saved, relation.onSaved );
+      relation.model.$off( NeuroModel.Events.Removed, relation.onRemoved );
 
       relation.model = null;
       relation.loaded = true;
     }
   },
 
-  setModel: function(relation, model)
+  setModel: function(relation, related)
   {
-    model.$on( 'saved', relation.onSaved, this );
-    model.$on( 'removed', relation.onRemoved, this );
+    related.$on( NeuroModel.Events.Saved, relation.onSaved, this );
+    related.$on( NeuroModel.Events.Removed, relation.onRemoved, this );
 
-    relation.model = model;
+    relation.model = related;
     relation.loaded = true;
 
     Neuro.debug( Neuro.Debugs.BELONGSTO_SET_MODEL, this, relation );
   },
 
   // same as HasOne
-  handleModel: function(model, relation)
+  handleModel: function(relation)
   {
     return function(related) 
     {
-      Neuro.debug( Neuro.Debugs.BELONGSTO_LOADED, this, model, relation, related );
+      Neuro.debug( Neuro.Debugs.BELONGSTO_LOADED, this, relation.parent, relation, related );
 
       if ( relation.loaded === false ) 
       {
         if ( related ) 
         {
           this.setModel( relation, related );
-          this.updateForeignKey( model, related );
+          this.updateForeignKey( relation.parent, related );
         }
         else
         {
-          this.clearForeignKey( model );
+          this.clearForeignKey( relation.parent );
         }
 
         relation.loaded = true;
 
-        this.setProperty( model, relation );
+        this.setProperty( relation );
       }
     };
   },
 
   // same as HasOne
-  hasForeignKey: function(model, related)
+  isRelatedFactory: function(model)
   {
     var relatedDatabase = this.model.Database;
     var local = this.local;
     var foreign = relatedDatabase.key;
 
-    return propsMatch( model, local, related, foreign );
+    return function hasForeignKey(related)
+    {
+      return propsMatch( model, local, related, foreign );
+    };
   },
 
   // same as HasOne
@@ -267,17 +281,35 @@ extend( new NeuroRelation(), NeuroBelongsTo,
   },
 
   // same as HasOne
-  setProperty: function(model, relation)
+  setProperty: function(relation)
   {
     if ( this.property )
     {
-      if ( model[ this.name ] !== relation.model )
+      var model = relation.parent;
+      var related = relation.model;
+
+      if ( model[ this.name ] !== related )
       {
-        model[ this.name ] = relation.model;
+        model[ this.name ] = related;
         
-        model.$trigger( 'relation-update', [this, relation] );
+        model.$trigger( NeuroModel.Events.RelationUpdate, [this, relation] );
       }
     }
+  },
+
+  handleKeyUpdate: function()
+  {
+    return function onKeyUpdate(model, related)
+    {
+      var relation = model.$relations[ this.name ];
+
+      if ( relation && related !== relation.model )
+      {
+        this.clearModel( relation );
+        this.setModel( relation, related );
+        this.setProperty( relation );
+      }
+    };
   }
 
 });

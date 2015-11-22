@@ -264,9 +264,14 @@ NeuroRelation.prototype =
       }
     }
 
-    if ( changes && this.auto && !target.$isNew() )
+    if ( changes )
     {
-      target.$save();
+      if ( this.auto && !target.$isNew() )
+      {
+        target.$save();
+      }
+
+      target.$trigger( NeuroModel.Events.KeyUpdate, [target, source] );      
     }
 
     return changes;

@@ -109,7 +109,7 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
     model.$key();
 
     // When models are added to the related database, check if it's related to this model
-    throughDatabase.on( 'model-added', this.handleModelAdded( relation ), this );
+    throughDatabase.on( NeuroDatabase.Events.ModelAdded, this.handleModelAdded( relation ), this );
 
     // Add convenience methods to the underlying array
     var related = relation.models.values;
@@ -464,7 +464,7 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
 
       throughs.put( throughKey, through );
 
-      through.$on( 'removed', relation.onThroughRemoved );
+      through.$on( NeuroModel.Events.Removed, relation.onThroughRemoved );
 
       if ( callSave )
       {
@@ -485,8 +485,8 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
 
       relateds.put( relatedKey, related );
 
-      related.$on( 'removed', relation.onRemoved );
-      related.$on( 'saved remote-update', relation.onSaved );
+      related.$on( NeuroModel.Events.Removed, relation.onRemoved );
+      related.$on( NeuroModel.Events.SavedRemoteUpdate, relation.onSaved );
 
       this.sort( relation );
 
@@ -542,7 +542,7 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
       var throughs = relation.throughs;
       var throughKey = through.$key();
 
-      through.$off( 'removed', relation.onThroughRemoved );
+      through.$off( NeuroModel.Events.Removed, relation.onThroughRemoved );
 
       if ( callRemove )
       {
@@ -567,8 +567,8 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
 
       relateds.remove( relatedKey );
 
-      related.$off( 'removed', relation.onRemoved );
-      related.$off( 'saved remote-update', relation.onSaved );
+      related.$off( NeuroModel.Events.Removed, relation.onRemoved );
+      related.$off( NeuroModel.Events.SavedRemoteUpdate, relation.onSaved );
 
       this.sort( relation );
       this.checkSave( relation );
@@ -642,7 +642,7 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
         related.sort( this.comparator );
       }
 
-      relation.parent.$trigger( 'relation-update', [this, relation] );
+      relation.parent.$trigger( NeuroModel.Events.RelationUpdate, [this, relation] );
     }
   },
 
