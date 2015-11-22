@@ -54,6 +54,7 @@ function TestStore()
   this.map = new Neuro.Map();
   this.valid = true;
   this.delay = 0;
+  this.lastKey = this.lastRecord = null;
 }
 
 TestStore.prototype = 
@@ -88,19 +89,35 @@ TestStore.prototype =
   },
   save: function(model, success, failure)
   {
-    this.map.put( model.$key(), model );
-    this.finishDelayed( success, failure, model.$key(), model );
+    this.put( model.$key(), model, success, failure );
   },
   put: function(key, record, success, failure)
   {
-    this.map.put( key, record );
-    this.finishDelayed( success, failure, key, record );
+    this.lastKey = key;
+    this.lastRecord = record;
+
+    var map = this.map;
+    function onPut()
+    {
+      map.put( key, record );
+      success.apply( this, arguments );
+    }
+
+    this.finishDelayed( onPut, failure, key, record );
   },
   remove: function(key, success, failure)
   {
-    var removed = this.map.get( key );
-    this.map.remove( key );
-    this.finishDelayed( success, failure, key, removed );
+    this.lastKey = key;
+
+    var map = this.map;
+    var removed = map.get( key );
+    function onRemove()
+    {
+      map.remove( key );
+      success.apply( this, arguments );
+    }
+
+    this.finishDelayed( onRemove, failure, key, removed );
   },
   all: function(success, failure)
   {
@@ -187,7 +204,7 @@ function TestRest()
   this.status = 200;
   this.returnValue = false;
   this.delay = 0;
-  this.lastArguments = [];
+  this.lastModel = this.lastRecord = null;
 }
 
 TestRest.prototype =
@@ -227,7 +244,8 @@ TestRest.prototype =
   },
   create: function(model, encoded, success, failure)
   {
-    this.lastArguments = Array.prototype.slice.call( arguments );
+    this.lastModel = model;
+    this.lastRecord = encoded;
 
     var map = this.map;
     function onCreate() 
@@ -240,7 +258,8 @@ TestRest.prototype =
   },
   update: function(model, encoded, success, failure)
   {
-    this.lastArguments = Array.prototype.slice.call( arguments );
+    this.lastModel = model;
+    this.lastRecord = encoded;
 
     var map = this.map;
     function onUpdate()
@@ -254,7 +273,7 @@ TestRest.prototype =
   },
   remove: function(model, success, failure)
   {
-    this.lastArguments = Array.prototype.slice.call( arguments );
+    this.lastModel = model;
 
     var map = this.map;
     function onRemove()
@@ -267,7 +286,6 @@ TestRest.prototype =
   },
   all: function(success, failure)
   {
-    this.lastArguments = Array.prototype.slice.call( arguments );
     this.finishDelayed( success, failure, this.map.values );
   }
 };

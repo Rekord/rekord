@@ -112,13 +112,13 @@
 
 ### Neuro hasOne options
 
-- [ ] model
-- [ ] store
-- [ ] save
-- [ ] auto
-- [ ] property
-- [ ] local
-- [ ] cascade
+- [x] model
+- [x] store
+- [x] save
+- [x] auto
+- [x] property
+- [x] local
+- [x] cascade
 
 ### Neuro hasOne
 

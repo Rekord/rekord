@@ -145,7 +145,7 @@ NeuroModel.prototype =
       }
       else
       {
-        this[ props ] = value; 
+        this[ props ] = value;
       }
     }
   },

@@ -1631,11 +1631,18 @@ NeuroDatabase.prototype =
       var conflicted = false;
       var updated = {};
       var notReallySaved = isEmpty( model.$saved );
+      var relations = db.relations;
 
       for (var prop in encoded)
       {
         if ( prop.charAt(0) === '$' )
         {
+          continue;
+        }
+
+        if ( prop in relations )
+        {
+          // TODO
           continue;
         }
 
@@ -2311,7 +2318,7 @@ NeuroModel.prototype =
       }
       else
       {
-        this[ props ] = value; 
+        this[ props ] = value;
       }
     }
   },
@@ -3099,7 +3106,7 @@ extend( new NeuroOperation( true, 'NeuroRemoveRemote' ), NeuroRemoveRemote,
     {
       Neuro.debug( Neuro.Debugs.REMOVE_ERROR, model, status, key );
     }
-    else 
+    else
     {
       // Looks like we're offline!
       Neuro.checkNetworkStatus();
@@ -3396,15 +3403,15 @@ function NeuroRelation()
 Neuro.Relations = {};
 
 Neuro.Store = {
-  None: 0,
-  Model: 1,
-  Key: 2,
-  Keys: 3
+  None:   0,
+  Model:  1,
+  Key:    2,
+  Keys:   3
 };
 
 Neuro.Save = {
-  None: 0,
-  Model: 4
+  None:   0,
+  Model:  4
 };
 
 NeuroRelation.Defaults = 
@@ -3701,7 +3708,7 @@ NeuroRelation.prototype =
         if ( related.$local ) 
         {
           return related.$local;
-        } 
+        }
         else 
         {
           var local = related.$toJSON( false );
@@ -5551,7 +5558,7 @@ extend( new NeuroRelation(), NeuroHasOne,
       if ( related && !relation.isRelated( related ) )
       {
         this.clearModel( relation );
-        this.setRelated( model, relation, related );
+        this.setRelated( relation, related );
       }
     }
   },
@@ -5567,7 +5574,7 @@ extend( new NeuroRelation(), NeuroHasOne,
       if ( relation.model !== related )
       {
         this.clearModel( relation );
-        this.setRelated( model, relation, related );
+        this.setRelated( relation, related );
       }
     }
   },
@@ -5592,13 +5599,6 @@ extend( new NeuroRelation(), NeuroHasOne,
     var related = relatedDatabase.parseModel( input );
 
     return related === relation.model;
-  },
-
-  setRelated: function(model, relation, related)
-  {
-    this.setModel( relation, related );
-    this.updateForeignKey( relation.parent, related );
-    this.setProperty( relation );
   },
 
   get: function(model)
@@ -5659,18 +5659,27 @@ extend( new NeuroRelation(), NeuroHasOne,
     }
   },
 
+  setRelated: function(relation, related)
+  {
+    this.setModel( relation, related );
+    this.updateForeignKey( relation.parent, related );
+    this.setProperty( relation );
+  },
+
   clearModel: function(relation, dontRemove)
   {
-    if ( relation.model )
+    var related = relation.model;
+
+    if ( related )
     {
       Neuro.debug( Neuro.Debugs.HASONE_CLEAR_MODEL, this, relation );
 
-      relation.model.$off( NeuroModel.Events.Saved, relation.onSaved );
-      relation.model.$off( NeuroModel.Events.Removed, relation.onRemoved );
+      related.$off( NeuroModel.Events.Saved, relation.onSaved );
+      related.$off( NeuroModel.Events.Removed, relation.onRemoved );
 
       if ( !dontRemove )
       {
-        relation.model.$remove();
+        related.$remove();
       }
 
       relation.model = null;

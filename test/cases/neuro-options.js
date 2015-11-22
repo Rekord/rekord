@@ -550,11 +550,11 @@ test( 'fullSave true', function(assert)
 
   var fs0 = fullSave_true.create({id: 2, name: 'name0'});
 
-  deepEqual( remote.lastArguments[1], {id: 2, name: 'name0'} );
+  deepEqual( remote.lastRecord, {id: 2, name: 'name0'} );
 
   fs0.$save( 'name', 'name1' );
 
-  deepEqual( remote.lastArguments[1], {id: 2, name: 'name1'} );
+  deepEqual( remote.lastRecord, {id: 2, name: 'name1'} );
 });
 
 test( 'fullSave false', function(assert)
@@ -569,11 +569,11 @@ test( 'fullSave false', function(assert)
 
   var fs0 = fullSave_false.create({id: 2, name: 'name0'});
 
-  deepEqual( remote.lastArguments[1], {id: 2, name: 'name0'} );
+  deepEqual( remote.lastRecord, {id: 2, name: 'name0'} );
 
   fs0.$save( 'name', 'name1' );
 
-  deepEqual( remote.lastArguments[1], {name: 'name1'} );
+  deepEqual( remote.lastRecord, {name: 'name1'} );
 });
 
 test( 'fullPublish true', function(assert)
@@ -689,7 +689,7 @@ test( 'encode decode', function(assert)
 
   ed.$save();
 
-  var encoded = remote.lastArguments[1];
+  var encoded = remote.lastRecord;
 
   isType( encoded.created_at, 'number' );
   isType( encoded.validation, 'string' );

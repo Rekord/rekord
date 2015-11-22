@@ -7,15 +7,15 @@ function NeuroRelation()
 Neuro.Relations = {};
 
 Neuro.Store = {
-  None: 0,
-  Model: 1,
-  Key: 2,
-  Keys: 3
+  None:   0,
+  Model:  1,
+  Key:    2,
+  Keys:   3
 };
 
 Neuro.Save = {
-  None: 0,
-  Model: 4
+  None:   0,
+  Model:  4
 };
 
 NeuroRelation.Defaults = 
@@ -312,7 +312,7 @@ NeuroRelation.prototype =
         if ( related.$local ) 
         {
           return related.$local;
-        } 
+        }
         else 
         {
           var local = related.$toJSON( false );

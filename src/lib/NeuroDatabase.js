@@ -456,11 +456,18 @@ NeuroDatabase.prototype =
       var conflicted = false;
       var updated = {};
       var notReallySaved = isEmpty( model.$saved );
+      var relations = db.relations;
 
       for (var prop in encoded)
       {
         if ( prop.charAt(0) === '$' )
         {
+          continue;
+        }
+
+        if ( prop in relations )
+        {
+          // TODO
           continue;
         }
 
