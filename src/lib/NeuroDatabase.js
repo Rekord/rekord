@@ -455,6 +455,7 @@ NeuroDatabase.prototype =
       var conflicts = {};
       var conflicted = false;
       var updated = {};
+      var notReallySaved = isEmpty( model.$saved );
 
       for (var prop in encoded)
       {
@@ -466,7 +467,7 @@ NeuroDatabase.prototype =
         var currentValue = current[ prop ];
         var savedValue = model.$saved[ prop ];
 
-        if ( equals( currentValue, savedValue ) )
+        if ( notReallySaved || equals( currentValue, savedValue ) )
         {
           model[ prop ] = decoded[ prop ];
           updated[ prop ] = encoded[ prop ];

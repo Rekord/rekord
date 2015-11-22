@@ -1630,6 +1630,7 @@ NeuroDatabase.prototype =
       var conflicts = {};
       var conflicted = false;
       var updated = {};
+      var notReallySaved = isEmpty( model.$saved );
 
       for (var prop in encoded)
       {
@@ -1641,7 +1642,7 @@ NeuroDatabase.prototype =
         var currentValue = current[ prop ];
         var savedValue = model.$saved[ prop ];
 
-        if ( equals( currentValue, savedValue ) )
+        if ( notReallySaved || equals( currentValue, savedValue ) )
         {
           model[ prop ] = decoded[ prop ];
           updated[ prop ] = encoded[ prop ];
@@ -3040,16 +3041,17 @@ extend( new NeuroOperation( true, 'NeuroRemoveNow' ), NeuroRemoveNow,
   {
     var key = model.$key();
 
+    model.$deleted = true;
     model.$pendingSave = false;
 
     if ( db.models.has( key ) )
     {
       db.models.remove( key );
-      db.trigger( 'model-removed', [model] );
+      db.trigger( NeuroDatabase.Events.ModelRemoved, [model] );
       
       db.updated();
 
-      model.$trigger('removed');
+      model.$trigger( NeuroModel.Events.Removed );
     }
 
     db.store.remove( key, this.success(), this.failure() );
@@ -3332,12 +3334,9 @@ extend( new NeuroOperation( false, 'NeuroSaveRemote' ), NeuroSaveRemote,
     }
 
     // If data was returned, place it in saving to update the model and publish
-    for (var prop in data)
+    if ( !isEmpty( data ) )
     {
-      if ( !(prop in saving ) )
-      {
-        saving[ prop ] = data[ prop ];
-      }
+      transfer( data, saving );
     }
 
     Neuro.debug( Neuro.Debugs.SAVE_VALUES, model, saving );

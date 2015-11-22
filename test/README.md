@@ -84,16 +84,16 @@
 
 ### Neuro.Model save cases
 
-- [ ] save while deleted
-- [ ] save with cache:false should go right to remote
-- [ ] save without changes
-- [ ] save while remotely removed (404/410)
-- [ ] save with unexpected status code
-- [ ] save while offline, resume save online
-- [ ] save, then delete, then save finishes
-- [ ] save, rest returns updated fields
-- [ ] save remote first time, check $saved
-- [ ] save remote and cachePending should remove locally
+- [x] save while deleted
+- [x] save with cache:false should go right to remote
+- [x] save without changes
+- [x] save while remotely removed (404/410)
+- [x] save with unexpected status code
+- [x] save while offline, resume save online
+- [x] save, then delete, then save finishes
+- [x] save, rest returns updated fields
+- [x] save remote first time, check $saved
+- [x] save remote and cachePending should remove locally
 
 ### Neuro.Model remove cases
 

@@ -108,12 +108,9 @@ extend( new NeuroOperation( false, 'NeuroSaveRemote' ), NeuroSaveRemote,
     }
 
     // If data was returned, place it in saving to update the model and publish
-    for (var prop in data)
+    if ( !isEmpty( data ) )
     {
-      if ( !(prop in saving ) )
-      {
-        saving[ prop ] = data[ prop ];
-      }
+      transfer( data, saving );
     }
 
     Neuro.debug( Neuro.Debugs.SAVE_VALUES, model, saving );

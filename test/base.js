@@ -192,17 +192,6 @@ function TestRest()
 
 TestRest.prototype =
 {
-  checkNetworkStatus: function(failure, returnValue)
-  {
-    var offline = !Neuro.online || Neuro.forceOffline;
-
-    if ( offline )
-    {
-      failure( this.returnValue || returnValue, 0 );
-    }
-
-    return !offline;
-  },
   finishDelayed: function(success, failure, returnValue)
   {
     var rest = this;
@@ -222,49 +211,63 @@ TestRest.prototype =
   },
   finish: function(success, failure, returnValue)
   {
-    if ( this.status >= 200 && this.status < 300 )
+    var offline = !Neuro.online || Neuro.forceOffline;
+    var status = offline ? 0 : this.status;
+    var successful = status >= 200 && status < 300;
+    var returnedValue = this.returnValue || returnValue;
+
+    if ( successful )
     {
-      if ( success ) success( this.returnValue || returnValue, this.status );        
+      if ( success ) success( returnedValue, status );        
     }
     else
     {
-      if ( failure ) failure( this.returnValue || returnValue, this.status );
+      if ( failure ) failure( returnedValue, status );
     }
   },
   create: function(model, encoded, success, failure)
   {
     this.lastArguments = Array.prototype.slice.call( arguments );
-    if ( this.checkNetworkStatus( failure, {} ) )
+
+    var map = this.map;
+    function onCreate() 
     {
-      this.map.put( model.$key(), encoded );
-      this.finishDelayed( success, failure, {} );
+      map.put( model.$key(), encoded );
+      success.apply( this, arguments );
     }
+
+    this.finishDelayed( onCreate, failure, {} );
   },
   update: function(model, encoded, success, failure)
   {
     this.lastArguments = Array.prototype.slice.call( arguments );
-    if ( this.checkNetworkStatus( failure, {} ) )
+
+    var map = this.map;
+    function onUpdate()
     {
-      var existing = this.map.get( model.$key() );
+      var existing = map.get( model.$key() );
       Neuro.transfer( encoded, existing );
-      this.finishDelayed( success, failure, {} );
+      success.apply( this, arguments );
     }
+
+    this.finishDelayed( onUpdate, failure, {} );
   },
   remove: function(model, success, failure)
   {
     this.lastArguments = Array.prototype.slice.call( arguments );
-    if ( this.checkNetworkStatus( failure, {} ) )
+
+    var map = this.map;
+    function onRemove()
     {
-      this.map.remove( model.$key() );
-      this.finishDelayed( success, failure, {} );
+      map.remove( model.$key() );
+      success.apply( this, arguments );
     }
+
+    this.finishDelayed( onRemove, failure, {} );
   },
   all: function(success, failure)
   {
     this.lastArguments = Array.prototype.slice.call( arguments );
-    if ( this.checkNetworkStatus( failure, [] ) )
-    {
-      this.finishDelayed( success, failure, this.map.values );
-    }
+    this.finishDelayed( success, failure, this.map.values );
   }
 };

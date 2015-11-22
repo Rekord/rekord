@@ -10,16 +10,17 @@ extend( new NeuroOperation( true, 'NeuroRemoveNow' ), NeuroRemoveNow,
   {
     var key = model.$key();
 
+    model.$deleted = true;
     model.$pendingSave = false;
 
     if ( db.models.has( key ) )
     {
       db.models.remove( key );
-      db.trigger( 'model-removed', [model] );
+      db.trigger( NeuroDatabase.Events.ModelRemoved, [model] );
       
       db.updated();
 
-      model.$trigger('removed');
+      model.$trigger( NeuroModel.Events.Removed );
     }
 
     db.store.remove( key, this.success(), this.failure() );
