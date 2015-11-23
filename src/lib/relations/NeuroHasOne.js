@@ -56,9 +56,7 @@ extend( new NeuroRelation(), NeuroHasOne,
       {
         Neuro.debug( Neuro.Debugs.HASONE_NINJA_REMOVE, that, model, relation );
 
-        this.clearModel( relation, true );
-        this.clearForeignKey( model );
-        this.setProperty( relation );
+        this.clearRelated( relation, true );
       },
       onSaved: function() 
       {
@@ -71,9 +69,7 @@ extend( new NeuroRelation(), NeuroHasOne,
 
         if ( !isRelated( relation.model ) )
         {
-          this.clearModel( relation );
-          this.clearForeignKey( model );
-          this.setProperty( relation );
+          this.clearRelated( relation );
         }
       }
     };
@@ -137,9 +133,7 @@ extend( new NeuroRelation(), NeuroHasOne,
 
     if ( !related || relation.model === related )
     {
-      this.clearModel( relation );
-      this.clearForeignKey( model );
-      this.setProperty( relation );
+      this.clearRelated( relation );
     }
   },
 
@@ -214,6 +208,13 @@ extend( new NeuroRelation(), NeuroHasOne,
   {
     this.setModel( relation, related );
     this.updateForeignKey( relation.parent, related );
+    this.setProperty( relation );
+  },
+
+  clearRelated: function(relation, dontRemove)
+  {
+    this.clearModel( relation, dontRemove );
+    this.clearForeignKey( relation.parent );
     this.setProperty( relation );
   },
 

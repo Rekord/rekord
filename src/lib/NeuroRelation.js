@@ -271,7 +271,7 @@ NeuroRelation.prototype =
         target.$save();
       }
 
-      target.$trigger( NeuroModel.Events.KeyUpdate, [target, source] );      
+      target.$trigger( NeuroModel.Events.KeyUpdate, [target, source, targetFields, sourceFields] );      
     }
 
     return changes;

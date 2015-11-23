@@ -319,15 +319,18 @@ extend( new NeuroRelation(), NeuroBelongsTo,
 
   handleKeyUpdate: function()
   {
-    return function onKeyUpdate(model, related)
+    return function onKeyUpdate(model, related, modelFields, relatedFields)
     {
-      var relation = model.$relations[ this.name ];
-
-      if ( relation && related !== relation.model )
+      if ( this.local === modelFields )
       {
-        this.clearModel( relation );
-        this.setModel( relation, related );
-        this.setProperty( relation );
+        var relation = model.$relations[ this.name ];
+
+        if ( relation && related !== relation.model )
+        {
+          this.clearModel( relation );
+          this.setModel( relation, related );
+          this.setProperty( relation );
+        }        
       }
     };
   }
