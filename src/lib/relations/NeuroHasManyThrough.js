@@ -591,12 +591,12 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
 
     if ( !isArray( relatedKey ) )
     {
-      return false;
+      return true;
     }
 
     if ( relatedKey.length !== input.length )
     {
-      return false;
+      return true;
     }
 
     for ( var i = 0; i < input.length; i++ )

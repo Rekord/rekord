@@ -25,6 +25,7 @@ function NeuroDatabase(options)
   this.remoteLoaded = false;
   this.remoteOperations = 0;
   this.afterOnline = false;
+  this.saveFields = copy( this.fields );
 
   // Services
   this.rest   = Neuro.rest( this );
@@ -38,6 +39,7 @@ function NeuroDatabase(options)
 
   // Relations
   this.relations = {};
+  this.relationNames = [];
 
   for (var relationType in options)
   {
@@ -62,7 +64,13 @@ function NeuroDatabase(options)
 
       relation.init( this, name, relationOptions );
 
+      if ( relation.save )
+      {
+        this.saveFields.push( name );
+      }
+
       this.relations[ name ] = relation;
+      this.relationNames.push( name );
     }
   }
 }

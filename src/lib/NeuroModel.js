@@ -325,7 +325,7 @@ NeuroModel.prototype =
   {
     var saved = this.$saved;
     var encoded = alreadyEncoded || this.$toJSON( true );
-    var fields = this.$db.fields;
+    var fields = this.$db.saveFields;
 
     return saved ? diff( encoded, saved, fields, equals ) : encoded;
   },

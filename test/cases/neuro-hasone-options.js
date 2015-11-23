@@ -292,7 +292,7 @@ test( 'save model', function(assert)
     $saved: {id: t0.id, name: t0.name, created_by: u0.id}
   });
 
-  deepEqual( remote.lastRecord, {
+  deepEqual( remote.map.get( t0.id ), {
     id: t0.id, name: t0.name, created_by: u0.id, 
     creator: {id: u0.id, name: u0.name}
   });

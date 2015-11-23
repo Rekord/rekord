@@ -1200,6 +1200,7 @@ function NeuroDatabase(options)
   this.remoteLoaded = false;
   this.remoteOperations = 0;
   this.afterOnline = false;
+  this.saveFields = copy( this.fields );
 
   // Services
   this.rest   = Neuro.rest( this );
@@ -1213,6 +1214,7 @@ function NeuroDatabase(options)
 
   // Relations
   this.relations = {};
+  this.relationNames = [];
 
   for (var relationType in options)
   {
@@ -1237,7 +1239,13 @@ function NeuroDatabase(options)
 
       relation.init( this, name, relationOptions );
 
+      if ( relation.save )
+      {
+        this.saveFields.push( name );
+      }
+
       this.relations[ name ] = relation;
+      this.relationNames.push( name );
     }
   }
 }
@@ -2498,7 +2506,7 @@ NeuroModel.prototype =
   {
     var saved = this.$saved;
     var encoded = alreadyEncoded || this.$toJSON( true );
-    var fields = this.$db.fields;
+    var fields = this.$db.saveFields;
 
     return saved ? diff( encoded, saved, fields, equals ) : encoded;
   },
@@ -4728,12 +4736,12 @@ extend( new NeuroRelation(), NeuroHasMany,
 
     if ( !isArray( relatedKey ) )
     {
-      return false;
+      return true;
     }
 
     if ( relatedKey.length !== input.length )
     {
-      return false;
+      return true;
     }
 
     for ( var i = 0; i < input.length; i++ )
@@ -5377,12 +5385,12 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
 
     if ( !isArray( relatedKey ) )
     {
-      return false;
+      return true;
     }
 
     if ( relatedKey.length !== input.length )
     {
-      return false;
+      return true;
     }
 
     for ( var i = 0; i < input.length; i++ )

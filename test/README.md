@@ -162,16 +162,16 @@
 
 ### Neuro hasMany options
 
-- [ ] model
-- [ ] store
-- [ ] save
-- [ ] auto
-- [ ] property
-- [ ] foreign
-- [ ] comparator
-- [ ] comparatorNullsFirst
-- [ ] cascadeRemove
-- [ ] cascadeSave
+- [x] model
+- [x] store
+- [x] save
+- [x] auto
+- [x] property
+- [x] foreign
+- [x] comparator
+- [x] comparatorNullsFirst
+- [x] cascadeRemove
+- [x] cascadeSave
 
 ### Neuro hasMany
 
