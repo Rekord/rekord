@@ -196,6 +196,37 @@ NeuroRelation.prototype =
 
   },
 
+  isModelArray: function(input)
+  {
+    if ( !isArray( input ) )
+    {
+      return false;
+    }
+
+    var relatedDatabase = this.model.Database;
+    var relatedKey = relatedDatabase.key;
+
+    if ( !isArray( relatedKey ) )
+    {
+      return true;
+    }
+
+    if ( relatedKey.length !== input.length )
+    {
+      return true;
+    }
+
+    for ( var i = 0; i < input.length; i++ )
+    {
+      if ( !isNumber( input[ i ] ) && !isString( input[ i ] ) )
+      {
+        return true;
+      }
+    }
+
+    return false;
+  },
+
   clearFields: function(target, targetFields)
   {
     var changes = false;

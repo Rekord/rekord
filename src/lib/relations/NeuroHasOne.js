@@ -91,7 +91,7 @@ extend( new NeuroRelation(), NeuroHasOne,
 
   set: function(model, input)
   {
-    if ( !isValue( input ) )
+    if ( isEmpty( input ) )
     {
       this.unrelate( model );
     }

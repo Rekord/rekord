@@ -35,6 +35,28 @@ function noline()
   Neuro.off( 'online offline' );
 }
 
+Array.prototype.pluck = function(property)
+{
+  var plucked = [];
+
+  for (var i = 0; i < this.length; i++)
+  {
+    var item = this[ i ];
+
+    if ( item !== null && item !== void 0 )
+    {
+      var value = item[ property ];
+
+      if ( value !== null && value !== void 0 )
+      {
+        plucked.push( value );
+      }
+    }
+  }
+
+  return plucked;
+};
+
 // Neuro.store."database name".(put|remove|all)
 
 Neuro.store = function(database)

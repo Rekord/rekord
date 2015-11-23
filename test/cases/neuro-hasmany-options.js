@@ -641,7 +641,7 @@ test( 'comparator', function(assert)
       tasks: {
         model: Task,
         foreign: 'task_list_id',
-        comparator: ['done', '-created_at']
+        comparator: ['-done', '-created_at']
       }
     }
   });
@@ -679,7 +679,7 @@ test( 'comparatorNullsFirst', function(assert)
       tasks: {
         model: Task,
         foreign: 'task_list_id',
-        comparator: ['done', '-created_at'],
+        comparator: ['-done', '-created_at'],
         comparatorNullsFirst: true
       }
     }

@@ -167,6 +167,59 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
     this.sort( relation );
     this.checkSave( relation );
   },
+  
+  set: function(model, input)
+  {
+    if ( isEmpty( input ) )
+    {
+      this.unrelate( model );
+    }
+    else
+    {
+      var relatedDatabase = this.model.Database;
+      var relation = model.$relations[ this.name ];
+      var existing = relation.models;
+      var given = new NeuroMap();
+
+      if ( this.isModelArray( input ) )
+      {
+        for (var i = 0; i < input.length; i++)
+        {
+          var related = relatedDatabase.parseModel( input[ i ] );
+
+          if ( related )
+          {
+            given.put( related.$key(), related );
+          }
+        }
+      }
+      else
+      {
+        var related = relatedDatabase.parseModel( input );
+
+        if ( related )
+        {
+          given.put( related.$key(), related );
+        }
+      }
+
+      var removing = existing.subtract( given ).values;
+      var adding = given.subtract( existing ).values;
+      
+      this.bulk( relation, function()
+      {
+        for (var i = 0; i < adding.length; i++)
+        {
+          this.addModel( relation, adding[ i ] );
+        }
+
+        for (var i = 0; i < removing.length; i++)
+        {
+          this.removeModel( relation, removing[ i] );
+        }
+      });
+    }
+  },
 
   relate: function(model, input)
   {
@@ -577,37 +630,6 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
     delete pending[ relatedKey ];
 
     return related;
-  },
-
-  isModelArray: function(input)
-  {
-    if ( !isArray( input ) )
-    {
-      return false;
-    }
-
-    var relatedDatabase = this.model.Database;
-    var relatedKey = relatedDatabase.key;
-
-    if ( !isArray( relatedKey ) )
-    {
-      return true;
-    }
-
-    if ( relatedKey.length !== input.length )
-    {
-      return true;
-    }
-
-    for ( var i = 0; i < input.length; i++ )
-    {
-      if ( !isNumber( input[ i ] ) && !isString( input[ i ] ) )
-      {
-        return true;
-      }
-    }
-
-    return false;
   },
 
   isRelatedFactory: function(model)

@@ -31,6 +31,11 @@ function isNumber(x)
   return typeof x === 'number' && !isNaN(x);
 }
 
+function isBoolean(x)
+{
+  return typeof x === 'boolean';
+}
+
 function isDate(x)
 {
   return x instanceof Date;
@@ -442,6 +447,10 @@ function compare(a, b, nullsFirst)
   if (isArray(a) && isArray(b)) 
   {
     return compareNumbers(a.length, b.length);
+  }
+  if (isBoolean(a) && isBoolean(b))
+  {
+    return a ? -1 : 1;
   }
   
   return (a + '').localeCompare(b + '');
@@ -2691,6 +2700,27 @@ NeuroMap.prototype =
     return this.values.length;
   },
 
+  subtract: function(map, dest)
+  {
+    var out = dest || new NeuroMap();
+    var n = this.size();
+    var values = this.values;
+    var keys = this.keys;
+
+    for (var i = 0; i < n; i++)
+    {
+      var v = values[ i ];
+      var k = keys[ i ];
+
+      if ( !map.has( k ) )
+      {
+        out.put( k, v );
+      }
+    }
+
+    return out;
+  },
+
   /**
    * Passes all values & keys in this map to a callback and if it returns a 
    * truthy value then the key and value are placed in the destination map.
@@ -3600,6 +3630,37 @@ NeuroRelation.prototype =
 
   },
 
+  isModelArray: function(input)
+  {
+    if ( !isArray( input ) )
+    {
+      return false;
+    }
+
+    var relatedDatabase = this.model.Database;
+    var relatedKey = relatedDatabase.key;
+
+    if ( !isArray( relatedKey ) )
+    {
+      return true;
+    }
+
+    if ( relatedKey.length !== input.length )
+    {
+      return true;
+    }
+
+    for ( var i = 0; i < input.length; i++ )
+    {
+      if ( !isNumber( input[ i ] ) && !isString( input[ i ] ) )
+      {
+        return true;
+      }
+    }
+
+    return false;
+  },
+
   clearFields: function(target, targetFields)
   {
     var changes = false;
@@ -3996,7 +4057,7 @@ extend( new NeuroRelation(), NeuroBelongsTo,
   // same as HasOne
   set: function(model, input)
   {
-    if ( !isValue( input ) )
+    if ( isEmpty( input ) )
     {
       this.unrelate( model );
     }
@@ -4378,7 +4439,58 @@ extend( new NeuroRelation(), NeuroHasMany,
     this.checkSave( relation );
   },
 
-  // TODO set
+  set: function(model, input)
+  {
+    if ( isEmpty( input ) )
+    {
+      this.unrelate( model );
+    }
+    else
+    {
+      var relatedDatabase = this.model.Database;
+      var relation = model.$relations[ this.name ];
+      var existing = relation.models;
+      var given = new NeuroMap();
+
+      if ( this.isModelArray( input ) )
+      {
+        for (var i = 0; i < input.length; i++)
+        {
+          var related = relatedDatabase.parseModel( input[ i ] );
+
+          if ( related )
+          {
+            given.put( related.$key(), related );
+          }
+        }
+      }
+      else
+      {
+        var related = relatedDatabase.parseModel( input );
+
+        if ( related )
+        {
+          given.put( related.$key(), related );
+        }
+      }
+
+      var removing = existing.subtract( given ).values;
+      var adding = given.subtract( existing ).values;
+      
+      this.bulk( relation, function()
+      {
+        for (var i = 0; i < adding.length; i++)
+        {
+          this.addModel( relation, adding[ i ] );
+        }
+
+        for (var i = 0; i < removing.length; i++)
+        {
+          this.removeModel( relation, removing[ i] );
+        }
+      });
+    }
+  },
 
   relate: function(model, input)
   {
@@ -4724,37 +4836,6 @@ extend( new NeuroRelation(), NeuroHasMany,
     }
   },
 
-  isModelArray: function(input)
-  {
-    if ( !isArray( input ) )
-    {
-      return false;
-    }
-
-    var relatedDatabase = this.model.Database;
-    var relatedKey = relatedDatabase.key;
-
-    if ( !isArray( relatedKey ) )
-    {
-      return true;
-    }
-
-    if ( relatedKey.length !== input.length )
-    {
-      return true;
-    }
-
-    for ( var i = 0; i < input.length; i++ )
-    {
-      if ( !isNumber( input[ i ] ) && !isString( input[ i ] ) )
-      {
-        return true;
-      }
-    }
-
-    return false;
-  },
-
   isRelatedFactory: function(model)
   {
     var foreign = this.foreign;
@@ -4960,6 +5041,59 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
 
     this.sort( relation );
     this.checkSave( relation );
+  },
+  
+  set: function(model, input)
+  {
+    if ( isEmpty( input ) )
+    {
+      this.unrelate( model );
+    }
+    else
+    {
+      var relatedDatabase = this.model.Database;
+      var relation = model.$relations[ this.name ];
+      var existing = relation.models;
+      var given = new NeuroMap();
+
+      if ( this.isModelArray( input ) )
+      {
+        for (var i = 0; i < input.length; i++)
+        {
+          var related = relatedDatabase.parseModel( input[ i ] );
+
+          if ( related )
+          {
+            given.put( related.$key(), related );
+          }
+        }
+      }
+      else
+      {
+        var related = relatedDatabase.parseModel( input );
+
+        if ( related )
+        {
+          given.put( related.$key(), related );
+        }
+      }
+
+      var removing = existing.subtract( given ).values;
+      var adding = given.subtract( existing ).values;
+      
+      this.bulk( relation, function()
+      {
+        for (var i = 0; i < adding.length; i++)
+        {
+          this.addModel( relation, adding[ i ] );
+        }
+
+        for (var i = 0; i < removing.length; i++)
+        {
+          this.removeModel( relation, removing[ i] );
+        }
+      });
+    }
   },
 
   relate: function(model, input)
@@ -5373,37 +5507,6 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
     return related;
   },
 
-  isModelArray: function(input)
-  {
-    if ( !isArray( input ) )
-    {
-      return false;
-    }
-
-    var relatedDatabase = this.model.Database;
-    var relatedKey = relatedDatabase.key;
-
-    if ( !isArray( relatedKey ) )
-    {
-      return true;
-    }
-
-    if ( relatedKey.length !== input.length )
-    {
-      return true;
-    }
-
-    for ( var i = 0; i < input.length; i++ )
-    {
-      if ( !isNumber( input[ i ] ) && !isString( input[ i ] ) )
-      {
-        return true;
-      }
-    }
-
-    return false;
-  },
-
   isRelatedFactory: function(model)
   {
     var foreign = model.$db.key;
@@ -5574,7 +5677,7 @@ extend( new NeuroRelation(), NeuroHasOne,
 
   set: function(model, input)
   {
-    if ( !isValue( input ) )
+    if ( isEmpty( input ) )
     {
       this.unrelate( model );
     }

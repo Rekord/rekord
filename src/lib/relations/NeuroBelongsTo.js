@@ -104,7 +104,7 @@ extend( new NeuroRelation(), NeuroBelongsTo,
   // same as HasOne
   set: function(model, input)
   {
-    if ( !isValue( input ) )
+    if ( isEmpty( input ) )
     {
       this.unrelate( model );
     }

@@ -28,6 +28,11 @@ function isNumber(x)
   return typeof x === 'number' && !isNaN(x);
 }
 
+function isBoolean(x)
+{
+  return typeof x === 'boolean';
+}
+
 function isDate(x)
 {
   return x instanceof Date;
@@ -439,6 +444,10 @@ function compare(a, b, nullsFirst)
   if (isArray(a) && isArray(b)) 
   {
     return compareNumbers(a.length, b.length);
+  }
+  if (isBoolean(a) && isBoolean(b))
+  {
+    return a ? -1 : 1;
   }
   
   return (a + '').localeCompare(b + '');
