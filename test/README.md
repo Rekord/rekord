@@ -138,27 +138,27 @@
 
 ### Neuro belongsTo options
 
-- [ ] model
-- [ ] store
-- [ ] save
-- [ ] auto
-- [ ] property
-- [ ] local
-- [ ] cascade
+- [x] model
+- [x] store
+- [x] save
+- [x] auto
+- [x] property
+- [x] local
+- [x] cascade
 
 ### Neuro belongsTo
 
-- [ ] no initial value
-- [ ] initial value
-- [ ] ninja remove
-- [ ] ninja save
-- [ ] set
-- [ ] relate
-- [ ] unrelate
-- [ ] isRelated
-- [ ] get
-- [ ] encode
-- [ ] post remove
+- [x] no initial value
+- [x] initial value
+- [x] ninja remove
+- [x] ninja save
+- [x] set
+- [x] relate
+- [x] unrelate
+- [x] isRelated
+- [x] get
+- [x] encode
+- [x] post remove
 
 ### Neuro hasMany options
 
