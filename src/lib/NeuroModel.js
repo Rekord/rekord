@@ -228,24 +228,29 @@ NeuroModel.prototype =
     return false;
   },
 
-  $save: function(setProperties, setValue)
+  $save: function(setProperties, setValue, cascade)
   {
+    var cascade = 
+      (arguments.length === 3 && isNumber( cascade ) ? cascade : 
+        (arguments.length === 2 && isObject( setProperties ) && isNumber( setValue ) ? setValue : 
+          (arguments.length === 1 && isNumber( setProperties ) ? setProperties : Neuro.Cascade.All ) ) );
+
     this.$set( setProperties, setValue );
 
     this.$callRelationFunction( 'preSave' );
 
-    this.$db.save( this );
+    this.$db.save( this, cascade );
 
     this.$callRelationFunction( 'postSave' );
   },
 
-  $remove: function()
+  $remove: function(cascade)
   {
     if ( this.$exists() )
     {
       this.$callRelationFunction( 'preRemove' );
 
-      this.$db.remove( this );
+      this.$db.remove( this, cascade );
 
       this.$callRelationFunction( 'postRemove' );
     }
@@ -266,9 +271,9 @@ NeuroModel.prototype =
     }
   },
 
-  $addOperation: function(OperationType) 
+  $addOperation: function(OperationType, cascade) 
   {
-    var operation = new OperationType( this );
+    var operation = new OperationType( this, cascade );
 
     if ( !this.$operation ) 
     {

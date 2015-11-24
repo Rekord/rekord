@@ -1,6 +1,6 @@
-function NeuroSaveRemote(model)
+function NeuroSaveRemote(model, cascade)
 {
-  this.reset( model );
+  this.reset( model, cascade );
 }
 
 extend( new NeuroOperation( false, 'NeuroSaveRemote' ), NeuroSaveRemote,
@@ -119,13 +119,13 @@ extend( new NeuroOperation( false, 'NeuroSaveRemote' ), NeuroSaveRemote,
     // local and model point to the same object.
     if ( !model.$saved )
     {
-      if ( !db.cache )
+      if ( model.$local )
       {
-        model.$saved = {};
+        model.$saved = model.$local.$saved = {}; 
       }
       else
       {
-        model.$saved = model.$local.$saved = {}; 
+        model.$saved = {};
       }
     }
     
@@ -133,13 +133,16 @@ extend( new NeuroOperation( false, 'NeuroSaveRemote' ), NeuroSaveRemote,
     db.putRemoteData( saving, this.key, model );
 
     // Publish saved data to everyone else
-    Neuro.debug( Neuro.Debugs.SAVE_PUBLISH, model, publishing );
+    if ( this.canCascade( Neuro.Cascade.Live ) )
+    {
+      Neuro.debug( Neuro.Debugs.SAVE_PUBLISH, model, publishing );
 
-    db.live({
-      op: NeuroDatabase.Live.Save,
-      model: publishing,
-      key: this.key
-    });
+      db.live({
+        op: NeuroDatabase.Live.Save,
+        model: publishing,
+        key: this.key
+      });
+    }
 
     if ( db.cachePending && db.cache )
     {
@@ -154,7 +157,7 @@ extend( new NeuroOperation( false, 'NeuroSaveRemote' ), NeuroSaveRemote,
     if ( model.$pendingSave )
     { 
       model.$pendingSave = false;
-      model.$addOperation( NeuroSaveRemote );
+      model.$addOperation( NeuroSaveRemote, this.cascade );
 
       Neuro.debug( Neuro.Debugs.SAVE_RESUME, model );
     }

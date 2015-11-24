@@ -1,6 +1,6 @@
-function NeuroRemoveNow(model)
+function NeuroRemoveNow(model, cascade)
 {
-  this.reset( model );
+  this.reset( model, cascade );
 }
 
 extend( new NeuroOperation( true, 'NeuroRemoveNow' ), NeuroRemoveNow,
@@ -23,7 +23,14 @@ extend( new NeuroOperation( true, 'NeuroRemoveNow' ), NeuroRemoveNow,
       model.$trigger( NeuroModel.Events.Removed );
     }
 
-    db.store.remove( key, this.success(), this.failure() );
+    if ( db.cache )
+    {
+      db.store.remove( key, this.success(), this.failure() );
+    }
+    else
+    {
+      this.finish();
+    }
   }
 
 });

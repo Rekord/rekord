@@ -1,4 +1,13 @@
 
+Neuro.Cascade = {
+  None:     0,
+  Local:    1,
+  Rest:     2,
+  Live:     4,
+  Remote:   6,
+  All:      7
+};
+
 function NeuroOperation(interrupts, type)
 {
   this.interrupts = interrupts;
@@ -7,12 +16,18 @@ function NeuroOperation(interrupts, type)
 
 NeuroOperation.prototype = 
 {
-  reset: function(model)
+  reset: function(model, cascade)
   {
     this.model = model;
+    this.cascade = isValue( cascade ) ? cascade : Neuro.Cascade.All;
     this.db = model.$db;
     this.next = null;
     this.finished = false;
+  },
+
+  canCascade: function(type)
+  {
+    return !!(this.cascade & type);
   },
 
   queue: function(operation)
@@ -61,17 +76,17 @@ NeuroOperation.prototype =
     return this;
   },
 
-  tryNext: function(OperationType)
+  tryNext: function(OperationType, cascade)
   {
     if ( !this.next )
     {
-      this.next = new OperationType( this.model );
+      this.next = new OperationType( this.model, cascade );
     }
   },
 
-  insertNext: function(OperationType)
+  insertNext: function(OperationType, cascade)
   {
-    var op = new OperationType( this.model );
+    var op = new OperationType( this.model, cascade );
 
     op.next = this.next;
     this.next = op;

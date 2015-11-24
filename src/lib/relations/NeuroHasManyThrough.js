@@ -17,8 +17,8 @@ NeuroHasManyThrough.Defaults =
   foreign:              null,
   comparator:           null,
   comparatorNullsFirst: false,
-  cascadeRemove:        true,
-  cascadeSave:          false
+  cascadeRemove:        Neuro.Cascade.All,
+  cascadeSave:          Neuro.Cascade.None
 };
 
 extend( new NeuroRelation(), NeuroHasManyThrough, 
@@ -364,7 +364,7 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
 
         if ( related.$hasChanges() )
         {
-          related.$save();
+          related.$save( this.cascadeSave );
         }
       }
 
@@ -389,7 +389,7 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
         {
           var related = models[ i ];
 
-          related.$remove();
+          related.$remove( this.cascadeRemove );
         }
       });
     }
@@ -527,7 +527,7 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
 
       if ( callSave )
       {
-        through.$save();
+        through.$save( this.cascadeSave );
       }
     }
   },
@@ -605,7 +605,7 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
 
       if ( callRemove )
       {
-        through.$remove();
+        through.$remove( this.cascadeRemove );
       }
 
       throughs.remove( throughKey );

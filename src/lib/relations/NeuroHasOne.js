@@ -13,7 +13,7 @@ NeuroHasOne.Defaults =
   auto:       true,
   property:   true,
   local:      null,
-  cascade:    false
+  cascade:    Neuro.Cascade.None
 };
 
 extend( new NeuroRelation(), NeuroHasOne, 
@@ -199,7 +199,7 @@ extend( new NeuroRelation(), NeuroHasOne,
       {
         Neuro.debug( Neuro.Debugs.HASONE_POSTREMOVE, this, model, relation );
 
-        this.clearModel( relation );
+        this.clearModel( relation, false, this.cascde );
       }
     }
   },
@@ -218,7 +218,7 @@ extend( new NeuroRelation(), NeuroHasOne,
     this.setProperty( relation );
   },
 
-  clearModel: function(relation, dontRemove)
+  clearModel: function(relation, dontRemove, cascade)
   {
     var related = relation.model;
 
@@ -231,7 +231,7 @@ extend( new NeuroRelation(), NeuroHasOne,
 
       if ( !dontRemove )
       {
-        related.$remove();
+        related.$remove( cascade );
       }
 
       relation.model = null;

@@ -719,7 +719,7 @@ test( 'cascadeRemove true', function(assert)
       tasks: {
         model: Task,
         foreign: 'task_list_id',
-        cascadeRemove: true
+        cascadeRemove: Neuro.Cascade.All
       }
     }
   });
@@ -754,7 +754,7 @@ test( 'cascadeRemove false', function(assert)
       list: {
         model: prefix + 'list',
         local: 'task_list_id',
-        cascade: false
+        cascade: Neuro.Cascade.None
       }
     }
   });
@@ -766,7 +766,7 @@ test( 'cascadeRemove false', function(assert)
       tasks: {
         model: Task,
         foreign: 'task_list_id',
-        cascadeRemove: false
+        cascadeRemove: Neuro.Cascade.None
       }
     }
   });
@@ -814,7 +814,7 @@ test( 'cascadeSave true', function(assert)
       tasks: {
         model: Task,
         foreign: 'task_list_id',
-        cascadeSave: true
+        cascadeSave: Neuro.Cascade.All
       }
     }
   });
@@ -860,7 +860,7 @@ test( 'cascadeSave false', function(assert)
       tasks: {
         model: Task,
         foreign: 'task_list_id',
-        cascadeSave: false
+        cascadeSave: Neuro.Cascade.None
       }
     }
   });

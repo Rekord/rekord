@@ -1,6 +1,6 @@
-function NeuroRemoveLocal(model)
+function NeuroRemoveLocal(model, cascade)
 {
-  this.reset( model );
+  this.reset( model, cascade );
 }
 
 extend( new NeuroOperation( true, 'NeuroRemoveLocal' ), NeuroRemoveLocal, 
@@ -40,9 +40,9 @@ extend( new NeuroOperation( true, 'NeuroRemoveLocal' ), NeuroRemoveLocal,
 
     Neuro.debug( Neuro.Debugs.REMOVE_LOCAL, model );
 
-    if ( model.$saved )
+    if ( model.$saved && this.canCascade( Neuro.Cascade.Rest ) )
     {
-      model.$addOperation( NeuroRemoveRemote );
+      model.$addOperation( NeuroRemoveRemote, this.cascade );
     }
   },
 
@@ -52,9 +52,9 @@ extend( new NeuroOperation( true, 'NeuroRemoveLocal' ), NeuroRemoveLocal,
 
     Neuro.debug( Neuro.Debugs.REMOVE_LOCAL_ERROR, model, e );
 
-    if ( model.$saved )
+    if ( model.$saved && this.canCascade( Neuro.Cascade.Rest )  )
     {
-      model.$addOperation( NeuroRemoveRemote );
+      model.$addOperation( NeuroRemoveRemote, this.cascade );
     }
   }
 

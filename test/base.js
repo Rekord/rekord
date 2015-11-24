@@ -169,6 +169,7 @@ function TestLive(database, onPublish)
   this.database = database;
   this.onPublish = onPublish;
   this.onHandleMessage = null;
+  this.lastMessage = null;
 }
 
 TestLive.prototype = 
@@ -196,13 +197,19 @@ TestLive.prototype =
   {
     var live = this;
 
-    return function (message)
+    var onMessage = function(message)
     {
+      live.lastMessage = message;
+      
       if ( live.onHandleMessage )
       {
         live.onHandleMessage( message );
       }
     };
+
+    onMessage.live = live;
+
+    return onMessage;
   }
 };
 

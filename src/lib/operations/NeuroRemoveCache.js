@@ -1,6 +1,6 @@
-function NeuroRemoveCache(model)
+function NeuroRemoveCache(model, cascade)
 {
-  this.reset( model );
+  this.reset( model, cascade );
 }
 
 extend( new NeuroOperation( true, 'NeuroRemoveCache' ), NeuroRemoveCache,
@@ -10,7 +10,14 @@ extend( new NeuroOperation( true, 'NeuroRemoveCache' ), NeuroRemoveCache,
   {
     model.$pendingSave = false;
 
-    db.store.remove( model.$key(), this.success(), this.failure() );
+    if ( db.cache )
+    {
+      db.store.remove( model.$key(), this.success(), this.failure() );
+    }
+    else
+    {
+      this.finish();
+    }
   }
 
 });

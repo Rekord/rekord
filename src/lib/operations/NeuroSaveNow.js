@@ -1,6 +1,6 @@
-function NeuroSaveNow(model)
+function NeuroSaveNow(model, cascade)
 {
-  this.reset( model );
+  this.reset( model, cascade );
 }
 
 extend( new NeuroOperation( false, 'NeuroSaveNow' ), NeuroSaveNow,

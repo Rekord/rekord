@@ -401,7 +401,7 @@ test( 'cascadeRemove true', function(assert)
   var prefix = 'hasManyThrough_cascadeRemove_true_';
 
   var options = {
-    cascadeRemove: true
+    cascadeRemove: Neuro.Cascade.All
   };
 
   var test = createUserGroups( prefix, options, options );
@@ -431,7 +431,7 @@ test( 'cascadeRemove false', function(assert)
   var prefix = 'hasManyThrough_cascadeRemove_false_';
 
   var options = {
-    cascadeRemove: false
+    cascadeRemove: Neuro.Cascade.None
   };
 
   var test = createUserGroups( prefix, options, options );
@@ -461,7 +461,7 @@ test( 'cascadeSave true', function(assert)
   var prefix = 'hasManyThrough_cascadeSave_true_';
 
   var options = {
-    cascadeSave: true
+    cascadeSave: Neuro.Cascade.All
   };
 
   var test = createUserGroups( prefix, options, options );
@@ -489,7 +489,7 @@ test( 'cascadeSave false', function(assert)
   var prefix = 'hasManyThrough_cascadeSave_false_';
 
   var options = {
-    cascadeSave: false
+    cascadeSave: Neuro.Cascade.None
   };
 
   var test = createUserGroups( prefix, options, options );

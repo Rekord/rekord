@@ -13,7 +13,7 @@ NeuroBelongsTo.Defaults =
   auto:       true,
   property:   true,
   local:      null,
-  cascade:    true
+  cascade:    Neuro.Cascade.All
 };
 
 extend( new NeuroRelation(), NeuroBelongsTo, 
@@ -59,7 +59,7 @@ extend( new NeuroRelation(), NeuroBelongsTo,
 
         if ( this.cascade )
         {
-          model.$remove();
+          model.$remove( this.cascade );
         }
         else
         {
@@ -74,11 +74,11 @@ extend( new NeuroRelation(), NeuroBelongsTo,
         {
           if ( this.cascade )
           {
-            model.$remove(); 
+            model.$remove( this.cascade ); 
           }
           else
           {
-            this.clearRelated( relation );   
+            this.clearRelated( relation );
           }
         }
       }

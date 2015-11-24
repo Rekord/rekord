@@ -215,6 +215,102 @@ test( '$save', function(assert)
   strictEqual( i0.number, 4 );
 });
 
+test( '$save cascade remote', function(assert)
+{
+  var Issue = Neuro({
+    name: 'Model_save_cascade_remote',
+    fields: ['id', 'title', 'number']
+  });
+
+  var local = Issue.Database.store;
+  var remote = Issue.Database.rest;
+  var live = Issue.Database.live.live;
+
+  var i0 = new Issue();
+
+  strictEqual( local.lastRecord, null );
+  strictEqual( remote.lastRecord, null );
+  strictEqual( live.lastMessage, null );
+
+  i0.$save( { title: 'Title0', number: 1 }, Neuro.Cascade.Remote );
+
+  strictEqual( local.lastRecord, void 0 );
+  notStrictEqual( remote.lastRecord, null );
+  notStrictEqual( live.lastMessage, null );
+});
+
+test( '$save cascade rest', function(assert)
+{
+  var Issue = Neuro({
+    name: 'Model_save_cascade_rest',
+    fields: ['id', 'title', 'number']
+  });
+
+  var local = Issue.Database.store;
+  var remote = Issue.Database.rest;
+  var live = Issue.Database.live.live;
+
+  var i0 = new Issue();
+
+  strictEqual( local.lastRecord, null );
+  strictEqual( remote.lastRecord, null );
+  strictEqual( live.lastMessage, null );
+
+  i0.$save( { title: 'Title0', number: 1 }, Neuro.Cascade.Rest );
+
+  strictEqual( local.lastRecord, void 0 );
+  notStrictEqual( remote.lastRecord, null );
+  strictEqual( live.lastMessage, null );
+});
+
+test( '$save cascade local', function(assert)
+{
+  var Issue = Neuro({
+    name: 'Model_save_cascade_local',
+    fields: ['id', 'title', 'number']
+  });
+
+  var local = Issue.Database.store;
+  var remote = Issue.Database.rest;
+  var live = Issue.Database.live.live;
+
+  var i0 = new Issue();
+
+  strictEqual( local.lastRecord, null );
+  strictEqual( remote.lastRecord, null );
+  strictEqual( live.lastMessage, null );
+
+  i0.$save( { title: 'Title0', number: 1 }, Neuro.Cascade.Local );
+
+  notStrictEqual( local.lastRecord, null );
+  strictEqual( remote.lastRecord, null );
+  strictEqual( live.lastMessage, null );
+});
+
+test( '$save cascade none', function(assert)
+{
+  var Issue = Neuro({
+    name: 'Model_save_cascade_none',
+    fields: ['id', 'title', 'number']
+  });
+
+  var local = Issue.Database.store;
+  var remote = Issue.Database.rest;
+  var live = Issue.Database.live.live;
+
+  var i0 = new Issue();
+
+  strictEqual( local.lastRecord, null );
+  strictEqual( remote.lastRecord, null );
+  strictEqual( live.lastMessage, null );
+
+  i0.$save( { title: 'Title0', number: 1 }, Neuro.Cascade.None );
+
+  strictEqual( local.lastRecord, null );
+  strictEqual( remote.lastRecord, null );
+  strictEqual( live.lastMessage, null );
+});
+
 test( '$remove $exists', function(assert)
 {
   var Issue = Neuro({
@@ -233,6 +329,78 @@ test( '$remove $exists', function(assert)
   i0.$remove();
 
   notOk( i0.$exists() );
+});
+
+test( '$remove cascade none', function(assert)
+{
+  var Issue = Neuro({
+    name: 'Model_remove_cascade_none',
+    fields: ['id', 'title', 'number']
+  });
+
+  var local = Issue.Database.store;
+  var remote = Issue.Database.rest;
+  var live = Issue.Database.live.live;
+
+  var i0 = Issue.create({title: 'Title0', number: 1});
+
+  ok( local.map.has( i0.id ) );
+  ok( remote.map.has( i0.id ) );
+  strictEqual( live.lastMessage.op, 'SAVE' );
+  
+  i0.$remove( Neuro.Cascade.None );
+
+  ok( local.map.has( i0.id ) );
+  ok( remote.map.has( i0.id ) );
+  strictEqual( live.lastMessage.op, 'SAVE' );
+});
+
+test( '$remove cascade rest', function(assert)
+{
+  var Issue = Neuro({
+    name: 'Model_remove_cascade_rest',
+    fields: ['id', 'title', 'number']
+  });
+
+  var local = Issue.Database.store;
+  var remote = Issue.Database.rest;
+  var live = Issue.Database.live.live;
+
+  var i0 = Issue.create({title: 'Title0', number: 1});
+
+  ok( local.map.has( i0.id ) );
+  ok( remote.map.has( i0.id ) );
+  strictEqual( live.lastMessage.op, 'SAVE' );
+
+  i0.$remove( Neuro.Cascade.Rest );
+
+  notOk( local.map.has( i0.id ) );
+  notOk( remote.map.has( i0.id ) );
+  strictEqual( live.lastMessage.op, 'SAVE' );
+});
+
+test( '$remove cascade remote', function(assert)
+{
+  var Issue = Neuro({
+    name: 'Model_remove_cascade_remote',
+    fields: ['id', 'title', 'number']
+  });
+
+  var local = Issue.Database.store;
+  var remote = Issue.Database.rest;
+  var live = Issue.Database.live.live;
+
+  var i0 = Issue.create({title: 'Title0', number: 1});
+
+  ok( local.map.has( i0.id ) );
+  ok( remote.map.has( i0.id ) );
+  strictEqual( live.lastMessage.op, 'SAVE' );
+
+  i0.$remove( Neuro.Cascade.Remote );
+
+  notOk( local.map.has( i0.id ) );
+  notOk( remote.map.has( i0.id ) );
+  strictEqual( live.lastMessage.op, 'REMOVE' );
 });
 
 test( '$key', function(assert)

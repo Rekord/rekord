@@ -378,7 +378,7 @@ test( 'cascade remove', function(assert)
       creator: {
         model: User,
         local: 'created_by',
-        cascade: true
+        cascade: Neuro.Cascade.All
       }
     }
   });

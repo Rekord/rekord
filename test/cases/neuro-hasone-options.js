@@ -500,7 +500,7 @@ test( 'cascade true', function(assert)
       creator: {
         model: User,
         local: 'created_by',
-        cascade: true
+        cascade: Neuro.Cascade.All
       }
     }
   });
@@ -535,7 +535,7 @@ test( 'cascade false', function(assert)
       creator: {
         model: User,
         local: 'created_by',
-        cascade: false
+        cascade: Neuro.Cascade.None
       }
     }
   });

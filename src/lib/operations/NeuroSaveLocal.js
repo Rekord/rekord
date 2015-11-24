@@ -1,6 +1,6 @@
-function NeuroSaveLocal(model)
+function NeuroSaveLocal(model, cascade)
 {
-  this.reset( model );
+  this.reset( model, cascade );
 }
 
 extend( new NeuroOperation( false, 'NeuroSaveLocal' ), NeuroSaveLocal,
@@ -24,6 +24,11 @@ extend( new NeuroOperation( false, 'NeuroSaveLocal' ), NeuroSaveLocal,
     if ( !model.$local ) 
     {
       model.$local = encoded;
+
+      if ( model.$saved )
+      {
+        model.$local.$saved = model.$saved;
+      }
     } 
     else 
     {
@@ -41,7 +46,10 @@ extend( new NeuroOperation( false, 'NeuroSaveLocal' ), NeuroSaveLocal,
 
     Neuro.debug( Neuro.Debugs.SAVE_LOCAL, model );
 
-    this.tryNext( NeuroSaveRemote );
+    if ( this.canCascade( Neuro.Cascade.Rest ) )
+    {
+      this.tryNext( NeuroSaveRemote, this.cascade );
+    }
   },
 
   onFailure: function(e)
@@ -50,7 +58,10 @@ extend( new NeuroOperation( false, 'NeuroSaveLocal' ), NeuroSaveLocal,
 
     Neuro.debug( Neuro.Debugs.SAVE_LOCAL_ERROR, model, e );
 
-    this.tryNext( NeuroSaveRemote );
+    if ( this.canCascade( Neuro.Cascade.Rest ) )
+    {
+      this.tryNext( NeuroSaveRemote, this.cascade );
+    }
   }
 
 });

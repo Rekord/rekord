@@ -15,8 +15,8 @@ NeuroHasMany.Defaults =
   foreign:              null,
   comparator:           null,
   comparatorNullsFirst: false,
-  cascadeRemove:        true,
-  cascadeSave:          true
+  cascadeRemove:        Neuro.Cascade.All,
+  cascadeSave:          Neuro.Cascade.All
 };
 
 extend( new NeuroRelation(), NeuroHasMany, 
@@ -344,7 +344,7 @@ extend( new NeuroRelation(), NeuroHasMany,
 
         if ( related.$hasChanges() )
         {
-          related.$save();
+          related.$save( this.cascadeSave );
         }
       }
 
@@ -369,7 +369,7 @@ extend( new NeuroRelation(), NeuroHasMany,
         {
           var related = models[ i ];
 
-          related.$remove();
+          related.$remove( this.cascadeRemove );
         }
       });
     }
@@ -483,7 +483,7 @@ extend( new NeuroRelation(), NeuroHasMany,
 
       if ( !alreadyRemoved && this.cascadeRemove )
       {
-        related.$remove();
+        related.$remove( this.cascadeRemove );
       }
 
       this.clearForeignKey( related );
