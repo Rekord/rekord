@@ -204,19 +204,16 @@
 
 ### Neuro hasManyThrough
 
-- [ ] no initial value
-- [ ] initial value
-- [ ] ninja remove
-- [ ] ninja save
-- [ ] set
-- [ ] relate
-- [ ] unrelate
-- [ ] isRelated
-- [ ] get
-- [ ] encode
-- [ ] pre remove
-- [ ] post save
-- [ ] auto save parent
-- [ ] ninja through remove
-- [ ] ninja through add
+- [x] no initial value
+- [x] initial value
+- [x] ninja remove
+- [x] ninja save add
+- [x] set
+- [x] relate
+- [x] unrelate
+- [x] isRelated
+- [x] get
+- [x] encode
+- [x] auto save parent
+- [x] ninja through remove
 

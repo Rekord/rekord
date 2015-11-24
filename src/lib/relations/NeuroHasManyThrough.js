@@ -114,6 +114,11 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
     // Add convenience methods to the underlying array
     var related = relation.models.values;
     
+    related.set = function(input)
+    {
+      that.set( model, input );
+    };
+
     related.relate = function(input)
     {
       that.relate( model, input );
