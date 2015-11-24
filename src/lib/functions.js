@@ -83,6 +83,11 @@ function indexOf(arr, x, comparator)
   return false;
 }
 
+function noop()
+{
+
+}
+
 function S4() 
 {
   return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
@@ -507,4 +512,49 @@ function createComparator(comparator, nullsFirst)
   }
 
   return null;
+}
+
+function addDynamicProperty(modelPrototype, property, definition)
+{
+  var get = isFunction( definition ) ? definition : 
+          ( isObject( definition ) && isFunction( definition.get ) ? definition.get : noop );
+  var set = isObject( definition ) && isFunction( definition.set ) ? definition.set : noop;
+
+  if ( Object.defineProperty )
+  {
+    Object.defineProperty( modelPrototype, property, 
+    {
+      configurable: false,
+      enumerable: true,
+      get: get,
+      set: set
+    });
+  }
+  else
+  {
+    var $init = modelPrototype.$init;
+
+    modelPrototype.$init = function()
+    {
+      $init.apply( this, arguments );
+
+      var lastCalculatedValue = this[ property ] = get.apply( this );
+
+      var handleChange = function()
+      {
+        var current = this[ property ];
+
+        if ( current !== lastCalculatedValue )
+        {
+          set.call( this, current );
+        }
+        else
+        {
+          lastCalculatedValue = this[ property ] = get.apply( this );
+        }
+      };
+
+      this.$after( NeuroModel.Events.Changes, handleChange, this );
+    };
+  }
 }

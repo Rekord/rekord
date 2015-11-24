@@ -17,6 +17,16 @@ function Neuro(options)
     transfer( options.methods, model.prototype );
   }
 
+  if ( isObject( options.dynamic ) )
+  {
+    for ( var property in options.dynamic )
+    {
+      var definition = options.dynamic[ property ];
+
+      addDynamicProperty( model.prototype, property, definition );
+    }
+  }
+
   database.model = model;
   database.init();
 

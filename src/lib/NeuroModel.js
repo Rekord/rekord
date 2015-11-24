@@ -43,6 +43,7 @@ NeuroModel.Events =
   FullUpdate:       'full-update',
   Updated:          'updated',
   Detach:           'detach',
+  Change:           'change',
   CreateAndSave:    'created saved',
   UpdateAndSave:    'updated saved',
   KeyUpdate:        'key-update',
@@ -51,7 +52,8 @@ NeuroModel.Events =
   RemoteUpdate:     'remote-update',
   RemoteRemove:     'remote-remove',
   RemoteAndRemove:  'remote-remove removed',
-  SavedRemoteUpdate:'saved remote-update'
+  SavedRemoteUpdate:'saved remote-update',
+  Changes:          'saved remote-update key-update relation-update removed change'
 };
 
 NeuroModel.prototype =
@@ -148,6 +150,8 @@ NeuroModel.prototype =
         this[ props ] = value;
       }
     }
+
+    this.$trigger( NeuroModel.Events.Change, [props, value] );
   },
 
   $get: function(props, copyValues)

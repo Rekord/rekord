@@ -86,6 +86,11 @@ function indexOf(arr, x, comparator)
   return false;
 }
 
+function noop()
+{
+
+}
+
 function S4() 
 {
   return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
@@ -512,6 +517,51 @@ function createComparator(comparator, nullsFirst)
   return null;
 }
 
+function addDynamicProperty(modelPrototype, property, definition)
+{
+  var get = isFunction( definition ) ? definition : 
+          ( isObject( definition ) && isFunction( definition.get ) ? definition.get : noop );
+  var set = isObject( definition ) && isFunction( definition.set ) ? definition.set : noop;
+
+  if ( Object.defineProperty )
+  {
+    Object.defineProperty( modelPrototype, property, 
+    {
+      configurable: false,
+      enumerable: true,
+      get: get,
+      set: set
+    });
+  }
+  else
+  {
+    var $init = modelPrototype.$init;
+
+    modelPrototype.$init = function()
+    {
+      $init.apply( this, arguments );
+
+      var lastCalculatedValue = this[ property ] = get.apply( this );
+
+      var handleChange = function()
+      {
+        var current = this[ property ];
+
+        if ( current !== lastCalculatedValue )
+        {
+          set.call( this, current );
+        }
+        else
+        {
+          lastCalculatedValue = this[ property ] = get.apply( this );
+        }
+      };
+
+      this.$after( NeuroModel.Events.Changes, handleChange, this );
+    };
+  }
+}
+
 /**
  * Adds functions to the given object (or prototype) so you can listen for any 
  * number of events on the given object, optionally once. Listeners can be 
@@ -793,6 +843,16 @@ function Neuro(options)
   if ( isObject( options.methods ) )
   {
     transfer( options.methods, model.prototype );
+  }
+
+  if ( isObject( options.dynamic ) )
+  {
+    for ( var property in options.dynamic )
+    {
+      var definition = options.dynamic[ property ];
+
+      addDynamicProperty( model.prototype, property, definition );
+    }
   }
 
   database.model = model;
@@ -2322,6 +2382,7 @@ NeuroModel.Events =
   FullUpdate:       'full-update',
   Updated:          'updated',
   Detach:           'detach',
+  Change:           'change',
   CreateAndSave:    'created saved',
   UpdateAndSave:    'updated saved',
   KeyUpdate:        'key-update',
@@ -2330,7 +2391,8 @@ NeuroModel.Events =
   RemoteUpdate:     'remote-update',
   RemoteRemove:     'remote-remove',
   RemoteAndRemove:  'remote-remove removed',
-  SavedRemoteUpdate:'saved remote-update'
+  SavedRemoteUpdate:'saved remote-update',
+  Changes:          'saved remote-update key-update relation-update removed change'
 };
 
 NeuroModel.prototype =
@@ -2427,6 +2489,8 @@ NeuroModel.prototype =
         this[ props ] = value;
       }
     }
+
+    this.$trigger( NeuroModel.Events.Change, [props, value] );
   },
 
   $get: function(props, copyValues)

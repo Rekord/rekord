@@ -756,6 +756,112 @@ test( 'methods', function(assert)
   notStrictEqual( t0.finished_at, null );
 
   t0.setName( 't1' );
-  
+
   strictEqual( t0.name, 't1' );
+});
+
+test( 'dynamic get', function(assert)
+{
+  var now = function() {
+    return 1448323200; // Tuesday 24th November 2015 12:00:00 AM
+  };
+
+  var Person = Neuro({
+    name: 'dynamic_get',
+    fields: ['name', 'dob'],
+    dynamic: {
+      age: function() {
+        return Math.floor( (now() - this.dob) / 31536000 );
+      }
+    }
+  });
+
+  var p = new Person();
+  p.dob = 599856120; // Tuesday 3rd January 1989 06:42:00 PM
+
+  strictEqual( p.age, 26 );
+
+  p.age = 23;
+
+  strictEqual( p.age, 26 );
+});
+
+test( 'dynamic set', function(assert)
+{
+  var MyNumber = Neuro({
+    name: 'dynamic_set',
+    fields: ['even'],
+    dynamic: {
+      number: {
+        set: function(x) {
+          this.even = !(x % 2);
+        }
+      }
+    }
+  });
+
+  var p = new MyNumber();
+
+  strictEqual( p.even, void 0 );
+
+  p.even = true;
+
+  strictEqual( p.even, true );
+
+  p.number = 23;
+
+  strictEqual( p.even, false );
+
+  p.number = 0;
+
+  strictEqual( p.even, true );
+
+  strictEqual( p.number, void 0 );
+});
+
+test( 'dynamic get/set', function(assert)
+{
+  var Task = Neuro({
+    name: 'dynamic_get_set',
+    fields: ['name', 'finished_at', 'updated_at'],
+    defaults: {
+      finished_at: null,
+      updated_at: Date.now
+    },
+    dynamic: {
+      done: {
+        get: function() {
+          return !!this.finished_at;
+        },
+        set: function(x) {
+          this.finished_at = x ? Date.now() : null;
+          this.updated_at = Date.now();
+        }
+      }
+    }
+  });
+
+  var t = new Task();
+
+  strictEqual( t.done, false );
+  strictEqual( t.finished_at, null );
+  isType( t.updated_at, 'number' );
+
+  t.done = true;
+
+  strictEqual( t.done, true );
+  isType( t.finished_at, 'number' );
+  isType( t.updated_at, 'number' );
+  
+  t.done = false;
+
+  strictEqual( t.done, false );
+  strictEqual( t.finished_at, null );
+  isType( t.updated_at, 'number' );
+
+  t.finished_at = Date.now();
+
+  strictEqual( t.done, true );
+  isType( t.finished_at, 'number' );
+  isType( t.updated_at, 'number' );
 });
