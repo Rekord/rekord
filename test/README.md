@@ -190,18 +190,17 @@
 
 ### Neuro hasManyThrough options
 
-- [ ] model
-- [ ] store
-- [ ] save
-- [ ] auto
-- [ ] property
-- [ ] through
-- [ ] foreign
-- [ ] local
-- [ ] comparator
-- [ ] comparatorNullsFirst
-- [ ] cascadeRemove
-- [ ] cascadeSave
+- [x] model
+- [x] store
+- [x] save
+- [x] property
+- [x] through
+- [x] foreign
+- [x] local
+- [x] comparator
+- [x] comparatorNullsFirst
+- [x] cascadeRemove
+- [x] cascadeSave
 
 ### Neuro hasManyThrough
 

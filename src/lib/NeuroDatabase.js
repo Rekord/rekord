@@ -165,13 +165,15 @@ NeuroDatabase.prototype =
   {
     var db = this;
     var callbackContext = context || db;
+    var grabbed = false;
 
     function checkModel()
     {
       var result = db.parseModel( input, fromStorage !== false );
 
-      if ( result !== false )
+      if ( result !== false && !grabbed )
       {
+        grabbed = true;
         callback.call( callbackContext, result );
       }
 
@@ -234,7 +236,14 @@ NeuroDatabase.prototype =
     }
     else if ( isObject( input ) )
     {
-      return db.putRemoteData( input, undefined, undefined, fromStorage );
+      if ( fromStorage )
+      { 
+        return db.putRemoteData( input, undefined, undefined, true ); 
+      }
+      else
+      {
+        return db.instantiate( db.decode( input ) );
+      }
     }
     else if ( hasRemote )
     {
@@ -918,6 +927,44 @@ NeuroDatabase.prototype =
   instantiate: function(data, fromStorage)
   {
     return new this.model( data, fromStorage );
+  },
+
+  // Create the model
+  create: function(props)
+  {
+    var db = this;
+
+    if ( !isObject( props ) )
+    {
+      var model = db.instantiate();
+
+      model.$save();
+
+      return model;
+    }
+
+    var fields = grab( props, db.fields );
+    var model = db.instantiate( fields );
+    var key = model.$key();
+    var relations = {};
+
+    db.models.put( key, model );
+    db.trigger( NeuroDatabase.Events.ModelAdded, [model] );
+    db.updated();
+
+    for (var i = 0; i < db.relationNames.length; i++)
+    {
+      var relationName = db.relationNames[ i ];
+
+      if ( relationName in props )
+      {
+        relations[ relationName ] = props[ relationName ];
+      }
+    }
+
+    model.$save( relations );
+
+    return model;
   },
 
   // Save the model

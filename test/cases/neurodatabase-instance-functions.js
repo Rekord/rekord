@@ -27,15 +27,15 @@ test( 'parseModel', function(assert)
 
   isInstance( p2, parseModel );
 
-  strictEqual( parseModel.all().length, 3 );
+  strictEqual( parseModel.all().length, 2 );
 
   var p3 = new parseModel({id: 7, name: 'name3'});
 
-  strictEqual( parseModel.all().length, 3 );
+  strictEqual( parseModel.all().length, 2 );
 
   db.parseModel( p3 );
 
-  strictEqual( parseModel.all().length, 4 );
+  strictEqual( parseModel.all().length, 3 );
 
   var p4 = db.parseModel( parseModel );
 

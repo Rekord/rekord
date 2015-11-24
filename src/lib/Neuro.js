@@ -25,11 +25,9 @@ function Neuro(options)
     return database.getModels();
   };
 
-  model.create = function(props)
+  model.create = function( props )
   {
-    var inst = new model( props );
-    inst.$save();
-    return inst;
+    return database.create( props );
   };
 
   Neuro.cache[ options.name ] = model;

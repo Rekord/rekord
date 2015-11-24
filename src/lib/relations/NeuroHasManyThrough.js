@@ -407,7 +407,7 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
   {
     return function (through)
     {
-      if ( relation.isRelated( through ) )
+      if ( relation.isRelated( through ) && !relation.throughs.has( through.$key() ) )
       {
         Neuro.debug( Neuro.Debugs.HASMANYTHRU_NINJA_ADD, this, relation, through );
 
@@ -481,9 +481,7 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
 
   onAddThrough: function(relation)
   {
-    var throughs = relation.throughs;
-
-    return function(through)
+    return function onAddThrough(through)
     {
       this.finishAddThrough( relation, through, true );
     };
@@ -499,10 +497,13 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
 
   onAddModelFromThrough: function(relation, through)
   {
-    return function(related)
+    return function onAddModelFromThrough(related)
     {
-      this.finishAddThrough( relation, through );
-      this.finishAddModel( relation, related );
+      if ( related )
+      {
+        this.finishAddThrough( relation, through );
+        this.finishAddModel( relation, related );
+      }
     };
   },
 

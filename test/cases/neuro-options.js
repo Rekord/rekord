@@ -95,7 +95,7 @@ test( 'fields', function(assert)
   });
 
   strictEqual( f.name, 'name0' );
-  strictEqual( f.notspecified, true );
+  strictEqual( f.notspecified, void 0 );
 
   var fjs = f.$toJSON();
 

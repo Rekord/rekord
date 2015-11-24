@@ -803,11 +803,9 @@ function Neuro(options)
     return database.getModels();
   };
 
-  model.create = function(props)
+  model.create = function( props )
   {
-    var inst = new model( props );
-    inst.$save();
-    return inst;
+    return database.create( props );
   };
 
   Neuro.cache[ options.name ] = model;
@@ -1349,13 +1347,15 @@ NeuroDatabase.prototype =
   {
     var db = this;
     var callbackContext = context || db;
+    var grabbed = false;
 
     function checkModel()
     {
       var result = db.parseModel( input, fromStorage !== false );
 
-      if ( result !== false )
+      if ( result !== false && !grabbed )
       {
+        grabbed = true;
         callback.call( callbackContext, result );
       }
 
@@ -1418,7 +1418,14 @@ NeuroDatabase.prototype =
     }
     else if ( isObject( input ) )
     {
-      return db.putRemoteData( input, undefined, undefined, fromStorage );
+      if ( fromStorage )
+      { 
+        return db.putRemoteData( input, undefined, undefined, true ); 
+      }
+      else
+      {
+        return db.instantiate( db.decode( input ) );
+      }
     }
     else if ( hasRemote )
     {
@@ -2104,6 +2111,44 @@ NeuroDatabase.prototype =
     return new this.model( data, fromStorage );
   },
 
+  // Create the model
+  create: function(props)
+  {
+    var db = this;
+
+    if ( !isObject( props ) )
+    {
+      var model = db.instantiate();
+
+      model.$save();
+
+      return model;
+    }
+
+    var fields = grab( props, db.fields );
+    var model = db.instantiate( fields );
+    var key = model.$key();
+    var relations = {};
+
+    db.models.put( key, model );
+    db.trigger( NeuroDatabase.Events.ModelAdded, [model] );
+    db.updated();
+
+    for (var i = 0; i < db.relationNames.length; i++)
+    {
+      var relationName = db.relationNames[ i ];
+
+      if ( relationName in props )
+      {
+        relations[ relationName ] = props[ relationName ];
+      }
+    }
+
+    model.$save( relations );
+
+    return model;
+  },
+
   // Save the model
   save: function(model)
   {
@@ -2494,6 +2539,11 @@ NeuroModel.prototype =
   $keys: function()
   {
     return this.$db.getKeys( this );
+  },
+
+  $hasKey: function()
+  {
+    return this.$db.hasFields( this, this.$db.key, isValue );
   },
 
   $isSaved: function()
@@ -5282,7 +5332,7 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
   {
     return function (through)
     {
-      if ( relation.isRelated( through ) )
+      if ( relation.isRelated( through ) && !relation.throughs.has( through.$key() ) )
       {
         Neuro.debug( Neuro.Debugs.HASMANYTHRU_NINJA_ADD, this, relation, through );
 
@@ -5356,9 +5406,7 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
 
   onAddThrough: function(relation)
   {
-    var throughs = relation.throughs;
-
-    return function(through)
+    return function onAddThrough(through)
     {
       this.finishAddThrough( relation, through, true );
     };
@@ -5374,10 +5422,13 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
 
   onAddModelFromThrough: function(relation, through)
   {
-    return function(related)
+    return function onAddModelFromThrough(related)
     {
-      this.finishAddThrough( relation, through );
-      this.finishAddModel( relation, related );
+      if ( related )
+      {
+        this.finishAddThrough( relation, through );
+        this.finishAddModel( relation, related );
+      }
     };
   },
 

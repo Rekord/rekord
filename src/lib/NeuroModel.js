@@ -306,6 +306,11 @@ NeuroModel.prototype =
     return this.$db.getKeys( this );
   },
 
+  $hasKey: function()
+  {
+    return this.$db.hasFields( this, this.$db.key, isValue );
+  },
+
   $isSaved: function()
   {
     return !!this.$saved;
