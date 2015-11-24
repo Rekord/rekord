@@ -8,7 +8,7 @@ extend( new NeuroOperation( false, 'NeuroSaveNow' ), NeuroSaveNow,
 
   run: function(db, model)
   {
-    if ( db.cachePending && db.cache )
+    if ( db.cache === Neuro.Cache.Pending )
     {
       this.finish();
     }

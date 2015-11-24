@@ -144,7 +144,7 @@ extend( new NeuroOperation( false, 'NeuroSaveRemote' ), NeuroSaveRemote,
       });
     }
 
-    if ( db.cachePending && db.cache )
+    if ( db.cache === Neuro.Cache.Pending )
     {
       this.insertNext( NeuroRemoveCache );
     }

@@ -39,12 +39,12 @@ test( 'delete while in the middle of save', function(assert)
 
 });
 
-test( 'delete with cache:false should go right to remote', function(assert)
+test( 'delete with cache:none should go right to remote', function(assert)
 {
   var Todo = Neuro({
     name: 'delete_cache_false',
     fields: ['id', 'name'],
-    cache: false
+    cache: Neuro.Cache.None
   });
 
   var rest = Todo.Database.rest;

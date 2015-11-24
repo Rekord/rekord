@@ -451,67 +451,67 @@ test( 'autoRefresh false', function(assert)
   noline();
 });
 
-test( 'cache true', function(assert)
+test( 'cache all', function(assert)
 {
-  var cache_true = Neuro({
-    name: 'cache_true',
+  var cache_all = Neuro({
+    name: 'cache_all',
     fields: ['id', 'name'],
-    cache: true
+    cache: Neuro.Cache.All
   });
 
-  var local = Neuro.store.cache_true.map.values;
+  var local = Neuro.store.cache_all.map.values;
 
   strictEqual( local.length, 0 );
 
-  var ct0 = cache_true.create({name: 'name0'});
-  var ct1 = cache_true.create({name: 'name1'});
+  var ct0 = cache_all.create({name: 'name0'});
+  var ct1 = cache_all.create({name: 'name1'});
 
   strictEqual( local.length, 2 );
 });
 
-test( 'cache false', function(assert)
+test( 'cache none', function(assert)
 {
-  var cache_false = Neuro({
-    name: 'cache_false',
+  var cache_none = Neuro({
+    name: 'cache_none',
     fields: ['id', 'name'],
-    cache: false
+    cache: Neuro.Cache.None
   });
 
-  var local = Neuro.store.cache_false.map.values;
-  var remote = Neuro.rest.cache_false.map.values;
+  var local = Neuro.store.cache_none.map.values;
+  var remote = Neuro.rest.cache_none.map.values;
 
   strictEqual( local.length, 0 );
   strictEqual( remote.length, 0 );
 
-  var ct0 = cache_false.create({name: 'name0'});
-  var ct1 = cache_false.create({name: 'name1'});
+  var ct0 = cache_none.create({name: 'name0'});
+  var ct1 = cache_none.create({name: 'name1'});
 
   strictEqual( local.length, 0 );
   strictEqual( remote.length, 2 );
 });
 
-test( 'cachePending true', function(assert)
+test( 'cache pending', function(assert)
 {
-  var cachePending_true = Neuro({
-    name: 'cachePending_true',
+  var cache_pending = Neuro({
+    name: 'cache_pending',
     fields: ['id', 'name'],
-    cachePending: true
+    cache: Neuro.Cache.Pending
   });
 
-  var local = Neuro.store.cachePending_true.map.values;
-  var remote = Neuro.rest.cachePending_true.map.values;
+  var local = Neuro.store.cache_pending.map.values;
+  var remote = Neuro.rest.cache_pending.map.values;
 
   strictEqual( local.length, 0 );
   strictEqual( remote.length, 0 );
 
-  var ct0 = cachePending_true.create({name: 'name0'});
+  var ct0 = cache_pending.create({name: 'name0'});
 
   strictEqual( local.length, 0 );
   strictEqual( remote.length, 1 );
 
   offline();
 
-  var ct1 = cachePending_true.create({name: 'name1'});  
+  var ct1 = cache_pending.create({name: 'name1'});  
 
   strictEqual( local.length, 1 );
   strictEqual( remote.length, 1 );
@@ -519,40 +519,6 @@ test( 'cachePending true', function(assert)
   online();
 
   strictEqual( local.length, 0 );
-  strictEqual( remote.length, 2 );
-
-  noline();
-});
-
-test( 'cachePending false', function(assert)
-{
-  var cachePending_false = Neuro({
-    name: 'cachePending_false',
-    fields: ['id', 'name'],
-    cachePending: false
-  });
-
-  var local = Neuro.store.cachePending_false.map.values;
-  var remote = Neuro.rest.cachePending_false.map.values;
-
-  strictEqual( local.length, 0 );
-  strictEqual( remote.length, 0 );
-
-  var ct0 = cachePending_false.create({name: 'name0'});
-
-  strictEqual( local.length, 1 );
-  strictEqual( remote.length, 1 );
-
-  offline();
-
-  var ct1 = cachePending_false.create({name: 'name1'});  
-
-  strictEqual( local.length, 2 );
-  strictEqual( remote.length, 1 );
-
-  online();
-
-  strictEqual( local.length, 2 );
   strictEqual( remote.length, 2 );
 
   noline();

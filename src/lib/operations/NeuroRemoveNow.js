@@ -23,13 +23,13 @@ extend( new NeuroOperation( true, 'NeuroRemoveNow' ), NeuroRemoveNow,
       model.$trigger( NeuroModel.Events.Removed );
     }
 
-    if ( db.cache )
+    if ( db.cache === Neuro.Cache.None )
     {
-      db.store.remove( key, this.success(), this.failure() );
+      this.finish();
     }
     else
     {
-      this.finish();
+      db.store.remove( key, this.success(), this.failure() );
     }
   }
 

@@ -10,13 +10,13 @@ extend( new NeuroOperation( true, 'NeuroRemoveCache' ), NeuroRemoveCache,
   {
     model.$pendingSave = false;
 
-    if ( db.cache )
+    if ( db.cache == Neuro.Cache.None )
     {
-      db.store.remove( model.$key(), this.success(), this.failure() );
+      this.finish();
     }
     else
     {
-      this.finish();
+      db.store.remove( model.$key(), this.success(), this.failure() );
     }
   }
 

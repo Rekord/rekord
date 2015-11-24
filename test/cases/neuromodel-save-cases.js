@@ -22,12 +22,12 @@ test( 'save while deleted', function(assert)
   deepEqual( t0.$saved, {id: 5, name: 'name0'} );
 });
 
-test( 'save with cache:false should go right to remote', function(assert)
+test( 'save with cache:none should go right to remote', function(assert)
 {
   var Todo = Neuro({
     name: 'save_no_cache',
     fields: ['id', 'name'],
-    cache: false
+    cache: Neuro.Cache.None
   });
 
   var rest = Todo.Database.rest;
@@ -184,14 +184,14 @@ test( 'save remote first time, check $saved', function(assert)
   strictEqual( t0.name, t0.$saved.name );
 });
 
-test( 'save remote and cachePending should remove locally', function(assert)
+test( 'save remote and cache pending should remove locally', function(assert)
 {
   var done = assert.async();
 
   var Todo = Neuro({
-    name: 'save_cachePending',
+    name: 'save_cache_pending',
     fields: ['id', 'name'],
-    cachePending: true
+    cache: Neuro.Cache.Pending
   });
 
   var local = Todo.Database.store;

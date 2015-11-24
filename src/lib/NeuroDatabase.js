@@ -114,6 +114,13 @@ NeuroDatabase.Live =
   Remove:       'REMOVE'
 };
 
+Neuro.Cache = 
+{
+  None:       'none',
+  Pending:    'pending',
+  All:        'all'
+};
+
 NeuroDatabase.Defaults = 
 {
   name:                 undefined,  // required
@@ -128,8 +135,7 @@ NeuroDatabase.Defaults =
   loadRelations:        true,
   loadRemote:           true,
   autoRefresh:          true,
-  cache:                true,
-  cachePending:         false,
+  cache:                Neuro.Cache.All,
   fullSave:             false,
   fullPublish:          false,
   encode:               function(data) { return data; },
@@ -542,7 +548,7 @@ NeuroDatabase.prototype =
 
       model.$trigger( NeuroModel.Events.RemoteUpdate, [encoded] );
 
-      if ( db.cache )
+      if ( db.cache === Neuro.Cache.All )
       {
         model.$addOperation( NeuroSaveNow ); 
       }
@@ -551,7 +557,7 @@ NeuroDatabase.prototype =
     {
       model = db.instantiate( decoded, fromStorage );
 
-      if ( db.cache )
+      if ( db.cache === Neuro.Cache.All )
       {
         model.$local = encoded;
         model.$saved = model.$local.$saved = copy( encoded );
@@ -663,13 +669,13 @@ NeuroDatabase.prototype =
     var db = this;
     var model = db.models.get( key );
 
-    if ( !db.cache )
+    if ( db.cache === Neuro.Cache.All )
     {
-      return db.destroyLocalUncachedModel( model, key );
+      return db.destroyLocalCachedModel( model, key );
     }
     else
     {
-      return db.destroyLocalCachedModel( model, key );
+      return db.destroyLocalUncachedModel( model, key );
     }
   },
 
@@ -684,7 +690,7 @@ NeuroDatabase.prototype =
       Neuro.after( 'online', db.onOnline, db );
     }
 
-    if ( !db.cache )
+    if ( db.cache === Neuro.Cache.None )
     {
       if ( db.loadRemote )
       {
@@ -1027,7 +1033,7 @@ NeuroDatabase.prototype =
 
     // If we're not storing locally OR we're not cascading locally, jump directly to remote.
     // TODO ensure cascade rest, otherwise call live.
-    if ( !db.cache || !(cascade & Neuro.Cascade.Local) )
+    if ( db.cache === Neuro.Cache.None || !(cascade & Neuro.Cascade.Local) )
     {
       // Save remotely
       model.$addOperation( NeuroSaveRemote, cascade );
@@ -1075,7 +1081,7 @@ NeuroDatabase.prototype =
 
     // If we're not storing locally OR we're not cascading locally, jump directly to remote.
     // TODO ensure cascade rest, otherwise call live.
-    if ( !db.cache || !(cascade & Neuro.Cascade.Local) )
+    if ( db.cache === Neuro.Cache.None || !(cascade & Neuro.Cascade.Local) )
     {
       // Remove remotely
       model.$addOperation( NeuroRemoveRemote, cascade );
