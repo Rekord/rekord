@@ -169,14 +169,14 @@ function applyOptions( target, options, defaults )
   target.options = options;
 }
 
-function ClassNameReplacer(match)
+function camelCaseReplacer(match)
 {
   return match.length === 1 ? match.toUpperCase() : match.charAt(1).toUpperCase(); 
 }
 
-function toClassName(name)
+function toCamelCase(name)
 {
-  return name.replace( /(^.|_.)/g, ClassNameReplacer );
+  return name.replace( /(^.|_.)/g, camelCaseReplacer );
 };
 
 function evaluate(x)
@@ -556,5 +556,118 @@ function addDynamicProperty(modelPrototype, property, definition)
 
       this.$after( NeuroModel.Events.Changes, handleChange, this );
     };
+  }
+}
+
+function parseEventListeners(events, callback, secret, out)
+{
+  var map = {
+    on:     secret ? '$on' : 'on',
+    once:   secret ? '$once' : 'once',
+    after:  secret ? '$after' : 'after'
+  };
+
+  var listeners = out || [];
+
+  if ( isFunction( callback ) )
+  {
+    listeners.push(
+    {
+      when: map.on,
+      events: events,
+      invoke: callback
+    });
+  }
+  else if ( isArray( callback ) && callback.length === 2 && isFunction( callback[0] ) )
+  {
+    listeners.push(
+    {
+      when: map.on,
+      events: events,
+      invoke: callback[0],
+      context: callback[1]
+    });
+  }
+  else if ( isObject( callback ) )
+  {
+    for ( var eventType in callback )
+    {
+      if ( eventType in map )
+      {
+        var subcallback = callback[ eventType ];
+        var when = map[ eventType ];
+
+        if ( isFunction( subcallback ) )
+        {
+          listeners.push(
+          {
+            when: when,
+            events: events,
+            invoke: subcallback
+          });
+        }
+        else if ( isArray( subcallback ) && subcallback.length === 2 && isFunction( subcallback[0] ) )
+        {
+          listeners.push(
+          {
+            when: when,
+            events: events,
+            invoke: subcallback[0],
+            context: subcallback[1]
+          });
+        }
+      }
+    }
+  }
+
+  return listeners;
+}
+
+function applyEventListeners(target, listeners)
+{
+  for (var i = 0; i < listeners.length; i++)
+  {
+    var l = listeners[ i ];
+
+    target[ l.when ]( l.events, l.invoke, l.context );
+  }
+}
+
+
+function addEventListener(target, events, callback, secret)
+{
+  var map = {
+    on:     secret ? '$on' : 'on',
+    once:   secret ? '$once' : 'once',
+    after:  secret ? '$after' : 'after'
+  };
+
+  if ( isFunction( callback ) )
+  {
+    target[ map.on ]( events, callback );
+  }
+  else if ( isArray( callback ) && callback.length === 2 && isFunction( callback[0] ) )
+  {
+    target[ map.on ]( events, callback[0], callback[1] );
+  }
+  else if ( isObject( callback ) )
+  {
+    for ( var type in callback )
+    {
+      if ( type in map )
+      {
+        var subcallback = callback[ type ];
+        var eventType = map[ type ];
+
+        if ( isFunction( subcallback ) )
+        {
+          target[ eventType ]( events, subcallback );
+        }
+        else if ( isArray( subcallback ) && subcallback.length === 2 && isFunction( subcallback[0] ) )
+        {
+          target[ eventType ]( events, subcallback[0], subcallback[1] );
+        }
+      }
+    }
   }
 }

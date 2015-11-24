@@ -831,3 +831,54 @@ test( 'dynamic get/set', function(assert)
   isType( t.finished_at, 'number' );
   isType( t.updated_at, 'number' );
 });
+
+test( 'events', function(assert)
+{
+  var context0 = {name: 'c0'};
+  var context1 = {name: 'c1'};
+
+  expect( 12 );
+
+  var Task = Neuro({
+    name: 'events',
+    fields: ['name'],
+    events: {
+      // Model Event
+      saved: function() {
+        isInstance( this, Task, 'on saved: isInstance' );
+      },
+      // Model Event
+      change: {
+        on: [
+          function() {
+            strictEqual( context0, this, 'on change: context check' );
+          },
+          context0
+        ],
+        once: function() {
+          isInstance( this, Task, 'once change: isInstance' );
+        }
+      },
+      // Database Event
+      modelAdded: function(model) {
+        notStrictEqual( model, void 0, 'on modelAdded: model given' );
+      },
+      // Database Event
+      modelUpdated: [
+        function(model) {
+          isInstance( model, Task, 'on moduleUpdated: isInstance' );
+          strictEqual( context1, this, 'on modelUpdated: context check')
+        },
+        context1
+      ]
+    }
+  });
+
+  var t = Task.create({name: 'Phil'});
+
+  assert.push( 1, 1, 1, '*** pre-save ***' );
+
+  t.$save({
+    name: 'Joe'
+  });
+});

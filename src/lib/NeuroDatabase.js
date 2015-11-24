@@ -39,7 +39,7 @@ function NeuroDatabase(options)
 
   // Properties
   this.models = new NeuroMap();
-  this.className = this.className || toClassName( this.name );
+  this.className = this.className || toCamelCase( this.name );
   this.initialized = false;
   this.pendingRefresh = false;
   this.localLoaded = false;
@@ -57,6 +57,33 @@ function NeuroDatabase(options)
   this.setComparator( this.comparator, this.comparatorNullsFirst );
   this.setRevision( this.revision );
   this.setToString( this.toString );
+
+  // Event Listeners
+  this.databaseEvents = [];
+  this.modelEvents = [];
+
+  if ( isObject( this.events ) )
+  {
+    for ( var eventType in this.events )
+    {
+      var callback = this.events[ eventType ];
+      var eventName = toCamelCase( eventType );
+      var databaseEventString = NeuroDatabase.Events[ eventName ];
+      var modelEventString = NeuroModel.Events[ eventName ];
+
+      if ( databaseEventString )
+      {
+        parseEventListeners( databaseEventString, callback, false, this.databaseEvents );
+      }
+
+      if ( modelEventString )
+      {
+        parseEventListeners( modelEventString, callback, true, this.modelEvents );
+      }
+    }
+  }
+
+  applyEventListeners( this, this.databaseEvents );
 
   // Relations
   this.relations = {};
@@ -124,7 +151,7 @@ Neuro.Cache =
 NeuroDatabase.Defaults = 
 {
   name:                 undefined,  // required
-  className:            null,       // defaults to toClassName( name )
+  className:            null,       // defaults to toCamelCase( name )
   key:                  'id',
   keySeparator:         '/',
   fields:               [],
@@ -138,6 +165,9 @@ NeuroDatabase.Defaults =
   cache:                Neuro.Cache.All,
   fullSave:             false,
   fullPublish:          false,
+  dynamic:              false,
+  methods:              false,
+  events:               false,
   encode:               function(data) { return data; },
   decode:               function(rawData) { return rawData; },
   toString:             function(model) { return model.$key() }
