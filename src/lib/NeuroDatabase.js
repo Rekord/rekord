@@ -16,6 +16,27 @@ function NeuroDatabase(options)
     }
   }
 
+  // If key fields aren't in fields array, add them in
+  var key = this.key;
+  var fields = this.fields;
+  if ( isArray( key ) )
+  {
+    for (var i = key.length - 1; i >= 0; i--)
+    {
+      if ( indexOf( fields, key[ i ] ) === false )
+      {
+        fields.unshift( key[ i ] );
+      }
+    }
+  }
+  else // isString( key )
+  {
+    if ( indexOf( fields, key ) === false )
+    {
+      fields.unshift( key );
+    }
+  }
+
   // Properties
   this.models = new NeuroMap();
   this.className = this.className || toClassName( this.name );
@@ -25,7 +46,7 @@ function NeuroDatabase(options)
   this.remoteLoaded = false;
   this.remoteOperations = 0;
   this.afterOnline = false;
-  this.saveFields = copy( this.fields );
+  this.saveFields = copy( fields );
 
   // Services
   this.rest   = Neuro.rest( this );
@@ -95,11 +116,11 @@ NeuroDatabase.Live =
 
 NeuroDatabase.Defaults = 
 {
-  name:                 undefined, // required
-  className:            null, // defaults to name
+  name:                 undefined,  // required
+  className:            null,       // defaults to toClassName( name )
   key:                  'id',
   keySeparator:         '/',
-  fields:               undefined, // required
+  fields:               [],
   defaults:             {},
   comparator:           null,
   comparatorNullsFirst: null,

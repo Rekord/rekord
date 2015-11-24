@@ -41,6 +41,16 @@ test( 'custom key', function(assert)
   hasModel( custom_key, 'key1', ck1 );
 });
 
+test( 'missing key', function(assert)
+{
+  var missing_key = Neuro({
+    name: 'missing_key',
+    fields: ['name']
+  });
+
+  deepEqual( missing_key.Database.fields, ['id', 'name'] );
+});
+
 test( 'key array', function(assert)
 {
   var key_array = Neuro({
@@ -80,6 +90,16 @@ test( 'key separator', function(assert)
   });
 
   strictEqual( ks0.$key(), '2/group/3' );
+});
+
+test( 'no fields', function(assert)
+{
+  var no_fields = Neuro({
+    name: 'no_fields',
+    key: ['user_id', 'group_id']
+  });
+
+  deepEqual( no_fields.Database.fields, ['user_id', 'group_id'] );
 });
 
 test( 'fields', function(assert)
