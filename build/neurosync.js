@@ -2644,6 +2644,11 @@ NeuroModel.prototype =
     return encoded;
   },
 
+  $change: function()
+  {
+    this.$trigger( NeuroModel.Events.Change );
+  },
+
   $key: function()
   {
     return this.$db.getKey( this );
