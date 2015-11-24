@@ -85,6 +85,7 @@ extend( new NeuroRelation(), NeuroBelongsTo,
     };
 
     model.$on( NeuroModel.Events.KeyUpdate, relation.onKeyUpdate, this );
+    model.$on( NeuroModel.Events.PostRemove, this.postRemove, this );
 
     if ( isEmpty( initial ) && relatedDatabase.hasFields( model, this.local, isValue ) )
     {

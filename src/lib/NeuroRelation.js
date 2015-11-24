@@ -176,26 +176,6 @@ NeuroRelation.prototype =
     
   },
 
-  preSave: function(model)
-  {
-
-  },
-
-  postSave: function(model)
-  {
-
-  },
-
-  preRemove: function(model)
-  {
-
-  },
-
-  postRemove: function(model)
-  {
-
-  },
-
   isModelArray: function(input)
   {
     if ( !isArray( input ) )

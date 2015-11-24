@@ -637,44 +637,6 @@ function applyEventListeners(target, listeners)
 }
 
 
-function addEventListener(target, events, callback, secret)
-{
-  var map = {
-    on:     secret ? '$on' : 'on',
-    once:   secret ? '$once' : 'once',
-    after:  secret ? '$after' : 'after'
-  };
-
-  if ( isFunction( callback ) )
-  {
-    target[ map.on ]( events, callback );
-  }
-  else if ( isArray( callback ) && callback.length === 2 && isFunction( callback[0] ) )
-  {
-    target[ map.on ]( events, callback[0], callback[1] );
-  }
-  else if ( isObject( callback ) )
-  {
-    for ( var type in callback )
-    {
-      if ( type in map )
-      {
-        var subcallback = callback[ type ];
-        var eventType = map[ type ];
-
-        if ( isFunction( subcallback ) )
-        {
-          target[ eventType ]( events, subcallback );
-        }
-        else if ( isArray( subcallback ) && subcallback.length === 2 && isFunction( subcallback[0] ) )
-        {
-          target[ eventType ]( events, subcallback[0], subcallback[1] );
-        }
-      }
-    }
-  }
-}
-
 /**
  * Adds functions to the given object (or prototype) so you can listen for any 
  * number of events on the given object, optionally once. Listeners can be 
@@ -2527,6 +2489,10 @@ NeuroModel.Events =
 {
   Created:          'created',
   Saved:            'saved',
+  PreSave:          'pre-save',
+  PostSave:         'post-save',
+  PreRemove:        'pre-remove',
+  PostRemove:       'post-remove',
   PartialUpdate:    'partial-update',
   FullUpdate:       'full-update',
   Updated:          'updated',
@@ -2735,38 +2701,28 @@ NeuroModel.prototype =
 
     this.$set( setProperties, setValue );
 
-    this.$callRelationFunction( 'preSave' );
+    this.$trigger( NeuroModel.Events.PreSave, [this] );
 
     this.$db.save( this, cascade );
 
-    this.$callRelationFunction( 'postSave' );
+    this.$trigger( NeuroModel.Events.PostSave, [this] );
   },
 
   $remove: function(cascade)
   {
     if ( this.$exists() )
     {
-      this.$callRelationFunction( 'preRemove' );
+      this.$trigger( NeuroModel.Events.PreRemove, [this] );
 
       this.$db.remove( this, cascade );
 
-      this.$callRelationFunction( 'postRemove' );
+      this.$trigger( NeuroModel.Events.PostRemove, [this] );
     }
   },
 
   $exists: function()
   {
     return !this.$deleted && this.$db.models.has( this.$key() );
-  },
-
-  $callRelationFunction: function(functionName)
-  {
-    var databaseRelations = this.$db.relations;
-
-    for ( var name in databaseRelations )
-    {
-      databaseRelations[ name ][ functionName ]( this );
-    }
   },
 
   $addOperation: function(OperationType, cascade) 
@@ -3979,26 +3935,6 @@ NeuroRelation.prototype =
     
   },
 
-  preSave: function(model)
-  {
-
-  },
-
-  postSave: function(model)
-  {
-
-  },
-
-  preRemove: function(model)
-  {
-
-  },
-
-  postRemove: function(model)
-  {
-
-  },
-
   isModelArray: function(input)
   {
     if ( !isArray( input ) )
@@ -4407,6 +4343,7 @@ extend( new NeuroRelation(), NeuroBelongsTo,
     };
 
     model.$on( NeuroModel.Events.KeyUpdate, relation.onKeyUpdate, this );
+    model.$on( NeuroModel.Events.PostRemove, this.postRemove, this );
 
     if ( isEmpty( initial ) && relatedDatabase.hasFields( model, this.local, isValue ) )
     {
@@ -4747,6 +4684,8 @@ extend( new NeuroRelation(), NeuroHasMany,
 
     // Populate the model's key if it's missing
     model.$key();
+    model.$on( NeuroModel.Events.PostSave, this.postSave, this );
+    model.$on( NeuroModel.Events.PreRemove, this.preRemove, this );
 
     // When models are added to the related database, check if it's related to this model
     relatedDatabase.on( NeuroDatabase.Events.ModelAdded, this.handleModelAdded( relation ), this );
@@ -5356,6 +5295,8 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
 
     // Populate the model's key if it's missing
     model.$key();
+    model.$on( NeuroModel.Events.PostSave, this.postSave, this );
+    model.$on( NeuroModel.Events.PreRemove, this.preRemove, this );
 
     // When models are added to the related database, check if it's related to this model
     throughDatabase.on( NeuroDatabase.Events.ModelAdded, this.handleModelAdded( relation ), this );
@@ -6039,6 +5980,9 @@ extend( new NeuroRelation(), NeuroHasOne,
         }
       }
     };
+
+    model.$on( NeuroModel.Events.PreSave, this.preSave, this );
+    model.$on( NeuroModel.Events.PostRemove, this.postRemove, this );
 
     if ( isEmpty( initial ) && relatedDatabase.hasFields( model, this.local, isValue ) )
     {

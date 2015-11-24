@@ -39,6 +39,10 @@ NeuroModel.Events =
 {
   Created:          'created',
   Saved:            'saved',
+  PreSave:          'pre-save',
+  PostSave:         'post-save',
+  PreRemove:        'pre-remove',
+  PostRemove:       'post-remove',
   PartialUpdate:    'partial-update',
   FullUpdate:       'full-update',
   Updated:          'updated',
@@ -247,38 +251,28 @@ NeuroModel.prototype =
 
     this.$set( setProperties, setValue );
 
-    this.$callRelationFunction( 'preSave' );
+    this.$trigger( NeuroModel.Events.PreSave, [this] );
 
     this.$db.save( this, cascade );
 
-    this.$callRelationFunction( 'postSave' );
+    this.$trigger( NeuroModel.Events.PostSave, [this] );
   },
 
   $remove: function(cascade)
   {
     if ( this.$exists() )
     {
-      this.$callRelationFunction( 'preRemove' );
+      this.$trigger( NeuroModel.Events.PreRemove, [this] );
 
       this.$db.remove( this, cascade );
 
-      this.$callRelationFunction( 'postRemove' );
+      this.$trigger( NeuroModel.Events.PostRemove, [this] );
     }
   },
 
   $exists: function()
   {
     return !this.$deleted && this.$db.models.has( this.$key() );
-  },
-
-  $callRelationFunction: function(functionName)
-  {
-    var databaseRelations = this.$db.relations;
-
-    for ( var name in databaseRelations )
-    {
-      databaseRelations[ name ][ functionName ]( this );
-    }
   },
 
   $addOperation: function(OperationType, cascade) 

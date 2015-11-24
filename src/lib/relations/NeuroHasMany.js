@@ -87,6 +87,8 @@ extend( new NeuroRelation(), NeuroHasMany,
 
     // Populate the model's key if it's missing
     model.$key();
+    model.$on( NeuroModel.Events.PostSave, this.postSave, this );
+    model.$on( NeuroModel.Events.PreRemove, this.preRemove, this );
 
     // When models are added to the related database, check if it's related to this model
     relatedDatabase.on( NeuroDatabase.Events.ModelAdded, this.handleModelAdded( relation ), this );

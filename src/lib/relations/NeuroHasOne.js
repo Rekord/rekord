@@ -74,6 +74,9 @@ extend( new NeuroRelation(), NeuroHasOne,
       }
     };
 
+    model.$on( NeuroModel.Events.PreSave, this.preSave, this );
+    model.$on( NeuroModel.Events.PostRemove, this.postRemove, this );
+
     if ( isEmpty( initial ) && relatedDatabase.hasFields( model, this.local, isValue ) )
     {
       initial = pull( model, this.local );
