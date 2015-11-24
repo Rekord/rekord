@@ -41,6 +41,7 @@
 - [ ] relations
 - [x] toString
 - [x] encode/decode
+- [x] methods
 
 ### Neuro instance functions
 

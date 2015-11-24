@@ -714,3 +714,48 @@ test( 'encode decode', function(assert)
   isType( encoded.created_at, 'number' );
   isType( encoded.validation, 'string' );
 });
+
+test( 'methods', function(assert)
+{
+  var Todo = Neuro({
+    name: 'methods',
+    fields: ['name', 'done', 'finished_at', 'updated_at', 'created_at'],
+    defaults: {
+      name: '',
+      done: false,
+      finished_at: null,
+      updated_at: Date.now,
+      created_at: Date.now
+    },
+    methods: {
+      setDone: function(done) {
+        this.$save({
+          done: done,
+          finished_at: done ? Date.now() : null,
+          updated_at: Date.now()
+        });
+      },
+      setName: function(name) {
+        this.$save({
+          name: name,
+          updated_at: Date.now()
+        });
+      }
+    }
+  });
+
+  var t0 = new Todo({name: 't0'});
+
+  strictEqual( t0.name, 't0' );
+  strictEqual( t0.done, false );
+  strictEqual( t0.finished_at, null );
+
+  t0.setDone( true );
+
+  strictEqual( t0.done, true );
+  notStrictEqual( t0.finished_at, null );
+
+  t0.setName( 't1' );
+  
+  strictEqual( t0.name, 't1' );
+});

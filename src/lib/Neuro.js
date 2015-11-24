@@ -12,6 +12,11 @@ function Neuro(options)
 
   model.prototype = new NeuroModel( database );
 
+  if ( isObject( options.methods ) )
+  {
+    transfer( options.methods, model.prototype );
+  }
+
   database.model = model;
   database.init();
 
