@@ -131,31 +131,23 @@
         {
           var User = Neuro({
             name: 'user',
-            className: 'User',
             api: RESTBASE + 'user/',
             key: 'id',
-            autoRefresh: true,
             fields: ['id', 'name', 'updated_at', 'created_at'],
             defaults: {
               updated_at: Date.now,
               created_at: Date.now
             },
             comparator: '-created_at',
-            loadRelations: true,
             hasMany: {
               userGroups: {
-                model: 'UserGroup',
-                cascadeRemove: true,
-                auto: true,
-                property: true
+                model: 'UserGroup'
               }
             },
             hasManyThrough: {
               groups: {
                 model: 'Group',
-                through: 'UserGroup',
-                cascadeRemove: true,
-                property: true
+                through: 'UserGroup'
               }
             },
             toString: function(user) {
@@ -172,24 +164,19 @@
         {
           var UserGroup = Neuro({
             name: 'user_group',
-            className: 'UserGroup',
             api: RESTBASE + 'user_group/',
-            autoRefresh: true,
             fullSave: true,
             key: ['user_id', 'group_id'],
             fields: ['user_id', 'group_id', 'created_at'],
             defaults: {
               created_at: Date.now
             },
-            loadRelations: true,
             belongsTo: {
               user: {
-                model: 'User',
-                property: true
+                model: 'User'
               },
               group: {
-                model: 'Group',
-                property: true
+                model: 'Group'
               }
             },
             toString: function(userGroup) {
@@ -209,28 +196,21 @@
             className: 'Group',
             api: RESTBASE + 'group/',
             key: 'id',
-            autoRefresh: true,
             fields: ['id', 'name', 'updated_at', 'created_at'],
             defaults: {
               updated_at: Date.now,
               created_at: Date.now
             },
             comparator: '-created_at',
-            loadRelations: true,
             hasMany: {
               userGroups: {
-                model: 'UserGroup',
-                cascadeRemove: true,
-                auto: true,
-                property: true
+                model: 'UserGroup'
               }
             },
             hasManyThrough: {
               users: {
                 model: 'User',
-                through: 'UserGroup',
-                cascadeRemove: true,
-                property: true
+                through: 'UserGroup'
               }
             },
             toString: function(group) {

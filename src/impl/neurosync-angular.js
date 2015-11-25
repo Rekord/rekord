@@ -116,7 +116,7 @@
     {
       on: function()
       {
-        if ( this.target.Database && this.target.Model )
+        if ( Neuro.isNeuro( this.target ) )
         {
           this.target = this.target.Database;
         }

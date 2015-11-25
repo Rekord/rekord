@@ -355,6 +355,9 @@ test( 'refresh relationships', function(assert)
         model: prefix + 'list',
         local: 'list_id'
       }
+    },
+    toString: function(task) {
+      return task.name;
     }
   });
 
@@ -369,9 +372,14 @@ test( 'refresh relationships', function(assert)
         store: Neuro.Store.Model,
         comparator: 'name'
       }
+    },
+    toString: function(list) {
+      return list.name;
     }
   });
-
+  
+  var remoteTasks = Task.Database.rest;
+  var localTasks = Task.Database.store;
   var db = TaskList.Database;
   var remote = db.rest;
 
@@ -389,19 +397,23 @@ test( 'refresh relationships', function(assert)
     name: l0.name,
     tasks: [
       {
-        id: t1.id, name: t1.name, done: true
+        id: t1.id, list_id: l0.id, name: t1.name, done: true
       },
       {
-        id: t2.id, name: t2.name, done: false
+        id: t2.id, list_id: l0.id, name: t2.name, done: false
       },
       {
-        id: 45, name: 't3', done: true
+        id: 45, list_id: l0.id, name: 't3', done: true
       },
       {
-        id: 46, name: 't4', done: false
+        id: 46, list_id: l0.id, name: 't4', done: false
       }
     ]
   });
+
+  remoteTasks.lastModel = remoteTasks.lastRecord = null;
+
+  strictEqual( Task.all().length, 3 );
 
   db.refresh();
 
@@ -418,7 +430,9 @@ test( 'refresh relationships', function(assert)
   strictEqual( l0.tasks[2].name, 't3' );
   strictEqual( l0.tasks[3].name, 't4' );
 
-  console.log( l0 );
+  strictEqual( Task.all().length, 4 );
+  strictEqual( remoteTasks.lastModel, null );
+  strictEqual( remoteTasks.lastRecord, null );
 });
 
 test( 'getModel', function(assert)

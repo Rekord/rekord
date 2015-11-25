@@ -10,6 +10,7 @@
   global.Neuro.Map = NeuroMap;
 
   /* Utility Functions */
+  global.Neuro.isNeuro = isNeuro;
   global.Neuro.uuid = uuid;
   global.Neuro.indexOf = indexOf;
   global.Neuro.propsMatch = propsMatch;

@@ -88,9 +88,6 @@ NeuroModel.prototype =
         this.$getRelation( name );
       }
     }
-
-    // Load Global Model Event Listeners
-    applyEventListeners( this, this.$db.modelEvents );
   },
 
   $reset: function(props)

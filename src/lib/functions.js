@@ -8,14 +8,9 @@ function isFunction(x)
   return !!(x && x.constructor && x.call && x.apply);
 }
 
-function isModelConstructor(x)
-{
-  return isFunction( x ) && x.prototype instanceof NeuroModel;
-}
-
 function isNeuro(x)
 {
-  return !!(x && x.Model && x.Database);
+  return !!(x && x.Database && isFunction( x ) && x.prototype instanceof NeuroModel);
 }
 
 function isString(x)
@@ -187,10 +182,6 @@ function evaluate(x)
   }
 
   if ( isNeuro( x ) )
-  {
-    return new x.Model();
-  }
-  if ( isModelConstructor( x ) )
   {
     return new x();
   }
@@ -512,123 +503,4 @@ function createComparator(comparator, nullsFirst)
   }
 
   return null;
-}
-
-function addDynamicProperty(modelPrototype, property, definition)
-{
-  var get = isFunction( definition ) ? definition : 
-          ( isObject( definition ) && isFunction( definition.get ) ? definition.get : noop );
-  var set = isObject( definition ) && isFunction( definition.set ) ? definition.set : noop;
-
-  if ( Object.defineProperty )
-  {
-    Object.defineProperty( modelPrototype, property, 
-    {
-      configurable: false,
-      enumerable: true,
-      get: get,
-      set: set
-    });
-  }
-  else
-  {
-    var $init = modelPrototype.$init;
-
-    modelPrototype.$init = function()
-    {
-      $init.apply( this, arguments );
-
-      var lastCalculatedValue = this[ property ] = get.apply( this );
-
-      var handleChange = function()
-      {
-        var current = this[ property ];
-
-        if ( current !== lastCalculatedValue )
-        {
-          set.call( this, current );
-        }
-        else
-        {
-          lastCalculatedValue = this[ property ] = get.apply( this );
-        }
-      };
-
-      this.$after( NeuroModel.Events.Changes, handleChange, this );
-    };
-  }
-}
-
-function parseEventListeners(events, callback, secret, out)
-{
-  var map = {
-    on:     secret ? '$on' : 'on',
-    once:   secret ? '$once' : 'once',
-    after:  secret ? '$after' : 'after'
-  };
-
-  var listeners = out || [];
-
-  if ( isFunction( callback ) )
-  {
-    listeners.push(
-    {
-      when: map.on,
-      events: events,
-      invoke: callback
-    });
-  }
-  else if ( isArray( callback ) && callback.length === 2 && isFunction( callback[0] ) )
-  {
-    listeners.push(
-    {
-      when: map.on,
-      events: events,
-      invoke: callback[0],
-      context: callback[1]
-    });
-  }
-  else if ( isObject( callback ) )
-  {
-    for ( var eventType in callback )
-    {
-      if ( eventType in map )
-      {
-        var subcallback = callback[ eventType ];
-        var when = map[ eventType ];
-
-        if ( isFunction( subcallback ) )
-        {
-          listeners.push(
-          {
-            when: when,
-            events: events,
-            invoke: subcallback
-          });
-        }
-        else if ( isArray( subcallback ) && subcallback.length === 2 && isFunction( subcallback[0] ) )
-        {
-          listeners.push(
-          {
-            when: when,
-            events: events,
-            invoke: subcallback[0],
-            context: subcallback[1]
-          });
-        }
-      }
-    }
-  }
-
-  return listeners;
-}
-
-function applyEventListeners(target, listeners)
-{
-  for (var i = 0; i < listeners.length; i++)
-  {
-    var l = listeners[ i ];
-
-    target[ l.when ]( l.events, l.invoke, l.context );
-  }
 }

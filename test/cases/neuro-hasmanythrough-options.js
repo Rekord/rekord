@@ -461,7 +461,7 @@ test( 'cascadeSave true', function(assert)
   var prefix = 'hasManyThrough_cascadeSave_true_';
 
   var options = {
-    cascadeSave: Neuro.Cascade.All
+    cascadeSaveRelated: Neuro.Cascade.All
   };
 
   var test = createUserGroups( prefix, options, options );
@@ -489,7 +489,7 @@ test( 'cascadeSave false', function(assert)
   var prefix = 'hasManyThrough_cascadeSave_false_';
 
   var options = {
-    cascadeSave: Neuro.Cascade.None
+    cascadeSaveRelated: Neuro.Cascade.None
   };
 
   var test = createUserGroups( prefix, options, options );

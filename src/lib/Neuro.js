@@ -9,77 +9,21 @@ function Neuro(options)
   var database = new NeuroDatabase( options );
 
   var model = new Function('return function ' + database.className + '(props, exists) { this.$init( props, exists ) }')();
-
   model.prototype = new NeuroModel( database );
 
-  if ( isObject( options.methods ) )
-  {
-    transfer( options.methods, model.prototype );
-  }
+  database.Model = model;
+  model.Database = database;
 
-  if ( isObject( options.dynamic ) )
-  {
-    for ( var property in options.dynamic )
-    {
-      var definition = options.dynamic[ property ];
+  Neuro.trigger( Neuro.Events.Plugins, [model, database, options] );
 
-      addDynamicProperty( model.prototype, property, definition );
-    }
-  }
+  Neuro.cache[ database.name ] = model;
+  Neuro.cache[ database.className ] = model;
 
-  database.model = model;
   database.init();
 
-  Neuro.debug( Neuro.Debugs.CREATION, database, options );
-
-  model.Database = database;
-  model.Model = model;
-
-  model.all = function()
-  {
-    return database.getModels();
-  };
-
-  model.create = function( props )
-  {
-    return database.create( props );
-  };
-
-  model.fetch = function( input )
-  {
-    var key = database.buildKeyFromInput( input );
-    var instance = database.getModel( key );
-
-    if ( !instance )
-    {
-      instance = database.buildObjectFromKey( key );
-
-      if ( isObject( input ) )
-      {
-        instance.$set( input );
-      }
-    }
-
-    instance.$refresh();
-
-    return instance;
-  };
-
-  model.boot = function( input )
-  {
-    var instance = new model( input );
-
-    instance.$local = instance.$toJSON( false );
-    instance.$local.$saved = instance.$saved = instance.$toJSON( true );
-    instance.$addOperation( NeuroSaveNow );
-
-    return instance;
-  };
-
-  Neuro.cache[ options.name ] = model;
-  Neuro.cache[ options.className ] = model;
-
   Neuro.trigger( Neuro.Events.Initialized, [model] );
+
+  Neuro.debug( Neuro.Debugs.CREATION, database, options );
 
   return model;
 }
@@ -87,6 +31,7 @@ function Neuro(options)
 Neuro.Events = 
 {
   Initialized:  'initialized',
+  Plugins:      'plugins',
   Online:       'online',
   Offline:      'offline'
 };

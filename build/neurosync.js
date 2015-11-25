@@ -11,14 +11,9 @@ function isFunction(x)
   return !!(x && x.constructor && x.call && x.apply);
 }
 
-function isModelConstructor(x)
-{
-  return isFunction( x ) && x.prototype instanceof NeuroModel;
-}
-
 function isNeuro(x)
 {
-  return !!(x && x.Model && x.Database);
+  return !!(x && x.Database && isFunction( x ) && x.prototype instanceof NeuroModel);
 }
 
 function isString(x)
@@ -190,10 +185,6 @@ function evaluate(x)
   }
 
   if ( isNeuro( x ) )
-  {
-    return new x.Model();
-  }
-  if ( isModelConstructor( x ) )
   {
     return new x();
   }
@@ -517,125 +508,6 @@ function createComparator(comparator, nullsFirst)
   return null;
 }
 
-function addDynamicProperty(modelPrototype, property, definition)
-{
-  var get = isFunction( definition ) ? definition : 
-          ( isObject( definition ) && isFunction( definition.get ) ? definition.get : noop );
-  var set = isObject( definition ) && isFunction( definition.set ) ? definition.set : noop;
-
-  if ( Object.defineProperty )
-  {
-    Object.defineProperty( modelPrototype, property, 
-    {
-      configurable: false,
-      enumerable: true,
-      get: get,
-      set: set
-    });
-  }
-  else
-  {
-    var $init = modelPrototype.$init;
-
-    modelPrototype.$init = function()
-    {
-      $init.apply( this, arguments );
-
-      var lastCalculatedValue = this[ property ] = get.apply( this );
-
-      var handleChange = function()
-      {
-        var current = this[ property ];
-
-        if ( current !== lastCalculatedValue )
-        {
-          set.call( this, current );
-        }
-        else
-        {
-          lastCalculatedValue = this[ property ] = get.apply( this );
-        }
-      };
-
-      this.$after( NeuroModel.Events.Changes, handleChange, this );
-    };
-  }
-}
-
-function parseEventListeners(events, callback, secret, out)
-{
-  var map = {
-    on:     secret ? '$on' : 'on',
-    once:   secret ? '$once' : 'once',
-    after:  secret ? '$after' : 'after'
-  };
-
-  var listeners = out || [];
-
-  if ( isFunction( callback ) )
-  {
-    listeners.push(
-    {
-      when: map.on,
-      events: events,
-      invoke: callback
-    });
-  }
-  else if ( isArray( callback ) && callback.length === 2 && isFunction( callback[0] ) )
-  {
-    listeners.push(
-    {
-      when: map.on,
-      events: events,
-      invoke: callback[0],
-      context: callback[1]
-    });
-  }
-  else if ( isObject( callback ) )
-  {
-    for ( var eventType in callback )
-    {
-      if ( eventType in map )
-      {
-        var subcallback = callback[ eventType ];
-        var when = map[ eventType ];
-
-        if ( isFunction( subcallback ) )
-        {
-          listeners.push(
-          {
-            when: when,
-            events: events,
-            invoke: subcallback
-          });
-        }
-        else if ( isArray( subcallback ) && subcallback.length === 2 && isFunction( subcallback[0] ) )
-        {
-          listeners.push(
-          {
-            when: when,
-            events: events,
-            invoke: subcallback[0],
-            context: subcallback[1]
-          });
-        }
-      }
-    }
-  }
-
-  return listeners;
-}
-
-function applyEventListeners(target, listeners)
-{
-  for (var i = 0; i < listeners.length; i++)
-  {
-    var l = listeners[ i ];
-
-    target[ l.when ]( l.events, l.invoke, l.context );
-  }
-}
-
 
 /**
  * Adds functions to the given object (or prototype) so you can listen for any 
@@ -912,77 +784,21 @@ function Neuro(options)
   var database = new NeuroDatabase( options );
 
   var model = new Function('return function ' + database.className + '(props, exists) { this.$init( props, exists ) }')();
-
   model.prototype = new NeuroModel( database );
 
-  if ( isObject( options.methods ) )
-  {
-    transfer( options.methods, model.prototype );
-  }
+  database.Model = model;
+  model.Database = database;
 
-  if ( isObject( options.dynamic ) )
-  {
-    for ( var property in options.dynamic )
-    {
-      var definition = options.dynamic[ property ];
+  Neuro.trigger( Neuro.Events.Plugins, [model, database, options] );
 
-      addDynamicProperty( model.prototype, property, definition );
-    }
-  }
+  Neuro.cache[ database.name ] = model;
+  Neuro.cache[ database.className ] = model;
 
-  database.model = model;
   database.init();
 
-  Neuro.debug( Neuro.Debugs.CREATION, database, options );
-
-  model.Database = database;
-  model.Model = model;
-
-  model.all = function()
-  {
-    return database.getModels();
-  };
-
-  model.create = function( props )
-  {
-    return database.create( props );
-  };
-
-  model.fetch = function( input )
-  {
-    var key = database.buildKeyFromInput( input );
-    var instance = database.getModel( key );
-
-    if ( !instance )
-    {
-      instance = database.buildObjectFromKey( key );
-
-      if ( isObject( input ) )
-      {
-        instance.$set( input );
-      }
-    }
-
-    instance.$refresh();
-
-    return instance;
-  };
-
-  model.boot = function( input )
-  {
-    var instance = new model( input );
-
-    instance.$local = instance.$toJSON( false );
-    instance.$local.$saved = instance.$saved = instance.$toJSON( true );
-    instance.$addOperation( NeuroSaveNow );
-
-    return instance;
-  };
-
-  Neuro.cache[ options.name ] = model;
-  Neuro.cache[ options.className ] = model;
-
   Neuro.trigger( Neuro.Events.Initialized, [model] );
+
+  Neuro.debug( Neuro.Debugs.CREATION, database, options );
 
   return model;
 }
@@ -990,6 +806,7 @@ function Neuro(options)
 Neuro.Events = 
 {
   Initialized:  'initialized',
+  Plugins:      'plugins',
   Online:       'online',
   Offline:      'offline'
 };
@@ -1030,6 +847,265 @@ Neuro.get = function(name, callback, context)
 
 eventize( Neuro );
 
+Neuro.on( Neuro.Events.Plugins, function(model, db, options)
+{
+  model.all = function()
+  {
+    return db.getModels();
+  };
+});
+Neuro.on( Neuro.Events.Plugins, function(model, db, options)
+{
+  model.boot = function( input )
+  {
+    var instance = new model( input );
+
+    instance.$local = instance.$toJSON( false );
+    instance.$local.$saved = instance.$saved = instance.$toJSON( true );
+    instance.$addOperation( NeuroSaveNow );
+
+    return instance;
+  };
+});
+Neuro.on( Neuro.Events.Plugins, function(model, db, options)
+{
+  model.create = function( props )
+  {
+    if ( !isObject( props ) )
+    {
+      var model = db.instantiate();
+
+      model.$save();
+
+      return model;
+    }
+
+    var fields = grab( props, db.fields );
+    var model = db.instantiate( fields );
+    var key = model.$key();
+    var relations = {};
+
+    db.models.put( key, model );
+    db.trigger( NeuroDatabase.Events.ModelAdded, [model] );
+    db.updated();
+
+    for (var i = 0; i < db.relationNames.length; i++)
+    {
+      var relationName = db.relationNames[ i ];
+
+      if ( relationName in props )
+      {
+        relations[ relationName ] = props[ relationName ];
+      }
+    }
+
+    model.$save( relations );
+
+    return model;
+  };
+});
+Neuro.on( Neuro.Events.Plugins, function(model, db, options)
+{
+  if ( isObject( options.dynamic ) )
+  {
+    for ( var property in options.dynamic )
+    {
+      var definition = options.dynamic[ property ];
+
+      addDynamicProperty( model.prototype, property, definition );
+    }
+  }
+});
+
+function addDynamicProperty(modelPrototype, property, definition)
+{
+  var get = isFunction( definition ) ? definition : 
+          ( isObject( definition ) && isFunction( definition.get ) ? definition.get : noop );
+  var set = isObject( definition ) && isFunction( definition.set ) ? definition.set : noop;
+
+  if ( Object.defineProperty )
+  {
+    Object.defineProperty( modelPrototype, property, 
+    {
+      configurable: false,
+      enumerable: true,
+      get: get,
+      set: set
+    });
+  }
+  else
+  {
+    var $init = modelPrototype.$init;
+
+    modelPrototype.$init = function()
+    {
+      $init.apply( this, arguments );
+
+      var lastCalculatedValue = this[ property ] = get.apply( this );
+
+      var handleChange = function()
+      {
+        var current = this[ property ];
+
+        if ( current !== lastCalculatedValue )
+        {
+          set.call( this, current );
+        }
+        else
+        {
+          lastCalculatedValue = this[ property ] = get.apply( this );
+        }
+      };
+
+      this.$after( NeuroModel.Events.Changes, handleChange, this );
+    };
+  }
+}
+
+Neuro.on( Neuro.Events.Plugins, function(model, db, options)
+{
+  var events = options.events;
+
+  if ( isObject( events ) )
+  {
+    var modelEvents = [];
+    var databaseEvents = [];
+
+    var $init = model.prototype.$init;
+
+    model.prototype.$init = function()
+    {
+      $init.apply( this, arguments );
+
+      applyEventListeners( this, modelEvents );
+    };
+
+    for ( var eventType in events )
+    {
+      var callback = events[ eventType ];
+      var eventName = toCamelCase( eventType );
+      
+      var databaseEventString = NeuroDatabase.Events[ eventName ];
+      var modelEventString = NeuroModel.Events[ eventName ];
+
+      if ( databaseEventString )
+      {
+        parseEventListeners( databaseEventString, callback, false, databaseEvents );
+      }
+
+      if ( modelEventString )
+      {
+        parseEventListeners( modelEventString, callback, true, modelEvents );
+      }
+    }
+
+    applyEventListeners( db, databaseEvents );
+  }
+
+});
+
+function parseEventListeners(events, callback, secret, out)
+{
+  var map = {
+    on:     secret ? '$on' : 'on',
+    once:   secret ? '$once' : 'once',
+    after:  secret ? '$after' : 'after'
+  };
+
+  var listeners = out || [];
+
+  if ( isFunction( callback ) )
+  {
+    listeners.push(
+    {
+      when: map.on,
+      events: events,
+      invoke: callback
+    });
+  }
+  else if ( isArray( callback ) && callback.length === 2 && isFunction( callback[0] ) )
+  {
+    listeners.push(
+    {
+      when: map.on,
+      events: events,
+      invoke: callback[0],
+      context: callback[1]
+    });
+  }
+  else if ( isObject( callback ) )
+  {
+    for ( var eventType in callback )
+    {
+      if ( eventType in map )
+      {
+        var subcallback = callback[ eventType ];
+        var when = map[ eventType ];
+
+        if ( isFunction( subcallback ) )
+        {
+          listeners.push(
+          {
+            when: when,
+            events: events,
+            invoke: subcallback
+          });
+        }
+        else if ( isArray( subcallback ) && subcallback.length === 2 && isFunction( subcallback[0] ) )
+        {
+          listeners.push(
+          {
+            when: when,
+            events: events,
+            invoke: subcallback[0],
+            context: subcallback[1]
+          });
+        }
+      }
+    }
+  }
+
+  return listeners;
+}
+
+function applyEventListeners(target, listeners)
+{
+  for (var i = 0; i < listeners.length; i++)
+  {
+    var l = listeners[ i ];
+
+    target[ l.when ]( l.events, l.invoke, l.context );
+  }
+}
+Neuro.on( Neuro.Events.Plugins, function(model, db, options)
+{
+  model.fetch = function( input )
+  {
+    var key = db.buildKeyFromInput( input );
+    var instance = db.getModel( key );
+
+    if ( !instance )
+    {
+      instance = db.buildObjectFromKey( key );
+
+      if ( isObject( input ) )
+      {
+        instance.$set( input );
+      }
+    }
+
+    instance.$refresh();
+
+    return instance;
+  };
+});
+Neuro.on( Neuro.Events.Plugins, function(model, db, options)
+{
+  if ( isObject( options.methods ) )
+  {
+    transfer( options.methods, model.prototype );
+  }
+});
 
 Neuro.debug = function(event, source)  /*, data.. */
 {
@@ -1430,33 +1506,6 @@ function NeuroDatabase(options)
   this.setRevision( this.revision );
   this.setToString( this.toString );
 
-  // Event Listeners
-  this.databaseEvents = [];
-  this.modelEvents = [];
-
-  if ( isObject( this.events ) )
-  {
-    for ( var eventType in this.events )
-    {
-      var callback = this.events[ eventType ];
-      var eventName = toCamelCase( eventType );
-      var databaseEventString = NeuroDatabase.Events[ eventName ];
-      var modelEventString = NeuroModel.Events[ eventName ];
-
-      if ( databaseEventString )
-      {
-        parseEventListeners( databaseEventString, callback, false, this.databaseEvents );
-      }
-
-      if ( modelEventString )
-      {
-        parseEventListeners( modelEventString, callback, true, this.modelEvents );
-      }
-    }
-  }
-
-  applyEventListeners( this, this.databaseEvents );
-
   // Relations
   this.relations = {};
   this.relationNames = [];
@@ -1537,9 +1586,6 @@ NeuroDatabase.Defaults =
   cache:                Neuro.Cache.All,
   fullSave:             false,
   fullPublish:          false,
-  dynamic:              false,
-  methods:              false,
-  events:               false,
   encode:               function(data) { return data; },
   decode:               function(rawData) { return rawData; },
   toString:             function(model) { return model.$key() }
@@ -1640,16 +1686,12 @@ NeuroDatabase.prototype =
 
     if ( isNeuro( input ) )
     {
-      input = new input.Model();
-    }
-    else if ( isModelConstructor( input ) )
-    {
       input = new input();
     }
 
     var key = db.buildKeyFromInput( input );
 
-    if ( input instanceof db.model )
+    if ( input instanceof db.Model )
     {
       if ( !db.models.has( key ) )
       {
@@ -1750,7 +1792,7 @@ NeuroDatabase.prototype =
   // Builds a key from various types of input.
   buildKeyFromInput: function(input)
   {
-    if ( input instanceof this.model )
+    if ( input instanceof this.Model )
     {
       return input.$key();
     }
@@ -2386,45 +2428,7 @@ NeuroDatabase.prototype =
   // Return an instance of the model with the data as initial values
   instantiate: function(data, fromStorage)
   {
-    return new this.model( data, fromStorage );
-  },
-
-  // Create the model
-  create: function(props)
-  {
-    var db = this;
-
-    if ( !isObject( props ) )
-    {
-      var model = db.instantiate();
-
-      model.$save();
-
-      return model;
-    }
-
-    var fields = grab( props, db.fields );
-    var model = db.instantiate( fields );
-    var key = model.$key();
-    var relations = {};
-
-    db.models.put( key, model );
-    db.trigger( NeuroDatabase.Events.ModelAdded, [model] );
-    db.updated();
-
-    for (var i = 0; i < db.relationNames.length; i++)
-    {
-      var relationName = db.relationNames[ i ];
-
-      if ( relationName in props )
-      {
-        relations[ relationName ] = props[ relationName ];
-      }
-    }
-
-    model.$save( relations );
-
-    return model;
+    return new this.Model( data, fromStorage );
   },
 
   // Save the model
@@ -2643,9 +2647,6 @@ NeuroModel.prototype =
         this.$getRelation( name );
       }
     }
-
-    // Load Global Model Event Listeners
-    applyEventListeners( this, this.$db.modelEvents );
   },
 
   $reset: function(props)
@@ -5403,7 +5404,8 @@ NeuroHasManyThrough.Defaults =
   comparator:           null,
   comparatorNullsFirst: false,
   cascadeRemove:        Neuro.Cascade.All,
-  cascadeSave:          Neuro.Cascade.None
+  cascadeSave:          Neuro.Cascade.All,
+  cascadeSaveRelated:   Neuro.Cascade.None
 };
 
 extend( new NeuroRelation(), NeuroHasManyThrough, 
@@ -5736,7 +5738,7 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
   {
     var relation = model.$relations[ this.name ];
 
-    if ( relation && this.cascadeSave )
+    if ( relation && this.cascadeSaveRelated )
     {
       Neuro.debug( Neuro.Debugs.HASMANYTHRU_PRESAVE, this, model, relation );
 
@@ -5751,7 +5753,7 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
 
         if ( related.$hasChanges() )
         {
-          related.$save( this.cascadeSave );
+          related.$save( this.cascadeSaveRelated );
         }
       }
 
@@ -6445,6 +6447,7 @@ extend( new NeuroRelation(), NeuroHasOne,
   global.Neuro.Map = NeuroMap;
 
   /* Utility Functions */
+  global.Neuro.isNeuro = isNeuro;
   global.Neuro.uuid = uuid;
   global.Neuro.indexOf = indexOf;
   global.Neuro.propsMatch = propsMatch;
