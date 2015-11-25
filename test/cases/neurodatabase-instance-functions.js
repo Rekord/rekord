@@ -341,6 +341,86 @@ test( 'refresh', function(assert)
   strictEqual( refresh.all().length, 3 );  
 });
 
+test( 'refresh relationships', function(assert)
+{
+  var prefix = 'NeuroDatabase_refresh_relationships_';
+
+  var Task = Neuro({
+    name: prefix + 'task',
+    fields: ['list_id', 'name', 'done'],
+    defaults: { done: false },
+    cache: Neuro.Cache.None,
+    belongsTo: {
+      list: {
+        model: prefix + 'list',
+        local: 'list_id'
+      }
+    }
+  });
+
+  var TaskList = Neuro({
+    name: prefix + 'list',
+    fields: ['name'],
+    hasMany: {
+      tasks: {
+        model: prefix + 'task',
+        foreign: 'list_id',
+        save: Neuro.Save.Model,
+        store: Neuro.Store.Model,
+        comparator: 'name'
+      }
+    }
+  });
+
+  var db = TaskList.Database;
+  var remote = db.rest;
+
+  var t0 = Task.create({name: 't0'});
+  var t1 = Task.create({name: 't1'});
+  var t2 = Task.create({name: 't2'});
+  var l0 = TaskList.create({name: 'l0', tasks:[t0, t1, t2]});
+
+  strictEqual( t0.list, l0 );
+  strictEqual( t1.list, l0 );
+  strictEqual( t2.list, l0 );
+
+  remote.map.put( l0.id, {
+    id: l0.id,
+    name: l0.name,
+    tasks: [
+      {
+        id: t1.id, name: t1.name, done: true
+      },
+      {
+        id: t2.id, name: t2.name, done: false
+      },
+      {
+        id: 45, name: 't3', done: true
+      },
+      {
+        id: 46, name: 't4', done: false
+      }
+    ]
+  });
+
+  db.refresh();
+
+  ok( t0.$deleted );
+  notOk( t1.$deleted );
+  notOk( t2.$deleted );
+
+  strictEqual( l0.tasks.length, 4 );
+  strictEqual( l0.tasks[0], t1 );
+  strictEqual( l0.tasks[1], t2 );
+
+  strictEqual( l0.tasks[0].done, true );
+  strictEqual( l0.tasks[1].done, false );
+  strictEqual( l0.tasks[2].name, 't3' );
+  strictEqual( l0.tasks[3].name, 't4' );
+
+  console.log( l0 );
+});
+
 test( 'getModel', function(assert)
 {
   var getModel = Neuro({

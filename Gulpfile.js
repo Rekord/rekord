@@ -29,7 +29,7 @@ var source =
     './src/lib/relations/*.js',
     './src/footer.js'
   ],
-  plugins: 
+  impl: 
   {
     pubsub: 
     [

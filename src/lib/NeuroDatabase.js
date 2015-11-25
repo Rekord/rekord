@@ -289,7 +289,14 @@ NeuroDatabase.prototype =
     }
     else if ( db.models.has( key ) )
     {
-      return db.models.get( key );
+      var model = db.models.get( key );
+      
+      if ( isObject( input ) )
+      {
+        db.putRemoteData( input, key, model, fromStorage );
+      }
+
+      return model;
     }
     else if ( isObject( input ) )
     {
@@ -567,7 +574,8 @@ NeuroDatabase.prototype =
 
         if ( prop in relations )
         {
-          // TODO
+          model.$set( prop, encoded[ prop ] );
+
           continue;
         }
 
