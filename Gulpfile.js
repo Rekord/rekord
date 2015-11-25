@@ -14,6 +14,7 @@ var source =
     './src/lib/functions.js',
     './src/lib/eventize.js',
     './src/lib/Neuro.js',
+    './src/lib/plugins/*.js',
     './src/lib/Neuro_debug.js',
     './src/lib/Neuro_rest.js',
     './src/lib/Neuro_store.js',
@@ -32,19 +33,19 @@ var source =
   {
     pubsub: 
     [
-      './src/plugins/neurosync-pubsub.js'
+      './src/impl/neurosync-pubsub.js'
     ],
     angular: 
     [
-      './src/plugins/neurosync-angular.js'
+      './src/impl/neurosync-angular.js'
     ],
     stork: 
     [
-      './src/plugins/neurosync-stork.js'
+      './src/impl/neurosync-stork.js'
     ],
     debug: 
     [
-      './src/plugins/neurosync-debug.js'
+      './src/impl/neurosync-debug.js'
     ]
   }
 };
@@ -58,35 +59,35 @@ var builds =
     output: './build/',
     include: source.default
   },
-  plugins:
+  impl:
   {
     pubsub:
     {
       filename: 'neurosync-pubsub.js',
       minified: 'neurosync-pubsub.min.js',
-      output: './build/plugins/',
-      include: source.plugins.pubsub
+      output: './build/impl/',
+      include: source.impl.pubsub
     },
     angular:
     {
       filename: 'neurosync-angular.js',
       minified: 'neurosync-angular.min.js',
-      output: './build/plugins/',
-      include: source.plugins.angular
+      output: './build/impl/',
+      include: source.impl.angular
     },
     stork:
     {
       filename: 'neurosync-stork.js',
       minified: 'neurosync-stork.min.js',
-      output: './build/plugins/',
-      include: source.plugins.stork
+      output: './build/impl/',
+      include: source.impl.stork
     },
     debug:
     {
       filename: 'neurosync-debug.js',
       minified: 'neurosync-debug.min.js',
-      output: './build/plugins/',
-      include: source.plugins.debug
+      output: './build/impl/',
+      include: source.impl.debug
     }
   }
 };
@@ -120,10 +121,10 @@ gulp.task( 'docs', shell.task(['./node_modules/.bin/jsdoc -c jsdoc.json']));
 
 gulp.task( 'js:default',        executeBuild( builds.default ) );
 gulp.task( 'js:default:min',    executeMinifiedBuild( builds.default ) );
-gulp.task( 'js:pubsub',         executeMinifiedBuild( builds.plugins.pubsub ) );
-gulp.task( 'js:angular',        executeMinifiedBuild( builds.plugins.angular ) );
-gulp.task( 'js:stork',          executeMinifiedBuild( builds.plugins.stork ) );
-gulp.task( 'js:debug',          executeMinifiedBuild( builds.plugins.debug ) );
+gulp.task( 'js:pubsub',         executeMinifiedBuild( builds.impl.pubsub ) );
+gulp.task( 'js:angular',        executeMinifiedBuild( builds.impl.angular ) );
+gulp.task( 'js:stork',          executeMinifiedBuild( builds.impl.stork ) );
+gulp.task( 'js:debug',          executeMinifiedBuild( builds.impl.debug ) );
 
 gulp.task( 'js:min', ['js:default:min', 'js:pubsub', 'js:angular', 'js:stork', 'js:debug']);
 gulp.task( 'js', ['js:default']);

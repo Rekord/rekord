@@ -528,3 +528,23 @@ test( '$hasChanges', function(assert)
 
   notOk( t0.$hasChanges() );
 });
+
+test( '$refresh', function(assert)
+{
+  var Todo = Neuro({
+    name: 'Model_refresh',
+    fields: ['name']
+  });
+
+  var remote = Todo.Database.rest;
+
+  var t0 = Todo.create({name: 'name0'});
+
+  strictEqual( t0.name, 'name0' );
+
+  remote.map.put( t0.id, {id: t0.id, name: 'name1'} );
+
+  t0.$refresh();
+
+  strictEqual( t0.name, 'name1' );
+});

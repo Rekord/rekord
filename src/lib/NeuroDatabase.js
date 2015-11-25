@@ -405,6 +405,32 @@ NeuroDatabase.prototype =
     return this.buildKeys( model, this.key );
   },
 
+  buildObjectFromKey: function(key)
+  {
+    var db = this;
+
+    var props = {};
+
+    if ( isArray( db.key ) )
+    {
+      if ( isString( key ) )
+      {
+        key = key.split( db.keySeparator );
+      }
+
+      for (var i = 0; i < db.key.length; i++)
+      {
+        props[ db.key[ i ] ] = key[ i ];
+      }
+    }
+    else
+    {
+      props[ db.key ] = key;
+    }
+
+    return db.instantiate( props );
+  },
+
   // Determines whether the given model has the given fields
   hasFields: function(model, fields, exists)
   {
@@ -578,10 +604,7 @@ NeuroDatabase.prototype =
 
       model.$trigger( NeuroModel.Events.RemoteUpdate, [encoded] );
 
-      if ( db.cache === Neuro.Cache.All )
-      {
-        model.$addOperation( NeuroSaveNow ); 
-      }
+      model.$addOperation( NeuroSaveNow ); 
     }
     else
     {
@@ -1120,6 +1143,30 @@ NeuroDatabase.prototype =
     { 
       // Start by removing locally.
       model.$addOperation( NeuroRemoveLocal, cascade );
+    }
+  },
+
+  refreshModel: function(model, cascade)
+  {
+    var db = this;
+    var cascade = isValue( cascade ) ? cascade : Neuro.Cascade.Rest;
+
+    // If we're not supposed to cascade this anywhere, stop!
+    if ( !cascade )
+    {
+      return;
+    }
+
+    // If we're not storing locally OR we're not cascading locally, jump directly to remote.
+    if ( db.cache !== Neuro.Cache.All || !(cascade & Neuro.Cascade.Local) )
+    {
+      // Getting remotely
+      model.$addOperation( NeuroGetRemote, cascade );
+    }
+    else
+    {
+      // Start by getting locally.
+      model.$addOperation( NeuroGetLocal, cascade );
     }
   }
 

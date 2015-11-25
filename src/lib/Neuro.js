@@ -45,6 +45,37 @@ function Neuro(options)
     return database.create( props );
   };
 
+  model.fetch = function( input )
+  {
+    var key = database.buildKeyFromInput( input );
+    var instance = database.getModel( key );
+
+    if ( !instance )
+    {
+      instance = database.buildObjectFromKey( key );
+
+      if ( isObject( input ) )
+      {
+        instance.$set( input );
+      }
+    }
+
+    instance.$refresh();
+
+    return instance;
+  };
+
+  model.boot = function( input )
+  {
+    var instance = new model( input );
+
+    instance.$local = instance.$toJSON( false );
+    instance.$local.$saved = instance.$saved = instance.$toJSON( true );
+    instance.$addOperation( NeuroSaveNow );
+
+    return instance;
+  };
+
   Neuro.cache[ options.name ] = model;
   Neuro.cache[ options.className ] = model;
 

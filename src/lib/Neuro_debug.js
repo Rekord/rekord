@@ -65,6 +65,12 @@ Neuro.Debugs = {
 
   REMOVE_REMOTE_BLOCKED: 43,  // NeuroModel
 
+  GET_LOCAL_SKIPPED: 104,     // NeuroModel
+  GET_LOCAL: 105,             // NeuroModel, encoded
+  GET_LOCAL_ERROR: 106,       // NeuroModel, e
+  GET_REMOTE: 107,            // NeuroModel, data
+  GET_REMOTE_ERROR: 108,      // NeuroModel, data, status
+
   ONLINE: 35,                 //
   OFFLINE: 36,                //
 

@@ -58,6 +58,13 @@
     33: 'Model removed locally',
     34: 'Model failed to remove locally, will still try to remove it remotely',
     /**/
+    /* Get */
+    104: 'Model local get skipped',
+    105: 'Model local get',
+    106: 'Model local get error',
+    107: 'Model remote get',
+    108: 'Model remote get error',
+    /**/
     /* Network Status */
     35: 'Application Online',
     36: 'Application Offline',

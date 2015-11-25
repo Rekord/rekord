@@ -948,6 +948,37 @@ function Neuro(options)
     return database.create( props );
   };
 
+  model.fetch = function( input )
+  {
+    var key = database.buildKeyFromInput( input );
+    var instance = database.getModel( key );
+
+    if ( !instance )
+    {
+      instance = database.buildObjectFromKey( key );
+
+      if ( isObject( input ) )
+      {
+        instance.$set( input );
+      }
+    }
+
+    instance.$refresh();
+
+    return instance;
+  };
+
+  model.boot = function( input )
+  {
+    var instance = new model( input );
+
+    instance.$local = instance.$toJSON( false );
+    instance.$local.$saved = instance.$saved = instance.$toJSON( true );
+    instance.$addOperation( NeuroSaveNow );
+
+    return instance;
+  };
+
   Neuro.cache[ options.name ] = model;
   Neuro.cache[ options.className ] = model;
 
@@ -1066,6 +1097,12 @@ Neuro.Debugs = {
 
   REMOVE_REMOTE_BLOCKED: 43,  // NeuroModel
 
+  GET_LOCAL_SKIPPED: 104,     // NeuroModel
+  GET_LOCAL: 105,             // NeuroModel, encoded
+  GET_LOCAL_ERROR: 106,       // NeuroModel, e
+  GET_REMOTE: 107,            // NeuroModel, data
+  GET_REMOTE_ERROR: 108,      // NeuroModel, data, status
+
   ONLINE: 35,                 //
   OFFLINE: 36,                //
 
@@ -1143,28 +1180,35 @@ Neuro.rest = function(database)
     // failure ( data[], status )
     all: function( success, failure )
     {
-      success( [], 200 );
+      success( [] );
+    },
+
+    // success( data )
+    // failure( data, status )
+    get: function( model, success, failure )
+    {
+      failure( null, -1 );
     },
 
     // success ( data )
     // failure ( data, status )
     create: function( model, encoded, success, failure )
     {
-      success( {}, 200 );
+      success( {} );
     },
 
     // success ( data )
     // failure ( data, status )
     update: function( model, encoded, success, failure )
     {
-      success( {}, 200 );
+      success( {} );
     },
 
     // success ( data )
     // failure ( data, status )
     remove: function( model, success, failure )
     {
-      success( {}, 200 );
+      success( {} );
     }
 
   };
@@ -1202,6 +1246,12 @@ Neuro.store = function(database)
     put: function(key, record, success, failure) 
     { 
       success( key, record );
+    },
+
+    // TODO
+    get: function(key, success, failure)
+    {
+      failure( key, void 0 );
     },
 
     /**
@@ -1727,6 +1777,32 @@ NeuroDatabase.prototype =
     return this.buildKeys( model, this.key );
   },
 
+  buildObjectFromKey: function(key)
+  {
+    var db = this;
+
+    var props = {};
+
+    if ( isArray( db.key ) )
+    {
+      if ( isString( key ) )
+      {
+        key = key.split( db.keySeparator );
+      }
+
+      for (var i = 0; i < db.key.length; i++)
+      {
+        props[ db.key[ i ] ] = key[ i ];
+      }
+    }
+    else
+    {
+      props[ db.key ] = key;
+    }
+
+    return db.instantiate( props );
+  },
+
   // Determines whether the given model has the given fields
   hasFields: function(model, fields, exists)
   {
@@ -1900,10 +1976,7 @@ NeuroDatabase.prototype =
 
       model.$trigger( NeuroModel.Events.RemoteUpdate, [encoded] );
 
-      if ( db.cache === Neuro.Cache.All )
-      {
-        model.$addOperation( NeuroSaveNow ); 
-      }
+      model.$addOperation( NeuroSaveNow ); 
     }
     else
     {
@@ -2443,6 +2516,30 @@ NeuroDatabase.prototype =
       // Start by removing locally.
       model.$addOperation( NeuroRemoveLocal, cascade );
     }
+  },
+
+  refreshModel: function(model, cascade)
+  {
+    var db = this;
+    var cascade = isValue( cascade ) ? cascade : Neuro.Cascade.Rest;
+
+    // If we're not supposed to cascade this anywhere, stop!
+    if ( !cascade )
+    {
+      return;
+    }
+
+    // If we're not storing locally OR we're not cascading locally, jump directly to remote.
+    if ( db.cache !== Neuro.Cache.All || !(cascade & Neuro.Cascade.Local) )
+    {
+      // Getting remotely
+      model.$addOperation( NeuroGetRemote, cascade );
+    }
+    else
+    {
+      // Start by getting locally.
+      model.$addOperation( NeuroGetLocal, cascade );
+    }
   }
 
 };
@@ -2718,6 +2815,11 @@ NeuroModel.prototype =
 
       this.$trigger( NeuroModel.Events.PostRemove, [this] );
     }
+  },
+
+  $refresh: function(cascade)
+  {
+    this.$db.refreshModel( this, cascade );
   },
 
   $exists: function()
@@ -3291,6 +3393,93 @@ NeuroOperation.prototype =
 
 };
 
+function NeuroGetLocal(model, cascade)
+{
+  this.reset( model, cascade );
+}
+
+extend( new NeuroOperation( false, 'NeuroGetLocal' ), NeuroGetLocal,
+{
+
+  run: function(db, model)
+  {
+    if ( db.cache === Neuro.Cache.All && this.canCascade( Neuro.Cascade.Local ) )
+    {
+      db.store.get( model.$key(), this.success(), this.failure() );
+    }
+    else if ( this.canCascade( Neuro.Cascade.Rest ) )
+    {
+      Neuro.debug( Neuro.Debugs.GET_LOCAL_SKIPPED, model );
+
+      this.insertNext( NeuroGetRemote, this.cascade ); 
+    }
+  },
+
+  onSuccess: function(key, encoded)
+  {
+    var model = this.model;
+
+    if ( isObject( encoded ) )
+    {
+      model.$set( encoded );
+    }
+
+    Neuro.debug( Neuro.Debugs.GET_LOCAL, model, encoded );
+
+    if ( this.canCascade( Neuro.Cascade.Rest ) )
+    {
+      this.insertNext( NeuroGetRemote, this.cascade );
+    }
+  },
+
+  onFailure: function(e)
+  {
+    var model = this.model;
+
+    Neuro.debug( Neuro.Debugs.GET_LOCAL, model, e );
+
+    if ( this.canCascade( Neuro.Cascade.Rest ) )
+    {
+      this.insertNext( NeuroGetRemote, this.cascade );
+    }
+  }
+
+});
+
+function NeuroGetRemote(model, cascade)
+{
+  this.reset( model, cascade );
+}
+
+extend( new NeuroOperation( false, 'NeuroGetRemote' ), NeuroGetRemote,
+{
+
+  run: function(db, model)
+  {
+    db.rest.get( model, this.success(), this.failure() );
+  },
+
+  onSuccess: function(data)
+  {
+    var model = this.model;
+
+    if ( isObject( data ) )
+    {
+      model.$set( data );
+    }
+
+    Neuro.debug( Neuro.Debugs.GET_REMOTE, model, data );
+  },
+
+  onFailure: function(data, status)
+  {
+    var model = this.model;
+
+    Neuro.debug( Neuro.Debugs.GET_REMOTE_ERROR, model, data, status )
+  }
+
+});
+
 function NeuroRemoveCache(model, cascade)
 {
   this.reset( model, cascade );
@@ -3580,7 +3769,7 @@ extend( new NeuroOperation( false, 'NeuroSaveNow' ), NeuroSaveNow,
 
   run: function(db, model)
   {
-    if ( db.cache === Neuro.Cache.Pending )
+    if ( db.cache !== Neuro.Cache.All )
     {
       this.finish();
     }

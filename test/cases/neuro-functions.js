@@ -309,7 +309,9 @@ test( 'Neuro.equals', function(assert)
   ok( Neuro.equals( null, null ) );
   ok( Neuro.equals( NaN, NaN ) );
 
-  ok( Neuro.equals( new Date(), new Date() ), 'okay - equals' );
+  var d1 = new Date(), d2 = new Date( d1.getTime() );
+
+  ok( Neuro.equals( d1, d2 ), 'okay - equals' );
   ok( Neuro.equals( {x:4}, {x:4} ) );
   ok( Neuro.equals( {x:4}, {x:4, $y:5} ) );
   ok( Neuro.equals( {x:4, $y: 6}, {x:4, $y:5} ) );

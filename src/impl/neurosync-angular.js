@@ -53,6 +53,10 @@
         {
           execute( 'GET', undefined, database.api, success, failure, [] );
         },
+        get: function( model, success, failure )
+        {
+          execute( 'GET', undefined, database.api + model.$key(), success, failure );
+        },
         create: function( model, encoded, success, failure )
         {
           execute( 'POST', encoded, database.api, success, failure, {} );

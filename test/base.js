@@ -109,6 +109,23 @@ TestStore.prototype =
       if ( failure ) failure( arg0, arg1 );
     }
   },
+  get: function(key, success, failure)
+  {
+    this.lastKey = key;
+
+    var map = this.map;
+    function onGet()
+    {
+      var model = map.get( key );
+      if ( model ) {
+        success.call( this, key, model );
+      } else {
+        failure.apply( this );
+      }
+    }
+
+    this.finishDelayed( onGet, failure );
+  },
   save: function(model, success, failure)
   {
     this.put( model.$key(), model, success, failure );
@@ -270,6 +287,23 @@ TestRest.prototype =
     {
       if ( failure ) failure( returnedValue, status );
     }
+  },
+  get: function(model, success, failure)
+  {
+    this.lastModel = model;
+
+    var map = this.map;
+    function onGet()
+    {
+      var cached = map.get( model.$key() );
+      if ( cached ) {
+        success.call( this, cached );
+      } else {
+        failure.call( this, null, -1 );
+      }
+    }
+
+    this.finishDelayed( onGet, failure, null );
   },
   create: function(model, encoded, success, failure)
   {

@@ -270,6 +270,11 @@ NeuroModel.prototype =
     }
   },
 
+  $refresh: function(cascade)
+  {
+    this.$db.refreshModel( this, cascade );
+  },
+
   $exists: function()
   {
     return !this.$deleted && this.$db.models.has( this.$key() );

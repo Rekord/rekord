@@ -32,6 +32,12 @@ Neuro.store = function(database)
       success( key, record );
     },
 
+    // TODO
+    get: function(key, success, failure)
+    {
+      failure( key, void 0 );
+    },
+
     /**
      * Removes a record from the store with the given key.
      * 
