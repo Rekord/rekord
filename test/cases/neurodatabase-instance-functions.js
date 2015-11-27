@@ -431,7 +431,7 @@ test( 'refresh relationships', function(assert)
   strictEqual( l0.tasks[3].name, 't4' );
 
   strictEqual( Task.all().length, 4 );
-  strictEqual( remoteTasks.lastModel, null );
+  strictEqual( remoteTasks.lastModel, t0 ); // removed
   strictEqual( remoteTasks.lastRecord, null );
 });
 

@@ -38,7 +38,7 @@ extend( new NeuroRelation(), NeuroHasMany,
     this.finishInitialization();
   },
 
-  handleLoad: function(model)
+  handleLoad: function(model, remoteData)
   {
     var that = this;
     var relatedDatabase = this.model.Database;
@@ -127,7 +127,7 @@ extend( new NeuroRelation(), NeuroHasMany,
         var key = relatedDatabase.buildKeyFromInput( input );
 
         relation.pending[ key ] = true;
-        relatedDatabase.grabModel( input, this.handleModel( relation ), this );
+        relatedDatabase.grabModel( input, this.handleModel( relation ), this, remoteData );
       }
     } 
     else
@@ -141,7 +141,7 @@ extend( new NeuroRelation(), NeuroHasMany,
     this.setProperty( relation );
   },
 
-  bulk: function(relation, callback)
+  bulk: function(relation, callback, remoteData)
   {
     relation.delaySorting = true;
     relation.delaySaving = true;
@@ -152,10 +152,10 @@ extend( new NeuroRelation(), NeuroHasMany,
     relation.delaySaving = false;
 
     this.sort( relation );
-    this.checkSave( relation );
+    this.checkSave( relation, remoteData );
   },
 
-  set: function(model, input)
+  set: function(model, input, remoteData)
   {
     if ( isEmpty( input ) )
     {
@@ -172,7 +172,7 @@ extend( new NeuroRelation(), NeuroHasMany,
       {
         for (var i = 0; i < input.length; i++)
         {
-          var related = relatedDatabase.parseModel( input[ i ] );
+          var related = relatedDatabase.parseModel( input[ i ], remoteData );
 
           if ( related )
           {
@@ -182,7 +182,7 @@ extend( new NeuroRelation(), NeuroHasMany,
       }
       else
       {
-        var related = relatedDatabase.parseModel( input );
+        var related = relatedDatabase.parseModel( input, remoteData );
 
         if ( related )
         {
@@ -197,14 +197,15 @@ extend( new NeuroRelation(), NeuroHasMany,
       {
         for (var i = 0; i < adding.length; i++)
         {
-          this.addModel( relation, adding[ i ] );
+          this.addModel( relation, adding[ i ], remoteData );
         }
 
         for (var i = 0; i < removing.length; i++)
         {
           this.removeModel( relation, removing[ i] );
         }
-      });
+
+      }, remoteData);
     }
   },
 
@@ -377,9 +378,9 @@ extend( new NeuroRelation(), NeuroHasMany,
     }
   },
 
-  checkSave: function(relation)
+  checkSave: function(relation, remoteData)
   {
-    if ( !relation.delaySaving )
+    if ( !relation.delaySaving && !remoteData )
     {
       if ( this.store === Neuro.Store.Model || this.save === Neuro.Save.Model )
       {
@@ -392,13 +393,13 @@ extend( new NeuroRelation(), NeuroHasMany,
 
   handleModelAdded: function(relation)
   {
-    return function (related)
+    return function (related, remoteData)
     {
       if ( relation.isRelated( related ) )
       {
         Neuro.debug( Neuro.Debugs.HASMANY_NINJA_ADD, this, relation, related );
 
-        this.addModel( relation, related );
+        this.addModel( relation, related, remoteData );
       }
     };
   },
@@ -440,7 +441,7 @@ extend( new NeuroRelation(), NeuroHasMany,
     };
   },
 
-  addModel: function(relation, related, skipCheck)
+  addModel: function(relation, related, remoteData)
   {
     var target = relation.models;
     var key = related.$key();
@@ -455,11 +456,11 @@ extend( new NeuroRelation(), NeuroHasMany,
       related.$on( NeuroModel.Events.Removed, relation.onRemoved );
       related.$on( NeuroModel.Events.SavedRemoteUpdate, relation.onSaved );
 
-      this.updateForeignKey( relation.parent, related );
+      this.updateForeignKey( relation.parent, related, remoteData );
 
       this.sort( relation );
 
-      if ( !skipCheck )
+      if ( !remoteData )
       {
         this.checkSave( relation );
       }
@@ -534,12 +535,12 @@ extend( new NeuroRelation(), NeuroHasMany,
     return true;
   },
 
-  updateForeignKey: function(model, related)
+  updateForeignKey: function(model, related, remoteData)
   {
     var foreign = this.foreign;
     var local = model.$db.key;
 
-    this.updateFields( related, foreign, model, local );
+    this.updateFields( related, foreign, model, local, remoteData );
   },
 
   clearForeignKey: function(related)

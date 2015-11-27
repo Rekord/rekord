@@ -35,11 +35,10 @@ extend( new NeuroRelation(), NeuroBelongsTo,
     this.finishInitialization();
   },
 
-  handleLoad: function(model)
+  handleLoad: function(model, remoteData)
   {
     var that = this;
     var isRelated = this.isRelatedFactory( model );
-    var onKeyUpdate = this.handleKeyUpdate();
     var relatedDatabase = this.model.Database;
     var initial = model[ this.name ];
 
@@ -50,8 +49,6 @@ extend( new NeuroRelation(), NeuroBelongsTo,
       isRelated: isRelated,
       model: null,
       loaded: false,
-
-      onKeyUpdate: onKeyUpdate,
 
       onRemoved: function() 
       {
@@ -84,7 +81,7 @@ extend( new NeuroRelation(), NeuroBelongsTo,
       }
     };
 
-    model.$on( NeuroModel.Events.KeyUpdate, relation.onKeyUpdate, this );
+    model.$on( NeuroModel.Events.KeyUpdate, this.onKeyUpdate, this );
     model.$on( NeuroModel.Events.PostRemove, this.postRemove, this );
 
     if ( isEmpty( initial ) && relatedDatabase.hasFields( model, this.local, isValue ) )
@@ -98,12 +95,12 @@ extend( new NeuroRelation(), NeuroBelongsTo,
     {
       Neuro.debug( Neuro.Debugs.BELONGSTO_INITIAL, this, model, initial );
 
-      relatedDatabase.grabModel( initial, this.handleModel( relation ), this );
+      relatedDatabase.grabModel( initial, this.handleModel( relation, remoteData ), this, remoteData );
     }
   },
 
   // same as HasOne
-  set: function(model, input)
+  set: function(model, input, remoteData)
   {
     if ( isEmpty( input ) )
     {
@@ -112,13 +109,13 @@ extend( new NeuroRelation(), NeuroBelongsTo,
     else
     {
       var relatedDatabase = this.model.Database;
-      var related = relatedDatabase.parseModel( input );
+      var related = relatedDatabase.parseModel( input, remoteData );
       var relation = model.$relations[ this.name ];
 
       if ( related && !relation.isRelated( related ) )
       {
         this.clearModel( relation );
-        this.setRelated( relation, related );
+        this.setRelated( relation, related, remoteData );
       }
     }
   },
@@ -164,10 +161,10 @@ extend( new NeuroRelation(), NeuroBelongsTo,
   },
 
   // same as HasOne
-  setRelated: function(relation, related)
+  setRelated: function(relation, related, remoteData)
   {
     this.setModel( relation, related );
-    this.updateForeignKey( relation.parent, related );
+    this.updateForeignKey( relation.parent, related, remoteData );
     this.setProperty( relation );
   },
 
@@ -208,8 +205,6 @@ extend( new NeuroRelation(), NeuroBelongsTo,
 
       this.clearModel( relation );
       this.setProperty( relation );
-
-      model.$off( NeuroModel.Events.KeyUpdate, relation.onKeyUpdate );
     }
   },
 
@@ -241,7 +236,7 @@ extend( new NeuroRelation(), NeuroBelongsTo,
   },
 
   // same as HasOne
-  handleModel: function(relation)
+  handleModel: function(relation, remoteData)
   {
     return function(related) 
     {
@@ -251,12 +246,12 @@ extend( new NeuroRelation(), NeuroBelongsTo,
       {
         if ( related ) 
         {
-          this.setModel( relation, related );
-          this.updateForeignKey( relation.parent, related );
+          this.setModel( relation, related, remoteData );
+          this.updateForeignKey( relation.parent, related, remoteData );
         }
         else
         {
-          this.clearForeignKey( relation.parent );
+          this.clearForeignKey( relation.parent, remoteData );
         }
 
         relation.loaded = true;
@@ -280,17 +275,17 @@ extend( new NeuroRelation(), NeuroBelongsTo,
   },
 
   // same as HasOne
-  clearForeignKey: function(model)
+  clearForeignKey: function(model, remoteData)
   {
     var local = this.local;
 
     Neuro.debug( Neuro.Debugs.BELONGSTO_CLEAR_KEY, this, model, local );
 
-    this.clearFields( model, local );
+    this.clearFields( model, local, remoteData );
   },
 
   // same as HasOne
-  updateForeignKey: function(model, related)
+  updateForeignKey: function(model, related, remoteData)
   {
     var relatedDatabase = this.model.Database;
     var local = this.local;
@@ -298,7 +293,7 @@ extend( new NeuroRelation(), NeuroBelongsTo,
 
     Neuro.debug( Neuro.Debugs.BELONGSTO_UPDATE_KEY, this, model, local, related, foreign );
 
-    this.updateFields( model, local, related, foreign );
+    this.updateFields( model, local, related, foreign, remoteData );
   },
 
   // same as HasOne
@@ -318,22 +313,19 @@ extend( new NeuroRelation(), NeuroBelongsTo,
     }
   },
 
-  handleKeyUpdate: function()
+  onKeyUpdate: function(model, related, modelFields, relatedFields)
   {
-    return function onKeyUpdate(model, related, modelFields, relatedFields)
+    if ( this.local === modelFields )
     {
-      if ( this.local === modelFields )
-      {
-        var relation = model.$relations[ this.name ];
+      var relation = model.$relations[ this.name ];
 
-        if ( relation && related !== relation.model )
-        {
-          this.clearModel( relation );
-          this.setModel( relation, related );
-          this.setProperty( relation );
-        }        
-      }
-    };
+      if ( relation && related !== relation.model )
+      {
+        this.clearModel( relation );
+        this.setModel( relation, related );
+        this.setProperty( relation );
+      }        
+    }
   }
 
 });

@@ -57,7 +57,7 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
     this.finishInitialization();
   },
 
-  handleLoad: function(model)
+  handleLoad: function(model, remoteData)
   {
     var that = this;
     var relatedDatabase = this.model.Database;
@@ -148,7 +148,7 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
         var key = relatedDatabase.buildKeyFromInput( input );
 
         relation.pending[ key ] = true;
-        relatedDatabase.grabModel( input, this.handleModel( relation ), this );
+        relatedDatabase.grabModel( input, this.handleModel( relation ), this, remoteData );
       }
     }
     else
@@ -176,7 +176,7 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
     this.checkSave( relation );
   },
   
-  set: function(model, input)
+  set: function(model, input, remoteData)
   {
     if ( isEmpty( input ) )
     {
@@ -193,7 +193,7 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
       {
         for (var i = 0; i < input.length; i++)
         {
-          var related = relatedDatabase.parseModel( input[ i ] );
+          var related = relatedDatabase.parseModel( input[ i ], remoteData );
 
           if ( related )
           {
@@ -203,7 +203,7 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
       }
       else
       {
-        var related = relatedDatabase.parseModel( input );
+        var related = relatedDatabase.parseModel( input, remoteData );
 
         if ( related )
         {
@@ -218,7 +218,7 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
       {
         for (var i = 0; i < adding.length; i++)
         {
-          this.addModel( relation, adding[ i ] );
+          this.addModel( relation, adding[ i ], remoteData );
         }
 
         for (var i = 0; i < removing.length; i++)
@@ -413,13 +413,13 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
 
   handleModelAdded: function(relation)
   {
-    return function (through)
+    return function (through, remoteData)
     {
       if ( relation.isRelated( through ) && !relation.throughs.has( through.$key() ) )
       {
         Neuro.debug( Neuro.Debugs.HASMANYTHRU_NINJA_ADD, this, relation, through );
 
-        this.addModelFromThrough( relation, through );
+        this.addModelFromThrough( relation, through, remoteData );
       }
     };
   },
@@ -467,55 +467,55 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
     };
   },
 
-  addModel: function(relation, related, skipCheck)
+  addModel: function(relation, related, remoteData)
   {
-    var adding = this.finishAddModel( relation, related, skipCheck );
+    var adding = this.finishAddModel( relation, related, remoteData );
 
     if ( adding )
     {
-      this.addThrough( relation, related );
+      this.addThrough( relation, related, remoteData );
     }
     
     return adding;
   },
 
-  addThrough: function(relation, related)
+  addThrough: function(relation, related, remoteData)
   {
     var throughDatabase = this.through.Database;
     var throughKey = this.createThroughKey( relation, related );
 
-    throughDatabase.grabModel( throughKey, this.onAddThrough( relation ), this, false );
+    throughDatabase.grabModel( throughKey, this.onAddThrough( relation, remoteData ), this, remoteData );
   },
 
-  onAddThrough: function(relation)
+  onAddThrough: function(relation, remoteData)
   {
     return function onAddThrough(through)
     {
-      this.finishAddThrough( relation, through, true );
+      this.finishAddThrough( relation, through, remoteData );
     };
   },
 
-  addModelFromThrough: function(relation, through)
+  addModelFromThrough: function(relation, through, remoteData)
   {
     var relatedDatabase = this.model.Database;
     var relatedKey = relatedDatabase.buildKey( through, this.foreign );
 
-    relatedDatabase.grabModel( relatedKey, this.onAddModelFromThrough( relation, through ), this );
+    relatedDatabase.grabModel( relatedKey, this.onAddModelFromThrough( relation, through, remoteData ), this, remoteData );
   },
 
-  onAddModelFromThrough: function(relation, through)
+  onAddModelFromThrough: function(relation, through, remoteData)
   {
     return function onAddModelFromThrough(related)
     {
       if ( related )
       {
-        this.finishAddThrough( relation, through );
-        this.finishAddModel( relation, related );
+        this.finishAddThrough( relation, through, remoteData );
+        this.finishAddModel( relation, related, remoteData );
       }
     };
   },
 
-  finishAddThrough: function(relation, through, callSave)
+  finishAddThrough: function(relation, through, remoteData)
   {
     var throughs = relation.throughs;
     var throughKey = through.$key();
@@ -528,14 +528,14 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
 
       through.$on( NeuroModel.Events.Removed, relation.onThroughRemoved );
 
-      if ( callSave )
+      if ( !remoteData )
       {
         through.$save( this.cascadeSave );
       }
     }
   },
 
-  finishAddModel: function(relation, related, skipCheck)
+  finishAddModel: function(relation, related, remoteData)
   {
     var relateds = relation.models;
     var relatedKey = related.$key();
@@ -552,7 +552,7 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
 
       this.sort( relation );
 
-      if ( !skipCheck )
+      if ( !remoteData )
       {
         this.checkSave( relation );
       }

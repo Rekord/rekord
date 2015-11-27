@@ -188,7 +188,7 @@ NeuroDatabase.prototype =
   },
 
   // Grab a model with the given input and notify the callback
-  grabModel: function(input, callback, context, fromStorage)
+  grabModel: function(input, callback, context, remoteData)
   {
     var db = this;
     var callbackContext = context || db;
@@ -196,7 +196,7 @@ NeuroDatabase.prototype =
 
     function checkModel()
     {
-      var result = db.parseModel( input, fromStorage !== false );
+      var result = db.parseModel( input, remoteData );
 
       if ( result !== false && !grabbed )
       {
@@ -226,7 +226,7 @@ NeuroDatabase.prototype =
   // parseModel( {name:'new model'} )
   // parseModel( {id:4, name:'new or existing model'} )
   // 
-  parseModel: function(input, fromStorage)
+  parseModel: function(input, remoteData)
   {
     var db = this;
     var hasRemote = db.remoteLoaded || !db.loadRemote;
@@ -245,11 +245,7 @@ NeuroDatabase.prototype =
 
     if ( input instanceof db.Model )
     {
-      if ( !db.models.has( key ) )
-      {
-        // trigger? save?
-        db.models.put( key, input );
-      }
+      db.saveToModels( input );
 
       return input;
     }
@@ -259,16 +255,23 @@ NeuroDatabase.prototype =
       
       if ( isObject( input ) )
       {
-        db.putRemoteData( input, key, model, fromStorage );
+        if ( remoteData )
+        {
+          db.putRemoteData( input, key, model );
+        }
+        else
+        {
+          model.$set( input );
+        }
       }
 
       return model;
     }
     else if ( isObject( input ) )
     {
-      if ( fromStorage )
+      if ( remoteData )
       { 
-        return db.putRemoteData( input, undefined, undefined, true ); 
+        return db.putRemoteData( input ); 
       }
       else
       {
@@ -506,7 +509,7 @@ NeuroDatabase.prototype =
 
   // Handles when we receive data from the server - either from
   // a publish, refresh, or values being returned on a save.
-  putRemoteData: function(encoded, key, model, fromStorage)
+  putRemoteData: function(encoded, key, model)
   {
     var db = this;
     var key = key || db.getKey( encoded );
@@ -527,6 +530,13 @@ NeuroDatabase.prototype =
 
     if ( model && model.$saved )
     {
+      var missingModel = !db.models.has( key );
+
+      if ( missingModel )
+      {
+        db.models.put( key, model );
+      }
+
       var current = model.$toJSON( true );
       var conflicts = {};
       var conflicted = false;
@@ -543,7 +553,7 @@ NeuroDatabase.prototype =
 
         if ( prop in relations )
         {
-          model.$set( prop, encoded[ prop ] );
+          model.$set( prop, encoded[ prop ], true );
 
           continue;
         }
@@ -582,32 +592,35 @@ NeuroDatabase.prototype =
       model.$trigger( NeuroModel.Events.RemoteUpdate, [encoded] );
 
       model.$addOperation( NeuroSaveNow ); 
+
+      if ( missingModel )
+      {
+        db.trigger( NeuroDatabase.Events.ModelAdded, [model, true] );
+      }
     }
     else
     {
-      model = db.instantiate( decoded, fromStorage );
+      model = db.instantiate( decoded, true );
+
+      model.$status = NeuroModel.Status.Synced;
 
       if ( db.cache === Neuro.Cache.All )
       {
-        model.$local = encoded;
-        model.$saved = model.$local.$saved = copy( encoded );
+        model.$local = model.$toJSON( false );
+        model.$local.$status = model.$status;
+        model.$saved = model.$local.$saved = model.$toJSON( true );
 
         model.$addOperation( NeuroSaveNow );
       }
       else
       {
-        model.$saved = clean( encoded );
+        model.$saved = model.$toJSON( true );
       }
-    }
 
-    if ( !db.models.has( key ) )
-    {
-      db.models.put( key, model );
-      db.trigger( NeuroDatabase.Events.ModelAdded, [model] );
-
-      if ( !fromStorage )
+      if ( !db.models.has( key ) )
       {
-        model.$trigger( NeuroModel.Events.Saved ); 
+        db.models.put( key, model );
+        db.trigger( NeuroDatabase.Events.ModelAdded, [model, true] );
       }
     }
 
@@ -981,9 +994,9 @@ NeuroDatabase.prototype =
   },
 
   // Return an instance of the model with the data as initial values
-  instantiate: function(data, fromStorage)
+  instantiate: function(data, remoteData)
   {
-    return new this.Model( data, fromStorage );
+    return new this.Model( data, remoteData );
   },
 
   // Save the model
@@ -1005,7 +1018,7 @@ NeuroDatabase.prototype =
     model.$addOperation( NeuroSaveLocal, cascade );
   },
 
-  saveToModels: function(model)
+  saveToModels: function(model, remoteData)
   {
     var db = this;
     var key = model.$key();
@@ -1013,14 +1026,14 @@ NeuroDatabase.prototype =
     if ( !db.models.has( key ) )
     {
       db.models.put( key, model );
-      db.trigger( NeuroDatabase.Events.ModelAdded, [model] );
+      db.trigger( NeuroDatabase.Events.ModelAdded, [model, remoteData] );
       db.updated();
 
       model.$trigger( NeuroModel.Events.CreateAndSave );
     }
     else
     {
-      db.trigger( NeuroDatabase.Events.ModelUpdated, [model] );
+      db.trigger( NeuroDatabase.Events.ModelUpdated, [model, remoteData] );
 
       model.$trigger( NeuroModel.Events.UpdateAndSave );
     }

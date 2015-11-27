@@ -35,7 +35,7 @@ extend( new NeuroRelation(), NeuroHasOne,
     this.finishInitialization();
   },
 
-  handleLoad: function(model)
+  handleLoad: function(model, remoteData)
   {
     var that = this;
     var isRelated = this.isRelatedFactory( model );
@@ -88,11 +88,11 @@ extend( new NeuroRelation(), NeuroHasOne,
     {
       Neuro.debug( Neuro.Debugs.HASONE_INITIAL, this, model, initial );
 
-      relatedDatabase.grabModel( initial, this.handleModel( relation ), this );      
+      relatedDatabase.grabModel( initial, this.handleModel( relation ), this, remoteData );      
     }
   },
 
-  set: function(model, input)
+  set: function(model, input, remoteData)
   {
     if ( isEmpty( input ) )
     {
@@ -101,7 +101,7 @@ extend( new NeuroRelation(), NeuroHasOne,
     else
     {
       var relatedDatabase = this.model.Database;
-      var related = relatedDatabase.parseModel( input );
+      var related = relatedDatabase.parseModel( input, remoteData );
       var relation = model.$relations[ this.name ];
 
       if ( related && !relation.isRelated( related ) )

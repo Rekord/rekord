@@ -17,7 +17,7 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
     var relations = {};
 
     db.models.put( key, model );
-    db.trigger( NeuroDatabase.Events.ModelAdded, [model] );
+    db.trigger( NeuroDatabase.Events.ModelAdded, [model, false] );
     db.updated();
 
     for (var i = 0; i < db.relationNames.length; i++)

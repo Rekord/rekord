@@ -783,7 +783,7 @@ function Neuro(options)
 
   var database = new NeuroDatabase( options );
 
-  var model = new Function('return function ' + database.className + '(props, exists) { this.$init( props, exists ) }')();
+  var model = new Function('return function ' + database.className + '(props, remoteData) { this.$init( props, remoteData ) }')();
   model.prototype = new NeuroModel( database );
 
   database.Model = model;
@@ -858,13 +858,7 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 {
   model.boot = function( input )
   {
-    var instance = new model( input );
-
-    instance.$local = instance.$toJSON( false );
-    instance.$local.$saved = instance.$saved = instance.$toJSON( true );
-    instance.$addOperation( NeuroSaveNow );
-
-    return instance;
+    return db.putRemoteData( input );
   };
 });
 Neuro.on( Neuro.Events.Plugins, function(model, db, options)
@@ -886,7 +880,7 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
     var relations = {};
 
     db.models.put( key, model );
-    db.trigger( NeuroDatabase.Events.ModelAdded, [model] );
+    db.trigger( NeuroDatabase.Events.ModelAdded, [model, false] );
     db.updated();
 
     for (var i = 0; i < db.relationNames.length; i++)
@@ -1636,7 +1630,7 @@ NeuroDatabase.prototype =
   },
 
   // Grab a model with the given input and notify the callback
-  grabModel: function(input, callback, context, fromStorage)
+  grabModel: function(input, callback, context, remoteData)
   {
     var db = this;
     var callbackContext = context || db;
@@ -1644,7 +1638,7 @@ NeuroDatabase.prototype =
 
     function checkModel()
     {
-      var result = db.parseModel( input, fromStorage !== false );
+      var result = db.parseModel( input, remoteData );
 
       if ( result !== false && !grabbed )
       {
@@ -1674,7 +1668,7 @@ NeuroDatabase.prototype =
   // parseModel( {name:'new model'} )
   // parseModel( {id:4, name:'new or existing model'} )
   // 
-  parseModel: function(input, fromStorage)
+  parseModel: function(input, remoteData)
   {
     var db = this;
     var hasRemote = db.remoteLoaded || !db.loadRemote;
@@ -1693,11 +1687,7 @@ NeuroDatabase.prototype =
 
     if ( input instanceof db.Model )
     {
-      if ( !db.models.has( key ) )
-      {
-        // trigger? save?
-        db.models.put( key, input );
-      }
+      db.saveToModels( input );
 
       return input;
     }
@@ -1707,16 +1697,23 @@ NeuroDatabase.prototype =
       
       if ( isObject( input ) )
       {
-        db.putRemoteData( input, key, model, fromStorage );
+        if ( remoteData )
+        {
+          db.putRemoteData( input, key, model );
+        }
+        else
+        {
+          model.$set( input );
+        }
       }
 
       return model;
     }
     else if ( isObject( input ) )
     {
-      if ( fromStorage )
+      if ( remoteData )
       { 
-        return db.putRemoteData( input, undefined, undefined, true ); 
+        return db.putRemoteData( input ); 
       }
       else
       {
@@ -1954,7 +1951,7 @@ NeuroDatabase.prototype =
 
   // Handles when we receive data from the server - either from
   // a publish, refresh, or values being returned on a save.
-  putRemoteData: function(encoded, key, model, fromStorage)
+  putRemoteData: function(encoded, key, model)
   {
     var db = this;
     var key = key || db.getKey( encoded );
@@ -1975,6 +1972,13 @@ NeuroDatabase.prototype =
 
     if ( model && model.$saved )
     {
+      var missingModel = !db.models.has( key );
+
+      if ( missingModel )
+      {
+        db.models.put( key, model );
+      }
+
       var current = model.$toJSON( true );
       var conflicts = {};
       var conflicted = false;
@@ -1991,7 +1995,7 @@ NeuroDatabase.prototype =
 
         if ( prop in relations )
         {
-          model.$set( prop, encoded[ prop ] );
+          model.$set( prop, encoded[ prop ], true );
 
           continue;
         }
@@ -2030,32 +2034,35 @@ NeuroDatabase.prototype =
       model.$trigger( NeuroModel.Events.RemoteUpdate, [encoded] );
 
       model.$addOperation( NeuroSaveNow ); 
+
+      if ( missingModel )
+      {
+        db.trigger( NeuroDatabase.Events.ModelAdded, [model, true] );
+      }
     }
     else
     {
-      model = db.instantiate( decoded, fromStorage );
+      model = db.instantiate( decoded, true );
+
+      model.$status = NeuroModel.Status.Synced;
 
       if ( db.cache === Neuro.Cache.All )
       {
-        model.$local = encoded;
-        model.$saved = model.$local.$saved = copy( encoded );
+        model.$local = model.$toJSON( false );
+        model.$local.$status = model.$status;
+        model.$saved = model.$local.$saved = model.$toJSON( true );
 
         model.$addOperation( NeuroSaveNow );
       }
       else
       {
-        model.$saved = clean( encoded );
+        model.$saved = model.$toJSON( true );
       }
-    }
 
-    if ( !db.models.has( key ) )
-    {
-      db.models.put( key, model );
-      db.trigger( NeuroDatabase.Events.ModelAdded, [model] );
-
-      if ( !fromStorage )
+      if ( !db.models.has( key ) )
       {
-        model.$trigger( NeuroModel.Events.Saved ); 
+        db.models.put( key, model );
+        db.trigger( NeuroDatabase.Events.ModelAdded, [model, true] );
       }
     }
 
@@ -2429,9 +2436,9 @@ NeuroDatabase.prototype =
   },
 
   // Return an instance of the model with the data as initial values
-  instantiate: function(data, fromStorage)
+  instantiate: function(data, remoteData)
   {
-    return new this.Model( data, fromStorage );
+    return new this.Model( data, remoteData );
   },
 
   // Save the model
@@ -2453,7 +2460,7 @@ NeuroDatabase.prototype =
     model.$addOperation( NeuroSaveLocal, cascade );
   },
 
-  saveToModels: function(model)
+  saveToModels: function(model, remoteData)
   {
     var db = this;
     var key = model.$key();
@@ -2461,14 +2468,14 @@ NeuroDatabase.prototype =
     if ( !db.models.has( key ) )
     {
       db.models.put( key, model );
-      db.trigger( NeuroDatabase.Events.ModelAdded, [model] );
+      db.trigger( NeuroDatabase.Events.ModelAdded, [model, remoteData] );
       db.updated();
 
       model.$trigger( NeuroModel.Events.CreateAndSave );
     }
     else
     {
-      db.trigger( NeuroDatabase.Events.ModelUpdated, [model] );
+      db.trigger( NeuroDatabase.Events.ModelUpdated, [model, remoteData] );
 
       model.$trigger( NeuroModel.Events.UpdateAndSave );
     }
@@ -2581,15 +2588,15 @@ NeuroModel.Status =
 NeuroModel.prototype =
 {
 
-  $init: function(props, exists)
+  $init: function(props, remoteData)
   {
     this.$status = NeuroModel.Status.Synced;
     this.$operation = null;
     this.$relations = {};
 
-    if ( exists )
+    if ( remoteData )
     {
-      this.$set( props );
+      this.$set( props, void 0, remoteData );
     }
     else
     {
@@ -2603,7 +2610,7 @@ NeuroModel.prototype =
 
       for (var name in databaseRelations)
       {
-        this.$getRelation( name );
+        this.$getRelation( name, remoteData );
       }
     }
   },
@@ -2650,22 +2657,22 @@ NeuroModel.prototype =
     this.$set( props );
   },
 
-  $set: function(props, value)
+  $set: function(props, value, remoteData)
   {
     if ( isObject( props ) )
     {
       for (var prop in props)
       {
-        this.$set( prop, props[ prop ] );
+        this.$set( prop, props[ prop ], remoteData );
       }
     }
     else if ( isString( props ) )
     {
-      var relation = this.$getRelation( props );
+      var relation = this.$getRelation( props, remoteData );
       
       if ( relation )
       {
-        relation.set( this, value );
+        relation.set( this, value, remoteData );
       }
       else
       {
@@ -2738,7 +2745,7 @@ NeuroModel.prototype =
     return relation && relation.isRelated( this, related );
   },
 
-  $getRelation: function(prop)
+  $getRelation: function(prop, remoteData)
   {
     var databaseRelations = this.$db.relations;
 
@@ -2748,7 +2755,7 @@ NeuroModel.prototype =
 
       if ( !(prop in this.$relations) )
       {
-        relation.load( this );
+        relation.load( this, remoteData );
       }
 
       return relation;
@@ -4057,6 +4064,7 @@ NeuroRelation.prototype =
     this.name = field;
     this.options = options;
     this.pendingLoads = [];
+    this.pendingRemoteDatas = [];
     this.initialized = false;
 
     this.discriminator = options.discriminator || 'discriminator';
@@ -4116,13 +4124,15 @@ NeuroRelation.prototype =
     this.initialized = true;
 
     var pending = this.pendingLoads;
+    var remotes = this.pendingRemoteDatas;
 
     for (var i = 0; i < pending.length; i++)
     {
-      this.handleLoad( pending[ i ] );
+      this.handleLoad( pending[ i ], remotes[ i ] );
     }
 
     pending.length = 0;
+    remotes.length = 0;
   },
 
   /**
@@ -4134,21 +4144,27 @@ NeuroRelation.prototype =
    * @param  {[type]} model [description]
    * @return {[type]}       [description]
    */
-  load: function(model)
+  load: function(model, remoteData)
   {
     if ( !this.initialized )
     {
       this.pendingLoads.push( model );
+      this.pendingRemoteDatas.push( remoteData );
     }
     else
     {
-      this.handleLoad( model );
+      this.handleLoad( model, remoteData );
     }
   },
 
-  handleLoad: function(model)
+  handleLoad: function(model, remoteData)
   {
 
+  },
+
+  set: function(model, input, remoteData)
+  {
+    
   },
 
   relate: function(model, input)
@@ -4169,12 +4185,6 @@ NeuroRelation.prototype =
   get: function(model)
   {
 
-  },
-
-  set: function(model, input)
-  {
-    this.unrelate( model );
-    this.relate( model, input );
   },
 
   encode: function(model, out, forSaving)
@@ -4213,7 +4223,7 @@ NeuroRelation.prototype =
     return false;
   },
 
-  clearFields: function(target, targetFields)
+  clearFields: function(target, targetFields, remoteData)
   {
     var changes = false;
 
@@ -4239,7 +4249,7 @@ NeuroRelation.prototype =
       }
     }
 
-    if ( changes && this.auto && !target.$isNew() )
+    if ( changes && !remoteData && this.auto && !target.$isNew() )
     {
       target.$save();
     }
@@ -4247,7 +4257,7 @@ NeuroRelation.prototype =
     return changes;
   },
 
-  updateFields: function(target, targetFields, source, sourceFields)
+  updateFields: function(target, targetFields, source, sourceFields, remoteData)
   {
     var changes = false;
 
@@ -4283,7 +4293,7 @@ NeuroRelation.prototype =
 
     if ( changes )
     {
-      if ( this.auto && !target.$isNew() )
+      if ( this.auto && !target.$isNew() && !remoteData )
       {
         target.$save();
       }
@@ -4540,11 +4550,10 @@ extend( new NeuroRelation(), NeuroBelongsTo,
     this.finishInitialization();
   },
 
-  handleLoad: function(model)
+  handleLoad: function(model, remoteData)
   {
     var that = this;
     var isRelated = this.isRelatedFactory( model );
-    var onKeyUpdate = this.handleKeyUpdate();
     var relatedDatabase = this.model.Database;
     var initial = model[ this.name ];
 
@@ -4555,8 +4564,6 @@ extend( new NeuroRelation(), NeuroBelongsTo,
       isRelated: isRelated,
       model: null,
       loaded: false,
-
-      onKeyUpdate: onKeyUpdate,
 
       onRemoved: function() 
       {
@@ -4589,7 +4596,7 @@ extend( new NeuroRelation(), NeuroBelongsTo,
       }
     };
 
-    model.$on( NeuroModel.Events.KeyUpdate, relation.onKeyUpdate, this );
+    model.$on( NeuroModel.Events.KeyUpdate, this.onKeyUpdate, this );
     model.$on( NeuroModel.Events.PostRemove, this.postRemove, this );
 
     if ( isEmpty( initial ) && relatedDatabase.hasFields( model, this.local, isValue ) )
@@ -4603,12 +4610,12 @@ extend( new NeuroRelation(), NeuroBelongsTo,
     {
       Neuro.debug( Neuro.Debugs.BELONGSTO_INITIAL, this, model, initial );
 
-      relatedDatabase.grabModel( initial, this.handleModel( relation ), this );
+      relatedDatabase.grabModel( initial, this.handleModel( relation, remoteData ), this, remoteData );
     }
   },
 
   // same as HasOne
-  set: function(model, input)
+  set: function(model, input, remoteData)
   {
     if ( isEmpty( input ) )
     {
@@ -4617,13 +4624,13 @@ extend( new NeuroRelation(), NeuroBelongsTo,
     else
     {
       var relatedDatabase = this.model.Database;
-      var related = relatedDatabase.parseModel( input );
+      var related = relatedDatabase.parseModel( input, remoteData );
       var relation = model.$relations[ this.name ];
 
       if ( related && !relation.isRelated( related ) )
       {
         this.clearModel( relation );
-        this.setRelated( relation, related );
+        this.setRelated( relation, related, remoteData );
       }
     }
   },
@@ -4669,10 +4676,10 @@ extend( new NeuroRelation(), NeuroBelongsTo,
   },
 
   // same as HasOne
-  setRelated: function(relation, related)
+  setRelated: function(relation, related, remoteData)
   {
     this.setModel( relation, related );
-    this.updateForeignKey( relation.parent, related );
+    this.updateForeignKey( relation.parent, related, remoteData );
     this.setProperty( relation );
   },
 
@@ -4713,8 +4720,6 @@ extend( new NeuroRelation(), NeuroBelongsTo,
 
       this.clearModel( relation );
       this.setProperty( relation );
-
-      model.$off( NeuroModel.Events.KeyUpdate, relation.onKeyUpdate );
     }
   },
 
@@ -4746,7 +4751,7 @@ extend( new NeuroRelation(), NeuroBelongsTo,
   },
 
   // same as HasOne
-  handleModel: function(relation)
+  handleModel: function(relation, remoteData)
   {
     return function(related) 
     {
@@ -4756,12 +4761,12 @@ extend( new NeuroRelation(), NeuroBelongsTo,
       {
         if ( related ) 
         {
-          this.setModel( relation, related );
-          this.updateForeignKey( relation.parent, related );
+          this.setModel( relation, related, remoteData );
+          this.updateForeignKey( relation.parent, related, remoteData );
         }
         else
         {
-          this.clearForeignKey( relation.parent );
+          this.clearForeignKey( relation.parent, remoteData );
         }
 
         relation.loaded = true;
@@ -4785,17 +4790,17 @@ extend( new NeuroRelation(), NeuroBelongsTo,
   },
 
   // same as HasOne
-  clearForeignKey: function(model)
+  clearForeignKey: function(model, remoteData)
   {
     var local = this.local;
 
     Neuro.debug( Neuro.Debugs.BELONGSTO_CLEAR_KEY, this, model, local );
 
-    this.clearFields( model, local );
+    this.clearFields( model, local, remoteData );
   },
 
   // same as HasOne
-  updateForeignKey: function(model, related)
+  updateForeignKey: function(model, related, remoteData)
   {
     var relatedDatabase = this.model.Database;
     var local = this.local;
@@ -4803,7 +4808,7 @@ extend( new NeuroRelation(), NeuroBelongsTo,
 
     Neuro.debug( Neuro.Debugs.BELONGSTO_UPDATE_KEY, this, model, local, related, foreign );
 
-    this.updateFields( model, local, related, foreign );
+    this.updateFields( model, local, related, foreign, remoteData );
   },
 
   // same as HasOne
@@ -4823,22 +4828,19 @@ extend( new NeuroRelation(), NeuroBelongsTo,
     }
   },
 
-  handleKeyUpdate: function()
+  onKeyUpdate: function(model, related, modelFields, relatedFields)
   {
-    return function onKeyUpdate(model, related, modelFields, relatedFields)
+    if ( this.local === modelFields )
     {
-      if ( this.local === modelFields )
-      {
-        var relation = model.$relations[ this.name ];
+      var relation = model.$relations[ this.name ];
 
-        if ( relation && related !== relation.model )
-        {
-          this.clearModel( relation );
-          this.setModel( relation, related );
-          this.setProperty( relation );
-        }        
-      }
-    };
+      if ( relation && related !== relation.model )
+      {
+        this.clearModel( relation );
+        this.setModel( relation, related );
+        this.setProperty( relation );
+      }        
+    }
   }
 
 });
@@ -4882,7 +4884,7 @@ extend( new NeuroRelation(), NeuroHasMany,
     this.finishInitialization();
   },
 
-  handleLoad: function(model)
+  handleLoad: function(model, remoteData)
   {
     var that = this;
     var relatedDatabase = this.model.Database;
@@ -4971,7 +4973,7 @@ extend( new NeuroRelation(), NeuroHasMany,
         var key = relatedDatabase.buildKeyFromInput( input );
 
         relation.pending[ key ] = true;
-        relatedDatabase.grabModel( input, this.handleModel( relation ), this );
+        relatedDatabase.grabModel( input, this.handleModel( relation ), this, remoteData );
       }
     } 
     else
@@ -4985,7 +4987,7 @@ extend( new NeuroRelation(), NeuroHasMany,
     this.setProperty( relation );
   },
 
-  bulk: function(relation, callback)
+  bulk: function(relation, callback, remoteData)
   {
     relation.delaySorting = true;
     relation.delaySaving = true;
@@ -4996,10 +4998,10 @@ extend( new NeuroRelation(), NeuroHasMany,
     relation.delaySaving = false;
 
     this.sort( relation );
-    this.checkSave( relation );
+    this.checkSave( relation, remoteData );
   },
 
-  set: function(model, input)
+  set: function(model, input, remoteData)
   {
     if ( isEmpty( input ) )
     {
@@ -5016,7 +5018,7 @@ extend( new NeuroRelation(), NeuroHasMany,
       {
         for (var i = 0; i < input.length; i++)
         {
-          var related = relatedDatabase.parseModel( input[ i ] );
+          var related = relatedDatabase.parseModel( input[ i ], remoteData );
 
           if ( related )
           {
@@ -5026,7 +5028,7 @@ extend( new NeuroRelation(), NeuroHasMany,
       }
       else
       {
-        var related = relatedDatabase.parseModel( input );
+        var related = relatedDatabase.parseModel( input, remoteData );
 
         if ( related )
         {
@@ -5041,14 +5043,15 @@ extend( new NeuroRelation(), NeuroHasMany,
       {
         for (var i = 0; i < adding.length; i++)
         {
-          this.addModel( relation, adding[ i ] );
+          this.addModel( relation, adding[ i ], remoteData );
         }
 
         for (var i = 0; i < removing.length; i++)
         {
           this.removeModel( relation, removing[ i] );
         }
-      });
+
+      }, remoteData);
     }
   },
 
@@ -5221,9 +5224,9 @@ extend( new NeuroRelation(), NeuroHasMany,
     }
   },
 
-  checkSave: function(relation)
+  checkSave: function(relation, remoteData)
   {
-    if ( !relation.delaySaving )
+    if ( !relation.delaySaving && !remoteData )
     {
       if ( this.store === Neuro.Store.Model || this.save === Neuro.Save.Model )
       {
@@ -5236,13 +5239,13 @@ extend( new NeuroRelation(), NeuroHasMany,
 
   handleModelAdded: function(relation)
   {
-    return function (related)
+    return function (related, remoteData)
     {
       if ( relation.isRelated( related ) )
       {
         Neuro.debug( Neuro.Debugs.HASMANY_NINJA_ADD, this, relation, related );
 
-        this.addModel( relation, related );
+        this.addModel( relation, related, remoteData );
       }
     };
   },
@@ -5284,7 +5287,7 @@ extend( new NeuroRelation(), NeuroHasMany,
     };
   },
 
-  addModel: function(relation, related, skipCheck)
+  addModel: function(relation, related, remoteData)
   {
     var target = relation.models;
     var key = related.$key();
@@ -5299,11 +5302,11 @@ extend( new NeuroRelation(), NeuroHasMany,
       related.$on( NeuroModel.Events.Removed, relation.onRemoved );
       related.$on( NeuroModel.Events.SavedRemoteUpdate, relation.onSaved );
 
-      this.updateForeignKey( relation.parent, related );
+      this.updateForeignKey( relation.parent, related, remoteData );
 
       this.sort( relation );
 
-      if ( !skipCheck )
+      if ( !remoteData )
       {
         this.checkSave( relation );
       }
@@ -5378,12 +5381,12 @@ extend( new NeuroRelation(), NeuroHasMany,
     return true;
   },
 
-  updateForeignKey: function(model, related)
+  updateForeignKey: function(model, related, remoteData)
   {
     var foreign = this.foreign;
     var local = model.$db.key;
 
-    this.updateFields( related, foreign, model, local );
+    this.updateFields( related, foreign, model, local, remoteData );
   },
 
   clearForeignKey: function(related)
@@ -5492,7 +5495,7 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
     this.finishInitialization();
   },
 
-  handleLoad: function(model)
+  handleLoad: function(model, remoteData)
   {
     var that = this;
     var relatedDatabase = this.model.Database;
@@ -5583,7 +5586,7 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
         var key = relatedDatabase.buildKeyFromInput( input );
 
         relation.pending[ key ] = true;
-        relatedDatabase.grabModel( input, this.handleModel( relation ), this );
+        relatedDatabase.grabModel( input, this.handleModel( relation ), this, remoteData );
       }
     }
     else
@@ -5611,7 +5614,7 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
     this.checkSave( relation );
   },
   
-  set: function(model, input)
+  set: function(model, input, remoteData)
   {
     if ( isEmpty( input ) )
     {
@@ -5628,7 +5631,7 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
       {
         for (var i = 0; i < input.length; i++)
         {
-          var related = relatedDatabase.parseModel( input[ i ] );
+          var related = relatedDatabase.parseModel( input[ i ], remoteData );
 
           if ( related )
           {
@@ -5638,7 +5641,7 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
       }
       else
       {
-        var related = relatedDatabase.parseModel( input );
+        var related = relatedDatabase.parseModel( input, remoteData );
 
         if ( related )
         {
@@ -5653,7 +5656,7 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
       {
         for (var i = 0; i < adding.length; i++)
         {
-          this.addModel( relation, adding[ i ] );
+          this.addModel( relation, adding[ i ], remoteData );
         }
 
         for (var i = 0; i < removing.length; i++)
@@ -5848,13 +5851,13 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
 
   handleModelAdded: function(relation)
   {
-    return function (through)
+    return function (through, remoteData)
     {
       if ( relation.isRelated( through ) && !relation.throughs.has( through.$key() ) )
       {
         Neuro.debug( Neuro.Debugs.HASMANYTHRU_NINJA_ADD, this, relation, through );
 
-        this.addModelFromThrough( relation, through );
+        this.addModelFromThrough( relation, through, remoteData );
       }
     };
   },
@@ -5902,55 +5905,55 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
     };
   },
 
-  addModel: function(relation, related, skipCheck)
+  addModel: function(relation, related, remoteData)
   {
-    var adding = this.finishAddModel( relation, related, skipCheck );
+    var adding = this.finishAddModel( relation, related, remoteData );
 
     if ( adding )
     {
-      this.addThrough( relation, related );
+      this.addThrough( relation, related, remoteData );
     }
     
     return adding;
   },
 
-  addThrough: function(relation, related)
+  addThrough: function(relation, related, remoteData)
   {
     var throughDatabase = this.through.Database;
     var throughKey = this.createThroughKey( relation, related );
 
-    throughDatabase.grabModel( throughKey, this.onAddThrough( relation ), this, false );
+    throughDatabase.grabModel( throughKey, this.onAddThrough( relation, remoteData ), this, remoteData );
   },
 
-  onAddThrough: function(relation)
+  onAddThrough: function(relation, remoteData)
   {
     return function onAddThrough(through)
     {
-      this.finishAddThrough( relation, through, true );
+      this.finishAddThrough( relation, through, remoteData );
     };
   },
 
-  addModelFromThrough: function(relation, through)
+  addModelFromThrough: function(relation, through, remoteData)
   {
     var relatedDatabase = this.model.Database;
     var relatedKey = relatedDatabase.buildKey( through, this.foreign );
 
-    relatedDatabase.grabModel( relatedKey, this.onAddModelFromThrough( relation, through ), this );
+    relatedDatabase.grabModel( relatedKey, this.onAddModelFromThrough( relation, through, remoteData ), this, remoteData );
   },
 
-  onAddModelFromThrough: function(relation, through)
+  onAddModelFromThrough: function(relation, through, remoteData)
   {
     return function onAddModelFromThrough(related)
     {
       if ( related )
       {
-        this.finishAddThrough( relation, through );
-        this.finishAddModel( relation, related );
+        this.finishAddThrough( relation, through, remoteData );
+        this.finishAddModel( relation, related, remoteData );
       }
     };
   },
 
-  finishAddThrough: function(relation, through, callSave)
+  finishAddThrough: function(relation, through, remoteData)
   {
     var throughs = relation.throughs;
     var throughKey = through.$key();
@@ -5963,14 +5966,14 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
 
       through.$on( NeuroModel.Events.Removed, relation.onThroughRemoved );
 
-      if ( callSave )
+      if ( !remoteData )
       {
         through.$save( this.cascadeSave );
       }
     }
   },
 
-  finishAddModel: function(relation, related, skipCheck)
+  finishAddModel: function(relation, related, remoteData)
   {
     var relateds = relation.models;
     var relatedKey = related.$key();
@@ -5987,7 +5990,7 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
 
       this.sort( relation );
 
-      if ( !skipCheck )
+      if ( !remoteData )
       {
         this.checkSave( relation );
       }
@@ -6190,7 +6193,7 @@ extend( new NeuroRelation(), NeuroHasOne,
     this.finishInitialization();
   },
 
-  handleLoad: function(model)
+  handleLoad: function(model, remoteData)
   {
     var that = this;
     var isRelated = this.isRelatedFactory( model );
@@ -6243,11 +6246,11 @@ extend( new NeuroRelation(), NeuroHasOne,
     {
       Neuro.debug( Neuro.Debugs.HASONE_INITIAL, this, model, initial );
 
-      relatedDatabase.grabModel( initial, this.handleModel( relation ), this );      
+      relatedDatabase.grabModel( initial, this.handleModel( relation ), this, remoteData );      
     }
   },
 
-  set: function(model, input)
+  set: function(model, input, remoteData)
   {
     if ( isEmpty( input ) )
     {
@@ -6256,7 +6259,7 @@ extend( new NeuroRelation(), NeuroHasOne,
     else
     {
       var relatedDatabase = this.model.Database;
-      var related = relatedDatabase.parseModel( input );
+      var related = relatedDatabase.parseModel( input, remoteData );
       var relation = model.$relations[ this.name ];
 
       if ( related && !relation.isRelated( related ) )

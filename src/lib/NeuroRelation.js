@@ -51,6 +51,7 @@ NeuroRelation.prototype =
     this.name = field;
     this.options = options;
     this.pendingLoads = [];
+    this.pendingRemoteDatas = [];
     this.initialized = false;
 
     this.discriminator = options.discriminator || 'discriminator';
@@ -110,13 +111,15 @@ NeuroRelation.prototype =
     this.initialized = true;
 
     var pending = this.pendingLoads;
+    var remotes = this.pendingRemoteDatas;
 
     for (var i = 0; i < pending.length; i++)
     {
-      this.handleLoad( pending[ i ] );
+      this.handleLoad( pending[ i ], remotes[ i ] );
     }
 
     pending.length = 0;
+    remotes.length = 0;
   },
 
   /**
@@ -128,21 +131,27 @@ NeuroRelation.prototype =
    * @param  {[type]} model [description]
    * @return {[type]}       [description]
    */
-  load: function(model)
+  load: function(model, remoteData)
   {
     if ( !this.initialized )
     {
       this.pendingLoads.push( model );
+      this.pendingRemoteDatas.push( remoteData );
     }
     else
     {
-      this.handleLoad( model );
+      this.handleLoad( model, remoteData );
     }
   },
 
-  handleLoad: function(model)
+  handleLoad: function(model, remoteData)
   {
 
+  },
+
+  set: function(model, input, remoteData)
+  {
+    
   },
 
   relate: function(model, input)
@@ -163,12 +172,6 @@ NeuroRelation.prototype =
   get: function(model)
   {
 
-  },
-
-  set: function(model, input)
-  {
-    this.unrelate( model );
-    this.relate( model, input );
   },
 
   encode: function(model, out, forSaving)
@@ -207,7 +210,7 @@ NeuroRelation.prototype =
     return false;
   },
 
-  clearFields: function(target, targetFields)
+  clearFields: function(target, targetFields, remoteData)
   {
     var changes = false;
 
@@ -233,7 +236,7 @@ NeuroRelation.prototype =
       }
     }
 
-    if ( changes && this.auto && !target.$isNew() )
+    if ( changes && !remoteData && this.auto && !target.$isNew() )
     {
       target.$save();
     }
@@ -241,7 +244,7 @@ NeuroRelation.prototype =
     return changes;
   },
 
-  updateFields: function(target, targetFields, source, sourceFields)
+  updateFields: function(target, targetFields, source, sourceFields, remoteData)
   {
     var changes = false;
 
@@ -277,7 +280,7 @@ NeuroRelation.prototype =
 
     if ( changes )
     {
-      if ( this.auto && !target.$isNew() )
+      if ( this.auto && !target.$isNew() && !remoteData )
       {
         target.$save();
       }

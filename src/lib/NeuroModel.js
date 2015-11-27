@@ -63,15 +63,15 @@ NeuroModel.Status =
 NeuroModel.prototype =
 {
 
-  $init: function(props, exists)
+  $init: function(props, remoteData)
   {
     this.$status = NeuroModel.Status.Synced;
     this.$operation = null;
     this.$relations = {};
 
-    if ( exists )
+    if ( remoteData )
     {
-      this.$set( props );
+      this.$set( props, void 0, remoteData );
     }
     else
     {
@@ -85,7 +85,7 @@ NeuroModel.prototype =
 
       for (var name in databaseRelations)
       {
-        this.$getRelation( name );
+        this.$getRelation( name, remoteData );
       }
     }
   },
@@ -132,22 +132,22 @@ NeuroModel.prototype =
     this.$set( props );
   },
 
-  $set: function(props, value)
+  $set: function(props, value, remoteData)
   {
     if ( isObject( props ) )
     {
       for (var prop in props)
       {
-        this.$set( prop, props[ prop ] );
+        this.$set( prop, props[ prop ], remoteData );
       }
     }
     else if ( isString( props ) )
     {
-      var relation = this.$getRelation( props );
+      var relation = this.$getRelation( props, remoteData );
       
       if ( relation )
       {
-        relation.set( this, value );
+        relation.set( this, value, remoteData );
       }
       else
       {
@@ -220,7 +220,7 @@ NeuroModel.prototype =
     return relation && relation.isRelated( this, related );
   },
 
-  $getRelation: function(prop)
+  $getRelation: function(prop, remoteData)
   {
     var databaseRelations = this.$db.relations;
 
@@ -230,7 +230,7 @@ NeuroModel.prototype =
 
       if ( !(prop in this.$relations) )
       {
-        relation.load( this );
+        relation.load( this, remoteData );
       }
 
       return relation;
