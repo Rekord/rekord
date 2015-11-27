@@ -41,7 +41,7 @@ NeuroOperation.prototype =
 
   execute: function()
   {
-    this.db.remoteOperations++;
+    this.db.pendingOperations++;
 
     this.run( this.db, this.model );
   },
@@ -62,11 +62,11 @@ NeuroOperation.prototype =
         this.next.execute();
       }
 
-      this.db.remoteOperations--;
+      this.db.pendingOperations--;
 
-      if ( this.db.remoteOperations === 0 )
+      if ( this.db.pendingOperations === 0 )
       {
-        this.db.onRemoteRest();
+        this.db.onOperationRest();
       }
     }
 

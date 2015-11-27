@@ -35,6 +35,13 @@ function noline()
   Neuro.off( 'online offline' );
 }
 
+function restart()
+{
+  Neuro.cache = {};
+  noline();
+  online();
+}
+
 Array.prototype.pluck = function(property)
 {
   var plucked = [];

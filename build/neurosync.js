@@ -263,7 +263,7 @@ function copy(x, copyHidden)
 
     for (var i = 0; i < x.length; i++) 
     {
-      c.push( copy(x[i]) );
+      c.push( copy(x[i], copyHidden) );
     }
 
     return c;
@@ -280,7 +280,7 @@ function copy(x, copyHidden)
   {
     if (copyHidden || prop.charAt(0) !== '$')
     {
-      c[ prop ] = copy( x[prop] );
+      c[ prop ] = copy( x[prop], copyHidden );
     }
   }
 
@@ -1095,6 +1095,22 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 });
 Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 {
+  model.get = function( input, callback, context )
+  {
+    if ( isFunction( callback ) )
+    {
+      db.grabModel( input, callback, context );
+    }
+    else
+    {
+      var key = db.buildKeyFromInput( input );
+
+      return db.getModel( key );
+    }
+  };
+});
+Neuro.on( Neuro.Events.Plugins, function(model, db, options)
+{
   if ( isObject( options.methods ) )
   {
     transfer( options.methods, model.prototype );
@@ -1486,7 +1502,8 @@ function NeuroDatabase(options)
   this.pendingRefresh = false;
   this.localLoaded = false;
   this.remoteLoaded = false;
-  this.remoteOperations = 0;
+  this.firstRefresh = false;
+  this.pendingOperations = 0;
   this.afterOnline = false;
   this.saveFields = copy( fields );
 
@@ -2198,6 +2215,9 @@ NeuroDatabase.prototype =
 
       db.models.reset();
 
+      records = Array.prototype.slice.call( records );
+      keys = Array.prototype.slice.call( keys );
+
       for (var i = 0; i < records.length; i++) 
       {
         var encoded = records[ i ];
@@ -2206,37 +2226,31 @@ NeuroDatabase.prototype =
         var model = db.instantiate( decoded, true );
 
         model.$local = encoded;
+        model.$saved = encoded.$saved;
 
-        if ( encoded.$isDeleted() )
+        if ( model.$status === NeuroModel.Status.RemovePending )
         {
           Neuro.debug( Neuro.Debugs.LOCAL_RESUME_DELETE, db, model );
 
           model.$addOperation( NeuroRemoveRemote );
         }
+        else if ( model.$status === NeuroModel.Status.Removed )
+        {
+          // nothing
+        }
+        else if ( model.$status === NeuroModel.Status.SavePending )
+        {
+          Neuro.debug( Neuro.Debugs.LOCAL_RESUME_SAVE, db, model );
+
+          db.models.put( key, model );
+
+          model.$addOperation( NeuroSaveRemote );
+        }
         else
         {
-          if ( encoded.$status === NeuroModel.Status.SavePending )
-          {
-            Neuro.debug( Neuro.Debugs.LOCAL_RESUME_SAVE, db, model );
+          Neuro.debug( Neuro.Debugs.LOCAL_LOAD_SAVED, db, model );
 
-            model.$addOperation( NeuroSaveRemote );
-          }
-          else
-          {
-            Neuro.debug( Neuro.Debugs.LOCAL_LOAD_SAVED, db, model );
-
-            model.$local.$saved = model.$saved;
-          }
-
-          // TODO investigate why sometimes the key is removed from the model then saved
-          if ( key === model.$key() )
-          {
-            db.models.put( key, model );            
-          }
-          else
-          {
-            db.store.remove( key );
-          }
+          db.models.put( key, model );
         }
       }
       
@@ -2249,7 +2263,14 @@ NeuroDatabase.prototype =
 
       if ( db.loadRemote )
       {
-        db.refresh();
+        if ( db.pendingOperations === 0 )
+        {
+          db.refresh();
+        }
+        else
+        {
+          db.firstRefresh = true;
+        }
       }
     }
 
@@ -2272,26 +2293,24 @@ NeuroDatabase.prototype =
   {
     this.afterOnline = true;
 
-    if ( this.remoteOperations === 0 )
+    if ( this.pendingOperations === 0 )
     {
-      this.onRemoteRest();
+      this.onOperationRest();
     }
   },
 
-  onRemoteRest: function()
+  onOperationRest: function()
   {
     var db = this;
 
-    if ( db.autoRefresh && db.remoteLoaded )
+    if ( ( db.autoRefresh && db.remoteLoaded && db.afterOnline ) || db.firstRefresh )
     {
-      if ( db.afterOnline )
-      {
-        db.afterOnline = false;
-        
-        Neuro.debug( Neuro.Debugs.AUTO_REFRESH, db );
+      db.afterOnline = false;
+      db.firstRefresh = false;
+      
+      Neuro.debug( Neuro.Debugs.AUTO_REFRESH, db );
 
-        db.refresh();
-      }
+      db.refresh();
     }
   },
 
@@ -3288,7 +3307,7 @@ NeuroOperation.prototype =
 
   execute: function()
   {
-    this.db.remoteOperations++;
+    this.db.pendingOperations++;
 
     this.run( this.db, this.model );
   },
@@ -3309,11 +3328,11 @@ NeuroOperation.prototype =
         this.next.execute();
       }
 
-      this.db.remoteOperations--;
+      this.db.pendingOperations--;
 
-      if ( this.db.remoteOperations === 0 )
+      if ( this.db.pendingOperations === 0 )
       {
-        this.db.onRemoteRest();
+        this.db.onOperationRest();
       }
     }
 

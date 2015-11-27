@@ -260,7 +260,7 @@ function copy(x, copyHidden)
 
     for (var i = 0; i < x.length; i++) 
     {
-      c.push( copy(x[i]) );
+      c.push( copy(x[i], copyHidden) );
     }
 
     return c;
@@ -277,7 +277,7 @@ function copy(x, copyHidden)
   {
     if (copyHidden || prop.charAt(0) !== '$')
     {
-      c[ prop ] = copy( x[prop] );
+      c[ prop ] = copy( x[prop], copyHidden );
     }
   }
 
