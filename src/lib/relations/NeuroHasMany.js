@@ -273,10 +273,13 @@ extend( new NeuroRelation(), NeuroHasMany,
     {
       var all = relation.models.values;
 
-      for (var i = all.length - 1; i >= 0; i--)
-      {
-        this.removeModel( relation, all[ i ] );
-      }
+      this.bulk( relation, function()
+      { 
+        for (var i = all.length - 1; i >= 0; i--)
+        {
+          this.removeModel( relation, all[ i ] );
+        }
+      });
     }
   },
 
@@ -345,9 +348,9 @@ extend( new NeuroRelation(), NeuroHasMany,
       {
         var related = models[ i ];
 
-        if ( related.$hasChanges() )
+        if ( !related.$isDeleted() && related.$hasChanges() )
         {
-          related.$save( this.cascadeSave );
+          related.$save();
         }
       }
 
@@ -372,7 +375,7 @@ extend( new NeuroRelation(), NeuroHasMany,
         {
           var related = models[ i ];
 
-          related.$remove( this.cascadeRemove );
+          related.$remove();
         }
       });
     }
@@ -443,6 +446,11 @@ extend( new NeuroRelation(), NeuroHasMany,
 
   addModel: function(relation, related, remoteData)
   {
+    if ( related.$isDeleted() )
+    {
+      return;
+    }
+
     var target = relation.models;
     var key = related.$key();
     var adding = !target.has( key );
@@ -486,7 +494,7 @@ extend( new NeuroRelation(), NeuroHasMany,
 
       if ( !alreadyRemoved && this.cascadeRemove )
       {
-        related.$remove( this.cascadeRemove );
+        related.$remove();
       }
 
       this.clearForeignKey( related );

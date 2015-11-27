@@ -162,7 +162,7 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
     this.setProperty( relation );
   },
 
-  bulk: function(relation, callback)
+  bulk: function(relation, callback, remoteData)
   {
     relation.delaySorting = true;
     relation.delaySaving = true;
@@ -173,7 +173,7 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
     relation.delaySaving = false;
 
     this.sort( relation );
-    this.checkSave( relation );
+    this.checkSave( relation, remoteData );
   },
   
   set: function(model, input, remoteData)
@@ -225,7 +225,8 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
         {
           this.removeModel( relation, removing[ i] );
         }
-      });
+        
+      }, remoteData);
     }
   },
 
@@ -293,10 +294,13 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
     {
       var all = relation.models.values;
 
-      for (var i = all.length - 1; i >= 0; i--)
-      {
-        this.removeModel( relation, all[ i ] );
-      }
+      this.bulk( relation, function()
+      { 
+        for (var i = all.length - 1; i >= 0; i--)
+        {
+          this.removeModel( relation, all[ i ] );
+        }
+      });
     }
   },
 
@@ -365,7 +369,7 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
       {
         var related = models[ i ];
 
-        if ( related.$hasChanges() )
+        if ( !related.$isDeleted() && related.$hasChanges() )
         {
           related.$save();
         }
@@ -398,9 +402,9 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
     }
   },
 
-  checkSave: function(relation)
+  checkSave: function(relation, remoteData)
   {
-    if ( !relation.delaySaving )
+    if ( !relation.delaySaving && !remoteData )
     {
       if ( this.store === Neuro.Store.Model || this.save === Neuro.Save.Model )
       {
@@ -469,6 +473,11 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
 
   addModel: function(relation, related, remoteData)
   {
+    if ( related.$isDeleted() )
+    {
+      return;
+    }
+
     var adding = this.finishAddModel( relation, related, remoteData );
 
     if ( adding )
@@ -497,6 +506,11 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
 
   addModelFromThrough: function(relation, through, remoteData)
   {
+    if ( through.$isDeleted() )
+    {
+      return;
+    }
+
     var relatedDatabase = this.model.Database;
     var relatedKey = relatedDatabase.buildKey( through, this.foreign );
 
@@ -528,9 +542,9 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
 
       through.$on( NeuroModel.Events.Removed, relation.onThroughRemoved );
 
-      if ( !remoteData )
+      if ( !remoteData && this.cascadeSave )
       {
-        through.$save( this.cascadeSave );
+        through.$save();
       }
     }
   },
@@ -608,7 +622,7 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
 
       if ( callRemove )
       {
-        through.$remove( this.cascadeRemove );
+        through.$remove();
       }
 
       throughs.remove( throughKey );

@@ -13,7 +13,7 @@ NeuroHasOne.Defaults =
   auto:       true,
   property:   true,
   local:      null,
-  cascade:    false
+  cascade:    true
 };
 
 extend( new NeuroRelation(), NeuroHasOne, 
@@ -56,7 +56,7 @@ extend( new NeuroRelation(), NeuroHasOne,
       {
         Neuro.debug( Neuro.Debugs.HASONE_NINJA_REMOVE, that, model, relation );
 
-        this.clearRelated( relation, true );
+        this.clearRelated( relation );
       },
       onSaved: function() 
       {
@@ -175,17 +175,14 @@ extend( new NeuroRelation(), NeuroHasOne,
     {
       var related = relation.model;  
 
-      if ( !relation.isRelated( related ) )
-      {
-        // this.set( model, model[ this.local ] ) ?
-      }
-
       if ( relation.dirty || related.$hasChanges() )
       {
         Neuro.debug( Neuro.Debugs.HASONE_PRESAVE, this, model, relation );
 
         relation.saving = true;
+
         related.$save();
+        
         relation.saving = false;
         relation.dirty = false;
       }
@@ -202,26 +199,29 @@ extend( new NeuroRelation(), NeuroHasOne,
       {
         Neuro.debug( Neuro.Debugs.HASONE_POSTREMOVE, this, model, relation );
 
-        this.clearModel( relation, false, this.cascade );
+        this.clearModel( relation );
       }
     }
   },
 
   setRelated: function(relation, related)
   {
-    this.setModel( relation, related );
-    this.updateForeignKey( relation.parent, related );
-    this.setProperty( relation );
+    if ( !related.$isDeleted() )
+    {
+      this.setModel( relation, related );
+      this.updateForeignKey( relation.parent, related );
+      this.setProperty( relation ); 
+    }
   },
 
-  clearRelated: function(relation, dontRemove)
+  clearRelated: function(relation)
   {
-    this.clearModel( relation, dontRemove );
+    this.clearModel( relation );
     this.clearForeignKey( relation.parent );
     this.setProperty( relation );
   },
 
-  clearModel: function(relation, dontRemove, cascade)
+  clearModel: function(relation) // remoteData?
   {
     var related = relation.model;
 
@@ -232,9 +232,9 @@ extend( new NeuroRelation(), NeuroHasOne,
       related.$off( NeuroModel.Events.Saved, relation.onSaved );
       related.$off( NeuroModel.Events.Removed, relation.onRemoved );
 
-      if ( !dontRemove )
+      if ( this.cascade && !related.$isDeleted() )
       {
-        related.$remove( cascade );
+        related.$remove();
       }
 
       relation.model = null;
@@ -263,7 +263,7 @@ extend( new NeuroRelation(), NeuroHasOne,
 
       if ( relation.loaded === false ) 
       {
-        if ( related ) 
+        if ( related && !related.$isDeleted() ) 
         {
           this.setModel( relation, related );
           this.updateForeignKey( relation.parent, related );

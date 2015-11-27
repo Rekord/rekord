@@ -163,9 +163,12 @@ extend( new NeuroRelation(), NeuroBelongsTo,
   // same as HasOne
   setRelated: function(relation, related, remoteData)
   {
-    this.setModel( relation, related );
-    this.updateForeignKey( relation.parent, related, remoteData );
-    this.setProperty( relation );
+    if ( !related.$isDeleted() )
+    {
+      this.setModel( relation, related );
+      this.updateForeignKey( relation.parent, related, remoteData );
+      this.setProperty( relation );
+    }
   },
 
   clearRelated: function(relation)
@@ -244,7 +247,7 @@ extend( new NeuroRelation(), NeuroBelongsTo,
 
       if ( relation.loaded === false ) 
       {
-        if ( related ) 
+        if ( related && !related.$isDeleted() ) 
         {
           this.setModel( relation, related, remoteData );
           this.updateForeignKey( relation.parent, related, remoteData );

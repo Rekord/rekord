@@ -4697,9 +4697,12 @@ extend( new NeuroRelation(), NeuroBelongsTo,
   // same as HasOne
   setRelated: function(relation, related, remoteData)
   {
-    this.setModel( relation, related );
-    this.updateForeignKey( relation.parent, related, remoteData );
-    this.setProperty( relation );
+    if ( !related.$isDeleted() )
+    {
+      this.setModel( relation, related );
+      this.updateForeignKey( relation.parent, related, remoteData );
+      this.setProperty( relation );
+    }
   },
 
   clearRelated: function(relation)
@@ -4778,7 +4781,7 @@ extend( new NeuroRelation(), NeuroBelongsTo,
 
       if ( relation.loaded === false ) 
       {
-        if ( related ) 
+        if ( related && !related.$isDeleted() ) 
         {
           this.setModel( relation, related, remoteData );
           this.updateForeignKey( relation.parent, related, remoteData );
@@ -5138,10 +5141,13 @@ extend( new NeuroRelation(), NeuroHasMany,
     {
       var all = relation.models.values;
 
-      for (var i = all.length - 1; i >= 0; i--)
-      {
-        this.removeModel( relation, all[ i ] );
-      }
+      this.bulk( relation, function()
+      { 
+        for (var i = all.length - 1; i >= 0; i--)
+        {
+          this.removeModel( relation, all[ i ] );
+        }
+      });
     }
   },
 
@@ -5210,9 +5216,9 @@ extend( new NeuroRelation(), NeuroHasMany,
       {
         var related = models[ i ];
 
-        if ( related.$hasChanges() )
+        if ( !related.$isDeleted() && related.$hasChanges() )
         {
-          related.$save( this.cascadeSave );
+          related.$save();
         }
       }
 
@@ -5237,7 +5243,7 @@ extend( new NeuroRelation(), NeuroHasMany,
         {
           var related = models[ i ];
 
-          related.$remove( this.cascadeRemove );
+          related.$remove();
         }
       });
     }
@@ -5308,6 +5314,11 @@ extend( new NeuroRelation(), NeuroHasMany,
 
   addModel: function(relation, related, remoteData)
   {
+    if ( related.$isDeleted() )
+    {
+      return;
+    }
+
     var target = relation.models;
     var key = related.$key();
     var adding = !target.has( key );
@@ -5351,7 +5362,7 @@ extend( new NeuroRelation(), NeuroHasMany,
 
       if ( !alreadyRemoved && this.cascadeRemove )
       {
-        related.$remove( this.cascadeRemove );
+        related.$remove();
       }
 
       this.clearForeignKey( related );
@@ -5619,7 +5630,7 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
     this.setProperty( relation );
   },
 
-  bulk: function(relation, callback)
+  bulk: function(relation, callback, remoteData)
   {
     relation.delaySorting = true;
     relation.delaySaving = true;
@@ -5630,7 +5641,7 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
     relation.delaySaving = false;
 
     this.sort( relation );
-    this.checkSave( relation );
+    this.checkSave( relation, remoteData );
   },
   
   set: function(model, input, remoteData)
@@ -5682,7 +5693,8 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
         {
           this.removeModel( relation, removing[ i] );
         }
-      });
+        
+      }, remoteData);
     }
   },
 
@@ -5750,10 +5762,13 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
     {
       var all = relation.models.values;
 
-      for (var i = all.length - 1; i >= 0; i--)
-      {
-        this.removeModel( relation, all[ i ] );
-      }
+      this.bulk( relation, function()
+      { 
+        for (var i = all.length - 1; i >= 0; i--)
+        {
+          this.removeModel( relation, all[ i ] );
+        }
+      });
     }
   },
 
@@ -5822,7 +5837,7 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
       {
         var related = models[ i ];
 
-        if ( related.$hasChanges() )
+        if ( !related.$isDeleted() && related.$hasChanges() )
         {
           related.$save();
         }
@@ -5855,9 +5870,9 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
     }
   },
 
-  checkSave: function(relation)
+  checkSave: function(relation, remoteData)
   {
-    if ( !relation.delaySaving )
+    if ( !relation.delaySaving && !remoteData )
     {
       if ( this.store === Neuro.Store.Model || this.save === Neuro.Save.Model )
       {
@@ -5926,6 +5941,11 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
 
   addModel: function(relation, related, remoteData)
   {
+    if ( related.$isDeleted() )
+    {
+      return;
+    }
+
     var adding = this.finishAddModel( relation, related, remoteData );
 
     if ( adding )
@@ -5954,6 +5974,11 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
 
   addModelFromThrough: function(relation, through, remoteData)
   {
+    if ( through.$isDeleted() )
+    {
+      return;
+    }
+
     var relatedDatabase = this.model.Database;
     var relatedKey = relatedDatabase.buildKey( through, this.foreign );
 
@@ -5985,9 +6010,9 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
 
       through.$on( NeuroModel.Events.Removed, relation.onThroughRemoved );
 
-      if ( !remoteData )
+      if ( !remoteData && this.cascadeSave )
       {
-        through.$save( this.cascadeSave );
+        through.$save();
       }
     }
   },
@@ -6065,7 +6090,7 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
 
       if ( callRemove )
       {
-        through.$remove( this.cascadeRemove );
+        through.$remove();
       }
 
       throughs.remove( throughKey );
@@ -6190,7 +6215,7 @@ NeuroHasOne.Defaults =
   auto:       true,
   property:   true,
   local:      null,
-  cascade:    false
+  cascade:    true
 };
 
 extend( new NeuroRelation(), NeuroHasOne, 
@@ -6233,7 +6258,7 @@ extend( new NeuroRelation(), NeuroHasOne,
       {
         Neuro.debug( Neuro.Debugs.HASONE_NINJA_REMOVE, that, model, relation );
 
-        this.clearRelated( relation, true );
+        this.clearRelated( relation );
       },
       onSaved: function() 
       {
@@ -6352,17 +6377,14 @@ extend( new NeuroRelation(), NeuroHasOne,
     {
       var related = relation.model;  
 
-      if ( !relation.isRelated( related ) )
-      {
-        // this.set( model, model[ this.local ] ) ?
-      }
-
       if ( relation.dirty || related.$hasChanges() )
       {
         Neuro.debug( Neuro.Debugs.HASONE_PRESAVE, this, model, relation );
 
         relation.saving = true;
+
         related.$save();
+        
         relation.saving = false;
         relation.dirty = false;
       }
@@ -6379,26 +6401,29 @@ extend( new NeuroRelation(), NeuroHasOne,
       {
         Neuro.debug( Neuro.Debugs.HASONE_POSTREMOVE, this, model, relation );
 
-        this.clearModel( relation, false, this.cascade );
+        this.clearModel( relation );
       }
     }
   },
 
   setRelated: function(relation, related)
   {
-    this.setModel( relation, related );
-    this.updateForeignKey( relation.parent, related );
-    this.setProperty( relation );
+    if ( !related.$isDeleted() )
+    {
+      this.setModel( relation, related );
+      this.updateForeignKey( relation.parent, related );
+      this.setProperty( relation ); 
+    }
   },
 
-  clearRelated: function(relation, dontRemove)
+  clearRelated: function(relation)
   {
-    this.clearModel( relation, dontRemove );
+    this.clearModel( relation );
     this.clearForeignKey( relation.parent );
     this.setProperty( relation );
   },
 
-  clearModel: function(relation, dontRemove, cascade)
+  clearModel: function(relation) // remoteData?
   {
     var related = relation.model;
 
@@ -6409,9 +6434,9 @@ extend( new NeuroRelation(), NeuroHasOne,
       related.$off( NeuroModel.Events.Saved, relation.onSaved );
       related.$off( NeuroModel.Events.Removed, relation.onRemoved );
 
-      if ( !dontRemove )
+      if ( this.cascade && !related.$isDeleted() )
       {
-        related.$remove( cascade );
+        related.$remove();
       }
 
       relation.model = null;
@@ -6440,7 +6465,7 @@ extend( new NeuroRelation(), NeuroHasOne,
 
       if ( relation.loaded === false ) 
       {
-        if ( related ) 
+        if ( related && !related.$isDeleted() ) 
         {
           this.setModel( relation, related );
           this.updateForeignKey( relation.parent, related );
