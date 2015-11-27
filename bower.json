@@ -1,0 +1,24 @@
+{
+  "name": "neurosync",
+  "version": "0.2.0",
+  "homepage": "https://github.com/ClickerMonkey/neurosync",
+  "authors": [
+    "Philip Diffenderfer <pdiffenderfer@gmail.com>"
+  ],
+  "description": "JavaScript client-side ORM with offline & real-time capabilities.",
+  "main": "build/neurosync.js",
+  "keywords": [
+    "javascript",
+    "orm",
+    "offline",
+    "realtime"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
