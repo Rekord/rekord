@@ -8,37 +8,30 @@ extend( new NeuroOperation( false, 'NeuroSaveRemote' ), NeuroSaveRemote,
 
   run: function(db, model)
   {
-    // If the model is deleted, return immediately!
-    if ( model.$deleted )
+    if ( model.$isDeleted() )
     {
       Neuro.debug( Neuro.Debugs.SAVE_REMOTE_DELETED, model );
 
-      return this.finish();
+      this.finish();
     }
-
-    // Grab key & encode to JSON
-    var key = this.key = model.$key();
-
-    // The fields that have changed since last save
-    var encoded = this.encoded = model.$toJSON( true );
-    var changes = this.changes = model.$getChanges( encoded );
-    var saving = this.saving = db.fullSave ? encoded : changes;
-    var publishing = this.publishing = db.fullPublish ? encoded : changes;
-
-    // If there's nothing to save, don't bother!
-    if ( isEmpty( changes ) )
+    else if ( isEmpty( model.$saving ) )
     {
-      return this.finish();
-    }
+      this.markSynced( model, true );
 
-    // Make the REST call to save the model
-    if ( model.$saved )
-    {
-      db.rest.update( model, saving, this.success(), this.failure() );
+      this.finish();
     }
     else
     {
-      db.rest.create( model, saving, this.success(), this.failure() );
+      model.$status = NeuroModel.Status.SavePending;
+
+      if ( model.$saved )
+      {
+        db.rest.update( model, model.$saving, this.success(), this.failure() );
+      }
+      else
+      {
+        db.rest.create( model, model.$saving, this.success(), this.failure() );
+      }
     }
   },
 
@@ -62,8 +55,7 @@ extend( new NeuroOperation( false, 'NeuroSaveRemote' ), NeuroSaveRemote,
     {
       Neuro.debug( Neuro.Debugs.SAVE_CONFLICT, model, data );
 
-      // Update the model with the data saved and returned
-      this.handleData( data, model, this.db );
+      this.handleData( data );
     }
     else if ( status === 410 || status === 404 ) // 410 Gone, 404 Not Found
     {
@@ -74,6 +66,8 @@ extend( new NeuroOperation( false, 'NeuroSaveRemote' ), NeuroSaveRemote,
     else if ( status !== 0 ) 
     {          
       Neuro.debug( Neuro.Debugs.SAVE_ERROR, model, status );
+
+      this.markSynced( model, true );
     } 
     else 
     {
@@ -83,12 +77,40 @@ extend( new NeuroOperation( false, 'NeuroSaveRemote' ), NeuroSaveRemote,
       // If not online for sure, try saving once online again
       if (!Neuro.online) 
       {
-        model.$pendingSave = true;
-
         Neuro.once( 'online', this.handleOnline, this );
+      }
+      else
+      {
+        this.markSynced( model, true );
       }
 
       Neuro.debug( Neuro.Debugs.SAVE_OFFLINE, model );
+    }
+  },
+
+  markSynced: function(model, saveNow)
+  {
+    model.$status = NeuroModel.Status.Synced;
+
+    this.clearPending( model );
+
+    if ( saveNow )
+    {
+      this.insertNext( NeuroSaveNow ); 
+    }
+  },
+
+  clearPending: function(model)
+  {
+    delete model.$saving;
+    delete model.$publish;
+
+    if ( model.$local )
+    {
+      model.$local.$status = model.$status;
+
+      delete model.$local.$saving;
+      delete model.$local.$publish;
     }
   },
 
@@ -96,21 +118,15 @@ extend( new NeuroOperation( false, 'NeuroSaveRemote' ), NeuroSaveRemote,
   {
     var db = this.db;
     var model = this.model;
-    var saving = this.saving;
-    var publishing = this.publishing;
+    var saving = model.$saving;
+    var publishing = model.$publish;
 
     // Check deleted one more time before updating model.
-    if ( model.$deleted )
+    if ( model.$isDeleted() )
     {
       Neuro.debug( Neuro.Debugs.SAVE_REMOTE_DELETED, model, data );
 
-      return;
-    }
-
-    // If data was returned, place it in saving to update the model and publish
-    if ( !isEmpty( data ) )
-    {
-      transfer( data, saving );
+      return this.clearPending( model );
     }
 
     Neuro.debug( Neuro.Debugs.SAVE_VALUES, model, saving );
@@ -119,34 +135,36 @@ extend( new NeuroOperation( false, 'NeuroSaveRemote' ), NeuroSaveRemote,
     // local and model point to the same object.
     if ( !model.$saved )
     {
-      if ( model.$local )
-      {
-        model.$saved = model.$local.$saved = {}; 
-      }
-      else
-      {
-        model.$saved = {};
-      }
+      model.$saved = model.$local ? (model.$local.$saved = {}) : {}; 
     }
+
+    transfer( saving, model.$saved );
     
     // Update the model with the return data
-    db.putRemoteData( saving, this.key, model );
+    if ( !isEmpty( data ) )
+    {
+      db.putRemoteData( data, model.$key(), model );
+    }    
 
     // Publish saved data to everyone else
-    if ( this.canCascade( Neuro.Cascade.Live ) )
+    Neuro.debug( Neuro.Debugs.SAVE_PUBLISH, model, publishing );
+
+    db.live(
     {
-      Neuro.debug( Neuro.Debugs.SAVE_PUBLISH, model, publishing );
+      op:     NeuroDatabase.Live.Save,
+      model:  model.$publish,
+      key:    model.$key()
+    });
 
-      db.live({
-        op: NeuroDatabase.Live.Save,
-        model: publishing,
-        key: this.key
-      });
-    }
-
+    this.markSynced( model, false );
+    
     if ( db.cache === Neuro.Cache.Pending )
     {
       this.insertNext( NeuroRemoveCache );
+    }
+    else
+    {
+      this.insertNext( NeuroSaveNow ); 
     }
   },
 
@@ -154,10 +172,9 @@ extend( new NeuroOperation( false, 'NeuroSaveRemote' ), NeuroSaveRemote,
   {
     var model = this.model;
 
-    if ( model.$pendingSave )
+    if ( model.$status === NeuroModel.Status.SavePending )
     { 
-      model.$pendingSave = false;
-      model.$addOperation( NeuroSaveRemote, this.cascade );
+      model.$addOperation( NeuroSaveRemote );
 
       Neuro.debug( Neuro.Debugs.SAVE_RESUME, model );
     }

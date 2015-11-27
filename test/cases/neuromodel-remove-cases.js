@@ -21,7 +21,7 @@ test( 'delete while in the middle of save', function(assert)
   t0.$save();
 
   strictEqual( t0.$saved.name, 'todo0' );
-  notOk( t0.$deleted );
+  notOk( t0.$isDeleted() );
 
   rest.delay = 0;
 
@@ -30,8 +30,8 @@ test( 'delete while in the middle of save', function(assert)
   setTimeout(function()
   {
     strictEqual( rest.map.values.length, 0 );
-    strictEqual( t0.$saved.name, 'todo0' );
-    ok( t0.$deleted );
+    strictEqual( t0.$saved, void 0 )
+    ok( t0.$isDeleted() );
 
     done();
 
@@ -69,7 +69,7 @@ test( 'delete local when it hasn\'t been saved locally', function(assert)
 
   var t0 = new Todo({name: 'todo0'});
 
-  notOk( t0.$deleted );
+  notOk( t0.$isDeleted() );
 
   local.valid = false;
   t0.$save();
@@ -77,7 +77,7 @@ test( 'delete local when it hasn\'t been saved locally', function(assert)
 
   t0.$remove();
 
-  ok( t0.$deleted );
+  ok( t0.$isDeleted() );
 });
 
 test( 'delete when it hasn\'t been saved remotely', function(assert)
@@ -129,7 +129,7 @@ test( 'delete while remotely removed (404/410)', function(assert)
 
   t0.$remove();
 
-  ok( t0.$deleted );
+  ok( t0.$isDeleted() );
 });
 
 test( 'delete with unexpected status code shouldn\'t remove from local storage', function(assert)
@@ -147,7 +147,7 @@ test( 'delete with unexpected status code shouldn\'t remove from local storage',
   ok( t0.$isSaved() );
   ok( local.has( t0.id ) );
   ok( remote.map.has( t0.id ) );
-  notOk( t0.$deleted );
+  notOk( t0.$isDeleted() );
 
   remote.status = 303;
 
@@ -155,7 +155,7 @@ test( 'delete with unexpected status code shouldn\'t remove from local storage',
 
   ok( local.has( t0.id ) );
   ok( remote.map.has( t0.id ) );
-  ok( t0.$deleted );
+  ok( t0.$isDeleted() );
 
   remote.status = 200;
 
@@ -164,7 +164,7 @@ test( 'delete with unexpected status code shouldn\'t remove from local storage',
   /* TODO fix remove that has failed - so I can remove locally. Remove $local
   notOk( local.has( t0.id ) );
   notOk( remote.map.has( t0.id ) );
-  ok( t0.$deleted );
+  ok( t0.$isDeleted() );
    */
 });
 

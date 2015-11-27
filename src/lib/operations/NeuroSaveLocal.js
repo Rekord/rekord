@@ -8,47 +8,91 @@ extend( new NeuroOperation( false, 'NeuroSaveLocal' ), NeuroSaveLocal,
 
   run: function(db, model)
   {
-    // If the model is deleted, return immediately!
-    if ( model.$deleted )
+    if ( model.$isDeleted() )
     {
       Neuro.debug( Neuro.Debugs.SAVE_LOCAL_DELETED, model );
 
-      return this.finish();
+      this.finish();
     }
-
-    // Fill the key if need be
-    var key = model.$key();
-    var encoded = model.$toJSON( false );
-
-    // If this model doesn't have a local copy yet - create it.
-    if ( !model.$local ) 
+    else if ( db.cache === Neuro.Cache.None )
     {
-      model.$local = encoded;
-
-      if ( model.$saved )
+      if ( this.cascade )
       {
-        model.$local.$saved = model.$saved;
+        if ( this.tryNext( NeuroSaveRemote ) )
+        {
+          this.markSaving( db, model );  
+        }
       }
-    } 
-    else 
-    {
-      // Copy to the local copy
-      transfer( encoded, model.$local );
-    }
 
-    db.store.put( key, model.$local, this.success(), this.failure() );
+      this.finish();
+    }
+    else
+    {
+      var key = model.$key();
+      var local = model.$toJSON( false );
+      
+      this.markSaving( db, model );
+
+      if ( model.$local )
+      {
+        transfer( local, model.$local );
+      }
+      else
+      {
+        model.$local = local;
+
+        if ( model.$saved )
+        {
+          model.$local.$saved = model.$saved;
+        }
+      }
+
+      model.$local.$status = model.$status;
+      model.$local.$saving = model.$saving;
+      model.$local.$publish = model.$publish;
+
+      db.store.put( key, model.$local, this.success(), this.failure() );
+    }
+  },
+
+  markSaving: function(db, model)
+  {
+    var remote = model.$toJSON( true );
+    var changes = model.$getChanges( remote );
+
+    var saving = db.fullSave ? remote : changes;
+    var publish = db.fullPublish ? remote : changes;
+
+    model.$status = NeuroModel.Status.SavePending;
+    model.$saving = saving;
+    model.$publish = publish;
+  },
+
+  clearLocal: function(model)
+  {
+    model.$status = NeuroModel.Status.Synced;
+
+    model.$local.$status = model.$status;
+    
+    delete model.$local.$saving;
+    delete model.$local.$publish;
+
+    this.insertNext( NeuroSaveNow );
   },
 
   onSuccess: function(key, encoded, previousValue)
   {
-    var db = this.db;
     var model = this.model;
 
     Neuro.debug( Neuro.Debugs.SAVE_LOCAL, model );
 
-    if ( this.canCascade( Neuro.Cascade.Rest ) )
+    if ( this.cascade )
     {
-      this.tryNext( NeuroSaveRemote, this.cascade );
+      this.tryNext( NeuroSaveRemote );
+    }
+    else
+    {
+      this.clearLocal( model );
     }
   },
 
@@ -58,9 +102,13 @@ extend( new NeuroOperation( false, 'NeuroSaveLocal' ), NeuroSaveLocal,
 
     Neuro.debug( Neuro.Debugs.SAVE_LOCAL_ERROR, model, e );
 
-    if ( this.canCascade( Neuro.Cascade.Rest ) )
+    if ( this.cascade )
     {
-      this.tryNext( NeuroSaveRemote, this.cascade );
+      this.tryNext( NeuroSaveRemote );
+    }
+    else
+    {
+      this.clearLocal( model );
     }
   }
 

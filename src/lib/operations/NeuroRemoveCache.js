@@ -8,8 +8,6 @@ extend( new NeuroOperation( true, 'NeuroRemoveCache' ), NeuroRemoveCache,
 
   run: function(db, model)
   {
-    model.$pendingSave = false;
-
     if ( db.cache == Neuro.Cache.None )
     {
       this.finish();

@@ -13,7 +13,7 @@ NeuroHasOne.Defaults =
   auto:       true,
   property:   true,
   local:      null,
-  cascade:    Neuro.Cascade.None
+  cascade:    false
 };
 
 extend( new NeuroRelation(), NeuroHasOne, 
@@ -202,7 +202,7 @@ extend( new NeuroRelation(), NeuroHasOne,
       {
         Neuro.debug( Neuro.Debugs.HASONE_POSTREMOVE, this, model, relation );
 
-        this.clearModel( relation, false, this.cascde );
+        this.clearModel( relation, false, this.cascade );
       }
     }
   },

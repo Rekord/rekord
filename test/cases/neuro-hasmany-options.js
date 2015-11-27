@@ -104,7 +104,7 @@ test( 'store none', function(assert)
 
   deepEqual( local.lastRecord, {
     id: l0.id, name: l0.name,
-    $saved: {id: l0.id, name: l0.name}
+    $saved: {id: l0.id, name: l0.name}, $status: 0
   });
   deepEqual( remote.lastRecord, {
     id: l0.id, name: l0.name
@@ -155,7 +155,7 @@ test( 'store model', function(assert)
 
   deepEqual( local.lastRecord, {
     id: l0.id, name: l0.name,
-    $saved: {id: l0.id, name: l0.name},
+    $saved: {id: l0.id, name: l0.name}, $status: 0,
     tasks: [
       t0.$local,
       t1.$local,
@@ -211,7 +211,7 @@ test( 'store key', function(assert)
 
   deepEqual( local.lastRecord, {
     id: l0.id, name: l0.name,
-    $saved: {id: l0.id, name: l0.name},
+    $saved: {id: l0.id, name: l0.name}, $status: 0,
     tasks: [ t0.id, t1.id, t2.id ]
   });
   deepEqual( remote.lastRecord, {
@@ -264,7 +264,7 @@ test( 'store keys', function(assert)
 
   deepEqual( local.lastRecord, {
     id: l0.id, name: l0.name,
-    $saved: {id: l0.id, name: l0.name},
+    $saved: {id: l0.id, name: l0.name}, $status: 0,
     tasks: [ [t0.id1, t0.id2], [t1.id1, t1.id2], [t2.id1, t2.id2] ]
   });
   deepEqual( remote.lastRecord, {
@@ -316,7 +316,7 @@ test( 'save none', function(assert)
 
   deepEqual( local.lastRecord, {
     id: l0.id, name: l0.name,
-    $saved: {id: l0.id, name: l0.name}
+    $saved: {id: l0.id, name: l0.name}, $status: 0
   });
   deepEqual( remote.lastRecord, {
     id: l0.id, name: l0.name
@@ -367,7 +367,9 @@ test( 'save model', function(assert)
 
   deepEqual( local.lastRecord, {
     id: l0.id, name: l0.name,
-    $saved: {id: l0.id, name: l0.name}
+    $saved: {id: l0.id, name: l0.name, 
+      tasks: [ t0.$saved, t1.$saved, t2.$saved ]
+    }, $status: 0
   });
 
   deepEqual( remote.map.get( l0.id ), {
@@ -719,7 +721,7 @@ test( 'cascadeRemove true', function(assert)
       tasks: {
         model: Task,
         foreign: 'task_list_id',
-        cascadeRemove: Neuro.Cascade.All
+        cascadeRemove: true
       }
     }
   });
@@ -754,7 +756,7 @@ test( 'cascadeRemove false', function(assert)
       list: {
         model: prefix + 'list',
         local: 'task_list_id',
-        cascade: Neuro.Cascade.None
+        cascade: false
       }
     }
   });
@@ -766,7 +768,7 @@ test( 'cascadeRemove false', function(assert)
       tasks: {
         model: Task,
         foreign: 'task_list_id',
-        cascadeRemove: Neuro.Cascade.None
+        cascadeRemove: false
       }
     }
   });
@@ -814,7 +816,7 @@ test( 'cascadeSave true', function(assert)
       tasks: {
         model: Task,
         foreign: 'task_list_id',
-        cascadeSave: Neuro.Cascade.All
+        cascadeSave: true
       }
     }
   });
@@ -860,7 +862,7 @@ test( 'cascadeSave false', function(assert)
       tasks: {
         model: Task,
         foreign: 'task_list_id',
-        cascadeSave: Neuro.Cascade.None
+        cascadeSave: false
       }
     }
   });

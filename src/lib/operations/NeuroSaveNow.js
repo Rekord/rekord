@@ -8,13 +8,16 @@ extend( new NeuroOperation( false, 'NeuroSaveNow' ), NeuroSaveNow,
 
   run: function(db, model)
   {
-    if ( db.cache !== Neuro.Cache.All )
+    var key = model.$key();
+    var local = model.$local;
+
+    if ( db.cache === Neuro.Cache.All && key && local )
     {
-      this.finish();
+      db.store.put( key, local, this.success(), this.failure() );
     }
     else
     {
-      db.store.put( model.$key(), model.$local, this.success(), this.failure() );
+      this.finish();
     }
   }
 

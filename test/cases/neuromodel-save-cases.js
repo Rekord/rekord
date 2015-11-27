@@ -15,11 +15,13 @@ test( 'save while deleted', function(assert)
 
   t0.$remove();
 
+  deepEqual( t0.$saved, void 0 );
+
   t0.name = 'name1';
 
   t0.$save();
 
-  deepEqual( t0.$saved, {id: 5, name: 'name0'} );
+  deepEqual( t0.$saved, void 0 );
 });
 
 test( 'save with cache:none should go right to remote', function(assert)
@@ -77,8 +79,8 @@ test( 'save while remotely removed', function(assert)
   t0.name = 'todo#1';
   t0.$save();
 
-  ok( t0.$deleted );
-  notOk( t0.$pendingSave );
+  ok( t0.$isDeleted() );
+  notStrictEqual( t0.$status, Neuro.Model.Status.SavePending );
 });
 
 test( 'save with unexpected status code', function(assert)
@@ -103,6 +105,8 @@ test( 'save with unexpected status code', function(assert)
 
 test( 'save while offline, resume save online', function(assert)
 {
+  noline();
+
   var Todo = Neuro({
     name: 'save_offline',
     fields: ['id', 'name']
@@ -125,6 +129,8 @@ test( 'save while offline, resume save online', function(assert)
 
 test( 'save, then delete, then save finishes', function(assert)
 {
+  noline();
+  
   var Todo = Neuro({
     name: 'save_offline',
     fields: ['id', 'name']

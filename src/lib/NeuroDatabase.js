@@ -445,7 +445,10 @@ NeuroDatabase.prototype =
     {
       this.revisionFunction = function(a, b)
       {
-        return (revision in a && revision in b) ? (compare( a[ revision ], b[ revision ] )) : false;
+        var ar = isObject( a ) && revision in a ? a[ revision ] : undefined;
+        var br = isObject( b ) && revision in b ? b[ revision ] : undefined;
+
+        return ar === undefined || br === undefined ? false : compare( ar, br );
       };
     }
     else
@@ -749,7 +752,7 @@ NeuroDatabase.prototype =
 
         model.$local = encoded;
 
-        if ( encoded.$deleted )
+        if ( encoded.$isDeleted() )
         {
           Neuro.debug( Neuro.Debugs.LOCAL_RESUME_DELETE, db, model );
 
@@ -757,7 +760,7 @@ NeuroDatabase.prototype =
         }
         else
         {
-          if ( !encoded.$saved )
+          if ( encoded.$status === NeuroModel.Status.SavePending )
           {
             Neuro.debug( Neuro.Debugs.LOCAL_RESUME_SAVE, db, model );
 
@@ -987,11 +990,9 @@ NeuroDatabase.prototype =
   save: function(model, cascade)
   {
     var db = this;
-    var key = model.$key();
-    var cascade = isValue( cascade ) ? cascade : Neuro.Cascade.All;
 
     // If the model is deleted, return immediately!
-    if ( model.$deleted )
+    if ( model.$isDeleted() )
     {
       Neuro.debug( Neuro.Debugs.SAVE_DELETED, db, model );
 
@@ -999,6 +1000,16 @@ NeuroDatabase.prototype =
     }
 
     // Place the model and trigger a database update.
+    this.saveToModels( model );
+
+    model.$addOperation( NeuroSaveLocal, cascade );
+  },
+
+  saveToModels: function(model)
+  {
+    var db = this;
+    var key = model.$key();
+
     if ( !db.models.has( key ) )
     {
       db.models.put( key, model );
@@ -1013,35 +1024,32 @@ NeuroDatabase.prototype =
 
       model.$trigger( NeuroModel.Events.UpdateAndSave );
     }
-
-    // If we're not supposed to cascade this anywhere, stop!
-    if ( !cascade )
-    {
-      return;
-    }
-
-    // If we're not storing locally OR we're not cascading locally, jump directly to remote.
-    // TODO ensure cascade rest, otherwise call live.
-    if ( db.cache === Neuro.Cache.None || !(cascade & Neuro.Cascade.Local) )
-    {
-      // Save remotely
-      model.$addOperation( NeuroSaveRemote, cascade );
-    }
-    else
-    {
-      // Start by saving locally.
-      model.$addOperation( NeuroSaveLocal, cascade );
-    }
   },
 
   // Remove the model 
   remove: function(model, cascade)
   {
     var db = this;
-    var key = model.$key();
-    var cascade = isValue( cascade ) ? cascade : Neuro.Cascade.All;
 
     // If we have it in the models, remove it!
+    this.removeFromModels( model );
+
+    // If we're offline and we have a pending save - cancel the pending save.
+    if ( model.$status === NeuroModel.Status.SavePending )
+    {
+      Neuro.debug( Neuro.Debugs.REMOVE_CANCEL_SAVE, db, model );
+    }
+
+    model.$status = NeuroModel.Status.RemovePending;
+
+    model.$addOperation( NeuroRemoveLocal );
+  },
+
+  removeFromModels: function(model)
+  {
+    var db = this;
+    var key = model.$key();
+
     if ( db.models.has( key ) )
     {
       db.models.remove( key );
@@ -1050,60 +1058,11 @@ NeuroDatabase.prototype =
 
       model.$trigger( NeuroModel.Events.Removed );
     }
-
-    // Mark as deleted right away
-    model.$deleted = true;
-
-    // If we're offline and we have a pending save - cancel the pending save.
-    if ( model.$pendingSave )
-    {
-      Neuro.debug( Neuro.Debugs.REMOVE_CANCEL_SAVE, db, model );
-
-      model.$pendingSave = false; 
-    }
-
-    // If we're not supposed to cascade this anywhere, stop!
-    if ( !cascade )
-    {
-      return;
-    }
-
-    // If we're not storing locally OR we're not cascading locally, jump directly to remote.
-    // TODO ensure cascade rest, otherwise call live.
-    if ( db.cache === Neuro.Cache.None || !(cascade & Neuro.Cascade.Local) )
-    {
-      // Remove remotely
-      model.$addOperation( NeuroRemoveRemote, cascade );
-    }
-    else
-    { 
-      // Start by removing locally.
-      model.$addOperation( NeuroRemoveLocal, cascade );
-    }
   },
 
   refreshModel: function(model, cascade)
   {
-    var db = this;
-    var cascade = isValue( cascade ) ? cascade : Neuro.Cascade.Rest;
-
-    // If we're not supposed to cascade this anywhere, stop!
-    if ( !cascade )
-    {
-      return;
-    }
-
-    // If we're not storing locally OR we're not cascading locally, jump directly to remote.
-    if ( db.cache !== Neuro.Cache.All || !(cascade & Neuro.Cascade.Local) )
-    {
-      // Getting remotely
-      model.$addOperation( NeuroGetRemote, cascade );
-    }
-    else
-    {
-      // Start by getting locally.
-      model.$addOperation( NeuroGetLocal, cascade );
-    }
+    model.$addOperation( NeuroGetLocal, cascade );
   }
 
 };

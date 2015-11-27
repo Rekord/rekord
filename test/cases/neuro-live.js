@@ -30,9 +30,9 @@ test( 'live removing', function(assert)
   var t0 = Todo.create({name: 'name0'});
 
   ok( t0.$isSaved() );
-  notOk( t0.$deleted );
+  notOk( t0.$isDeleted() );
 
   live.remove( t0.id );
 
-  ok( t0.$deleted );
+  ok( t0.$isDeleted() );
 });

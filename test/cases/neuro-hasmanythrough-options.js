@@ -151,7 +151,7 @@ test( 'store none', function(assert)
 
   deepEqual( local.lastRecord, {
     id: u0.id, name: u0.name,
-    $saved: {id: u0.id, name: u0.name}
+    $saved: {id: u0.id, name: u0.name}, $status: 0
   });
   deepEqual( remote.lastRecord, {
     id: u0.id, name: u0.name
@@ -182,7 +182,7 @@ test( 'store model', function(assert)
 
   deepEqual( local.lastRecord, {
     id: u0.id, name: u0.name,
-    $saved: {id: u0.id, name: u0.name},
+    $saved: {id: u0.id, name: u0.name}, $status: 0,
     groups: [
       g0.$local,
       g1.$local
@@ -217,7 +217,7 @@ test( 'store key', function(assert)
 
   deepEqual( local.lastRecord, {
     id: u0.id, name: u0.name,
-    $saved: {id: u0.id, name: u0.name},
+    $saved: {id: u0.id, name: u0.name}, $status: 0,
     groups: [ g0.id, g1.id ]
   });
   deepEqual( remote.lastRecord, {
@@ -258,7 +258,7 @@ test( 'save none', function(assert)
 
   deepEqual( local.lastRecord, {
     id: u0.id, name: u0.name,
-    $saved: {id: u0.id, name: u0.name}
+    $saved: {id: u0.id, name: u0.name}, $status: 0
   });
   deepEqual( remote.lastRecord, {
     id: u0.id, name: u0.name
@@ -289,7 +289,9 @@ test( 'save model', function(assert)
 
   deepEqual( local.lastRecord, {
     id: u0.id, name: u0.name,
-    $saved: {id: u0.id, name: u0.name}
+    $saved: {id: u0.id, name: u0.name,
+      groups: [ g0.$saved, g1.$saved ]
+    }, $status: 0
   });
   deepEqual( remote.map.get( u0.id ), {
     id: u0.id, name: u0.name,
@@ -401,7 +403,7 @@ test( 'cascadeRemove true', function(assert)
   var prefix = 'hasManyThrough_cascadeRemove_true_';
 
   var options = {
-    cascadeRemove: Neuro.Cascade.All
+    cascadeRemove: true
   };
 
   var test = createUserGroups( prefix, options, options );
@@ -431,7 +433,7 @@ test( 'cascadeRemove false', function(assert)
   var prefix = 'hasManyThrough_cascadeRemove_false_';
 
   var options = {
-    cascadeRemove: Neuro.Cascade.None
+    cascadeRemove: false
   };
 
   var test = createUserGroups( prefix, options, options );
@@ -461,7 +463,7 @@ test( 'cascadeSave true', function(assert)
   var prefix = 'hasManyThrough_cascadeSave_true_';
 
   var options = {
-    cascadeSaveRelated: Neuro.Cascade.All
+    cascadeSaveRelated: true
   };
 
   var test = createUserGroups( prefix, options, options );
@@ -489,7 +491,7 @@ test( 'cascadeSave false', function(assert)
   var prefix = 'hasManyThrough_cascadeSave_false_';
 
   var options = {
-    cascadeSaveRelated: Neuro.Cascade.None
+    cascadeSaveRelated: false
   };
 
   var test = createUserGroups( prefix, options, options );

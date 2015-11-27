@@ -1,4 +1,5 @@
 
+/* Removing?
 Neuro.Cascade = {
   None:     0,
   Local:    1,
@@ -7,6 +8,7 @@ Neuro.Cascade = {
   Remote:   6,
   All:      7
 };
+*/
 
 function NeuroOperation(interrupts, type)
 {
@@ -19,15 +21,10 @@ NeuroOperation.prototype =
   reset: function(model, cascade)
   {
     this.model = model;
-    this.cascade = isValue( cascade ) ? cascade : Neuro.Cascade.All;
+    this.cascade = cascade !== false;
     this.db = model.$db;
     this.next = null;
     this.finished = false;
-  },
-
-  canCascade: function(type)
-  {
-    return !!(this.cascade & type);
   },
 
   queue: function(operation)
@@ -78,10 +75,14 @@ NeuroOperation.prototype =
 
   tryNext: function(OperationType, cascade)
   {
-    if ( !this.next )
+    var setNext = !this.next;
+
+    if ( setNext )
     {
       this.next = new OperationType( this.model, cascade );
     }
+
+    return setNext;
   },
 
   insertNext: function(OperationType, cascade)

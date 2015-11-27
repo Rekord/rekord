@@ -13,7 +13,7 @@ NeuroBelongsTo.Defaults =
   auto:       true,
   property:   true,
   local:      null,
-  cascade:    Neuro.Cascade.All
+  cascade:    true
 };
 
 extend( new NeuroRelation(), NeuroBelongsTo, 

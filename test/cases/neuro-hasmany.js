@@ -295,15 +295,15 @@ test( 'set', function(assert)
   strictEqual( l0.tasks[0], t0 );
   strictEqual( l0.tasks[1], t1 );
 
-  notOk( t0.$deleted );
-  notOk( t1.$deleted );
-  notOk( t2.$deleted );
+  notOk( t0.$isDeleted() );
+  notOk( t1.$isDeleted() );
+  notOk( t2.$isDeleted() );
   
   l0.$set( 'tasks', [t2, t1] );
 
-  ok( t0.$deleted );
-  notOk( t1.$deleted );
-  notOk( t2.$deleted );
+  ok( t0.$isDeleted() );
+  notOk( t1.$isDeleted() );
+  notOk( t2.$isDeleted() );
 
   strictEqual( t0.list, null );
   strictEqual( t1.list, l0 );
@@ -543,7 +543,7 @@ test( 'encode', function(assert)
     id: l0.id, name: l0.name, 
     tasks: [
       {id: t0.id, name: t0.name, task_list_id: l0.id,
-        $saved: {id: t0.id, name: t0.name, task_list_id: l0.id}
+        $saved: {id: t0.id, name: t0.name, task_list_id: l0.id}, $status: 0
       }
     ]
   });

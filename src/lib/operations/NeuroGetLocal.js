@@ -8,15 +8,20 @@ extend( new NeuroOperation( false, 'NeuroGetLocal' ), NeuroGetLocal,
 
   run: function(db, model)
   {
-    if ( db.cache === Neuro.Cache.All && this.canCascade( Neuro.Cascade.Local ) )
+    if ( model.$isDeleted() )
+    {
+      this.finish();
+    }
+    else if ( db.cache === Neuro.Cache.All )
     {
       db.store.get( model.$key(), this.success(), this.failure() );
     }
-    else if ( this.canCascade( Neuro.Cascade.Rest ) )
+    else if ( this.cascade )
     {
       Neuro.debug( Neuro.Debugs.GET_LOCAL_SKIPPED, model );
 
-      this.insertNext( NeuroGetRemote, this.cascade ); 
+      this.insertNext( NeuroGetRemote ); 
+      this.finish();
     }
   },
 
@@ -31,9 +36,9 @@ extend( new NeuroOperation( false, 'NeuroGetLocal' ), NeuroGetLocal,
 
     Neuro.debug( Neuro.Debugs.GET_LOCAL, model, encoded );
 
-    if ( this.canCascade( Neuro.Cascade.Rest ) )
+    if ( this.cascade && !model.$isDeleted() )
     {
-      this.insertNext( NeuroGetRemote, this.cascade );
+      this.insertNext( NeuroGetRemote );
     }
   },
 
@@ -43,9 +48,9 @@ extend( new NeuroOperation( false, 'NeuroGetLocal' ), NeuroGetLocal,
 
     Neuro.debug( Neuro.Debugs.GET_LOCAL, model, e );
 
-    if ( this.canCascade( Neuro.Cascade.Rest ) )
+    if ( this.cascade && !model.$isDeleted()  )
     {
-      this.insertNext( NeuroGetRemote, this.cascade );
+      this.insertNext( NeuroGetRemote );
     }
   }
 

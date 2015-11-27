@@ -1893,7 +1893,10 @@ NeuroDatabase.prototype =
     {
       this.revisionFunction = function(a, b)
       {
-        return (revision in a && revision in b) ? (compare( a[ revision ], b[ revision ] )) : false;
+        var ar = isObject( a ) && revision in a ? a[ revision ] : undefined;
+        var br = isObject( b ) && revision in b ? b[ revision ] : undefined;
+
+        return ar === undefined || br === undefined ? false : compare( ar, br );
       };
     }
     else
@@ -2197,7 +2200,7 @@ NeuroDatabase.prototype =
 
         model.$local = encoded;
 
-        if ( encoded.$deleted )
+        if ( encoded.$isDeleted() )
         {
           Neuro.debug( Neuro.Debugs.LOCAL_RESUME_DELETE, db, model );
 
@@ -2205,7 +2208,7 @@ NeuroDatabase.prototype =
         }
         else
         {
-          if ( !encoded.$saved )
+          if ( encoded.$status === NeuroModel.Status.SavePending )
           {
             Neuro.debug( Neuro.Debugs.LOCAL_RESUME_SAVE, db, model );
 
@@ -2435,11 +2438,9 @@ NeuroDatabase.prototype =
   save: function(model, cascade)
   {
     var db = this;
-    var key = model.$key();
-    var cascade = isValue( cascade ) ? cascade : Neuro.Cascade.All;
 
     // If the model is deleted, return immediately!
-    if ( model.$deleted )
+    if ( model.$isDeleted() )
     {
       Neuro.debug( Neuro.Debugs.SAVE_DELETED, db, model );
 
@@ -2447,6 +2448,16 @@ NeuroDatabase.prototype =
     }
 
     // Place the model and trigger a database update.
+    this.saveToModels( model );
+
+    model.$addOperation( NeuroSaveLocal, cascade );
+  },
+
+  saveToModels: function(model)
+  {
+    var db = this;
+    var key = model.$key();
+
     if ( !db.models.has( key ) )
     {
       db.models.put( key, model );
@@ -2461,35 +2472,32 @@ NeuroDatabase.prototype =
 
       model.$trigger( NeuroModel.Events.UpdateAndSave );
     }
-
-    // If we're not supposed to cascade this anywhere, stop!
-    if ( !cascade )
-    {
-      return;
-    }
-
-    // If we're not storing locally OR we're not cascading locally, jump directly to remote.
-    // TODO ensure cascade rest, otherwise call live.
-    if ( db.cache === Neuro.Cache.None || !(cascade & Neuro.Cascade.Local) )
-    {
-      // Save remotely
-      model.$addOperation( NeuroSaveRemote, cascade );
-    }
-    else
-    {
-      // Start by saving locally.
-      model.$addOperation( NeuroSaveLocal, cascade );
-    }
   },
 
   // Remove the model 
   remove: function(model, cascade)
   {
     var db = this;
-    var key = model.$key();
-    var cascade = isValue( cascade ) ? cascade : Neuro.Cascade.All;
 
     // If we have it in the models, remove it!
+    this.removeFromModels( model );
+
+    // If we're offline and we have a pending save - cancel the pending save.
+    if ( model.$status === NeuroModel.Status.SavePending )
+    {
+      Neuro.debug( Neuro.Debugs.REMOVE_CANCEL_SAVE, db, model );
+    }
+
+    model.$status = NeuroModel.Status.RemovePending;
+
+    model.$addOperation( NeuroRemoveLocal );
+  },
+
+  removeFromModels: function(model)
+  {
+    var db = this;
+    var key = model.$key();
+
     if ( db.models.has( key ) )
     {
       db.models.remove( key );
@@ -2498,60 +2506,11 @@ NeuroDatabase.prototype =
 
       model.$trigger( NeuroModel.Events.Removed );
     }
-
-    // Mark as deleted right away
-    model.$deleted = true;
-
-    // If we're offline and we have a pending save - cancel the pending save.
-    if ( model.$pendingSave )
-    {
-      Neuro.debug( Neuro.Debugs.REMOVE_CANCEL_SAVE, db, model );
-
-      model.$pendingSave = false; 
-    }
-
-    // If we're not supposed to cascade this anywhere, stop!
-    if ( !cascade )
-    {
-      return;
-    }
-
-    // If we're not storing locally OR we're not cascading locally, jump directly to remote.
-    // TODO ensure cascade rest, otherwise call live.
-    if ( db.cache === Neuro.Cache.None || !(cascade & Neuro.Cascade.Local) )
-    {
-      // Remove remotely
-      model.$addOperation( NeuroRemoveRemote, cascade );
-    }
-    else
-    { 
-      // Start by removing locally.
-      model.$addOperation( NeuroRemoveLocal, cascade );
-    }
   },
 
   refreshModel: function(model, cascade)
   {
-    var db = this;
-    var cascade = isValue( cascade ) ? cascade : Neuro.Cascade.Rest;
-
-    // If we're not supposed to cascade this anywhere, stop!
-    if ( !cascade )
-    {
-      return;
-    }
-
-    // If we're not storing locally OR we're not cascading locally, jump directly to remote.
-    if ( db.cache !== Neuro.Cache.All || !(cascade & Neuro.Cascade.Local) )
-    {
-      // Getting remotely
-      model.$addOperation( NeuroGetRemote, cascade );
-    }
-    else
-    {
-      // Start by getting locally.
-      model.$addOperation( NeuroGetLocal, cascade );
-    }
+    model.$addOperation( NeuroGetLocal, cascade );
   }
 
 };
@@ -2575,21 +2534,13 @@ function NeuroModel(db)
    */
   
   /**
-   * @property {Boolean} [$deleted]
-   *           A flag placed on a model once it's requested to be deleted. A  
-   *           model with this flag isn't present on any arrays - it's stored
-   *           locally until its successfully removed remotely - then it's 
-   *           removed locally.
-   */
-  
-  /**
    * @property {Object} [$local]
    *           The object of encoded data that is stored locally. It's $saved
    *           property is the same object as this $saved property.
    */
   
   /**
-   * @property {Boolean} $pendingSave
+   * @property {Boolean} $status
    *           Whether there is a pending save for this model.
    */
 }
@@ -2619,12 +2570,20 @@ NeuroModel.Events =
   Changes:          'saved remote-update key-update relation-update removed change'
 };
 
+NeuroModel.Status =
+{
+  Synced:         0,
+  SavePending:    1,
+  RemovePending:  2,
+  Removed:        3
+};
+
 NeuroModel.prototype =
 {
 
   $init: function(props, exists)
   {
-    this.$pendingSave = false;
+    this.$status = NeuroModel.Status.Synced;
     this.$operation = null;
     this.$relations = {};
 
@@ -2801,9 +2760,9 @@ NeuroModel.prototype =
   $save: function(setProperties, setValue, cascade)
   {
     var cascade = 
-      (arguments.length === 3 && isNumber( cascade ) ? cascade : 
-        (arguments.length === 2 && isObject( setProperties ) && isNumber( setValue ) ? setValue : 
-          (arguments.length === 1 && isNumber( setProperties ) ? setProperties : Neuro.Cascade.All ) ) );
+      (arguments.length === 3 ? cascade !== false : 
+        (arguments.length === 2 && isObject( setProperties ) ? setValue !== false : 
+          (arguments.length === 1 ? setProperties !== false : true ) ) );
 
     this.$set( setProperties, setValue );
 
@@ -2833,7 +2792,7 @@ NeuroModel.prototype =
 
   $exists: function()
   {
-    return !this.$deleted && this.$db.models.has( this.$key() );
+    return !this.$isDeleted() && this.$db.models.has( this.$key() );
   },
 
   $addOperation: function(OperationType, cascade) 
@@ -2884,6 +2843,11 @@ NeuroModel.prototype =
   $hasKey: function()
   {
     return this.$db.hasFields( this, this.$db.key, isValue );
+  },
+
+  $isDeleted: function()
+  {
+    return this.$status >= NeuroModel.Status.RemovePending;
   },
 
   $isSaved: function()
@@ -3275,6 +3239,7 @@ NeuroMap.prototype =
 
 };
 
+/* Removing?
 Neuro.Cascade = {
   None:     0,
   Local:    1,
@@ -3283,6 +3248,7 @@ Neuro.Cascade = {
   Remote:   6,
   All:      7
 };
+*/
 
 function NeuroOperation(interrupts, type)
 {
@@ -3295,15 +3261,10 @@ NeuroOperation.prototype =
   reset: function(model, cascade)
   {
     this.model = model;
-    this.cascade = isValue( cascade ) ? cascade : Neuro.Cascade.All;
+    this.cascade = cascade !== false;
     this.db = model.$db;
     this.next = null;
     this.finished = false;
-  },
-
-  canCascade: function(type)
-  {
-    return !!(this.cascade & type);
   },
 
   queue: function(operation)
@@ -3354,10 +3315,14 @@ NeuroOperation.prototype =
 
   tryNext: function(OperationType, cascade)
   {
-    if ( !this.next )
+    var setNext = !this.next;
+
+    if ( setNext )
     {
       this.next = new OperationType( this.model, cascade );
     }
+
+    return setNext;
   },
 
   insertNext: function(OperationType, cascade)
@@ -3412,15 +3377,20 @@ extend( new NeuroOperation( false, 'NeuroGetLocal' ), NeuroGetLocal,
 
   run: function(db, model)
   {
-    if ( db.cache === Neuro.Cache.All && this.canCascade( Neuro.Cascade.Local ) )
+    if ( model.$isDeleted() )
+    {
+      this.finish();
+    }
+    else if ( db.cache === Neuro.Cache.All )
     {
       db.store.get( model.$key(), this.success(), this.failure() );
     }
-    else if ( this.canCascade( Neuro.Cascade.Rest ) )
+    else if ( this.cascade )
     {
       Neuro.debug( Neuro.Debugs.GET_LOCAL_SKIPPED, model );
 
-      this.insertNext( NeuroGetRemote, this.cascade ); 
+      this.insertNext( NeuroGetRemote ); 
+      this.finish();
     }
   },
 
@@ -3435,9 +3405,9 @@ extend( new NeuroOperation( false, 'NeuroGetLocal' ), NeuroGetLocal,
 
     Neuro.debug( Neuro.Debugs.GET_LOCAL, model, encoded );
 
-    if ( this.canCascade( Neuro.Cascade.Rest ) )
+    if ( this.cascade && !model.$isDeleted() )
     {
-      this.insertNext( NeuroGetRemote, this.cascade );
+      this.insertNext( NeuroGetRemote );
     }
   },
 
@@ -3447,9 +3417,9 @@ extend( new NeuroOperation( false, 'NeuroGetLocal' ), NeuroGetLocal,
 
     Neuro.debug( Neuro.Debugs.GET_LOCAL, model, e );
 
-    if ( this.canCascade( Neuro.Cascade.Rest ) )
+    if ( this.cascade && !model.$isDeleted()  )
     {
-      this.insertNext( NeuroGetRemote, this.cascade );
+      this.insertNext( NeuroGetRemote );
     }
   }
 
@@ -3465,7 +3435,14 @@ extend( new NeuroOperation( false, 'NeuroGetRemote' ), NeuroGetRemote,
 
   run: function(db, model)
   {
-    db.rest.get( model, this.success(), this.failure() );
+    if ( model.$isDeleted() )
+    {
+      this.finish();
+    }
+    else
+    {
+      db.rest.get( model, this.success(), this.failure() );
+    }
   },
 
   onSuccess: function(data)
@@ -3474,7 +3451,7 @@ extend( new NeuroOperation( false, 'NeuroGetRemote' ), NeuroGetRemote,
 
     if ( isObject( data ) )
     {
-      model.$set( data );
+      model.$set( data, void 0, true );
     }
 
     Neuro.debug( Neuro.Debugs.GET_REMOTE, model, data );
@@ -3499,8 +3476,6 @@ extend( new NeuroOperation( true, 'NeuroRemoveCache' ), NeuroRemoveCache,
 
   run: function(db, model)
   {
-    model.$pendingSave = false;
-
     if ( db.cache == Neuro.Cache.None )
     {
       this.finish();
@@ -3522,29 +3497,26 @@ extend( new NeuroOperation( true, 'NeuroRemoveLocal' ), NeuroRemoveLocal,
 
   run: function(db, model)
   {
-    var key = model.$key();
+    model.$status = NeuroModel.Status.RemovePending;
 
-    // If there is no local there's nothing to remove from anywhere!
-    if ( !model.$local )
+    if ( db.cache === Neuro.Cache.None || !model.$local )
     {
       Neuro.debug( Neuro.Debugs.REMOVE_LOCAL_NONE, model );
 
-      return this.finish();
+      this.insertNext( NeuroRemoveRemote );
+      this.finish();
     }
-
-    // If this model hasn't been saved we only need to remove it from local storage.
-    if ( model.$saved )
+    else if ( model.$saved )
     {
-      // Mark local copy as deleted in the event we're not online
-      model.$local.$deleted = true;
+      model.$local.$status = model.$status;
 
-      db.store.put( key, model.$local, this.success(), this.failure() );
+      db.store.put( model.$key(), model.$local, this.success(), this.failure() );
     }
     else
     {
       Neuro.debug( Neuro.Debugs.REMOVE_LOCAL_UNSAVED, model );
 
-      db.store.remove( key, this.success(), this.failure() );
+      db.store.remove( model.$key(), this.success(), this.failure() );
     }
   },
 
@@ -3554,9 +3526,9 @@ extend( new NeuroOperation( true, 'NeuroRemoveLocal' ), NeuroRemoveLocal,
 
     Neuro.debug( Neuro.Debugs.REMOVE_LOCAL, model );
 
-    if ( model.$saved && this.canCascade( Neuro.Cascade.Rest ) )
+    if ( model.$saved && this.cascade )
     {
-      model.$addOperation( NeuroRemoveRemote, this.cascade );
+      model.$addOperation( NeuroRemoveRemote );
     }
   },
 
@@ -3566,9 +3538,9 @@ extend( new NeuroOperation( true, 'NeuroRemoveLocal' ), NeuroRemoveLocal,
 
     Neuro.debug( Neuro.Debugs.REMOVE_LOCAL_ERROR, model, e );
 
-    if ( model.$saved && this.canCascade( Neuro.Cascade.Rest )  )
+    if ( model.$saved && this.cascade )
     {
-      model.$addOperation( NeuroRemoveRemote, this.cascade );
+      model.$addOperation( NeuroRemoveRemote );
     }
   }
 
@@ -3585,27 +3557,41 @@ extend( new NeuroOperation( true, 'NeuroRemoveNow' ), NeuroRemoveNow,
   {
     var key = model.$key();
 
-    model.$deleted = true;
-    model.$pendingSave = false;
+    model.$status = NeuroModel.Status.RemovePending;
 
-    if ( db.models.has( key ) )
-    {
-      db.models.remove( key );
-      db.trigger( NeuroDatabase.Events.ModelRemoved, [model] );
-      
-      db.updated();
-
-      model.$trigger( NeuroModel.Events.Removed );
-    }
+    db.removeFromModels( model );
 
     if ( db.cache === Neuro.Cache.None )
     {
+      this.finishRemove();
       this.finish();
     }
     else
     {
       db.store.remove( key, this.success(), this.failure() );
     }
+  },
+
+  onSuccess: function()
+  {
+    this.finishRemove();
+  },
+
+  onFailure: function()
+  {
+    this.finishRemove();
+  },
+
+  finishRemove: function()
+  {
+    var model = this.model;
+
+    model.$status = NeuroModel.Status.Removed;
+
+    delete model.$local;
+    delete model.$saving;
+    delete model.$publish;
+    delete model.$saved;
   }
 
 });
@@ -3619,14 +3605,8 @@ extend( new NeuroOperation( true, 'NeuroRemoveRemote' ), NeuroRemoveRemote,
 
   run: function(db, model)
   {
-    // Cancel any pending saves
-    model.$pendingSave = false;
-    model.$deleted = true;
+    model.$status = NeuroModel.Status.RemovePending;
 
-    // Grab key & encode to JSON
-    this.key = model.$key();
-
-    // Make the REST call to remove the model
     db.rest.remove( model, this.success(), this.failure() );
   },
 
@@ -3673,19 +3653,20 @@ extend( new NeuroOperation( true, 'NeuroRemoveRemote' ), NeuroRemoveRemote,
 
     Neuro.debug( Neuro.Debugs.REMOVE_REMOTE, model, key );
 
+    // Successfully removed!
+    model.$status = NeuroModel.Status.Removed;
+
     // Remove from local storage now
     this.insertNext( NeuroRemoveNow );
 
     // Publish REMOVE
-    if ( this.canCascade( Neuro.Cascade.Live ) )
-    {
-      Neuro.debug( Neuro.Debugs.REMOVE_PUBLISH, model, key );
+    Neuro.debug( Neuro.Debugs.REMOVE_PUBLISH, model, key );
 
-      db.live({
-        op: NeuroDatabase.Live.Remove,
-        key: key
-      });
-    }
+    db.live(
+    {
+      op:   NeuroDatabase.Live.Remove,
+      key:  key
+    });
   },
 
   handleOnline: function()
@@ -3694,7 +3675,7 @@ extend( new NeuroOperation( true, 'NeuroRemoveRemote' ), NeuroRemoveRemote,
 
     Neuro.debug( Neuro.Debugs.REMOVE_RESUME, model );
 
-    model.$addOperation( NeuroRemoveRemote, this.cascade );
+    model.$addOperation( NeuroRemoveRemote );
   }
 
 });
@@ -3710,47 +3691,91 @@ extend( new NeuroOperation( false, 'NeuroSaveLocal' ), NeuroSaveLocal,
 
   run: function(db, model)
   {
-    // If the model is deleted, return immediately!
-    if ( model.$deleted )
+    if ( model.$isDeleted() )
     {
       Neuro.debug( Neuro.Debugs.SAVE_LOCAL_DELETED, model );
 
-      return this.finish();
+      this.finish();
     }
-
-    // Fill the key if need be
-    var key = model.$key();
-    var encoded = model.$toJSON( false );
-
-    // If this model doesn't have a local copy yet - create it.
-    if ( !model.$local ) 
+    else if ( db.cache === Neuro.Cache.None )
     {
-      model.$local = encoded;
-
-      if ( model.$saved )
+      if ( this.cascade )
       {
-        model.$local.$saved = model.$saved;
+        if ( this.tryNext( NeuroSaveRemote ) )
+        {
+          this.markSaving( db, model );  
+        }
       }
-    } 
-    else 
-    {
-      // Copy to the local copy
-      transfer( encoded, model.$local );
-    }
 
-    db.store.put( key, model.$local, this.success(), this.failure() );
+      this.finish();
+    }
+    else
+    {
+      var key = model.$key();
+      var local = model.$toJSON( false );
+      
+      this.markSaving( db, model );
+
+      if ( model.$local )
+      {
+        transfer( local, model.$local );
+      }
+      else
+      {
+        model.$local = local;
+
+        if ( model.$saved )
+        {
+          model.$local.$saved = model.$saved;
+        }
+      }
+
+      model.$local.$status = model.$status;
+      model.$local.$saving = model.$saving;
+      model.$local.$publish = model.$publish;
+
+      db.store.put( key, model.$local, this.success(), this.failure() );
+    }
+  },
+
+  markSaving: function(db, model)
+  {
+    var remote = model.$toJSON( true );
+    var changes = model.$getChanges( remote );
+
+    var saving = db.fullSave ? remote : changes;
+    var publish = db.fullPublish ? remote : changes;
+
+    model.$status = NeuroModel.Status.SavePending;
+    model.$saving = saving;
+    model.$publish = publish;
+  },
+
+  clearLocal: function(model)
+  {
+    model.$status = NeuroModel.Status.Synced;
+
+    model.$local.$status = model.$status;
+    
+    delete model.$local.$saving;
+    delete model.$local.$publish;
+
+    this.insertNext( NeuroSaveNow );
   },
 
   onSuccess: function(key, encoded, previousValue)
   {
-    var db = this.db;
     var model = this.model;
 
     Neuro.debug( Neuro.Debugs.SAVE_LOCAL, model );
 
-    if ( this.canCascade( Neuro.Cascade.Rest ) )
+    if ( this.cascade )
     {
-      this.tryNext( NeuroSaveRemote, this.cascade );
+      this.tryNext( NeuroSaveRemote );
+    }
+    else
+    {
+      this.clearLocal( model );
     }
   },
 
@@ -3760,9 +3785,13 @@ extend( new NeuroOperation( false, 'NeuroSaveLocal' ), NeuroSaveLocal,
 
     Neuro.debug( Neuro.Debugs.SAVE_LOCAL_ERROR, model, e );
 
-    if ( this.canCascade( Neuro.Cascade.Rest ) )
+    if ( this.cascade )
     {
-      this.tryNext( NeuroSaveRemote, this.cascade );
+      this.tryNext( NeuroSaveRemote );
+    }
+    else
+    {
+      this.clearLocal( model );
     }
   }
 
@@ -3778,13 +3807,16 @@ extend( new NeuroOperation( false, 'NeuroSaveNow' ), NeuroSaveNow,
 
   run: function(db, model)
   {
-    if ( db.cache !== Neuro.Cache.All )
+    var key = model.$key();
+    var local = model.$local;
+
+    if ( db.cache === Neuro.Cache.All && key && local )
     {
-      this.finish();
+      db.store.put( key, local, this.success(), this.failure() );
     }
     else
     {
-      db.store.put( model.$key(), model.$local, this.success(), this.failure() );
+      this.finish();
     }
   }
 
@@ -3799,37 +3831,30 @@ extend( new NeuroOperation( false, 'NeuroSaveRemote' ), NeuroSaveRemote,
 
   run: function(db, model)
   {
-    // If the model is deleted, return immediately!
-    if ( model.$deleted )
+    if ( model.$isDeleted() )
     {
       Neuro.debug( Neuro.Debugs.SAVE_REMOTE_DELETED, model );
 
-      return this.finish();
+      this.finish();
     }
-
-    // Grab key & encode to JSON
-    var key = this.key = model.$key();
-
-    // The fields that have changed since last save
-    var encoded = this.encoded = model.$toJSON( true );
-    var changes = this.changes = model.$getChanges( encoded );
-    var saving = this.saving = db.fullSave ? encoded : changes;
-    var publishing = this.publishing = db.fullPublish ? encoded : changes;
-
-    // If there's nothing to save, don't bother!
-    if ( isEmpty( changes ) )
+    else if ( isEmpty( model.$saving ) )
     {
-      return this.finish();
-    }
+      this.markSynced( model, true );
 
-    // Make the REST call to save the model
-    if ( model.$saved )
-    {
-      db.rest.update( model, saving, this.success(), this.failure() );
+      this.finish();
     }
     else
     {
-      db.rest.create( model, saving, this.success(), this.failure() );
+      model.$status = NeuroModel.Status.SavePending;
+
+      if ( model.$saved )
+      {
+        db.rest.update( model, model.$saving, this.success(), this.failure() );
+      }
+      else
+      {
+        db.rest.create( model, model.$saving, this.success(), this.failure() );
+      }
     }
   },
 
@@ -3853,8 +3878,7 @@ extend( new NeuroOperation( false, 'NeuroSaveRemote' ), NeuroSaveRemote,
     {
       Neuro.debug( Neuro.Debugs.SAVE_CONFLICT, model, data );
 
-      // Update the model with the data saved and returned
-      this.handleData( data, model, this.db );
+      this.handleData( data );
     }
     else if ( status === 410 || status === 404 ) // 410 Gone, 404 Not Found
     {
@@ -3865,6 +3889,8 @@ extend( new NeuroOperation( false, 'NeuroSaveRemote' ), NeuroSaveRemote,
     else if ( status !== 0 ) 
     {          
       Neuro.debug( Neuro.Debugs.SAVE_ERROR, model, status );
+
+      this.markSynced( model, true );
     } 
     else 
     {
@@ -3874,12 +3900,40 @@ extend( new NeuroOperation( false, 'NeuroSaveRemote' ), NeuroSaveRemote,
       // If not online for sure, try saving once online again
       if (!Neuro.online) 
       {
-        model.$pendingSave = true;
-
         Neuro.once( 'online', this.handleOnline, this );
+      }
+      else
+      {
+        this.markSynced( model, true );
       }
 
       Neuro.debug( Neuro.Debugs.SAVE_OFFLINE, model );
+    }
+  },
+
+  markSynced: function(model, saveNow)
+  {
+    model.$status = NeuroModel.Status.Synced;
+
+    this.clearPending( model );
+
+    if ( saveNow )
+    {
+      this.insertNext( NeuroSaveNow ); 
+    }
+  },
+
+  clearPending: function(model)
+  {
+    delete model.$saving;
+    delete model.$publish;
+
+    if ( model.$local )
+    {
+      model.$local.$status = model.$status;
+
+      delete model.$local.$saving;
+      delete model.$local.$publish;
     }
   },
 
@@ -3887,21 +3941,15 @@ extend( new NeuroOperation( false, 'NeuroSaveRemote' ), NeuroSaveRemote,
   {
     var db = this.db;
     var model = this.model;
-    var saving = this.saving;
-    var publishing = this.publishing;
+    var saving = model.$saving;
+    var publishing = model.$publish;
 
     // Check deleted one more time before updating model.
-    if ( model.$deleted )
+    if ( model.$isDeleted() )
     {
       Neuro.debug( Neuro.Debugs.SAVE_REMOTE_DELETED, model, data );
 
-      return;
-    }
-
-    // If data was returned, place it in saving to update the model and publish
-    if ( !isEmpty( data ) )
-    {
-      transfer( data, saving );
+      return this.clearPending( model );
     }
 
     Neuro.debug( Neuro.Debugs.SAVE_VALUES, model, saving );
@@ -3910,34 +3958,36 @@ extend( new NeuroOperation( false, 'NeuroSaveRemote' ), NeuroSaveRemote,
     // local and model point to the same object.
     if ( !model.$saved )
     {
-      if ( model.$local )
-      {
-        model.$saved = model.$local.$saved = {}; 
-      }
-      else
-      {
-        model.$saved = {};
-      }
+      model.$saved = model.$local ? (model.$local.$saved = {}) : {}; 
     }
+
+    transfer( saving, model.$saved );
     
     // Update the model with the return data
-    db.putRemoteData( saving, this.key, model );
+    if ( !isEmpty( data ) )
+    {
+      db.putRemoteData( data, model.$key(), model );
+    }    
 
     // Publish saved data to everyone else
-    if ( this.canCascade( Neuro.Cascade.Live ) )
+    Neuro.debug( Neuro.Debugs.SAVE_PUBLISH, model, publishing );
+
+    db.live(
     {
-      Neuro.debug( Neuro.Debugs.SAVE_PUBLISH, model, publishing );
+      op:     NeuroDatabase.Live.Save,
+      model:  model.$publish,
+      key:    model.$key()
+    });
 
-      db.live({
-        op: NeuroDatabase.Live.Save,
-        model: publishing,
-        key: this.key
-      });
-    }
-
+    this.markSynced( model, false );
+    
     if ( db.cache === Neuro.Cache.Pending )
     {
       this.insertNext( NeuroRemoveCache );
+    }
+    else
+    {
+      this.insertNext( NeuroSaveNow ); 
     }
   },
 
@@ -3945,10 +3995,9 @@ extend( new NeuroOperation( false, 'NeuroSaveRemote' ), NeuroSaveRemote,
   {
     var model = this.model;
 
-    if ( model.$pendingSave )
+    if ( model.$status === NeuroModel.Status.SavePending )
     { 
-      model.$pendingSave = false;
-      model.$addOperation( NeuroSaveRemote, this.cascade );
+      model.$addOperation( NeuroSaveRemote );
 
       Neuro.debug( Neuro.Debugs.SAVE_RESUME, model );
     }
@@ -4469,7 +4518,7 @@ NeuroBelongsTo.Defaults =
   auto:       true,
   property:   true,
   local:      null,
-  cascade:    Neuro.Cascade.All
+  cascade:    true
 };
 
 extend( new NeuroRelation(), NeuroBelongsTo, 
@@ -4810,8 +4859,8 @@ NeuroHasMany.Defaults =
   foreign:              null,
   comparator:           null,
   comparatorNullsFirst: false,
-  cascadeRemove:        Neuro.Cascade.All,
-  cascadeSave:          Neuro.Cascade.All
+  cascadeRemove:        true,
+  cascadeSave:          true
 };
 
 extend( new NeuroRelation(), NeuroHasMany, 
@@ -5403,9 +5452,9 @@ NeuroHasManyThrough.Defaults =
   foreign:              null,
   comparator:           null,
   comparatorNullsFirst: false,
-  cascadeRemove:        Neuro.Cascade.All,
-  cascadeSave:          Neuro.Cascade.All,
-  cascadeSaveRelated:   Neuro.Cascade.None
+  cascadeRemove:        true,
+  cascadeSave:          true,
+  cascadeSaveRelated:   false
 };
 
 extend( new NeuroRelation(), NeuroHasManyThrough, 
@@ -5753,7 +5802,7 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
 
         if ( related.$hasChanges() )
         {
-          related.$save( this.cascadeSaveRelated );
+          related.$save();
         }
       }
 
@@ -5778,7 +5827,7 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
         {
           var related = models[ i ];
 
-          related.$remove( this.cascadeRemove );
+          related.$remove();
         }
       });
     }
@@ -6119,7 +6168,7 @@ NeuroHasOne.Defaults =
   auto:       true,
   property:   true,
   local:      null,
-  cascade:    Neuro.Cascade.None
+  cascade:    false
 };
 
 extend( new NeuroRelation(), NeuroHasOne, 
@@ -6308,7 +6357,7 @@ extend( new NeuroRelation(), NeuroHasOne,
       {
         Neuro.debug( Neuro.Debugs.HASONE_POSTREMOVE, this, model, relation );
 
-        this.clearModel( relation, false, this.cascde );
+        this.clearModel( relation, false, this.cascade );
       }
     }
   },

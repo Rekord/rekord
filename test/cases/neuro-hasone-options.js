@@ -80,7 +80,7 @@ test( 'store none', function(assert)
 
   deepEqual( local.lastRecord, {
     id: t0.id, name: t0.name, created_by: u0.id, 
-    $saved: {id: t0.id, name: t0.name, created_by: u0.id}
+    $saved: {id: t0.id, name: t0.name, created_by: u0.id}, $status: 0
   });
   deepEqual( remote.lastRecord, {
     id: t0.id, name: t0.name, created_by: u0.id
@@ -121,8 +121,8 @@ test( 'store model', function(assert)
 
   deepEqual( local.lastRecord, {
     id: t0.id, name: t0.name, created_by: u0.id, 
-    $saved: {id: t0.id, name: t0.name, created_by: u0.id},
-    creator: {id: u0.id, name: u0.name, $saved: {id: u0.id, name: u0.name}}
+    $saved: {id: t0.id, name: t0.name, created_by: u0.id}, $status: 0,
+    creator: {id: u0.id, name: u0.name, $saved: {id: u0.id, name: u0.name}, $status: 0}
   });
   deepEqual( remote.lastRecord, {
     id: t0.id, name: t0.name, created_by: u0.id
@@ -163,7 +163,7 @@ test( 'store key', function(assert)
 
   deepEqual( local.lastRecord, {
     id: t0.id, name: t0.name, created_by: u0.id, 
-    $saved: {id: t0.id, name: t0.name, created_by: u0.id},
+    $saved: {id: t0.id, name: t0.name, created_by: u0.id}, $status: 0,
     creator: u0.id
   });
   deepEqual( remote.lastRecord, {
@@ -206,7 +206,7 @@ test( 'store keys', function(assert)
 
   deepEqual( local.lastRecord, {
       id: t0.id, name: t0.name, created_by: u0.id, created_by_house: u0.house_id,
-      $saved: {id: t0.id, name: t0.name, created_by: u0.id, created_by_house: u0.house_id},
+      $saved: {id: t0.id, name: t0.name, created_by: u0.id, created_by_house: u0.house_id}, $status: 0,
       creator: [u0.id, u0.house_id]
   });
   deepEqual( remote.lastRecord, {
@@ -248,7 +248,7 @@ test( 'save none', function(assert)
 
   deepEqual( local.lastRecord, {
     id: t0.id, name: t0.name, created_by: u0.id, 
-    $saved: {id: t0.id, name: t0.name, created_by: u0.id}
+    $saved: {id: t0.id, name: t0.name, created_by: u0.id}, $status: 0,
   });
   deepEqual( remote.lastRecord, {
       id: t0.id, name: t0.name, created_by: u0.id
@@ -289,7 +289,11 @@ test( 'save model', function(assert)
 
   deepEqual( local.lastRecord, {
     id: t0.id, name: t0.name, created_by: u0.id, 
-    $saved: {id: t0.id, name: t0.name, created_by: u0.id}
+    $saved: {id: t0.id, name: t0.name, created_by: u0.id,
+      creator: {
+        id: u0.id, name: u0.name
+      }
+    }, $status: 0
   });
 
   deepEqual( remote.map.get( t0.id ), {
@@ -397,11 +401,11 @@ test( 'property true', function(assert)
   var u1 = User.create({name: 'Me'});
 
   ok( u0.$isSaved() );
-  notOk( u0.$deleted );
+  notOk( u0.$isDeleted() );
 
   t0.$set( 'creator', u1 );
 
-  ok( u0.$deleted );
+  ok( u0.$isDeleted() );
 
   strictEqual( t0.creator, u1 );
 });
@@ -500,7 +504,7 @@ test( 'cascade true', function(assert)
       creator: {
         model: User,
         local: 'created_by',
-        cascade: Neuro.Cascade.All
+        cascade: true
       }
     }
   });
@@ -509,14 +513,14 @@ test( 'cascade true', function(assert)
   var t0 = Task.create({name: 'This', creator: u0});
 
   ok( u0.$isSaved() );
-  notOk( u0.$deleted );
+  notOk( u0.$isDeleted() );
   ok( t0.$isSaved() );
-  notOk( t0.$deleted );
+  notOk( t0.$isDeleted() );
 
   t0.$remove();
 
-  ok( u0.$deleted );
-  ok( t0.$deleted );
+  ok( u0.$isDeleted() );
+  ok( t0.$isDeleted() );
 });
 
 test( 'cascade false', function(assert)
@@ -535,7 +539,7 @@ test( 'cascade false', function(assert)
       creator: {
         model: User,
         local: 'created_by',
-        cascade: Neuro.Cascade.None
+        cascade: false
       }
     }
   });
@@ -544,12 +548,12 @@ test( 'cascade false', function(assert)
   var t0 = Task.create({name: 'This', creator: u0});
 
   ok( u0.$isSaved() );
-  notOk( u0.$deleted );
+  notOk( u0.$isDeleted() );
   ok( t0.$isSaved() );
-  notOk( t0.$deleted );
+  notOk( t0.$isDeleted() );
 
   t0.$remove();
 
-  notOk( u0.$deleted );
-  ok( t0.$deleted );
+  notOk( u0.$isDeleted() );
+  ok( t0.$isDeleted() );
 });

@@ -108,8 +108,8 @@ test( 'ninja remove', function(assert)
 
   u0.$remove();
 
-  ok( u0.$deleted );
-  ok( t0.$deleted );
+  ok( u0.$isDeleted() );
+  ok( t0.$isDeleted() );
 });
 
 test( 'ninja save', function(assert)
@@ -342,7 +342,7 @@ test( 'encode', function(assert)
   deepEqual( storing0, {
     id: t0.id, name: t0.name, created_by: t0.created_by,
     creator: {id: u0.id, name: u0.name,
-      $saved: {id: u0.id, name: u0.name}
+      $saved: {id: u0.id, name: u0.name}, $status: 0
     }
   });
 
@@ -378,7 +378,7 @@ test( 'cascade remove', function(assert)
       creator: {
         model: User,
         local: 'created_by',
-        cascade: Neuro.Cascade.All
+        cascade: true
       }
     }
   });
@@ -386,13 +386,13 @@ test( 'cascade remove', function(assert)
   var u0 = User.create({name: 'You'});
   var t0 = Task.create({name: 'This', creator: u0});
 
-  notOk( u0.$deleted );
-  notOk( t0.$deleted );
+  notOk( u0.$isDeleted() );
+  notOk( t0.$isDeleted() );
 
   u0.$remove();
 
-  ok( u0.$deleted );
-  ok( t0.$deleted );
+  ok( u0.$isDeleted() );
+  ok( t0.$isDeleted() );
 
   strictEqual( User.Database.store.map.size(), 0 );
   strictEqual( Task.Database.store.map.size(), 0 );
@@ -435,9 +435,9 @@ test( 'more than one belongsTo relationship', function(assert)
 
   u1.$remove();
 
-  ok( t0.$deleted );
+  ok( t0.$isDeleted() );
 
   u0.$remove();
 
-  ok( t0.$deleted );
+  ok( t0.$isDeleted() );
 });

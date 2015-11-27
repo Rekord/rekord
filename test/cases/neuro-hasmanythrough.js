@@ -293,6 +293,7 @@ test( 'auto save parent', function(assert)
   var u0 = User.create({name: 'u0', groups: [g0, g1]});
 
   deepEqual( remote.lastRecord, {
+    id: u0.id, name: u0.name,
     groups: [
       {id: g0.id, name: 'g0'},
       {id: g1.id, name: 'g1'}

@@ -397,6 +397,8 @@ test( 'loadRemote false', function(assert)
 
 test( 'autoRefresh true', function(assert)
 {
+  noline();
+
   var rest = Neuro.rest.autoRefresh_true = new TestRest();
   rest.map.put( 1, {id: 1, name: 'name1' } );
   rest.map.put( 2, {id: 2, name: 'name2' } );
@@ -425,6 +427,8 @@ test( 'autoRefresh true', function(assert)
 
 test( 'autoRefresh false', function(assert)
 {
+  noline();
+
   var rest = Neuro.rest.autoRefresh_false = new TestRest();
   rest.map.put( 1, {id: 1, name: 'name1' } );
   rest.map.put( 2, {id: 2, name: 'name2' } );
@@ -492,6 +496,8 @@ test( 'cache none', function(assert)
 
 test( 'cache pending', function(assert)
 {
+  noline();
+  
   var cache_pending = Neuro({
     name: 'cache_pending',
     fields: ['id', 'name'],

@@ -8,14 +8,8 @@ extend( new NeuroOperation( true, 'NeuroRemoveRemote' ), NeuroRemoveRemote,
 
   run: function(db, model)
   {
-    // Cancel any pending saves
-    model.$pendingSave = false;
-    model.$deleted = true;
+    model.$status = NeuroModel.Status.RemovePending;
 
-    // Grab key & encode to JSON
-    this.key = model.$key();
-
-    // Make the REST call to remove the model
     db.rest.remove( model, this.success(), this.failure() );
   },
 
@@ -62,19 +56,20 @@ extend( new NeuroOperation( true, 'NeuroRemoveRemote' ), NeuroRemoveRemote,
 
     Neuro.debug( Neuro.Debugs.REMOVE_REMOTE, model, key );
 
+    // Successfully removed!
+    model.$status = NeuroModel.Status.Removed;
+
     // Remove from local storage now
     this.insertNext( NeuroRemoveNow );
 
     // Publish REMOVE
-    if ( this.canCascade( Neuro.Cascade.Live ) )
-    {
-      Neuro.debug( Neuro.Debugs.REMOVE_PUBLISH, model, key );
+    Neuro.debug( Neuro.Debugs.REMOVE_PUBLISH, model, key );
 
-      db.live({
-        op: NeuroDatabase.Live.Remove,
-        key: key
-      });
-    }
+    db.live(
+    {
+      op:   NeuroDatabase.Live.Remove,
+      key:  key
+    });
   },
 
   handleOnline: function()
@@ -83,7 +78,7 @@ extend( new NeuroOperation( true, 'NeuroRemoveRemote' ), NeuroRemoveRemote,
 
     Neuro.debug( Neuro.Debugs.REMOVE_RESUME, model );
 
-    model.$addOperation( NeuroRemoveRemote, this.cascade );
+    model.$addOperation( NeuroRemoveRemote );
   }
 
 });

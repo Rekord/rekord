@@ -417,9 +417,9 @@ test( 'refresh relationships', function(assert)
 
   db.refresh();
 
-  ok( t0.$deleted );
-  notOk( t1.$deleted );
-  notOk( t2.$deleted );
+  ok( t0.$isDeleted() );
+  notOk( t1.$isDeleted() );
+  notOk( t2.$isDeleted() );
 
   strictEqual( l0.tasks.length, 4 );
   strictEqual( l0.tasks[0], t1 );

@@ -16,21 +16,13 @@ function NeuroModel(db)
    */
   
   /**
-   * @property {Boolean} [$deleted]
-   *           A flag placed on a model once it's requested to be deleted. A  
-   *           model with this flag isn't present on any arrays - it's stored
-   *           locally until its successfully removed remotely - then it's 
-   *           removed locally.
-   */
-  
-  /**
    * @property {Object} [$local]
    *           The object of encoded data that is stored locally. It's $saved
    *           property is the same object as this $saved property.
    */
   
   /**
-   * @property {Boolean} $pendingSave
+   * @property {Boolean} $status
    *           Whether there is a pending save for this model.
    */
 }
@@ -60,12 +52,20 @@ NeuroModel.Events =
   Changes:          'saved remote-update key-update relation-update removed change'
 };
 
+NeuroModel.Status =
+{
+  Synced:         0,
+  SavePending:    1,
+  RemovePending:  2,
+  Removed:        3
+};
+
 NeuroModel.prototype =
 {
 
   $init: function(props, exists)
   {
-    this.$pendingSave = false;
+    this.$status = NeuroModel.Status.Synced;
     this.$operation = null;
     this.$relations = {};
 
@@ -242,9 +242,9 @@ NeuroModel.prototype =
   $save: function(setProperties, setValue, cascade)
   {
     var cascade = 
-      (arguments.length === 3 && isNumber( cascade ) ? cascade : 
-        (arguments.length === 2 && isObject( setProperties ) && isNumber( setValue ) ? setValue : 
-          (arguments.length === 1 && isNumber( setProperties ) ? setProperties : Neuro.Cascade.All ) ) );
+      (arguments.length === 3 ? cascade !== false : 
+        (arguments.length === 2 && isObject( setProperties ) ? setValue !== false : 
+          (arguments.length === 1 ? setProperties !== false : true ) ) );
 
     this.$set( setProperties, setValue );
 
@@ -274,7 +274,7 @@ NeuroModel.prototype =
 
   $exists: function()
   {
-    return !this.$deleted && this.$db.models.has( this.$key() );
+    return !this.$isDeleted() && this.$db.models.has( this.$key() );
   },
 
   $addOperation: function(OperationType, cascade) 
@@ -325,6 +325,11 @@ NeuroModel.prototype =
   $hasKey: function()
   {
     return this.$db.hasFields( this, this.$db.key, isValue );
+  },
+
+  $isDeleted: function()
+  {
+    return this.$status >= NeuroModel.Status.RemovePending;
   },
 
   $isSaved: function()

@@ -15,8 +15,8 @@ NeuroHasMany.Defaults =
   foreign:              null,
   comparator:           null,
   comparatorNullsFirst: false,
-  cascadeRemove:        Neuro.Cascade.All,
-  cascadeSave:          Neuro.Cascade.All
+  cascadeRemove:        true,
+  cascadeSave:          true
 };
 
 extend( new NeuroRelation(), NeuroHasMany, 

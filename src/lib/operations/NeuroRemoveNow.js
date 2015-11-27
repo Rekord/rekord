@@ -10,27 +10,41 @@ extend( new NeuroOperation( true, 'NeuroRemoveNow' ), NeuroRemoveNow,
   {
     var key = model.$key();
 
-    model.$deleted = true;
-    model.$pendingSave = false;
+    model.$status = NeuroModel.Status.RemovePending;
 
-    if ( db.models.has( key ) )
-    {
-      db.models.remove( key );
-      db.trigger( NeuroDatabase.Events.ModelRemoved, [model] );
-      
-      db.updated();
-
-      model.$trigger( NeuroModel.Events.Removed );
-    }
+    db.removeFromModels( model );
 
     if ( db.cache === Neuro.Cache.None )
     {
+      this.finishRemove();
       this.finish();
     }
     else
     {
       db.store.remove( key, this.success(), this.failure() );
     }
+  },
+
+  onSuccess: function()
+  {
+    this.finishRemove();
+  },
+
+  onFailure: function()
+  {
+    this.finishRemove();
+  },
+
+  finishRemove: function()
+  {
+    var model = this.model;
+
+    model.$status = NeuroModel.Status.Removed;
+
+    delete model.$local;
+    delete model.$saving;
+    delete model.$publish;
+    delete model.$saved;
   }
 
 });

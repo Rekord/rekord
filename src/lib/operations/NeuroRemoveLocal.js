@@ -8,29 +8,26 @@ extend( new NeuroOperation( true, 'NeuroRemoveLocal' ), NeuroRemoveLocal,
 
   run: function(db, model)
   {
-    var key = model.$key();
+    model.$status = NeuroModel.Status.RemovePending;
 
-    // If there is no local there's nothing to remove from anywhere!
-    if ( !model.$local )
+    if ( db.cache === Neuro.Cache.None || !model.$local )
     {
       Neuro.debug( Neuro.Debugs.REMOVE_LOCAL_NONE, model );
 
-      return this.finish();
+      this.insertNext( NeuroRemoveRemote );
+      this.finish();
     }
-
-    // If this model hasn't been saved we only need to remove it from local storage.
-    if ( model.$saved )
+    else if ( model.$saved )
     {
-      // Mark local copy as deleted in the event we're not online
-      model.$local.$deleted = true;
+      model.$local.$status = model.$status;
 
-      db.store.put( key, model.$local, this.success(), this.failure() );
+      db.store.put( model.$key(), model.$local, this.success(), this.failure() );
     }
     else
     {
       Neuro.debug( Neuro.Debugs.REMOVE_LOCAL_UNSAVED, model );
 
-      db.store.remove( key, this.success(), this.failure() );
+      db.store.remove( model.$key(), this.success(), this.failure() );
     }
   },
 
@@ -40,9 +37,9 @@ extend( new NeuroOperation( true, 'NeuroRemoveLocal' ), NeuroRemoveLocal,
 
     Neuro.debug( Neuro.Debugs.REMOVE_LOCAL, model );
 
-    if ( model.$saved && this.canCascade( Neuro.Cascade.Rest ) )
+    if ( model.$saved && this.cascade )
     {
-      model.$addOperation( NeuroRemoveRemote, this.cascade );
+      model.$addOperation( NeuroRemoveRemote );
     }
   },
 
@@ -52,9 +49,9 @@ extend( new NeuroOperation( true, 'NeuroRemoveLocal' ), NeuroRemoveLocal,
 
     Neuro.debug( Neuro.Debugs.REMOVE_LOCAL_ERROR, model, e );
 
-    if ( model.$saved && this.canCascade( Neuro.Cascade.Rest )  )
+    if ( model.$saved && this.cascade )
     {
-      model.$addOperation( NeuroRemoveRemote, this.cascade );
+      model.$addOperation( NeuroRemoveRemote );
     }
   }
 

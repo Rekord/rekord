@@ -104,7 +104,7 @@ test( '$set', function(assert)
   var a1 = p0.address;
 
   notStrictEqual( a0, a1 );
-  ok( a0.$deleted );
+  ok( a0.$isDeleted() );
 });
 
 test( '$get', function(assert)
@@ -215,6 +215,7 @@ test( '$save', function(assert)
   strictEqual( i0.number, 4 );
 });
 
+/* 
 test( '$save cascade remote', function(assert)
 {
   var Issue = Neuro({
@@ -402,6 +403,7 @@ test( '$remove cascade remote', function(assert)
   notOk( remote.map.has( i0.id ) );
   strictEqual( live.lastMessage.op, 'REMOVE' );
 });
+*/
 
 test( '$key', function(assert)
 {
