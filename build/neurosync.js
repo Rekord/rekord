@@ -1588,7 +1588,7 @@ function NeuroDatabase(options)
   // Functions
   this.setComparator( this.comparator, this.comparatorNullsFirst );
   this.setRevision( this.revision );
-  this.setToString( this.toString );
+  this.setSummarize( this.summarize );
 
   // Relations
   this.relations = {};
@@ -1672,7 +1672,7 @@ NeuroDatabase.Defaults =
   fullPublish:          false,
   encode:               function(data) { return data; },
   decode:               function(rawData) { return rawData; },
-  toString:             function(model) { return model.$key() }
+  summarize:            function(model) { return model.$key(); }
 };
 
 NeuroDatabase.prototype =
@@ -2002,22 +2002,22 @@ NeuroDatabase.prototype =
     this.comparatorFunction = createComparator( comparator, nullsFirst );
   },
 
-  setToString: function(toString)
+  setSummarize: function(summarize)
   {
-    if ( isFunction( toString ) )
+    if ( isFunction( summarize ) )
     {
-      this.toString = toString;
+      this.summarize = summarize;
     }
-    else if ( isString( toString ) )
+    else if ( isString( summarize ) )
     {
-      this.toString = function(model)
+      this.summarize = function(model)
       {
-        return isValue( model ) ? model[ toString ] : model;
+        return isValue( model ) ? model[ summarize ] : model;
       };
     }
     else
     {
-      this.toString = function(model)
+      this.summarize = function(model)
       {
         return model.$key();
       };

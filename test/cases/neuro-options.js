@@ -497,7 +497,7 @@ test( 'cache none', function(assert)
 test( 'cache pending', function(assert)
 {
   noline();
-  
+
   var cache_pending = Neuro({
     name: 'cache_pending',
     fields: ['id', 'name'],
@@ -618,32 +618,32 @@ test( 'fullPublish false', function(assert)
   fp0.$save( 'name', 'name1' );
 });
 
-test( 'toString prop', function(assert)
+test( 'summarize prop', function(assert)
 {
-  var toString_prop = Neuro({
-    name: 'toString_prop',
+  var summarize_prop = Neuro({
+    name: 'summarize_prop',
     fields: ['id', 'name'],
-    toString: 'name'
+    summarize: 'name'
   });
 
-  var inst = toString_prop.create({name: 'name0'});
+  var inst = summarize_prop.create({name: 'name0'});
 
-  strictEqual( toString_prop.Database.toString( inst ), 'name0' );
+  strictEqual( summarize_prop.Database.summarize( inst ), 'name0' );
 });
 
-test( 'toString custom', function(assert)
+test( 'summarize custom', function(assert)
 {
-  var toString_custom = Neuro({
-    name: 'toString_custom',
+  var summarize_custom = Neuro({
+    name: 'summarize_custom',
     fields: ['id', 'name'],
-    toString: function(model) {
+    summarize: function(model) {
       return model.id + '/' + model.name;
     }
   });
 
-  var inst = toString_custom.create({id: 4, name: 'name0'});
+  var inst = summarize_custom.create({id: 4, name: 'name0'});
 
-  strictEqual( toString_custom.Database.toString( inst ), '4/name0' );
+  strictEqual( summarize_custom.Database.summarize( inst ), '4/name0' );
 });
 
 test( 'encode decode', function(assert)
