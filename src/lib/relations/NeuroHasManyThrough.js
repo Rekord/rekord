@@ -63,6 +63,7 @@ extend( NeuroRelation, NeuroHasManyThrough,
     var that = this;
     var relatedDatabase = this.model.Database;
     var throughDatabase = this.through.Database;
+    var collection = new NeuroRelationCollection( relatedDatabase, model, this );
     var isRelated = this.isRelatedFactory( model );
     var initial = model[ this.name ];
  
@@ -72,7 +73,7 @@ extend( NeuroRelation, NeuroHasManyThrough,
       isRelated: isRelated,
       initial: initial,
       pending: {},
-      models: new NeuroMap(),
+      models: collection.map,
       throughs: new NeuroMap(),
       saving: false,
       delaySorting: false,
@@ -452,7 +453,7 @@ extend( NeuroRelation, NeuroHasManyThrough,
     return function (throughDatabase)
     {
       var throughsAll = throughDatabase.models;
-      var throughsRelated = throughsAll.filter( relation.isRelated );
+      var throughsRelated = throughsAll.filter( relation.isRelated ); // TODO
       var throughs = throughsRelated.values;
 
       if ( throughs.length === 0 )

@@ -8,13 +8,20 @@
   global.Neuro.Relation = NeuroRelation;
   global.Neuro.Operation = NeuroOperation;
   global.Neuro.Map = NeuroMap;
+  global.Neuro.Collection = NeuroCollection;
+  global.Neuro.ModelCollection = NeuroModelCollection;
+  global.Neuro.Query = NeuroQuery;
+  global.Neuro.RemoteQuery = NeuroRemoteQuery;
 
   /* Utility Functions */
   global.Neuro.isNeuro = isNeuro;
   global.Neuro.uuid = uuid;
   global.Neuro.indexOf = indexOf;
   global.Neuro.propsMatch = propsMatch;
+  
   global.Neuro.extend = extend;
+  global.Neuro.extendArray = extendArray;
+  
   global.Neuro.transfer = transfer;
   global.Neuro.swap = swap;
   global.Neuro.grab = grab;
@@ -23,9 +30,17 @@
   global.Neuro.diff = diff;
   global.Neuro.sizeof = sizeof;
   global.Neuro.isEmpty = isEmpty;
+
   global.Neuro.compare = compare;
   global.Neuro.equals = equals;
   global.Neuro.equalsStrict = equalsStrict;
+  global.Neuro.equalsCompare = equalsCompare;
+
+  global.Neuro.isSorted = isSorted;
+
+  global.Neuro.createWhere = createWhere;
+  global.Neuro.createPropertyResolver = createPropertyResolver;
+  global.Neuro.createNumberResolver = createNumberResolver;
   global.Neuro.createComparator = createComparator;
 
 })(window);

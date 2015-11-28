@@ -655,7 +655,7 @@ test( 'comparator', function(assert)
 
   var expected = [t2, t0, t1];
 
-  deepEqual( l0.tasks, expected );
+  deepEqual( l0.tasks.toArray(), expected );
 });
 
 test( 'comparatorNullsFirst', function(assert)
@@ -695,7 +695,7 @@ test( 'comparatorNullsFirst', function(assert)
 
   var expected = [t3, t2, t0, t1];
 
-  deepEqual( l0.tasks, expected );
+  deepEqual( l0.tasks.toArray(), expected );
 });
 
 test( 'cascadeRemove true', function(assert)

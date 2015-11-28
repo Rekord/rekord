@@ -193,13 +193,181 @@ test( 'boot complex', function(assert)
   strictEqual( t0.assignee_id, u1.id, 'assignee_id for task 0 updated' );
   strictEqual( t1.assignee_id, u2.id, 'assignee_id for task 1 updated' );
 
-  deepEqual( u1.assigned, [t0], 'user 1 has one task' );
-  deepEqual( u2.assigned, [t1], 'user 2 has one task' );
-  deepEqual( u1.lists, [l0], 'user 1 has a list' );
-  deepEqual( u2.lists, [], 'user 2 has no list' );
+  deepEqual( u1.assigned.toArray(), [t0], 'user 1 has one task' );
+  deepEqual( u2.assigned.toArray(), [t1], 'user 2 has one task' );
+  deepEqual( u1.lists.toArray(), [l0], 'user 1 has a list' );
+  deepEqual( u2.lists.toArray(), [], 'user 2 has no list' );
 
   // Ensure no remote calls were made
   strictEqual( User.Database.rest.lastModel, null );
   strictEqual( Task.Database.rest.lastModel, null );
   strictEqual( TaskList.Database.rest.lastModel, null );
 });
+
+test( 'where', function(assert)
+{
+  var prefix = 'Neuro_where_';
+
+  var Todo = Neuro({
+    name: prefix + 'todo',
+    fields: ['name', 'done']
+  });
+
+  var t0 = Todo.create({name: 't0', done: true});
+  var t1 = Todo.create({name: 't1', done: false});
+  var t2 = Todo.create({name: 't2', done: false});
+  var t3 = Todo.create({name: 't3', done: true});
+
+  var done = Todo.where('done', true);
+
+  done.setComparator( 'name' );
+
+  strictEqual( done.length, 2 );
+  strictEqual( done[0], t0 );
+  strictEqual( done[1], t3 );
+
+  t2.$save('done', true);
+
+  strictEqual( done.length, 3 );
+  strictEqual( done[0], t0 );
+  strictEqual( done[1], t2 );
+  strictEqual( done[2], t3 );
+
+  t0.$remove();
+
+  strictEqual( done.length, 2 );
+  strictEqual( done[0], t2 );
+  strictEqual( done[1], t3 );
+
+  t3.done = false;
+
+  done.sync();
+
+  strictEqual( done.length, 1 );
+  strictEqual( done[0], t2 );
+
+  var t4 = Todo.create({name: 't4', done: true});
+  var t5 = Todo.boot({id: 5, name: 't5', done: true});
+
+  strictEqual( done.length, 3 );
+  strictEqual( done[0], t2 );
+  strictEqual( done[1], t4 );
+  strictEqual( done[2], t5 );
+});
+
+test( 'query success', function(assert)
+{
+  var done = assert.async();
+  var prefix = 'Neuro_query_success_';
+
+  expect( 4 );
+
+  var Todo = Neuro({
+    name: prefix + 'todo',
+    fields: ['name', 'done'],
+    loadRemote: false
+  });
+
+  var remote = Todo.Database.rest;
+
+  remote.queries.put( 'http://neurosync.io', [
+    {id: 1, name: 't1', done: true},
+    {id: 2, name: 't2', done: false},
+    {id: 3, name: 't3', done: true}
+  ]);
+
+  remote.delay = 10;
+
+  var q = Todo.query( 'http://neurosync.io' );
+
+  strictEqual( q.length, 0 );
+
+  q.ready(function()
+  {
+    strictEqual( q.length, 3, 'query ready and models loaded' );
+  });
+
+  q.success(function()
+  {
+    strictEqual( q.length, 3, 'query success and models loaded' );
+  });
+
+  q.failure(function()
+  {
+    ok();
+  });
+
+  wait( 15, function()
+  {
+    strictEqual( q.length, 3, 'times up, data loaded' );
+    done();
+
+  });
+
+});
+
+test( 'query failure', function(assert)
+{
+  var done = assert.async();
+  var prefix = 'Neuro_query_failure_';
+
+  expect( 4 );
+
+  var Todo = Neuro({
+    name: prefix + 'todo',
+    fields: ['name', 'done'],
+    loadRemote: false
+  });
+
+  var remote = Todo.Database.rest;
+
+  remote.queries.put( 'http://neurosync.io', [
+    {id: 1, name: 't1', done: true},
+    {id: 2, name: 't2', done: false},
+    {id: 3, name: 't3', done: true}
+  ]);
+
+  remote.delay = 10;
+  remote.status = 300;
+
+  var q = Todo.query( 'http://neurosync.io' );
+
+  strictEqual( q.length, 0, 'initial length zero' );
+
+  q.ready(function()
+  {
+    strictEqual( q.length, 0, 'ready but empty' );
+  });
+
+  q.success(function()
+  {
+    ok();
+  });
+
+  q.failure(function()
+  {
+    strictEqual( q.length, 0, 'failure notified' );
+  });
+
+  wait( 15, function()
+  {
+    strictEqual( q.length, 0, 'times up, no data' );
+    done();
+
+  });
+
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -320,6 +320,13 @@ function clean(x)
   return x;
 }
 
+function copyFunction(x)
+{
+  return function() {
+    return x.apply( this, arguments );
+  };
+}
+
 function copy(x, copyHidden)
 {
   if (x === null || x === undefined || typeof x !== 'object' || isFunction(x) || isRegExp(x))
@@ -421,9 +428,166 @@ function isEmpty(x)
   return false;
 }
 
+function createNumberResolver(numbers)
+{
+  if ( isString( numbers ) )
+  {
+    return function resolveNumber(model)
+    {
+      if ( isNumber( model ) )
+      {
+        return model;
+      }
+      else if ( isValue( model ) )
+      {
+        return parseFloat( model[ numbers ] );
+      }
+    };
+  }
+  else if ( isFunction( numbers ) )
+  {
+    return numbers;
+  }
+  else
+  {
+    return function resolveNumber(value)
+    {
+      return parseFloat( value );
+    };
+  }
+}
+
+function createPropertyResolver(properties, delim)
+{
+  if ( isString( properties ) )
+  {
+    return function resolveProperty(model)
+    {
+      return model[ properties ];
+    };
+  }
+  else if ( isArray( properties ) )
+  {
+    return function resolveProperty(model)
+    {
+      return pull( model, properties ).join( delim );
+    };
+  }
+  else if ( isObject( properties ) )
+  {
+    var propsArray = [];
+    var propsResolver = [];
+
+    for (var prop in properties)
+    {
+      propsArray.push( prop );
+      propsResolver.push( createPropertyResolver( properties[ prop ], delim ) );
+    }
+
+    return function resolveProperty(model)
+    {
+      var pulled = [];
+
+      for (var i = 0; i < prop.length; i++)
+      {
+        pulled.push( propsResolver[ i ]( model[ propsArray[ i ] ] ) );
+      }
+
+      return pulled.join( delim );
+    };
+  }
+  else if ( isFunction( properties ) )
+  {
+    return properties;
+  }
+  else
+  {
+    return function resolveProperty(model)
+    {
+      return model;
+    }
+  }
+}
+
+function createWhere(properties, value, equals)
+{
+  var equality = equals || equalsStrict;
+
+  if ( isFunction( properties ) )
+  {
+    return properties;
+  }
+  if ( isObject( properties ) )
+  {
+    return function where(model)
+    {
+      for (var prop in properties)
+      {
+        if ( !equality( model[ prop ], properties[ prop ] ) )
+        {
+          return false;
+        }
+      }
+
+      return true;
+    };
+  }
+  else if ( isString( properties ) )
+  {
+    if ( isValue( value ) )
+    { 
+      return function where(model)
+      {
+        return equality( model[ properties ], value );
+      };
+    }
+    else
+    {
+      return function where(model)
+      {
+        return isValue( model[ properties ] );
+      };
+    }
+  }
+  else
+  {
+    return function where(model)
+    {
+      return true;
+    };
+  }
+}
+
+function createHaving(having)
+{
+  if ( isFunction( having ) )
+  {
+    return having;
+  }
+  else if ( isString( having ) )
+  {
+    return function has(model)
+    {
+      return isValue( model ) && isValue( model[ having ] );
+    };
+  }
+  else
+  {
+    return function has()
+    {
+      return true;
+    };
+  }
+}
+
 function equalsStrict(a, b)
 {
   return a === b;
+}
+
+function equalsCompare(a, b)
+{
+  return compare( a, b ) === 0;
 }
 
 function equals(a, b)
@@ -520,6 +684,24 @@ function compare(a, b, nullsFirst)
   }
   
   return (a + '').localeCompare(b + '');
+}
+
+function isSorted(comparator, array)
+{
+  if ( !comparator )
+  {
+    return true;
+  }
+
+  for (var i = 0, n = array.length - 1; i < n; i++)
+  {
+    if ( comparator( array[ i ], array[ i + 1 ] ) > 0 )
+    {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 function createComparator(comparator, nullsFirst)

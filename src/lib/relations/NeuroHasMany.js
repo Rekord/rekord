@@ -44,6 +44,7 @@ extend( NeuroRelation, NeuroHasMany,
     var that = this;
     var relatedDatabase = this.model.Database;
     var isRelated = this.isRelatedFactory( model );
+    var collection = new NeuroRelationCollection( relatedDatabase, model, this );
     var initial = model[ this.name ];
  
     var relation = model.$relations[ this.name ] =
@@ -52,7 +53,7 @@ extend( NeuroRelation, NeuroHasMany,
       isRelated: isRelated,
       initial: initial,
       pending: {},
-      models: new NeuroMap(),
+      models: collection.map,
       saving: false,
       delaySorting: false,
       delaySaving: false,
@@ -94,29 +95,6 @@ extend( NeuroRelation, NeuroHasMany,
     // When models are added to the related database, check if it's related to this model
     relatedDatabase.on( NeuroDatabase.Events.ModelAdded, this.handleModelAdded( relation ), this );
 
-    // Add convenience methods to the underlying array
-    var related = relation.models.values;
-    
-    related.set = function(input)
-    {
-      that.set( model, input );
-    };
-    
-    related.relate = function(input)
-    {
-      that.relate( model, input );
-    };
-    
-    related.unrelate = function(input)
-    {
-      that.unrelate( model, input );
-    };
-    
-    related.isRelated = function(input)
-    {
-      return that.isRelated( model, input );
-    };
-    
     // If the model's initial value is an array, populate the relation from it!
     if ( isArray( initial ) )
     {
@@ -430,7 +408,7 @@ extend( NeuroRelation, NeuroHasMany,
   {
     return function (relatedDatabase)
     {
-      var related = relatedDatabase.models.filter( relation.isRelated );
+      var related = relatedDatabase.models.filter( relation.isRelated ); // TODO
       var models = related.values;
 
       Neuro.debug( Neuro.Debugs.HASMANY_LAZY_LOAD, this, relation, models );

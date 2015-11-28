@@ -38,6 +38,7 @@ function NeuroDatabase(options)
   }
 
   // Properties
+  // this.models = new NeuroModelCollection();
   this.models = new NeuroMap();
   this.className = this.className || toCamelCase( this.name );
   this.initialized = false;
@@ -432,7 +433,7 @@ NeuroDatabase.prototype =
   // Sorts the models & notifies listeners that the database has been updated.
   updated: function()
   {
-    this.sort();
+    this.sort(); // TODO remove
     this.trigger( NeuroDatabase.Events.Updated );
   },
 
@@ -468,7 +469,8 @@ NeuroDatabase.prototype =
   // with a minus in the front to sort in reverse, or a comparator function.
   setComparator: function(comparator, nullsFirst)
   {
-    this.comparatorFunction = createComparator( comparator, nullsFirst );
+    this.comparatorFunction = createComparator( comparator, nullsFirst ); // TODO remove
+    // this.models.setComparator( comparator, nullsFirst );
   },
 
   setSummarize: function(summarize)
@@ -500,12 +502,14 @@ NeuroDatabase.prototype =
     {
       this.models.sort( this.comparatorFunction );
     }
+    // this.models.resort(); TODO add
   },
 
   // Determines whether this database is sorted.
   isSorted: function()
   {
     return this.models.isSorted( this.comparatorFunction );
+    // return this.models.isSorted();
   },
 
   // Handles when we receive data from the server - either from
@@ -755,6 +759,7 @@ NeuroDatabase.prototype =
     {
       Neuro.debug( Neuro.Debugs.LOCAL_LOAD, db, records );
 
+      // db.models.clear();
       db.models.reset();
 
       records = Array.prototype.slice.call( records );
@@ -784,7 +789,7 @@ NeuroDatabase.prototype =
         {
           Neuro.debug( Neuro.Debugs.LOCAL_RESUME_SAVE, db, model );
 
-          db.models.put( key, model );
+          db.models.put( key, model, true );
 
           model.$addOperation( NeuroSaveRemote );
         }
@@ -792,7 +797,7 @@ NeuroDatabase.prototype =
         {
           Neuro.debug( Neuro.Debugs.LOCAL_LOAD_SAVED, db, model );
 
-          db.models.put( key, model );
+          db.models.put( key, model, true );
         }
       }
       
@@ -879,7 +884,7 @@ NeuroDatabase.prototype =
         }
       }
 
-      var keys = db.models.keys;
+      var keys = db.models.keys; // TODO ()
 
       for (var i = 0; i < keys.length; i++)
       {
@@ -951,7 +956,7 @@ NeuroDatabase.prototype =
   // The reference to all of the models in the database
   getModels: function()
   {
-    return this.models.values;
+    return this.models.values; // TOOD -.values
   }, 
 
   // Returns a model

@@ -469,7 +469,7 @@ NeuroRelation.prototype =
   {
     return function(db)
     {
-      var related = db.models.filter( isRelated );
+      var related = db.models.filter( isRelated ); // TODO
 
       callback.call( this, related );
     };
@@ -489,7 +489,7 @@ NeuroRelation.prototype =
 
       db.ready(function(db)
       {
-        db.models.filter( isRelated, related );
+        db.models.filter( isRelated, related ); // TODO
 
         if ( ++current === total )
         {

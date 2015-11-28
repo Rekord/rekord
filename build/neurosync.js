@@ -323,6 +323,13 @@ function clean(x)
   return x;
 }
 
+function copyFunction(x)
+{
+  return function() {
+    return x.apply( this, arguments );
+  };
+}
+
 function copy(x, copyHidden)
 {
   if (x === null || x === undefined || typeof x !== 'object' || isFunction(x) || isRegExp(x))
@@ -424,9 +431,166 @@ function isEmpty(x)
   return false;
 }
 
+function createNumberResolver(numbers)
+{
+  if ( isString( numbers ) )
+  {
+    return function resolveNumber(model)
+    {
+      if ( isNumber( model ) )
+      {
+        return model;
+      }
+      else if ( isValue( model ) )
+      {
+        return parseFloat( model[ numbers ] );
+      }
+    };
+  }
+  else if ( isFunction( numbers ) )
+  {
+    return numbers;
+  }
+  else
+  {
+    return function resolveNumber(value)
+    {
+      return parseFloat( value );
+    };
+  }
+}
+
+function createPropertyResolver(properties, delim)
+{
+  if ( isString( properties ) )
+  {
+    return function resolveProperty(model)
+    {
+      return model[ properties ];
+    };
+  }
+  else if ( isArray( properties ) )
+  {
+    return function resolveProperty(model)
+    {
+      return pull( model, properties ).join( delim );
+    };
+  }
+  else if ( isObject( properties ) )
+  {
+    var propsArray = [];
+    var propsResolver = [];
+
+    for (var prop in properties)
+    {
+      propsArray.push( prop );
+      propsResolver.push( createPropertyResolver( properties[ prop ], delim ) );
+    }
+
+    return function resolveProperty(model)
+    {
+      var pulled = [];
+
+      for (var i = 0; i < prop.length; i++)
+      {
+        pulled.push( propsResolver[ i ]( model[ propsArray[ i ] ] ) );
+      }
+
+      return pulled.join( delim );
+    };
+  }
+  else if ( isFunction( properties ) )
+  {
+    return properties;
+  }
+  else
+  {
+    return function resolveProperty(model)
+    {
+      return model;
+    }
+  }
+}
+
+function createWhere(properties, value, equals)
+{
+  var equality = equals || equalsStrict;
+
+  if ( isFunction( properties ) )
+  {
+    return properties;
+  }
+  if ( isObject( properties ) )
+  {
+    return function where(model)
+    {
+      for (var prop in properties)
+      {
+        if ( !equality( model[ prop ], properties[ prop ] ) )
+        {
+          return false;
+        }
+      }
+
+      return true;
+    };
+  }
+  else if ( isString( properties ) )
+  {
+    if ( isValue( value ) )
+    { 
+      return function where(model)
+      {
+        return equality( model[ properties ], value );
+      };
+    }
+    else
+    {
+      return function where(model)
+      {
+        return isValue( model[ properties ] );
+      };
+    }
+  }
+  else
+  {
+    return function where(model)
+    {
+      return true;
+    };
+  }
+}
+
+function createHaving(having)
+{
+  if ( isFunction( having ) )
+  {
+    return having;
+  }
+  else if ( isString( having ) )
+  {
+    return function has(model)
+    {
+      return isValue( model ) && isValue( model[ having ] );
+    };
+  }
+  else
+  {
+    return function has()
+    {
+      return true;
+    };
+  }
+}
+
 function equalsStrict(a, b)
 {
   return a === b;
+}
+
+function equalsCompare(a, b)
+{
+  return compare( a, b ) === 0;
 }
 
 function equals(a, b)
@@ -523,6 +687,24 @@ function compare(a, b, nullsFirst)
   }
   
   return (a + '').localeCompare(b + '');
+}
+
+function isSorted(comparator, array)
+{
+  if ( !comparator )
+  {
+    return true;
+  }
+
+  for (var i = 0, n = array.length - 1; i < n; i++)
+  {
+    if ( comparator( array[ i ], array[ i + 1 ] ) > 0 )
+    {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 function createComparator(comparator, nullsFirst)
@@ -936,6 +1118,13 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 });
 Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 {
+  model.bootCollection = function( input )
+  {
+    return new NeuroModelCollection( db, input, true );
+  };
+});
+Neuro.on( Neuro.Events.Plugins, function(model, db, options)
+{
   model.create = function( props )
   {
     if ( !isObject( props ) )
@@ -1189,6 +1378,24 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
     transfer( options.methods, model.prototype );
   }
 });
+Neuro.on( Neuro.Events.Plugins, function(model, db, options)
+{
+  model.query = function(query)
+  {
+    var q = new NeuroRemoteQuery( db, query );
+
+    q.sync();
+
+    return q;
+  };
+});
+Neuro.on( Neuro.Events.Plugins, function(model, db, options)
+{
+  model.where = function(whereProperties, whereValue, whereEquals)
+  {
+    return new NeuroQuery( db, whereProperties, whereValue, whereEquals );
+  };
+});
 
 Neuro.debug = function(event, source)  /*, data.. */
 {
@@ -1368,6 +1575,13 @@ Neuro.rest = function(database)
     remove: function( model, success, failure )
     {
       success( {} );
+    },
+
+    // success ( data[] )
+    // failure ( data[], status )
+    query: function( query, success, failure )
+    {
+      success( [] );
     }
 
   };
@@ -1569,6 +1783,7 @@ function NeuroDatabase(options)
   }
 
   // Properties
+  // this.models = new NeuroModelCollection();
   this.models = new NeuroMap();
   this.className = this.className || toCamelCase( this.name );
   this.initialized = false;
@@ -1963,7 +2178,7 @@ NeuroDatabase.prototype =
   // Sorts the models & notifies listeners that the database has been updated.
   updated: function()
   {
-    this.sort();
+    this.sort(); // TODO remove
     this.trigger( NeuroDatabase.Events.Updated );
   },
 
@@ -1999,7 +2214,8 @@ NeuroDatabase.prototype =
   // with a minus in the front to sort in reverse, or a comparator function.
   setComparator: function(comparator, nullsFirst)
   {
-    this.comparatorFunction = createComparator( comparator, nullsFirst );
+    this.comparatorFunction = createComparator( comparator, nullsFirst ); // TODO remove
+    // this.models.setComparator( comparator, nullsFirst );
   },
 
   setSummarize: function(summarize)
@@ -2031,12 +2247,14 @@ NeuroDatabase.prototype =
     {
       this.models.sort( this.comparatorFunction );
     }
+    // this.models.resort(); TODO add
   },
 
   // Determines whether this database is sorted.
   isSorted: function()
   {
     return this.models.isSorted( this.comparatorFunction );
+    // return this.models.isSorted();
   },
 
   // Handles when we receive data from the server - either from
@@ -2286,6 +2504,7 @@ NeuroDatabase.prototype =
     {
       Neuro.debug( Neuro.Debugs.LOCAL_LOAD, db, records );
 
+      // db.models.clear();
       db.models.reset();
 
       records = Array.prototype.slice.call( records );
@@ -2315,7 +2534,7 @@ NeuroDatabase.prototype =
         {
           Neuro.debug( Neuro.Debugs.LOCAL_RESUME_SAVE, db, model );
 
-          db.models.put( key, model );
+          db.models.put( key, model, true );
 
           model.$addOperation( NeuroSaveRemote );
         }
@@ -2323,7 +2542,7 @@ NeuroDatabase.prototype =
         {
           Neuro.debug( Neuro.Debugs.LOCAL_LOAD_SAVED, db, model );
 
-          db.models.put( key, model );
+          db.models.put( key, model, true );
         }
       }
       
@@ -2410,7 +2629,7 @@ NeuroDatabase.prototype =
         }
       }
 
-      var keys = db.models.keys;
+      var keys = db.models.keys; // TODO ()
 
       for (var i = 0; i < keys.length; i++)
       {
@@ -2482,7 +2701,7 @@ NeuroDatabase.prototype =
   // The reference to all of the models in the database
   getModels: function()
   {
-    return this.models.values;
+    return this.models.values; // TOOD -.values
   }, 
 
   // Returns a model
@@ -3232,22 +3451,7 @@ NeuroMap.prototype =
    */
   isSorted: function(comparator)
   {
-    if ( !comparator )
-    {
-      return true;
-    }
-
-    var models = this.values;
-
-    for (var i = 0, n = models.length - 1; i < n; i++)
-    {
-      if ( comparator( models[ i ], models[ i + 1 ] ) > 0 )
-      {
-        return false;
-      }
-    }
-
-    return true;
+    return isSorted( comparator, this.values );
   },
 
   /**
@@ -3337,6 +3541,881 @@ NeuroMap.prototype =
   }
 
 };
+function NeuroCollection(values)
+{
+  this.addAll( values );
+}
+
+NeuroCollection.Events =
+{
+  Add:            'add',
+  Adds:           'adds',
+  Sort:           'sort',
+  Remove:         'remove',
+  Reset:          'reset',
+  Changes:        'add adds sort remote reset'
+};
+
+extendArray( Array, NeuroCollection, 
+{
+
+  setComparator: function(comparator, comparatorNullsFirst)
+  {
+    this.comparator = createComparator( comparator, comparatorNullsFirst );
+    this.resort();
+  },
+
+  isSorted: function()
+  {
+    return isSorted( this.comparator, this );
+  },
+
+  resort: function(comparator, comparatorNullsFirst)
+  {
+    var cmp = comparator ? createComparator( comparator, comparatorNullsFirst ) : this.comparator;
+
+    if ( !isSorted( cmp, this ) )
+    {
+      this.sort( cmp );
+      this.trigger( NeuroCollection.Events.Sort, [this] );
+    }
+  },
+
+  add: function(value, delaySort)
+  {
+    this.push( value );
+    this.trigger( NeuroCollection.Events.Add, [this, value] );
+
+    if ( !delaySort )
+    {
+      this.resort();
+    }
+  },
+
+  addAll: function(values, delaySort)
+  {
+    if ( isArray( values ) )
+    {
+      this.push.apply( this, values );
+      this.trigger( NeuroCollection.Events.Adds, [this, values] );
+
+      if ( !delaySort )
+      {
+        this.resort();
+      }
+    }
+  },
+
+  removeAt: function(i, delaySort)
+  {
+    if (i >= 0 && i < this.length)
+    {
+      var removing = this[ i ];
+
+      this.splice( i, 1 );
+      this.trigger( NeuroCollection.Events.Remove, [this, i, removing] );
+
+      if ( !delaySort )
+      {
+        this.resort();
+      }
+    }
+  },
+
+  insertAt: function(i, value, delaySort)
+  {
+    this.splice( i, 0, value );
+    this.trigger( NeuroCollection.Events.Add, [this, value] );
+
+    if ( !delaySort )
+    {
+      this.resort();
+    }
+  },
+
+  minModel: function(comparator)
+  {
+    var cmp = createComparator( comparator || this.comparator, false );
+    var min = undefined;
+
+    for (var i = 0; i < this.length; i++)
+    {
+      if ( cmp( min, this[i] ) > 0 )
+      {
+        min = this[i];
+      }
+    }
+
+    return min;
+  },
+
+  maxModel: function(comparator)
+  {
+    var cmp = createComparator( comparator || this.comparator, true );
+    var max = undefined;
+
+    for (var i = 0; i < this.length; i++)
+    {
+      if ( cmp( max, this[i] ) < 0 )
+      {
+        max = this[i];
+      }
+    }
+
+    return max;
+  },
+
+  min: function(properties, delim)
+  {
+    var resolver = createPropertyResolver( properties, delim );
+    var min = undefined;
+
+    for (var i = 0; i < this.length; i++)
+    {
+      var resolved = resolver( this[ i ] );
+
+      if ( compare( min, resolved, false ) > 0 )
+      {
+        min = resolved;
+      }
+    }
+
+    return min;
+  },
+
+  max: function(properties, delim)
+  {
+    var resolver = createPropertyResolver( properties, delim );
+    var max = undefined;
+
+    for (var i = 0; i < this.length; i++)
+    {
+      var resolved = resolver( this[ i ] );
+
+      if ( compare( max, resolved, true ) < 0 )
+      {
+        max = resolved;
+      }
+    }
+
+    return max;
+  },
+
+  firstWhere: function(properties, value, equals)
+  {
+    var where = createWhere( properties, value, equals );
+
+    for (var i = 0; i < this.length; i++)
+    {
+      var model = this[ i ];
+
+      if ( where( model ) )
+      {
+        return model;
+      }
+    }
+
+    return null;
+  },
+
+  first: function(properties, delim)
+  {
+    var resolver = createPropertyResolver( properties, delim );
+
+    for (var i = 0; i < this.length; i++)
+    {
+      var resolved = resolver( this[ i ] );
+
+      if ( isValue( resolved ) )
+      {
+        return resolved;
+      }
+    }
+  },
+
+  lastWhere: function(property)
+  {
+    var where = createWhere( properties, value, equals );
+
+    for (var i = this.length - 1; i >= 0; i--)
+    {
+      var model = this[ i ];
+
+      if ( where( model ) )
+      {
+        return model;
+      }
+    }
+
+    return null;
+  },
+
+  last: function(properties, delim)
+  {
+    var resolver = createPropertyResolver( properties, delim );
+
+    for (var i = this.length - 1; i >= 0; i--)
+    {
+      var resolved = resolver( this[ i ] );
+
+      if ( isValue( resolved ) )
+      {
+        return resolved;
+      }
+    }
+  },
+
+  aggregate: function(numbers, process, getResult)
+  {
+    var resolver = createNumberResolver( numbers );
+
+    for (var i = 0; i < this.length; i++)
+    {
+      var num = resolver( this[ i ] );
+
+      if ( isNumber( num ) )
+      {
+        process( num );
+      }
+    }
+
+    return getResult();
+  },
+
+  sum: function(numbers)
+  {
+    var result = 0;
+
+    function process(x)
+    {
+      result += x;
+    }
+
+    function getResult()
+    {
+      return result;
+    }
+
+    return this.aggregate( numbers, process, getResult );
+  },
+
+  avg: function(numbers)
+  {
+    var result = 0;
+    var total = 0;
+
+    function process(x)
+    {
+      result += x;
+      total++;
+    }
+
+    function getResult()
+    {
+      return total === 0 ? 0 : result / total;
+    }
+
+    return this.aggregate( numbers, process, getResult );
+  },
+
+  countWhere: function(properties, value, equals)
+  {
+    var where = createWhere( properties, value, equals );
+    var met = 0;
+
+    for (var i = 0; i < this.length; i++)
+    {
+      var model = this[ i ];
+
+      if ( where( model ) )
+      {
+        met++;
+      }
+    }
+
+    return met;
+  },
+
+  count: function(properties)
+  {
+    if ( !isValue( properties ) )
+    {
+      return this.length;
+    }
+
+    var resolver = createPropertyResolver( properties );
+    var result = 0;
+
+    for (var i = 0; i < this.length; i++)
+    {
+      var resolved = resolver( this[ i ] );
+
+      if ( isValue( resolved ) )
+      {
+        result++;
+      }
+    }
+
+    return result;
+  },
+
+  pluck: function(values, keys)
+  {
+    var valuesResolver = createPropertyResolver( values );
+
+    if ( keys )
+    {
+      var keysResolver = createPropertyResolver( keys );
+      var result = {};
+      
+      for (var i = 0; i < this.length; i++)
+      {
+        var model = this[ i ];
+        var value = valuesResolver( model );
+        var key = keysResolver( model );
+
+        result[ key ] = value;
+      }
+
+      return result;
+    }
+    else
+    {
+      var result = [];
+
+      for (var i = 0; i < this.length; i++)
+      {
+        var model = this[ i ];
+        var value = valuesResolver( model );
+
+        result.push( value );
+      }
+
+      return result;
+    }
+  },
+
+  each: function(callback, context)
+  {
+    var callbackContext = context || this;
+
+    for (var i = 0; i < this.length; i++)
+    {
+      callback.call( context, this[ i ], i );
+    }
+  },
+
+  reduce: function(reducer, initialValue)
+  {
+    for (var i = 0; i < this.length; i++)
+    {
+      initialValue += reducer( initialValue, this[ i ] );
+    }
+
+    return initialValue;
+  },
+
+  random: function()
+  {
+    var i = Math.floor( Math.random() * this.length );
+
+    return this[ i ];
+  },
+
+  chunk: function(chunkSize, out)
+  {
+    var outer = out || [];
+    var outerIndex = 0;
+    var inner = outer[ outerIndex ] = outer[ outerIndex ] || [];
+    var innerIndex = 0;
+
+    for (var i = 0; i < this.length; i++)
+    {
+      inner[ innerIndex ] = this[ i ];
+
+      if ( ++innerIndex >= chunkSize )
+      {
+        innerIndex = 0;
+        outerIndex++;
+        inner.length = chunkSize;
+        inner = outer[ outerIndex ] = outer[ outerIndex ] || [];
+      }
+    }
+
+    if ( innerIndex !== 0 )
+    {
+      outerIndex++;
+    }
+
+    inner.length = innerIndex;
+    outer.length = outerIndex;
+
+    return outer;
+  },
+
+  where: function(properties, value, equals)
+  {
+    var where = createWhere( properties, value, equals );
+    var result = [];
+
+    for (var i = 0; i < this.length; i++)
+    {
+      var model = this[ i ];
+
+      if ( where( model ) )
+      {
+        result.push( model );
+      }
+    }
+
+    return result;
+  },
+
+  contains: function(properties, value, equals)
+  {
+    var where = createWhere( properties, value, equals );
+
+    for (var i = 0; i < this.length; i++)
+    {
+      var model = this[ i ];
+
+      if ( where( model ) )
+      {
+        return true;
+      }
+    }
+
+    return false;
+  },
+
+  toArray: function()
+  {
+    var arr = [];
+    arr.push.apply( arr, this );
+    return arr;
+  },
+
+  group: function(grouping)
+  {
+    var by = createPropertyResolver( grouping.by, grouping.bySeparator || '/' );
+    var having = createHaving( grouping.having );
+    var select = grouping.select || {};
+    var map = {};
+
+    if ( isString( grouping.by ) )
+    {
+      if ( !(grouping.by in select) )
+      {
+        select[ grouping.by ] = 'first';
+      }
+    }
+    else if ( isArray( grouping.by ) )
+    {
+      for (var prop in grouping.by)
+      {
+        if ( !(prop in select) )
+        {
+          select[ prop ] = 'first';
+        }
+      }
+    }
+
+    for (var i = 0; i < this.length; i++)
+    {
+      var model = this[ i ];
+      var key = by( model );
+      var group = map[ key ];
+
+      if ( !group )
+      {
+        group = map[ key ] = this.constructor.create();
+      }
+
+      group.add( model, true );
+    }
+
+    var groupings = this.constructor.create();
+    groupings.setComparator( grouping.comparator, grouping.comparatorNullsFirst );
+
+    for (var key in map)
+    {
+      var grouped = {};
+      var groupArray = map[ key ];
+
+      for (var propName in select)
+      {
+        var aggregator = select[ propName ];
+
+        if ( isString( aggregator ) )
+        {
+          grouped[ propName ] = groupArray[ aggregator ]( propName );
+        }
+        else if ( isFunction( aggregator ) )
+        {
+          grouped[ propName ] = aggregator( groupArray, propName );
+        }
+      }
+
+      if ( grouping.track !== false )
+      {
+        grouped.$group = groupArray;
+      }
+
+      if ( grouping.count !== false )
+      {
+        grouped.$count = groupArray.length;
+      }
+
+      if ( having( grouped ) )
+      {
+        groupings.push( grouped );        
+      }
+    }
+
+    groupings.resort();
+
+    return groupings;
+  }
+
+});
+
+eventize( NeuroCollection.prototype );
+function NeuroModelCollection(database, models, remoteData)
+{
+  this.init( database, models, remoteData );
+}
+
+extendArray( NeuroCollection, NeuroModelCollection, 
+{
+
+  init: function(database, models, remoteData)
+  {
+    this.map = new NeuroMap();
+    this.map.values = this;
+    this.database = database;
+    this.reset( models, remoteData );
+  },
+
+  resort: function(comparator, comparatorNullsFirst)
+  {
+    var cmp = comparator ? createComparator( comparator, comparatorNullsFirst ) : this.comparator;
+
+    if ( !isSorted( cmp, this ) )
+    {
+      this.map.sort( cmp );
+      this.trigger( NeuroCollection.Events.Sort, [this] );
+    }
+  },
+
+  clear: function()
+  {
+    return this.map.reset();
+  },
+
+  reset: function(models, remoteData)
+  {
+    if ( isArray( models ) )
+    {
+      this.map.reset();
+
+      for (var i = 0; i < models.length; i++)
+      {
+        var model = models[ i ];
+        var parsed = this.database.parseModel( model, remoteData );
+
+        if ( parsed )
+        {
+          this.map.put( parsed.$key(), parsed );
+        }
+      }
+
+      this.trigger( NeuroCollection.Events.Reset, [this] );
+      this.resort();
+    }
+  },
+
+  add: function(model, delaySort)
+  {
+    this.map.put( model.$key(), model );
+    this.trigger( NeuroCollection.Events.Add, [this, model] );
+
+    if ( !delaySort )
+    {
+      this.resort();
+    }
+  },
+
+  addAll: function(models, delaySort)
+  {
+    if ( isArray( models ) )
+    {
+      for (var i = 0; i < models.length; i++)
+      {
+        var model = models[ i ];
+
+        this.map.put( model.$key(), model );
+      }
+
+      this.trigger( NeuroCollection.Events.Adds, [this, models] );
+
+      if ( !delaySort )
+      {
+        this.resort();
+      }
+    }
+  },
+
+  put: function(key, model, delaySort)
+  {
+    this.map.put( key, model );
+    this.trigger( NeuroCollection.Events.Add, [this, model] );
+
+    if ( !delaySort )
+    {
+      this.resort();
+    }
+  },
+
+  has: function(key)
+  {
+    return this.map.has( key );
+  },
+
+  get: function(key)
+  {
+    return this.map.get( key );
+  },
+
+  remove: function(input, delaySort)
+  {
+    var key = this.database.buildKeyFromInput( input );
+    var removing = this.map.get( key );
+
+    if ( removing )
+    {
+      this.map.remove( key );
+      this.trigger( NeuroCollection.Events.Remove, [this, input, removing] );
+
+      if ( !delaySort )
+      {
+        this.resort();
+      }
+    }
+  },
+
+  rebuild: function()
+  {
+    this.map.rebuildIndex();
+  },
+
+  keys: function()
+  {
+    return this.map.keys;
+  },
+
+  reverse: function()
+  {
+    this.map.reverse();
+  },
+
+  update: function(props, value, remoteData)
+  {
+    for (var i = 0; i < this.length; i++)
+    {
+      this[ i ].$set( props, value, remoteData );
+    }
+
+    for (var i = 0; i < this.length; i++)
+    {
+      this[ i ].$save();
+    }
+
+    this.resort();
+  }
+
+});
+function NeuroQuery(database, whereProperties, whereValue, whereEquals)
+{
+  this.init( database );
+  this.where = createWhere( whereProperties, whereValue, whereEquals );
+  this.listen();
+  this.sync();
+}
+
+extendArray( NeuroModelCollection, NeuroQuery,
+{
+
+  listen: function()
+  {
+    this.onModelAdd = copyFunction( this.handleModelAdded );
+    this.onModelRemoved = copyFunction( this.handleModelRemoved );
+    this.onModelUpdated = copyFunction( this.handleModelUpdated );
+
+    this.database.on( NeuroDatabase.Events.ModelAdded, this.onModelAdd, this );
+    this.database.on( NeuroDatabase.Events.ModelRemoved, this.onModelRemoved, this );
+    this.database.on( NeuroDatabase.Events.ModelUpdated, this.onModelUpdated, this );
+  },
+
+  sync: function()
+  {
+    var models = this.database.getModels();
+
+    this.map.reset();
+
+    for (var i = 0; i < models.length; i++)
+    {
+      var model = models[ i ];
+
+      if ( this.where( model ) )
+      {
+        this.map.put( model.$key(), model );
+      }
+    }
+
+    this.trigger( NeuroCollection.Events.Reset, [this] );
+  },
+
+  handleModelAdded: function(model, remoteData)
+  {
+    if ( this.where( model ) )
+    {
+      this.add( model );
+    }
+  },
+
+  handleModelRemoved: function(model)
+  {
+    this.remove( model );
+  },
+
+  handleModelUpdated: function(model, remoteData)
+  {
+    var key = model.$key();
+
+    if ( this.map.has( key ) )
+    {
+      if ( !this.where( model ) )
+      {
+        this.remove( model );
+      }
+    }
+    else
+    {
+      if ( this.where( model ) )
+      {
+        this.add( model );
+      }
+    }
+  },
+
+  destroy: function()
+  {
+    this.database.off( NeuroDatabase.Events.ModelAdded, this.onModelAdd );
+    this.database.off( NeuroDatabase.Events.ModelRemoved, this.onModelRemoved );
+    this.database.off( NeuroDatabase.Events.ModelUpdated, this.onModelUpdated );
+  }
+
+});
+function NeuroRemoteQuery(database, query)
+{
+  this.init( database );
+  this.query = query;
+  this.status = NeuroRemoteQuery.Status.Pending;
+}
+
+NeuroRemoteQuery.Status =
+{
+  Pending:  0,
+  Success:  1,
+  Failure:  2
+};
+
+NeuroRemoteQuery.Events = 
+{
+  Ready:      'ready',
+  Success:    'success',
+  Failure:    'failure'
+};
+
+extendArray( NeuroQuery, NeuroRemoteQuery, 
+{
+
+  sync: function(clearPending)
+  {
+    this.status = NeuroRemoteQuery.Status.Pending;
+
+    if ( clearPending )
+    {
+      this.off( NeuroRemoteQuery.Events.Ready );
+      this.off( NeuroRemoteQuery.Events.Success );
+      this.off( NeuroRemoteQuery.Events.Failure );
+    }
+
+    this.database.rest.query( this.query, this.onSuccess(), this.onFailure() );
+  },
+
+  ready: function(callback, context)
+  {
+    if ( this.status === NeuroRemoteQuery.Status.Pending )
+    {
+      this.once( NeuroRemoteQuery.Events.Ready, callback, context );
+    }
+    else
+    {
+      callback.call( context, this );
+    }
+  },
+
+  success: function(callback, context)
+  {
+    if ( this.status === NeuroRemoteQuery.Status.Pending )
+    {
+      this.once( NeuroRemoteQuery.Events.Success, callback, context );
+    }
+    else if ( this.status === NeuroRemoteQuery.Status.Success )
+    {
+      callback.call( context, this );
+    }
+  },
+
+  failure: function(callback, context)
+  {
+    if ( this.status === NeuroRemoteQuery.Status.Pending )
+    {
+      this.once( NeuroRemoteQuery.Events.Failure, callback, context );
+    }
+    else if ( this.status === NeuroRemoteQuery.Status.Failure )
+    {
+      callback.call( context, this );
+    }
+  },
+
+  onSuccess: function()
+  {
+    var that = this;
+
+    return function(models)
+    {
+      that.status = NeuroRemoteQuery.Status.Success;
+      that.reset( models, true );
+      that.trigger( NeuroRemoteQuery.Events.Success, [that] );
+      that.trigger( NeuroRemoteQuery.Events.Ready, [that] );
+    };
+  },
+
+  onFailure: function()
+  {
+    var that = this;
+
+    return function(models, error)
+    {
+      that.status = NeuroRemoteQuery.Status.Failure;
+      that.trigger( NeuroRemoteQuery.Events.Failure, [that] );
+      that.trigger( NeuroRemoteQuery.Events.Ready, [that] );
+    };
+  }
+
+});
 
 /* Removing?
 Neuro.Cascade = {
@@ -4608,7 +5687,7 @@ NeuroRelation.prototype =
   {
     return function(db)
     {
-      var related = db.models.filter( isRelated );
+      var related = db.models.filter( isRelated ); // TODO
 
       callback.call( this, related );
     };
@@ -4628,7 +5707,7 @@ NeuroRelation.prototype =
 
       db.ready(function(db)
       {
-        db.models.filter( isRelated, related );
+        db.models.filter( isRelated, related ); // TODO
 
         if ( ++current === total )
         {
@@ -5020,6 +6099,7 @@ extend( NeuroRelation, NeuroHasMany,
     var that = this;
     var relatedDatabase = this.model.Database;
     var isRelated = this.isRelatedFactory( model );
+    var collection = new NeuroRelationCollection( relatedDatabase, model, this );
     var initial = model[ this.name ];
  
     var relation = model.$relations[ this.name ] =
@@ -5028,7 +6108,7 @@ extend( NeuroRelation, NeuroHasMany,
       isRelated: isRelated,
       initial: initial,
       pending: {},
-      models: new NeuroMap(),
+      models: collection.map,
       saving: false,
       delaySorting: false,
       delaySaving: false,
@@ -5070,29 +6150,6 @@ extend( NeuroRelation, NeuroHasMany,
     // When models are added to the related database, check if it's related to this model
     relatedDatabase.on( NeuroDatabase.Events.ModelAdded, this.handleModelAdded( relation ), this );
 
-    // Add convenience methods to the underlying array
-    var related = relation.models.values;
-    
-    related.set = function(input)
-    {
-      that.set( model, input );
-    };
-    
-    related.relate = function(input)
-    {
-      that.relate( model, input );
-    };
-    
-    related.unrelate = function(input)
-    {
-      that.unrelate( model, input );
-    };
-    
-    related.isRelated = function(input)
-    {
-      return that.isRelated( model, input );
-    };
-    
     // If the model's initial value is an array, populate the relation from it!
     if ( isArray( initial ) )
     {
@@ -5406,7 +6463,7 @@ extend( NeuroRelation, NeuroHasMany,
   {
     return function (relatedDatabase)
     {
-      var related = relatedDatabase.models.filter( relation.isRelated );
+      var related = relatedDatabase.models.filter( relation.isRelated ); // TODO
       var models = related.values;
 
       Neuro.debug( Neuro.Debugs.HASMANY_LAZY_LOAD, this, relation, models );
@@ -5640,6 +6697,7 @@ extend( NeuroRelation, NeuroHasManyThrough,
     var that = this;
     var relatedDatabase = this.model.Database;
     var throughDatabase = this.through.Database;
+    var collection = new NeuroRelationCollection( relatedDatabase, model, this );
     var isRelated = this.isRelatedFactory( model );
     var initial = model[ this.name ];
  
@@ -5649,7 +6707,7 @@ extend( NeuroRelation, NeuroHasManyThrough,
       isRelated: isRelated,
       initial: initial,
       pending: {},
-      models: new NeuroMap(),
+      models: collection.map,
       throughs: new NeuroMap(),
       saving: false,
       delaySorting: false,
@@ -6029,7 +7087,7 @@ extend( NeuroRelation, NeuroHasManyThrough,
     return function (throughDatabase)
     {
       var throughsAll = throughDatabase.models;
-      var throughsRelated = throughsAll.filter( relation.isRelated );
+      var throughsRelated = throughsAll.filter( relation.isRelated ); // TODO
       var throughs = throughsRelated.values;
 
       if ( throughs.length === 0 )
@@ -6643,6 +7701,38 @@ extend( NeuroRelation, NeuroHasOne,
 
 });
 
+function NeuroRelationCollection(database, model, relator)
+{
+  this.init( database );
+  this.model = model;
+  this.relator = relator;
+}
+
+extendArray( NeuroModelCollection, NeuroRelationCollection,
+{
+
+  set: function(input)
+  {
+    this.relator.set( this.model, input );
+  },
+  
+  relate: function(input)
+  {
+    this.relator.relate( this.model, input );
+  },
+  
+  unrelate: function(input)
+  {
+    this.relator.unrelate( this.model, input );
+  },
+  
+  isRelated: function(input)
+  {
+    return this.relator.isRelated( this.model, input );
+  }
+
+});
+
   /* Top-Level Function */
   global.Neuro = Neuro;
 
@@ -6652,13 +7742,20 @@ extend( NeuroRelation, NeuroHasOne,
   global.Neuro.Relation = NeuroRelation;
   global.Neuro.Operation = NeuroOperation;
   global.Neuro.Map = NeuroMap;
+  global.Neuro.Collection = NeuroCollection;
+  global.Neuro.ModelCollection = NeuroModelCollection;
+  global.Neuro.Query = NeuroQuery;
+  global.Neuro.RemoteQuery = NeuroRemoteQuery;
 
   /* Utility Functions */
   global.Neuro.isNeuro = isNeuro;
   global.Neuro.uuid = uuid;
   global.Neuro.indexOf = indexOf;
   global.Neuro.propsMatch = propsMatch;
+  
   global.Neuro.extend = extend;
+  global.Neuro.extendArray = extendArray;
+  
   global.Neuro.transfer = transfer;
   global.Neuro.swap = swap;
   global.Neuro.grab = grab;
@@ -6667,9 +7764,17 @@ extend( NeuroRelation, NeuroHasOne,
   global.Neuro.diff = diff;
   global.Neuro.sizeof = sizeof;
   global.Neuro.isEmpty = isEmpty;
+
   global.Neuro.compare = compare;
   global.Neuro.equals = equals;
   global.Neuro.equalsStrict = equalsStrict;
+  global.Neuro.equalsCompare = equalsCompare;
+
+  global.Neuro.isSorted = isSorted;
+
+  global.Neuro.createWhere = createWhere;
+  global.Neuro.createPropertyResolver = createPropertyResolver;
+  global.Neuro.createNumberResolver = createNumberResolver;
   global.Neuro.createComparator = createComparator;
 
 })(window);

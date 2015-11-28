@@ -42,6 +42,11 @@ function restart()
   online();
 }
 
+function wait(millis, func)
+{
+  setTimeout( func, millis );
+}
+
 Array.prototype.pluck = function(property)
 {
   var plucked = [];
@@ -254,6 +259,7 @@ Neuro.rest = function(database)
 function TestRest()
 {
   this.map = new Neuro.Map();
+  this.queries = new Neuro.Map();
   this.status = 200;
   this.returnValue = false;
   this.delay = 0;
@@ -357,5 +363,9 @@ TestRest.prototype =
   all: function(success, failure)
   {
     this.finishDelayed( success, failure, this.map.values );
+  },
+  query: function(query, success, failure)
+  {
+    this.finishDelayed( success, failure, this.queries.get( query ) );
   }
 };

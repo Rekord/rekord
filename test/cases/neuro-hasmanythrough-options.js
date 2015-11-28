@@ -371,7 +371,7 @@ test( 'comparator', function(assert)
 
   var expected = [g1, g2, g0];
 
-  deepEqual( u0.groups, expected );
+  deepEqual( u0.groups.toArray(), expected );
 });
 
 test( 'comparatorNullsFirst', function(assert)
@@ -395,7 +395,7 @@ test( 'comparatorNullsFirst', function(assert)
 
   var expected = [g2, g1, g0];
 
-  deepEqual( u0.groups, expected );
+  deepEqual( u0.groups.toArray(), expected );
 });
 
 test( 'cascadeRemove true', function(assert)

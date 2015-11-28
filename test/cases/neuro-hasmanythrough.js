@@ -11,7 +11,7 @@ test( 'no initial value', function(assert)
 
   var u0 = User.create({name: 'u0'});
 
-  deepEqual( u0.groups, [] );
+  deepEqual( u0.groups.toArray(), [] );
 });
 
 test( 'initial value', function(assert)
@@ -38,8 +38,8 @@ test( 'ninja remove', function(assert)
 
   ug0.$remove();
 
-  deepEqual( u0.groups, [g1] );
-  deepEqual( g0.users, [] );
+  deepEqual( u0.groups.toArray(), [g1] );
+  deepEqual( g0.users.toArray(), [] );
 });
 
 test( 'ninja save sort', function(assert)
@@ -61,13 +61,13 @@ test( 'ninja save sort', function(assert)
 
   var expected0 = [g0, g1];
 
-  deepEqual( u0.groups, expected0 );
+  deepEqual( u0.groups.toArray(), expected0 );
 
   g1.$save( 'name', 'a' );
 
   var expected1 = [g1, g0];
 
-  deepEqual( u0.groups, expected1 );
+  deepEqual( u0.groups.toArray(), expected1 );
 });
 
 test( 'ninja save add', function(assert)
@@ -85,11 +85,11 @@ test( 'ninja save add', function(assert)
   var g1 = test.g1;
   var g2 = Group.create({name: 'g2'});
 
-  deepEqual( u0.groups, [g0, g1] );
+  deepEqual( u0.groups.toArray(), [g0, g1] );
 
   var ug2 = UserGroup.create({user_id: u0.id, group_id: g2.id});
 
-  deepEqual( u0.groups, [g0, g1, g2] );
+  deepEqual( u0.groups.toArray(), [g0, g1, g2] );
 });
 
 test( 'set', function(assert)
@@ -109,7 +109,7 @@ test( 'set', function(assert)
 
   u0.groups.set( [g0, g2] );
 
-  deepEqual( u0.groups, [g0, g2] );
+  deepEqual( u0.groups.toArray(), [g0, g2] );
   strictEqual( u0.userGroups.length, 2 );
 });
 
@@ -168,12 +168,12 @@ test( 'unrelate', function(assert)
 
   u0.groups.unrelate( g0.id );
 
-  deepEqual( u0.groups, [g2, g1] );
+  deepEqual( u0.groups.toArray(), [g2, g1] );
   strictEqual( u0.userGroups.length, 2 );
 
   u0.groups.unrelate( g2 );
 
-  deepEqual( u0.groups, [g1] );
+  deepEqual( u0.groups.toArray(), [g1] );
   strictEqual( u0.userGroups.length, 1 );
 
   u0.groups.unrelate();
@@ -222,7 +222,7 @@ test( 'get', function(assert)
 
   var expected = [g0, g1, g2];
 
-  deepEqual( u0.$get( 'groups'), expected );
+  deepEqual( u0.$get( 'groups').toArray(), expected );
   strictEqual( u0.$get( 'groups' ), u0.groups );
 });
 
@@ -327,9 +327,9 @@ test( 'test ninja through remove', function(assert)
   var ug0 = test.ug0;
   var ug1 = test.ug1;
 
-  deepEqual( u0.groups, [g0, g1] );
+  deepEqual( u0.groups.toArray(), [g0, g1] );
 
   ug0.$remove();
 
-  deepEqual( u0.groups, [g1] );
+  deepEqual( u0.groups.toArray(), [g1] );
 });

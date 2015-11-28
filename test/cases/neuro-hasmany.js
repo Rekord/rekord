@@ -29,7 +29,7 @@ test( 'no initial value', function(assert)
 
   var l0 = TaskList.create({name: 'l0'});
 
-  deepEqual( l0.tasks, [] );
+  deepEqual( l0.tasks.toArray(), [] );
 });
 
 test( 'initial value', function(assert)
@@ -494,7 +494,7 @@ test( 'get', function(assert)
 
   var expected = [t0, t1, t2];
 
-  deepEqual( l0.$get( 'tasks'), expected );
+  deepEqual( l0.$get( 'tasks').toArray(), expected );
   strictEqual( l0.$get( 'tasks' ), l0.tasks );
 });
 

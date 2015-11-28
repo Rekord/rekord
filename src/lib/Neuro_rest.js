@@ -39,6 +39,13 @@ Neuro.rest = function(database)
     remove: function( model, success, failure )
     {
       success( {} );
+    },
+
+    // success ( data[] )
+    // failure ( data[], status )
+    query: function( query, success, failure )
+    {
+      success( [] );
     }
 
   };
