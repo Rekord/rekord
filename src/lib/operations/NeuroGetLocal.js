@@ -3,8 +3,12 @@ function NeuroGetLocal(model, cascade)
   this.reset( model, cascade );
 }
 
-extend( new NeuroOperation( false, 'NeuroGetLocal' ), NeuroGetLocal,
+extend( NeuroOperation, NeuroGetLocal,
 {
+
+  interrupts: false,
+
+  type: 'NeuroGetLocal',
 
   run: function(db, model)
   {

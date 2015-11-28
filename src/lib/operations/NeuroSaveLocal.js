@@ -3,8 +3,12 @@ function NeuroSaveLocal(model, cascade)
   this.reset( model, cascade );
 }
 
-extend( new NeuroOperation( false, 'NeuroSaveLocal' ), NeuroSaveLocal,
+extend( NeuroOperation, NeuroSaveLocal,
 {
+
+  interrupts: false,
+
+  type: 'NeuroSaveLocal',
 
   run: function(db, model)
   {

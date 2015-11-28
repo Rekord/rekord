@@ -10,10 +10,8 @@ Neuro.Cascade = {
 };
 */
 
-function NeuroOperation(interrupts, type)
+function NeuroOperation()
 {
-  this.interrupts = interrupts;
-  this.type = type;
 }
 
 NeuroOperation.prototype = 

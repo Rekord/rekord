@@ -3,8 +3,12 @@ function NeuroRemoveLocal(model, cascade)
   this.reset( model, cascade );
 }
 
-extend( new NeuroOperation( true, 'NeuroRemoveLocal' ), NeuroRemoveLocal, 
+extend( NeuroOperation, NeuroRemoveLocal, 
 {
+
+  interrupts: true,
+
+  type: 'NeuroRemoveLocal',
 
   run: function(db, model)
   {

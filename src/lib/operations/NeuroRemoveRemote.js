@@ -3,8 +3,12 @@ function NeuroRemoveRemote(model, cascade)
   this.reset( model, cascade );
 }
 
-extend( new NeuroOperation( true, 'NeuroRemoveRemote' ), NeuroRemoveRemote,
+extend( NeuroOperation, NeuroRemoveRemote,
 {
+
+  interrupts: true,
+
+  type: 'NeuroRemoveRemote',
 
   run: function(db, model)
   {

@@ -121,9 +121,82 @@ function propsMatch(test, testFields, expected, expectedFields)
   return false;
 }
 
+// Copies a constructor function returning a function that can be called to 
+// return an instance and doesn't invoke the original constructor.
+function copyConstructor(func)
+{
+  function F() {};
+  F.prototype = func.prototype;
+  return F;
+}
+
 function extend(parent, child, override)
 {
-  transfer( override, child.prototype = parent );
+  // Avoid calling the parent constructor
+  parent = copyConstructor( parent );
+  // Child instances are instanceof parent
+  child.prototype = new parent()
+  // Copy new methods into child prototype
+  transfer( override, child.prototype )
+  // Set the correct constructor
+  child.prototype.constructor = child;
+}
+
+// Creates a factory for instantiating
+function factory(constructor)
+{
+  function F(args)
+  {
+    return constructor.apply( this, args );
+  }
+
+  F.prototype = constructor.prototype;
+
+  return function()
+  {
+    return new F( arguments );
+  };
+}
+
+function extendArray(parent, child, override)
+{
+
+  // If direct extension of array is supported...
+  if ( extendArraySupported() )
+  {
+    extend( parent, child, override );
+    child.create = factory( child );
+  }
+  // Otherwise copy all of the methods
+  else
+  {
+    // Avoid calling the parent constructor
+    parent = copyConstructor( parent );
+
+    // TODO fix for IE8
+    child.create = function()
+    {
+      var created = new parent();
+      child.apply( created, arguments );
+      transfer( override, created );
+      return created;
+    };
+  }
+}
+
+// Is directly extending an array supported?
+function extendArraySupported()
+{
+  if ( extendArraySupported.supported === undefined )
+  {
+    function EA() {};
+    EA.prototype = [];
+    var eq = new EA();
+    eq.push(0);
+    extendArraySupported.supported = (eq.length === 1);
+  }
+
+  return extendArraySupported.supported;
 }
 
 function transfer(from, to)
@@ -3276,10 +3349,8 @@ Neuro.Cascade = {
 };
 */
 
-function NeuroOperation(interrupts, type)
+function NeuroOperation()
 {
-  this.interrupts = interrupts;
-  this.type = type;
 }
 
 NeuroOperation.prototype = 
@@ -3398,8 +3469,12 @@ function NeuroGetLocal(model, cascade)
   this.reset( model, cascade );
 }
 
-extend( new NeuroOperation( false, 'NeuroGetLocal' ), NeuroGetLocal,
+extend( NeuroOperation, NeuroGetLocal,
 {
+
+  interrupts: false,
+
+  type: 'NeuroGetLocal',
 
   run: function(db, model)
   {
@@ -3456,8 +3531,12 @@ function NeuroGetRemote(model, cascade)
   this.reset( model, cascade );
 }
 
-extend( new NeuroOperation( false, 'NeuroGetRemote' ), NeuroGetRemote,
+extend( NeuroOperation, NeuroGetRemote,
 {
+
+  interrupts: false,
+
+  type: 'NeuroGetRemote',
 
   run: function(db, model)
   {
@@ -3497,8 +3576,12 @@ function NeuroRemoveCache(model, cascade)
   this.reset( model, cascade );
 }
 
-extend( new NeuroOperation( true, 'NeuroRemoveCache' ), NeuroRemoveCache,
+extend( NeuroOperation, NeuroRemoveCache,
 {
+
+  interrupts: true,
+
+  type: 'NeuroRemoveCache',
 
   run: function(db, model)
   {
@@ -3518,8 +3601,12 @@ function NeuroRemoveLocal(model, cascade)
   this.reset( model, cascade );
 }
 
-extend( new NeuroOperation( true, 'NeuroRemoveLocal' ), NeuroRemoveLocal, 
+extend( NeuroOperation, NeuroRemoveLocal, 
 {
+
+  interrupts: true,
+
+  type: 'NeuroRemoveLocal',
 
   run: function(db, model)
   {
@@ -3576,8 +3663,12 @@ function NeuroRemoveNow(model, cascade)
   this.reset( model, cascade );
 }
 
-extend( new NeuroOperation( true, 'NeuroRemoveNow' ), NeuroRemoveNow,
+extend( NeuroOperation, NeuroRemoveNow,
 {
+
+  interrupts: true,
+
+  type: 'NeuroRemoveNow',
 
   run: function(db, model)
   {
@@ -3626,8 +3717,12 @@ function NeuroRemoveRemote(model, cascade)
   this.reset( model, cascade );
 }
 
-extend( new NeuroOperation( true, 'NeuroRemoveRemote' ), NeuroRemoveRemote,
+extend( NeuroOperation, NeuroRemoveRemote,
 {
+
+  interrupts: true,
+
+  type: 'NeuroRemoveRemote',
 
   run: function(db, model)
   {
@@ -3712,8 +3807,12 @@ function NeuroSaveLocal(model, cascade)
   this.reset( model, cascade );
 }
 
-extend( new NeuroOperation( false, 'NeuroSaveLocal' ), NeuroSaveLocal,
+extend( NeuroOperation, NeuroSaveLocal,
 {
+
+  interrupts: false,
+
+  type: 'NeuroSaveLocal',
 
   run: function(db, model)
   {
@@ -3828,8 +3927,12 @@ function NeuroSaveNow(model, cascade)
   this.reset( model, cascade );
 }
 
-extend( new NeuroOperation( false, 'NeuroSaveNow' ), NeuroSaveNow,
+extend( NeuroOperation, NeuroSaveNow,
 {
+
+  interrupts: false,
+
+  type: 'NeuroSaveNow',
 
   run: function(db, model)
   {
@@ -3852,8 +3955,12 @@ function NeuroSaveRemote(model, cascade)
   this.reset( model, cascade );
 }
 
-extend( new NeuroOperation( false, 'NeuroSaveRemote' ), NeuroSaveRemote,
+extend( NeuroOperation, NeuroSaveRemote,
 {
+
+  interrupts: false,
+
+  type: 'NeuroSaveRemote',
 
   run: function(db, model)
   {
@@ -4534,7 +4641,6 @@ NeuroRelation.prototype =
 };
 function NeuroBelongsTo()
 {
-  this.type = 'belongsTo';
 }
 
 Neuro.Relations.belongsTo = NeuroBelongsTo;
@@ -4550,8 +4656,10 @@ NeuroBelongsTo.Defaults =
   cascade:    true
 };
 
-extend( new NeuroRelation(), NeuroBelongsTo, 
+extend( NeuroRelation, NeuroBelongsTo, 
 {
+
+  type: 'belongsTo',
 
   getDefaults: function(database, field, options)
   {
@@ -4868,7 +4976,6 @@ extend( new NeuroRelation(), NeuroBelongsTo,
 });
 function NeuroHasMany()
 {
-  this.type = 'hasMany';
 }
 
 Neuro.Relations.hasMany = NeuroHasMany;
@@ -4887,8 +4994,10 @@ NeuroHasMany.Defaults =
   cascadeSave:          true
 };
 
-extend( new NeuroRelation(), NeuroHasMany, 
+extend( NeuroRelation, NeuroHasMany, 
 {
+
+  type: 'hasMany',
 
   getDefaults: function(database, field, options)
   {
@@ -5468,7 +5577,6 @@ extend( new NeuroRelation(), NeuroHasMany,
 });
 function NeuroHasManyThrough()
 {
-  this.type = 'hasManyThrough';
 }
 
 Neuro.Relations.hasManyThrough = NeuroHasManyThrough;
@@ -5490,8 +5598,10 @@ NeuroHasManyThrough.Defaults =
   cascadeSaveRelated:   false
 };
 
-extend( new NeuroRelation(), NeuroHasManyThrough, 
+extend( NeuroRelation, NeuroHasManyThrough, 
 {
+
+  type: 'hasManyThrough',
 
   getDefaults: function(database, field, options)
   {
@@ -6202,7 +6312,6 @@ extend( new NeuroRelation(), NeuroHasManyThrough,
 });
 function NeuroHasOne()
 {
-  this.type = 'hasOne';
 }
 
 Neuro.Relations.hasOne = NeuroHasOne;
@@ -6218,8 +6327,10 @@ NeuroHasOne.Defaults =
   cascade:    true
 };
 
-extend( new NeuroRelation(), NeuroHasOne, 
+extend( NeuroRelation, NeuroHasOne, 
 {
+
+  type: 'hasOne',
 
   getDefaults: function(database, field, options)
   {
@@ -6384,7 +6495,7 @@ extend( new NeuroRelation(), NeuroHasOne,
         relation.saving = true;
 
         related.$save();
-        
+
         relation.saving = false;
         relation.dirty = false;
       }

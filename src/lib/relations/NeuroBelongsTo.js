@@ -1,6 +1,5 @@
 function NeuroBelongsTo()
 {
-  this.type = 'belongsTo';
 }
 
 Neuro.Relations.belongsTo = NeuroBelongsTo;
@@ -16,8 +15,10 @@ NeuroBelongsTo.Defaults =
   cascade:    true
 };
 
-extend( new NeuroRelation(), NeuroBelongsTo, 
+extend( NeuroRelation, NeuroBelongsTo, 
 {
+
+  type: 'belongsTo',
 
   getDefaults: function(database, field, options)
   {

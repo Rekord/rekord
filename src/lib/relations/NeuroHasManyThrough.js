@@ -1,6 +1,5 @@
 function NeuroHasManyThrough()
 {
-  this.type = 'hasManyThrough';
 }
 
 Neuro.Relations.hasManyThrough = NeuroHasManyThrough;
@@ -22,8 +21,10 @@ NeuroHasManyThrough.Defaults =
   cascadeSaveRelated:   false
 };
 
-extend( new NeuroRelation(), NeuroHasManyThrough, 
+extend( NeuroRelation, NeuroHasManyThrough, 
 {
+
+  type: 'hasManyThrough',
 
   getDefaults: function(database, field, options)
   {

@@ -1,6 +1,5 @@
 function NeuroHasMany()
 {
-  this.type = 'hasMany';
 }
 
 Neuro.Relations.hasMany = NeuroHasMany;
@@ -19,8 +18,10 @@ NeuroHasMany.Defaults =
   cascadeSave:          true
 };
 
-extend( new NeuroRelation(), NeuroHasMany, 
+extend( NeuroRelation, NeuroHasMany, 
 {
+
+  type: 'hasMany',
 
   getDefaults: function(database, field, options)
   {

@@ -77,7 +77,7 @@ test( 'Neuro.extend', function(assert)
   function Child()
   {
   }
-  Neuro.extend( new Parent(), Child, {
+  Neuro.extend( Parent, Child, {
     bar: function() {return 3;}
   });
 

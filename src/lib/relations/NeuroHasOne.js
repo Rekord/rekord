@@ -1,6 +1,5 @@
 function NeuroHasOne()
 {
-  this.type = 'hasOne';
 }
 
 Neuro.Relations.hasOne = NeuroHasOne;
@@ -16,8 +15,10 @@ NeuroHasOne.Defaults =
   cascade:    true
 };
 
-extend( new NeuroRelation(), NeuroHasOne, 
+extend( NeuroRelation, NeuroHasOne, 
 {
+
+  type: 'hasOne',
 
   getDefaults: function(database, field, options)
   {
@@ -182,7 +183,7 @@ extend( new NeuroRelation(), NeuroHasOne,
         relation.saving = true;
 
         related.$save();
-        
+
         relation.saving = false;
         relation.dirty = false;
       }
