@@ -312,26 +312,6 @@ test( '$save cascade none', function(assert)
   strictEqual( live.lastMessage, null );
 });
 
-test( '$remove $exists', function(assert)
-{
-  var Issue = Neuro({
-    name: 'Model_remove_exists',
-    fields: ['id', 'title', 'number']
-  });
-
-  var i0 = new Issue({title: 'Tissue'});
-
-  notOk( i0.$exists() );
-
-  i0.$save();
-
-  ok( i0.$exists() );
-
-  i0.$remove();
-
-  notOk( i0.$exists() );
-});
-
 test( '$remove cascade none', function(assert)
 {
   var Issue = Neuro({
@@ -404,6 +384,26 @@ test( '$remove cascade remote', function(assert)
   strictEqual( live.lastMessage.op, 'REMOVE' );
 });
 */
+
+test( '$remove $exists', function(assert)
+{
+  var Issue = Neuro({
+    name: 'Model_remove_exists',
+    fields: ['id', 'title', 'number']
+  });
+
+  var i0 = new Issue({title: 'Tissue'});
+
+  notOk( i0.$exists() );
+
+  i0.$save();
+
+  ok( i0.$exists() );
+
+  i0.$remove();
+
+  notOk( i0.$exists() );
+});
 
 test( '$key', function(assert)
 {
@@ -550,3 +550,68 @@ test( '$refresh', function(assert)
 
   strictEqual( t0.name, 'name1' );
 });
+
+test( '$push $pop $discard', function(assert)
+{
+  var prefix = 'Model_push_';
+
+  var Task = Neuro({
+    name: prefix + 'task',
+    fields: ['list_id', 'name', 'done']
+  });
+
+  var TaskList = Neuro({
+    name: prefix + 'list',
+    fields: ['name'],
+    hasMany: {
+      tasks: {
+        model: Task,
+        foreign: 'list_id',
+        comparator: 'name',
+        cascadeRemove: false
+      }
+    }
+  });
+
+  var t0 = Task.create({name: 't0', done: true});
+  var t1 = Task.create({name: 't1', done: false});
+  var t2 = Task.create({name: 't2', done: true});
+  var l0 = TaskList.create({name: 'l0', tasks: [t0, t1, t2]});
+
+  deepEqual( l0.tasks.toArray(), [t0, t1, t2], 'tasks initialized correctly' );
+
+  l0.$push();
+
+  l0.name = 'l0a';
+  l0.tasks.unrelate( t0 );
+
+  deepEqual( l0.tasks.toArray(), [t1, t2], 'task 0 unrelated' );
+
+  l0.$pop();
+
+  strictEqual( l0.name, 'l0' );
+  deepEqual( l0.tasks.toArray(), [t1, t2], 'tasks untouched' );
+
+  l0.$push(['tasks']);
+
+  l0.tasks.unrelate( t1 );
+
+  deepEqual( l0.tasks.toArray(), [t2], 'task 1 unrelated' );
+
+  l0.$pop();
+
+  deepEqual( l0.tasks.toArray(), [t1, t2], 'task 1 restored from pop' );
+
+  l0.$push(['tasks']);
+  l0.tasks.unrelate();
+
+  deepEqual( l0.tasks.toArray(), [], 'tasks removed' );
+
+  l0.$discard();
+  l0.$pop();
+
+  deepEqual( l0.tasks.toArray(), [], 'tasks removed' );
+});
+
+
+

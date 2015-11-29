@@ -60,6 +60,11 @@ NeuroModel.Status =
   Removed:        3
 };
 
+NeuroModel.Blocked = 
+{
+  toString: true
+};
+
 NeuroModel.prototype =
 {
 
@@ -143,6 +148,11 @@ NeuroModel.prototype =
     }
     else if ( isString( props ) )
     {
+      if ( NeuroModel.Blocked[ props ] )
+      {
+        return;
+      }
+
       var relation = this.$getRelation( props, remoteData );
       
       if ( relation )
@@ -178,6 +188,11 @@ NeuroModel.prototype =
     }
     else if ( isString( props ) )
     {
+      if ( NeuroModel.Blocked[ props ] )
+      {
+        return;
+      }
+
       var relation = this.$getRelation( props );
 
       if ( relation )
@@ -223,11 +238,10 @@ NeuroModel.prototype =
   $getRelation: function(prop, remoteData)
   {
     var databaseRelations = this.$db.relations;
+    var relation = databaseRelations[ prop ];
 
-    if ( prop in databaseRelations )
+    if ( relation )
     {
-      var relation = databaseRelations[ prop ];
-
       if ( !(prop in this.$relations) )
       {
         relation.load( this, remoteData );
@@ -270,6 +284,29 @@ NeuroModel.prototype =
   $refresh: function(cascade)
   {
     this.$db.refreshModel( this, cascade );
+  },
+
+  $push: function(fields)
+  {
+    this.$savedState = this.$db.encode( grab( this, fields || this.$db.fields, true ) );
+  },
+
+  $pop: function(dontDiscard)
+  {
+    if ( isObject( this.$savedState ) )
+    {
+      this.$set( this.$savedState );
+
+      if ( !dontDiscard )
+      {
+        this.$discard();
+      }  
+    }
+  },
+
+  $discard: function()
+  {
+    delete this.$savedState;
   },
 
   $exists: function()
