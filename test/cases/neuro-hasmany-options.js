@@ -378,6 +378,61 @@ test( 'save model', function(assert)
   });
 });
 
+test( 'save key', function(assert)
+{
+  var prefix = 'hasMany_save_key_';
+
+  var Task = Neuro({
+    name: prefix + 'task',
+    fields: ['id', 'task_list_id', 'name', 'done'],
+    defaults: { done: false },
+    belongsTo: {
+      list: {
+        model: prefix + 'list',
+        local: 'task_list_id'
+      }
+    }
+  });
+
+  var TaskList = Neuro({
+    name: prefix + 'list',
+    fields: ['id', 'name'],
+    hasMany: {
+      tasks: {
+        model: Task,
+        foreign: 'task_list_id',
+        save: Neuro.Save.Key
+      }
+    }
+  });
+
+  var local = TaskList.Database.store;
+  var remote = TaskList.Database.rest;
+
+  var t0 = Task.create({name: 't0'});
+  var t1 = Task.create({name: 't1'});
+  var t2 = Task.create({name: 't2'});
+  var l0 = TaskList.create({name: 'l0', tasks: [t0, t1, t2]});
+
+  strictEqual( t0.list, l0 );
+  strictEqual( l0.tasks.length, 3 );
+  strictEqual( l0.tasks[0], t0 );
+  strictEqual( l0.tasks[1], t1 );
+  strictEqual( l0.tasks[2], t2 );
+
+  deepEqual( local.lastRecord, {
+    id: l0.id, name: l0.name,
+    $saved: {id: l0.id, name: l0.name, 
+      tasks: [ t0.id, t1.id, t2.id ]
+    }, $status: 0
+  });
+
+  deepEqual( remote.map.get( l0.id ), {
+    id: l0.id, name: l0.name,
+    tasks: [ t0.id, t1.id, t2.id ]
+  });
+});
+
 test( 'auto true', function(assert)
 {
   var prefix = 'hasMany_auto_true_';

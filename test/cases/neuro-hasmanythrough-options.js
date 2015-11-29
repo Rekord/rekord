@@ -299,6 +299,40 @@ test( 'save model', function(assert)
   });
 });
 
+test( 'save key', function(assert)
+{
+  var prefix = 'hasManyThrough_save_key_';
+
+  var userOptions = {
+    save: Neuro.Save.Key
+  };
+
+  var test = createUserGroups( prefix, userOptions );
+  var User = test.User;
+  var Group = test.Group;
+  var UserGroup = test.UserGroup;
+
+  seedUserGroups1( test );
+
+  var g0 = test.g0;
+  var g1 = test.g1;
+  var u0 = test.u0;
+
+  var local = User.Database.store;
+  var remote = User.Database.rest;
+
+  deepEqual( local.lastRecord, {
+    id: u0.id, name: u0.name,
+    $saved: {id: u0.id, name: u0.name,
+      groups: [ g0.id, g1.id ]
+    }, $status: 0
+  });
+  deepEqual( remote.map.get( u0.id ), {
+    id: u0.id, name: u0.name,
+    groups: [ g0.id, g1.id ]
+  });
+});
+
 test( 'property true', function(assert)
 {
   var prefix = 'hasManyThrough_property_true_';

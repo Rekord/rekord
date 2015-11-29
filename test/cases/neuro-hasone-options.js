@@ -302,6 +302,51 @@ test( 'save model', function(assert)
   });
 });
 
+test( 'save key', function(assert)
+{
+  var prefix = 'hasOne_save_key_';
+
+  var User = Neuro({
+    name: prefix + 'user',
+    fields: ['id', 'name']
+  });
+
+  var Task = Neuro({
+    name: prefix + 'task',
+    fields: ['id', 'name', 'created_by'],
+    hasOne: {
+      creator: {
+        model: User,
+        local: 'created_by',
+        save: Neuro.Save.Key
+      }
+    }
+  });
+
+  var local = Task.Database.store;
+  var remote = Task.Database.rest;
+
+  var u0 = User.create({name: 'You'});
+  var t0 = Task.create({name: 'This', creator: u0});
+
+  strictEqual( t0.creator, u0 );
+  strictEqual( t0.created_by, u0.id );
+
+  t0.$save();
+
+  deepEqual( local.lastRecord, {
+    id: t0.id, name: t0.name, created_by: u0.id, 
+    $saved: {id: t0.id, name: t0.name, created_by: u0.id,
+      creator: u0.id
+    }, $status: 0
+  });
+
+  deepEqual( remote.map.get( t0.id ), {
+    id: t0.id, name: t0.name, created_by: u0.id, 
+    creator: u0.id
+  });
+});
+
 test( 'auto true', function(assert)
 {
   var prefix = 'hasOne_auto_true_';

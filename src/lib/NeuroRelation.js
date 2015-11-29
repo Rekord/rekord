@@ -15,7 +15,9 @@ Neuro.Store = {
 
 Neuro.Save = {
   None:   0,
-  Model:  4
+  Model:  4,
+  Key:    5,
+  Keys:   6
 };
 
 NeuroRelation.Defaults = 
@@ -383,9 +385,11 @@ NeuroRelation.prototype =
           return local;
         }
 
+      case Neuro.Save.Key:
       case Neuro.Store.Key:
         return related.$key();
 
+      case Neuro.Save.Keys:
       case Neuro.Store.Keys:
         return related.$keys();
 
