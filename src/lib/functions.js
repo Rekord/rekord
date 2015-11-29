@@ -245,7 +245,14 @@ function camelCaseReplacer(match)
 function toCamelCase(name)
 {
   return name.replace( /(^.|_.)/g, camelCaseReplacer );
-};
+}
+
+function collect(a)
+{
+  var values = arguments.length > 1 || !isArray(a) ? Array.prototype.slice.call( arguments ) : a;
+
+  return new NeuroCollection( values );
+}
 
 function evaluate(x)
 {
@@ -428,158 +435,6 @@ function isEmpty(x)
   return false;
 }
 
-function createNumberResolver(numbers)
-{
-  if ( isString( numbers ) )
-  {
-    return function resolveNumber(model)
-    {
-      if ( isNumber( model ) )
-      {
-        return model;
-      }
-      else if ( isValue( model ) )
-      {
-        return parseFloat( model[ numbers ] );
-      }
-    };
-  }
-  else if ( isFunction( numbers ) )
-  {
-    return numbers;
-  }
-  else
-  {
-    return function resolveNumber(value)
-    {
-      return parseFloat( value );
-    };
-  }
-}
-
-function createPropertyResolver(properties, delim)
-{
-  if ( isString( properties ) )
-  {
-    return function resolveProperty(model)
-    {
-      return model[ properties ];
-    };
-  }
-  else if ( isArray( properties ) )
-  {
-    return function resolveProperty(model)
-    {
-      return pull( model, properties ).join( delim );
-    };
-  }
-  else if ( isObject( properties ) )
-  {
-    var propsArray = [];
-    var propsResolver = [];
-
-    for (var prop in properties)
-    {
-      propsArray.push( prop );
-      propsResolver.push( createPropertyResolver( properties[ prop ], delim ) );
-    }
-
-    return function resolveProperty(model)
-    {
-      var pulled = [];
-
-      for (var i = 0; i < prop.length; i++)
-      {
-        pulled.push( propsResolver[ i ]( model[ propsArray[ i ] ] ) );
-      }
-
-      return pulled.join( delim );
-    };
-  }
-  else if ( isFunction( properties ) )
-  {
-    return properties;
-  }
-  else
-  {
-    return function resolveProperty(model)
-    {
-      return model;
-    }
-  }
-}
-
-function createWhere(properties, value, equals)
-{
-  var equality = equals || equalsStrict;
-
-  if ( isFunction( properties ) )
-  {
-    return properties;
-  }
-  if ( isObject( properties ) )
-  {
-    return function where(model)
-    {
-      for (var prop in properties)
-      {
-        if ( !equality( model[ prop ], properties[ prop ] ) )
-        {
-          return false;
-        }
-      }
-
-      return true;
-    };
-  }
-  else if ( isString( properties ) )
-  {
-    if ( isValue( value ) )
-    { 
-      return function where(model)
-      {
-        return equality( model[ properties ], value );
-      };
-    }
-    else
-    {
-      return function where(model)
-      {
-        return isValue( model[ properties ] );
-      };
-    }
-  }
-  else
-  {
-    return function where(model)
-    {
-      return true;
-    };
-  }
-}
-
-function createHaving(having)
-{
-  if ( isFunction( having ) )
-  {
-    return having;
-  }
-  else if ( isString( having ) )
-  {
-    return function has(model)
-    {
-      return isValue( model ) && isValue( model[ having ] );
-    };
-  }
-  else
-  {
-    return function has()
-    {
-      return true;
-    };
-  }
-}
-
 function equalsStrict(a, b)
 {
   return a === b;
@@ -758,4 +613,149 @@ function createComparator(comparator, nullsFirst)
   }
 
   return null;
+}
+
+function createNumberResolver(numbers)
+{
+  if ( isFunction( numbers ) )
+  {
+    return numbers;
+  }
+  else if ( isString( numbers ) )
+  {
+    return function resolveNumber(model)
+    {
+      return isValue( model ) ? parseFloat( model[ numbers ] ) : undefined;
+    };
+  }
+  else
+  {
+    return function resolveNumber(value)
+    {
+      return parseFloat( value );
+    };
+  }
+}
+
+function createPropertyResolver(properties, delim)
+{
+  if ( isFunction( properties ) )
+  {
+    return properties;
+  }
+  else if ( isString( properties ) )
+  {
+    return function resolveProperty(model)
+    {
+      return model[ properties ];
+    };
+  }
+  else if ( isArray( properties ) )
+  {
+    return function resolveProperties(model)
+    {
+      return pull( model, properties ).join( delim );
+    };
+  }
+  else if ( isObject( properties ) )
+  {
+    var propsArray = [];
+    var propsResolver = [];
+
+    for (var prop in properties)
+    {
+      propsArray.push( prop );
+      propsResolver.push( createPropertyResolver( properties[ prop ], delim ) );
+    }
+
+    return function resolvePropertyObject(model)
+    {
+      var pulled = [];
+
+      for (var i = 0; i < prop.length; i++)
+      {
+        pulled.push( propsResolver[ i ]( model[ propsArray[ i ] ] ) );
+      }
+
+      return pulled.join( delim );
+    };
+  } 
+  else
+  {
+    return function resolveNone(model)
+    {
+      return model;
+    }
+  }
+}
+
+function createWhere(properties, value, equals)
+{
+  var equality = equals || equalsStrict;
+
+  if ( isFunction( properties ) )
+  {
+    return properties;
+  }
+  if ( isObject( properties ) )
+  {
+    return function whereEqualsObject(model)
+    {
+      for (var prop in properties)
+      {
+        if ( !equality( model[ prop ], properties[ prop ] ) )
+        {
+          return false;
+        }
+      }
+
+      return true;
+    };
+  }
+  else if ( isString( properties ) )
+  {
+    if ( isValue( value ) )
+    { 
+      return function whereEqualsValue(model)
+      {
+        return equality( model[ properties ], value );
+      };
+    }
+    else
+    {
+      return function whereHasValue(model)
+      {
+        return isValue( model[ properties ] );
+      };
+    }
+  }
+  else
+  {
+    return function whereAll(model)
+    {
+      return true;
+    };
+  }
+}
+
+function createHaving(having)
+{
+  if ( isFunction( having ) )
+  {
+    return having;
+  }
+  else if ( isString( having ) )
+  {
+    return function hasValue(model)
+    {
+      return isValue( model ) && isValue( model[ having ] );
+    };
+  }
+  else
+  {
+    return function hasAll()
+    {
+      return true;
+    };
+  }
 }

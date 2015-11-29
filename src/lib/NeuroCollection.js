@@ -9,8 +9,11 @@ NeuroCollection.Events =
   Adds:           'adds',
   Sort:           'sort',
   Remove:         'remove',
+  Removes:        'removes',
+  Updates:        'updates',
   Reset:          'reset',
-  Changes:        'add adds sort remote reset'
+  Cleared:        'cleared',
+  Changes:        'add adds sort remove removes reset'
 };
 
 extendArray( Array, NeuroCollection, 
@@ -20,6 +23,8 @@ extendArray( Array, NeuroCollection,
   {
     this.comparator = createComparator( comparator, comparatorNullsFirst );
     this.resort();
+
+    return this;
   },
 
   isSorted: function()
@@ -36,6 +41,91 @@ extendArray( Array, NeuroCollection,
       this.sort( cmp );
       this.trigger( NeuroCollection.Events.Sort, [this] );
     }
+
+    return this;
+  },
+
+  filtered: function(whereProperties, whereValue, whereEquals)
+  {
+    var filter = createWhere( whereProperties, whereValue, whereEquals );
+
+    return new NeuroFilteredCollection( this, filter );
+  },
+
+  subtract: function(collection, out)
+  {
+    var target = out || new this.constructor();
+
+    for (var i = 0; i < this.length; i++)
+    {
+      var a = this[ i ];
+      var exists = false;
+
+      for (var j = 0; j < collection.length && !exists; j++)
+      {
+        exists = equals( a, collection[ j ] );
+      }
+
+      if (!exists)
+      {
+        target.push( a );
+      }
+    }
+
+    return target;
+  },
+
+  intersect: function(collection, out)
+  {
+    var target = out || new this.constructor();
+
+    for (var i = 0; i < collection.length; i++)
+    {
+      var a = collection[ i ];
+      var exists = false;
+
+      for (var j = 0; j < this.length && !exists; j++)
+      {
+        exists = equals( a, this[ j ] );
+      }
+
+      if (exists)
+      {
+        target.push( a );
+      }
+    }
+
+    return target;
+  },
+
+  complement: function(collection, out)
+  {
+    var target = out || new this.constructor();
+
+    for (var i = 0; i < collection.length; i++)
+    {
+      var a = collection[ i ];
+      var exists = false;
+
+      for (var j = 0; j < this.length && !exists; j++)
+      {
+        exists = equals( a, this[ j ] );
+      }
+
+      if (!exists)
+      {
+        target.push( a );
+      }
+    }
+
+    return target;
+  },
+
+
+  clear: function()
+  {
+    this.length = 0;
+    this.trigger( NeuroCollection.Events.Cleared, [this] );
   },
 
   add: function(value, delaySort)
@@ -51,7 +141,7 @@ extendArray( Array, NeuroCollection,
 
   addAll: function(values, delaySort)
   {
-    if ( isArray( values ) )
+    if ( isArray( values ) && values.length )
     {
       this.push.apply( this, values );
       this.trigger( NeuroCollection.Events.Adds, [this, values] );
@@ -70,13 +160,89 @@ extendArray( Array, NeuroCollection,
       var removing = this[ i ];
 
       this.splice( i, 1 );
-      this.trigger( NeuroCollection.Events.Remove, [this, i, removing] );
+      this.trigger( NeuroCollection.Events.Remove, [this, removing, i] );
 
       if ( !delaySort )
       {
         this.resort();
       }
     }
+  },
+
+  remove: function(value)
+  {
+    var i = this.indexOf( value );
+
+    if ( i !== -1 )
+    {
+      this.removeAt( i );
+    }
+  },
+
+  removeAll: function(values, equals, delaySort)
+  {
+    if ( isArray( values ) && values.length )
+    {
+      var removed = [];
+
+      for (var i = 0; i < values.length; i++)
+      {
+        var value = values[ i ];
+        var k = this.indexOf( value, equals );
+
+        if ( k !== -1 )
+        {
+          this.splice( k, 1 );
+          removed.push( value );
+        }
+      }
+
+      this.trigger( NeuroCollection.Events.Removes, [this, removed] );
+
+      if ( !delaySort )
+      {
+        this.resort();
+      }
+
+      return removed;
+    }
+  },
+
+  removeWhere: function(whereProperties, whereValue, whereEquals)
+  {
+    var where = createWhere( whereProperties, whereValue, whereEquals );
+    var removed = [];
+
+    for (var i = this.length - 1; i >= 0; i--)
+    {
+      var value = this[ i ];
+      
+      if ( where( value ) )
+      {
+        this.splice( i, 1 );
+        removed.push( value );
+      }
+    }
+
+    this.trigger( NeuroCollection.Events.Removes, [this, removed] );
+    this.resort();
+
+    return removed;
+  },
+
+  indexOf: function(value, equals)
+  {
+    var equality = equals || equalsStrict;
+
+    for (var i = 0; i < this.length; i++)
+    {
+      if ( equality( value, this[ i ] ) )
+      {
+        return i;
+      }
+    }
+
+    return -1;
   },
 
   insertAt: function(i, value, delaySort)
@@ -89,6 +255,11 @@ extendArray( Array, NeuroCollection,
       this.resort();
     }
   },
+
+
+
+
+
 
   minModel: function(comparator)
   {
@@ -190,7 +361,7 @@ extendArray( Array, NeuroCollection,
     }
   },
 
-  lastWhere: function(property)
+  lastWhere: function(properties, value, equals)
   {
     var where = createWhere( properties, value, equals );
 
@@ -222,17 +393,15 @@ extendArray( Array, NeuroCollection,
     }
   },
 
-  aggregate: function(numbers, process, getResult)
+  aggregate: function(resolver, validator, process, getResult)
   {
-    var resolver = createNumberResolver( numbers );
-
     for (var i = 0; i < this.length; i++)
     {
-      var num = resolver( this[ i ] );
+      var resolved = resolver( this[ i ] );
 
-      if ( isNumber( num ) )
+      if ( validator( resolved ) )
       {
-        process( num );
+        process( resolved );
       }
     }
 
@@ -241,6 +410,7 @@ extendArray( Array, NeuroCollection,
 
   sum: function(numbers)
   {
+    var resolver = createNumberResolver( numbers );
     var result = 0;
 
     function process(x)
@@ -253,11 +423,12 @@ extendArray( Array, NeuroCollection,
       return result;
     }
 
-    return this.aggregate( numbers, process, getResult );
+    return this.aggregate( resolver, isNumber, process, getResult );
   },
 
   avg: function(numbers)
   {
+    var resolver = createNumberResolver( numbers );
     var result = 0;
     var total = 0;
 
@@ -272,7 +443,7 @@ extendArray( Array, NeuroCollection,
       return total === 0 ? 0 : result / total;
     }
 
-    return this.aggregate( numbers, process, getResult );
+    return this.aggregate( resolver, isNumber, process, getResult );
   },
 
   countWhere: function(properties, value, equals)
@@ -316,13 +487,13 @@ extendArray( Array, NeuroCollection,
     return result;
   },
 
-  pluck: function(values, keys)
+  pluck: function(values, keys, valuesDelim, keysDelim)
   {
-    var valuesResolver = createPropertyResolver( values );
+    var valuesResolver = createPropertyResolver( values, valuesDelim );
 
     if ( keys )
     {
-      var keysResolver = createPropertyResolver( keys );
+      var keysResolver = createPropertyResolver( keys, keysDelim );
       var result = {};
       
       for (var i = 0; i < this.length; i++)
@@ -366,7 +537,7 @@ extendArray( Array, NeuroCollection,
   {
     for (var i = 0; i < this.length; i++)
     {
-      initialValue += reducer( initialValue, this[ i ] );
+      initialValue = reducer( initialValue, this[ i ] );
     }
 
     return initialValue;
@@ -485,13 +656,14 @@ extendArray( Array, NeuroCollection,
 
       if ( !group )
       {
-        group = map[ key ] = this.constructor.create();
+        group = map[ key ] = new this.constructor();
       }
 
       group.add( model, true );
     }
 
-    var groupings = this.constructor.create();
+    var groupings = new this.constructor();
+
     groupings.setComparator( grouping.comparator, grouping.comparatorNullsFirst );
 
     for (var key in map)

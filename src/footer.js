@@ -30,6 +30,7 @@
   global.Neuro.diff = diff;
   global.Neuro.sizeof = sizeof;
   global.Neuro.isEmpty = isEmpty;
+  global.Neuro.collect = collect;
 
   global.Neuro.compare = compare;
   global.Neuro.equals = equals;

@@ -59,6 +59,27 @@ test( 'setComparator', function(assert)
   strictEqual( c[2].name, 'Adam' );
 });
 
+test( 'isSorted', function(assert)
+{
+  var c = new Neuro.Collection([1, 5, 4, 2]);
+
+  ok( c.isSorted() );  // no comparator, consider it sorted
+
+  c.setComparator( Neuro.compare );
+
+  ok( c.isSorted() );
+
+  deepEqual( c.toArray(), [1, 2, 4, 5] );
+
+  c.push( 3 );
+
+  notOk( c.isSorted() );
+
+  c.resort();
+
+  ok( c.isSorted() );
+});
+
 test( 'add', function(assert)
 {
   var c = createNeuroCollection();
@@ -127,6 +148,27 @@ test( 'firstWhere', function(assert)
   var c = createNeuroCollection();
 
   strictEqual( c.firstWhere('age', 28), c[2] ); // Adam
+});
+
+test( 'first', function(assert)
+{
+  var c = createNeuroCollection();
+
+  strictEqual( c.first('superhero'), true ); // Phil
+});
+
+test( 'lastWhere', function(assert)
+{
+  var c = createNeuroCollection();
+
+  strictEqual( c.lastWhere('age', 28), c[4] ); // Robert
+});
+
+test( 'last', function(assert)
+{
+  var c = createNeuroCollection();
+
+  strictEqual( c.last('superhero'), true ); // Robert
 });
 
 test( 'sum', function(assert)
@@ -229,3 +271,151 @@ test( 'group', function(assert)
   deepEqual( grouped[1], {sex: 'M', age: 27.333333333333332, name: 'Robert'} );
   
 });
+
+test( 'clear', function(assert)
+{
+  var c = new Neuro.Collection([1, 2, 3, 4]);
+
+  strictEqual( c.length, 4 );
+  strictEqual( c[0], 1 );
+
+  c.clear();
+
+  strictEqual( c.length, 0 );
+
+  c.push( 45 );
+
+  strictEqual( c.length, 1 );
+  strictEqual( c[0], 45 );
+});
+
+test( 'subtract', function(assert)
+{
+  var c = new Neuro.Collection([1, 2, 3, 4, 5]);
+
+  deepEqual( c.subtract([2, 4, 5, 6], []), [1, 3] );
+});
+
+test( 'intersect', function(assert)
+{
+  var c = new Neuro.Collection([1, 2, 3, 4, 5]);
+
+  deepEqual( c.intersect([2, 5, 6], []), [2, 5] );
+});
+
+test( 'complement', function(assert)
+{
+  var c = new Neuro.Collection([1, 2, 3, 4, 5]);
+
+  deepEqual( c.complement([2, 5, 6], []), [6] );
+});
+
+test( 'remove', function(assert)
+{
+  var c = new Neuro.Collection([1, 2, 3, 4, 5]);
+
+  c.remove( 4 );
+
+  deepEqual( c.toArray(), [1, 2, 3, 5] );
+
+  c.remove( -1 );
+
+  deepEqual( c.toArray(), [1, 2, 3, 5] );
+});
+
+test( 'removeAll', function(assert)
+{
+  var c = new Neuro.Collection([1, 2, 3, 4, 5]);
+
+  c.removeAll( [4, 2, 1] );
+
+  deepEqual( c.toArray(), [3, 5] );
+
+  c.removeAll( [-1] );
+
+  deepEqual( c.toArray(), [3, 5] );
+});
+
+test( 'indexOf', function(assert)
+{
+  var c = Neuro.collect(1, 3, 4, 5, 6, 3);
+  
+  strictEqual( c.indexOf( 0 ), -1 );
+  strictEqual( c.indexOf( 1 ), 0 );
+  strictEqual( c.indexOf( 2 ), -1 );
+  strictEqual( c.indexOf( 3 ), 1 );
+  strictEqual( c.indexOf( 4 ), 2 );
+  strictEqual( c.indexOf( 5 ), 3 );
+  strictEqual( c.indexOf( 6 ), 4 );
+  strictEqual( c.indexOf( 7 ), -1 );
+
+});
+
+test( 'insertAt', function(assert)
+{
+  var c = Neuro.collect(1, 3, 4);
+
+  c.insertAt( 1, 2 );
+
+  deepEqual( c.toArray(), [1, 2, 3, 4] );
+});
+
+test( 'reduce', function(assert)
+{
+  var c = Neuro.collect(1, 2, 3, 4);
+
+  var reducer = function(accum, value)
+  {
+    return accum * value;
+  };
+
+  strictEqual( c.reduce( reducer, 1 ), 24 );
+});
+
+test( 'filtered', function(assert)
+{
+  var EVEN = function(x) { return x % 2 === 0; };
+
+  var c = Neuro.collect(1, 2, 3, 4, 5, 6, 7, 8);
+
+  var f = c.filtered( EVEN );
+
+  deepEqual( f.toArray(), [2, 4, 6, 8] );
+
+  c.add( 9 );
+
+  deepEqual( f.toArray(), [2, 4, 6, 8] );
+
+  c.add( 10 );
+
+  deepEqual( f.toArray(), [2, 4, 6, 8, 10] );
+
+  c.add( 0 );
+
+  deepEqual( f.toArray(), [2, 4, 6, 8, 10, 0] );
+
+  f.setComparator( Neuro.compare );
+
+  deepEqual( f.toArray(), [0, 2, 4, 6, 8, 10] );
+
+  c.addAll( [14, 16, -2] );
+
+  deepEqual( f.toArray(), [-2, 0, 2, 4, 6, 8, 10, 14, 16] );
+
+  c.remove( 2 );
+
+  deepEqual( f.toArray(), [-2, 0, 4, 6, 8, 10, 14, 16] );
+
+  c.removeAll( [4, 8, 10, -2] );
+
+  deepEqual( f.toArray(), [0, 6, 14, 16] );
+
+  c.insertAt( 3, 4 );
+
+  deepEqual( f.toArray(), [0, 4, 6, 14, 16] );
+
+  c.removeWhere( EVEN );
+
+  deepEqual( f.toArray(), [] );
+});
+

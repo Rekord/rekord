@@ -3,6 +3,9 @@ function NeuroRemoteQuery(database, query)
   this.init( database );
   this.query = query;
   this.status = NeuroRemoteQuery.Status.Pending;
+
+  this.onSuccess = this.handleSuccess();
+  this.onFailure = this.handleFailure();
 }
 
 NeuroRemoteQuery.Status =
@@ -22,18 +25,39 @@ NeuroRemoteQuery.Events =
 extendArray( NeuroQuery, NeuroRemoteQuery, 
 {
 
+  setQuery: function(query, skipSync, clearPending)
+  {
+    this.query = query;
+
+    if ( !skipSync )
+    {
+      this.sync( clearPending );
+    }
+
+    return this;
+  },
+
   sync: function(clearPending)
   {
     this.status = NeuroRemoteQuery.Status.Pending;
 
     if ( clearPending )
     {
-      this.off( NeuroRemoteQuery.Events.Ready );
-      this.off( NeuroRemoteQuery.Events.Success );
-      this.off( NeuroRemoteQuery.Events.Failure );
+      this.cancel();
     }
 
-    this.database.rest.query( this.query, this.onSuccess(), this.onFailure() );
+    this.database.rest.query( this.query, this.onSuccess, this.onFailure );
+
+    return this;
+  },
+
+  cancel: function()
+  {
+    this.off( NeuroRemoteQuery.Events.Ready );
+    this.off( NeuroRemoteQuery.Events.Success );
+    this.off( NeuroRemoteQuery.Events.Failure );
+
+    return this;
   },
 
   ready: function(callback, context)
@@ -46,6 +70,8 @@ extendArray( NeuroQuery, NeuroRemoteQuery,
     {
       callback.call( context, this );
     }
+
+    return this;
   },
 
   success: function(callback, context)
@@ -58,6 +84,8 @@ extendArray( NeuroQuery, NeuroRemoteQuery,
     {
       callback.call( context, this );
     }
+
+    return this;
   },
 
   failure: function(callback, context)
@@ -70,9 +98,11 @@ extendArray( NeuroQuery, NeuroRemoteQuery,
     {
       callback.call( context, this );
     }
+    
+    return this;
   },
 
-  onSuccess: function()
+  handleSuccess: function()
   {
     var that = this;
 
@@ -85,7 +115,7 @@ extendArray( NeuroQuery, NeuroRemoteQuery,
     };
   },
 
-  onFailure: function()
+  handleFailure: function()
   {
     var that = this;
 

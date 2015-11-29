@@ -1,23 +1,35 @@
 function NeuroQuery(database, whereProperties, whereValue, whereEquals)
 {
+  this.onModelAdd = copyFunction( this.handleModelAdded );
+  this.onModelRemoved = copyFunction( this.handleModelRemoved );
+  this.onModelUpdated = copyFunction( this.handleModelUpdated );
+
   this.init( database );
-  this.where = createWhere( whereProperties, whereValue, whereEquals );
-  this.listen();
-  this.sync();
+  this.connect();
+  this.setWhere( whereProperties, whereValue, whereEquals );
 }
 
 extendArray( NeuroModelCollection, NeuroQuery,
 {
 
-  listen: function()
+  setWhere: function(whereProperties, whereValue, whereEquals)
   {
-    this.onModelAdd = copyFunction( this.handleModelAdded );
-    this.onModelRemoved = copyFunction( this.handleModelRemoved );
-    this.onModelUpdated = copyFunction( this.handleModelUpdated );
+    this.where = createWhere( whereProperties, whereValue, whereEquals );
+    this.sync();
+  },
 
+  connect: function()
+  {
     this.database.on( NeuroDatabase.Events.ModelAdded, this.onModelAdd, this );
     this.database.on( NeuroDatabase.Events.ModelRemoved, this.onModelRemoved, this );
     this.database.on( NeuroDatabase.Events.ModelUpdated, this.onModelUpdated, this );
+  },
+
+  disconnect: function()
+  {
+    this.database.off( NeuroDatabase.Events.ModelAdded, this.onModelAdd );
+    this.database.off( NeuroDatabase.Events.ModelRemoved, this.onModelRemoved );
+    this.database.off( NeuroDatabase.Events.ModelUpdated, this.onModelUpdated );
   },
 
   sync: function()
@@ -70,13 +82,6 @@ extendArray( NeuroModelCollection, NeuroQuery,
         this.add( model );
       }
     }
-  },
-
-  destroy: function()
-  {
-    this.database.off( NeuroDatabase.Events.ModelAdded, this.onModelAdd );
-    this.database.off( NeuroDatabase.Events.ModelRemoved, this.onModelRemoved );
-    this.database.off( NeuroDatabase.Events.ModelUpdated, this.onModelUpdated );
   }
 
 });
