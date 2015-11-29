@@ -556,6 +556,59 @@ test( 'property false', function(assert)
   strictEqual( l0.tasks, void 0 );
 });
 
+test( 'dynamic true', function(assert)
+{
+  var prefix = 'hasMany_dynamic_true_';
+
+  var Task = Neuro({
+    name: prefix + 'task',
+    fields: ['id', 'task_list_id', 'name', 'done'],
+    defaults: { done: false },
+    belongsTo: {
+      list: {
+        model: prefix + 'list',
+        local: 'task_list_id'
+      }
+    }
+  });
+
+  var TaskList = Neuro({
+    name: prefix + 'list',
+    fields: ['id', 'name'],
+    hasMany: {
+      tasks: {
+        model: Task,
+        foreign: 'task_list_id',
+        comparator: 'name',
+        property: true,
+        dynamic: true
+      }
+    }
+  });
+
+  var local = TaskList.Database.store;
+  var remote = TaskList.Database.rest;
+
+  var t0 = Task.create({name: 't0'});
+  var t1 = Task.create({name: 't1'});
+  var t2 = Task.create({name: 't2'});
+  var t3 = Task.create({name: 't3'});
+  var l0 = TaskList.create({name: 'l0', tasks: [t0, t1, t2]});
+
+  strictEqual( t0.list, l0 );
+  ok( l0.tasks );
+  deepEqual( l0.tasks.toArray(), [t0, t1, t2] );
+  strictEqual( t3.task_list_id, void 0 );
+
+  l0.tasks = [t1, t3];
+
+  deepEqual( l0.tasks.toArray(), [t1, t3] );
+  strictEqual( t3.task_list_id, l0.id );
+
+  ok( t0.$isDeleted() );
+  ok( t2.$isDeleted() );
+});
+
 test( 'foreign default', function(assert)
 {
   var prefix = 'hasMany_foreign_default_';

@@ -437,6 +437,42 @@ test( 'property false', function(assert)
   strictEqual( t0.creator, void 0 );
 });
 
+test( 'dynamic true', function(assert)
+{
+  var prefix = 'hasOne_dynamic_true_';
+
+  var User = Neuro({
+    name: prefix + 'user',
+    fields: ['id', 'name']
+  });
+
+  var Task = Neuro({
+    name: prefix + 'task',
+    fields: ['id', 'name', 'created_by'],
+    hasOne: {
+      creator: {
+        model: User,
+        local: 'created_by',
+        property: true,
+        dynamic: true
+      }
+    }
+  });
+
+  var u0 = User.create({name: 'You'});
+  var u1 = User.create({name: 'Us'});
+  var t0 = Task.create({name: 'This', creator: u0});
+
+  strictEqual( t0.creator, u0 );
+  strictEqual( t0.created_by, u0.id );
+
+  t0.creator = u1;
+
+  strictEqual( t0.creator, u1 );
+  strictEqual( t0.created_by, u1.id );
+  ok( u0.$isDeleted() );
+});
+
 test( 'local default', function(assert)
 {
   var prefix = 'hasOne_local_default_';

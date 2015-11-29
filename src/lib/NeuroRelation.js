@@ -24,7 +24,8 @@ NeuroRelation.Defaults =
   store:      Neuro.Store.None,
   save:       Neuro.Save.None,
   auto:       true,
-  property:   true
+  property:   true,
+  dynamic:    false
 };
 
 NeuroRelation.prototype =
@@ -151,7 +152,7 @@ NeuroRelation.prototype =
 
   set: function(model, input, remoteData)
   {
-    
+
   },
 
   relate: function(model, input)
@@ -177,6 +178,49 @@ NeuroRelation.prototype =
   encode: function(model, out, forSaving)
   {
     
+  },
+
+  setProperty: function(relation)
+  {
+    if ( this.property )
+    {
+      var model = relation.parent;
+      var propertyName = this.name;
+      var applied = !!relation.dynamicSet;
+
+      if ( !applied && this.dynamic && Object.defineProperty )
+      {
+        var relator = this;
+
+        Object.defineProperty( model, propertyName,
+        {
+          enumerable: true,
+
+          set: function(input)
+          {
+            relator.set( model, input );
+          },
+          get: function()
+          {
+            return relation.related;
+          }
+        });
+
+        applied = relation.dynamicSet = true;
+      }
+
+      if ( !applied )
+      {
+        model[ propertyName ] = relation.related;
+      }
+
+      if ( relation.lastRelated !== relation.related )
+      {
+        relation.lastRelated = relation.related;
+
+        model.$trigger( NeuroModel.Events.RelationUpdate, [this, relation] );
+      }
+    }
   },
 
   isModelArray: function(input)

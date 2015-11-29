@@ -11,6 +11,7 @@ NeuroBelongsTo.Defaults =
   save:       Neuro.Save.None,
   auto:       true,
   property:   true,
+  dynamic:    false,
   local:      null,
   cascade:    true
 };
@@ -48,7 +49,7 @@ extend( NeuroRelation, NeuroBelongsTo,
       parent: model,
       initial: initial,
       isRelated: isRelated,
-      model: null,
+      related: null,
       loaded: false,
 
       onRemoved: function() 
@@ -68,7 +69,7 @@ extend( NeuroRelation, NeuroBelongsTo,
       {
         Neuro.debug( Neuro.Debugs.BELONGSTO_NINJA_SAVE, that, model, relation );
 
-        if ( !isRelated( relation.model ) )
+        if ( !isRelated( relation.related ) )
         {
           if ( this.cascade )
           {
@@ -130,7 +131,7 @@ extend( NeuroRelation, NeuroBelongsTo,
     
     if ( related )
     {
-      if ( relation.model !== related )
+      if ( relation.related !== related )
       {
         this.clearModel( relation );
         this.setRelated( relation, related );
@@ -145,7 +146,7 @@ extend( NeuroRelation, NeuroBelongsTo,
     var relation = model.$relations[ this.name ];
     var related = relatedDatabase.parseModel( input );
 
-    if ( !related || relation.model === related )
+    if ( !related || relation.related === related )
     {
       this.clearRelated( relation );
     }
@@ -158,7 +159,7 @@ extend( NeuroRelation, NeuroBelongsTo,
     var relation = model.$relations[ this.name ];
     var related = relatedDatabase.parseModel( input );
 
-    return related === relation.model;
+    return related === relation.related;
   },
 
   // same as HasOne
@@ -184,7 +185,7 @@ extend( NeuroRelation, NeuroBelongsTo,
   {
     var relation = model.$relations[ this.name ];
     
-    return relation.model;
+    return relation.related;
   },
 
   // same as HasOne
@@ -195,7 +196,7 @@ extend( NeuroRelation, NeuroBelongsTo,
 
     if ( relation && mode )
     {
-      out[ this.name ] = this.getStored( relation.model, mode );
+      out[ this.name ] = this.getStored( relation.related, mode );
     }
   },
 
@@ -214,7 +215,7 @@ extend( NeuroRelation, NeuroBelongsTo,
 
   clearModel: function(relation)
   {
-    var related = relation.model;
+    var related = relation.related;
 
     if ( related )
     {
@@ -223,7 +224,7 @@ extend( NeuroRelation, NeuroBelongsTo,
       related.$off( NeuroModel.Events.Saved, relation.onSaved );
       related.$off( NeuroModel.Events.Removed, relation.onRemoved );
 
-      relation.model = null;
+      relation.related = null;
       relation.loaded = true;
     }
   },
@@ -233,7 +234,7 @@ extend( NeuroRelation, NeuroBelongsTo,
     related.$on( NeuroModel.Events.Saved, relation.onSaved, this );
     related.$on( NeuroModel.Events.Removed, relation.onRemoved, this );
 
-    relation.model = related;
+    relation.related = related;
     relation.loaded = true;
 
     Neuro.debug( Neuro.Debugs.BELONGSTO_SET_MODEL, this, relation );
@@ -300,30 +301,13 @@ extend( NeuroRelation, NeuroBelongsTo,
     this.updateFields( model, local, related, foreign, remoteData );
   },
 
-  // same as HasOne
-  setProperty: function(relation)
-  {
-    if ( this.property )
-    {
-      var model = relation.parent;
-      var related = relation.model;
-
-      if ( model[ this.name ] !== related )
-      {
-        model[ this.name ] = related;
-        
-        model.$trigger( NeuroModel.Events.RelationUpdate, [this, relation] );
-      }
-    }
-  },
-
   onKeyUpdate: function(model, related, modelFields, relatedFields)
   {
     if ( this.local === modelFields )
     {
       var relation = model.$relations[ this.name ];
 
-      if ( relation && related !== relation.model )
+      if ( relation && related !== relation.related )
       {
         this.clearModel( relation );
         this.setModel( relation, related );

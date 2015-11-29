@@ -351,6 +351,37 @@ test( 'property false', function(assert)
   strictEqual( u0.userGroups[1], ug1 );
 });
 
+test( 'dynamic true', function(assert)
+{
+  var prefix = 'hasManyThrough_dynamic_true_';
+
+  var options = {
+    property: true,
+    dynamic: true
+  };
+
+  var test = createUserGroups( prefix, options, options );
+  var User = test.User;
+  var Group = test.Group;
+  var UserGroup = test.UserGroup;
+
+  User.Database.relations.groups.comparator = Neuro.createComparator( 'name' );
+
+  seedUserGroups1( test );
+
+  var g0 = test.g0;
+  var g1 = test.g1;
+  var g2 = Group.create({name: 'g2'});
+  var g3 = Group.create({name: 'g3'});
+  var u0 = test.u0;
+
+  deepEqual( u0.groups.toArray(), [g0, g1] );
+
+  u0.groups = [g2, g3, g0];
+
+  deepEqual( u0.groups.toArray(), [g0, g2, g3] );
+});
+
 test( 'comparator', function(assert)
 {
   var prefix = 'hasManyThrough_comparator_';
