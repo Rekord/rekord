@@ -34,7 +34,9 @@ extendArray( NeuroModelCollection, NeuroQuery,
 
   sync: function()
   {
-    var models = this.database.getModels();
+    var where = this.where;
+    var map = this.map;
+    var models = this.database.models;
 
     this.map.reset();
 
@@ -42,9 +44,9 @@ extendArray( NeuroModelCollection, NeuroQuery,
     {
       var model = models[ i ];
 
-      if ( this.where( model ) )
+      if ( where( model ) )
       {
-        this.map.put( model.$key(), model );
+        map.put( model.$key(), model );
       }
     }
 

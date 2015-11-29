@@ -10,7 +10,7 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
     {
       var key = db.buildKeyFromInput( input );
 
-      return db.getModel( key );
+      return db.get( key );
     }
   };
 });

@@ -3,7 +3,7 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
   model.fetch = function( input )
   {
     var key = db.buildKeyFromInput( input );
-    var instance = db.getModel( key );
+    var instance = db.get( key );
 
     if ( !instance )
     {

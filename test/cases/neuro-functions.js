@@ -279,9 +279,10 @@ test( 'Neuro.isEmpty', function(assert)
 
 test( 'Neuro.compare', function(assert)
 {
-  var d0 = new Date();
-  var d1 = new Date();
   var d2 = Date.now();
+  var d0 = new Date( d2 );
+  var d1 = new Date( d2 );
+  
 
   strictEqual( Neuro.compare( 1, 1 ), 0, 'okay - equivalent values' );
   strictEqual( Neuro.compare( 1, '1' ), 0 );

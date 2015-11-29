@@ -27,9 +27,11 @@ extendArray( Array, NeuroCollection,
     return this;
   },
 
-  isSorted: function()
+  isSorted: function(comparator, comparatorNullsFirst)
   {
-    return isSorted( this.comparator, this );
+    var cmp = comparator ? createComparator( comparator, comparatorNullsFirst ) : this.comparator;
+
+    return isSorted( cmp, this );
   },
 
   resort: function(comparator, comparatorNullsFirst)
@@ -50,6 +52,24 @@ extendArray( Array, NeuroCollection,
     var filter = createWhere( whereProperties, whereValue, whereEquals );
 
     return new NeuroFilteredCollection( this, filter );
+  },
+
+  filter: function(whereProperties, whereValue, whereEquals)
+  {
+    var where = createWhere( whereProperties, whereValue, whereEquals );
+    var target = new this.constructor();
+
+    for (var i = 0; i < this.length; i++)
+    {
+      var a = this[ i ];
+
+      if ( where( a ) )
+      {
+        target.add( a );
+      }
+    }
+
+    return target;
   },
 
   subtract: function(collection, out)

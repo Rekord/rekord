@@ -2,6 +2,6 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 {
   model.all = function()
   {
-    return db.getModels();
+    return db.models;
   };
 });

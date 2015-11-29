@@ -270,11 +270,11 @@ test( 'sort', function(assert)
 
   var expected0 = [s2, s0, s1];
 
-  ok( Neuro.equals( sort.all(), expected0 ) );
+  ok( Neuro.equals( sort.all().toArray(), expected0 ) );
 
   s1.age = 2;
 
-  ok( Neuro.equals( sort.all(), expected0 ) );
+  ok( Neuro.equals( sort.all().toArray(), expected0 ) );
 
   notOk( db.isSorted() );
 
@@ -282,7 +282,7 @@ test( 'sort', function(assert)
 
   var expected1 = [s1, s2, s0];
 
-  ok( Neuro.equals( sort.all(), expected1 ) );
+  ok( Neuro.equals( sort.all().toArray(), expected1 ) );
 });
 
 test( 'setComparator', function(assert)
@@ -301,19 +301,13 @@ test( 'setComparator', function(assert)
 
   var expected0 = [s0, s2, s1];
 
-  ok( Neuro.equals( setComparator.all(), expected0 ) );
+  ok( Neuro.equals( setComparator.all().toArray(), expected0 ) );
 
   db.setComparator( '-name', true );
 
-  ok( Neuro.equals( setComparator.all(), expected0 ) );
-
-  notOk( db.isSorted() );
-
-  db.sort();
-
   var expected1 = [s1, s2, s0];
 
-  ok( Neuro.equals( setComparator.all(), expected1 ) );
+  ok( Neuro.equals( setComparator.all().toArray(), expected1 ) );
 });
 
 test( 'refresh', function(assert)
@@ -450,9 +444,9 @@ test( 'getModel', function(assert)
 
   strictEqual( getModel.all().length, 3 );
 
-  strictEqual( db.getModel(2).name, 'name2' );
-  strictEqual( db.getModel([3]).name, 'name3' );
+  strictEqual( db.get(2).name, 'name2' );
+  strictEqual( db.get([3]).name, 'name3' );
 
-  strictEqual( db.getModel(4), void 0 );
-  strictEqual( db.getModel(23), void 0 );
+  strictEqual( db.get(4), void 0 );
+  strictEqual( db.get(23), void 0 );
 });

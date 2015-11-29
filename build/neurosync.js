@@ -1105,7 +1105,7 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 {
   model.all = function()
   {
-    return db.getModels();
+    return db.models;
   };
 });
 Neuro.on( Neuro.Events.Plugins, function(model, db, options)
@@ -1122,6 +1122,13 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
     }
 
     return input;
+  };
+});
+Neuro.on( Neuro.Events.Plugins, function(model, db, options)
+{
+  model.bootCollection = function( input )
+  {
+    return new NeuroModelCollection( db, input, true );
   };
 });
 Neuro.on( Neuro.Events.Plugins, function(model, db, options)
@@ -1349,7 +1356,7 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
   model.fetch = function( input )
   {
     var key = db.buildKeyFromInput( input );
-    var instance = db.getModel( key );
+    var instance = db.get( key );
 
     if ( !instance )
     {
@@ -1378,7 +1385,7 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
     {
       var key = db.buildKeyFromInput( input );
 
-      return db.getModel( key );
+      return db.get( key );
     }
   };
 });
@@ -1794,8 +1801,7 @@ function NeuroDatabase(options)
   }
 
   // Properties
-  // this.models = new NeuroModelCollection();
-  this.models = new NeuroMap();
+  this.models = new NeuroModelCollection( this );
   this.className = this.className || toCamelCase( this.name );
   this.initialized = false;
   this.pendingRefresh = false;
@@ -2225,8 +2231,7 @@ NeuroDatabase.prototype =
   // with a minus in the front to sort in reverse, or a comparator function.
   setComparator: function(comparator, nullsFirst)
   {
-    this.comparatorFunction = createComparator( comparator, nullsFirst ); // TODO remove
-    // this.models.setComparator( comparator, nullsFirst );
+    this.models.setComparator( comparator, nullsFirst );
   },
 
   setSummarize: function(summarize)
@@ -2254,18 +2259,13 @@ NeuroDatabase.prototype =
   // Sorts the database if it isn't sorted.
   sort: function()
   {
-    if ( !this.isSorted() )
-    {
-      this.models.sort( this.comparatorFunction );
-    }
-    // this.models.resort(); TODO add
+    this.models.resort();
   },
 
   // Determines whether this database is sorted.
   isSorted: function()
   {
-    return this.models.isSorted( this.comparatorFunction );
-    // return this.models.isSorted();
+    return this.models.isSorted();
   },
 
   // Handles when we receive data from the server - either from
@@ -2515,8 +2515,7 @@ NeuroDatabase.prototype =
     {
       Neuro.debug( Neuro.Debugs.LOCAL_LOAD, db, records );
 
-      // db.models.clear();
-      db.models.reset();
+      db.models.clear();
 
       records = Array.prototype.slice.call( records );
       keys = Array.prototype.slice.call( keys );
@@ -2640,7 +2639,7 @@ NeuroDatabase.prototype =
         }
       }
 
-      var keys = db.models.keys; // TODO ()
+      var keys = db.models.keys();
 
       for (var i = 0; i < keys.length; i++)
       {
@@ -2709,21 +2708,10 @@ NeuroDatabase.prototype =
     }
   },
 
-  // The reference to all of the models in the database
-  getModels: function()
-  {
-    return this.models.values; // TOOD -.values
-  }, 
-
   // Returns a model
-  getModel: function(key)
+  get: function(key)
   {
-    if ( isArray( key ) )
-    {
-      key = this.buildKeyFromArray( key );
-    }
-
-    return this.models.get( key );
+    return this.models.get( this.buildKeyFromInput( key ) );
   },
 
   // Crates a function for handling real-time changes
@@ -3581,9 +3569,11 @@ extendArray( Array, NeuroCollection,
     return this;
   },
 
-  isSorted: function()
+  isSorted: function(comparator, comparatorNullsFirst)
   {
-    return isSorted( this.comparator, this );
+    var cmp = comparator ? createComparator( comparator, comparatorNullsFirst ) : this.comparator;
+
+    return isSorted( cmp, this );
   },
 
   resort: function(comparator, comparatorNullsFirst)
@@ -3604,6 +3594,24 @@ extendArray( Array, NeuroCollection,
     var filter = createWhere( whereProperties, whereValue, whereEquals );
 
     return new NeuroFilteredCollection( this, filter );
+  },
+
+  filter: function(whereProperties, whereValue, whereEquals)
+  {
+    var where = createWhere( whereProperties, whereValue, whereEquals );
+    var target = new this.constructor();
+
+    for (var i = 0; i < this.length; i++)
+    {
+      var a = this[ i ];
+
+      if ( where( a ) )
+      {
+        target.add( a );
+      }
+    }
+
+    return target;
   },
 
   subtract: function(collection, out)
@@ -4768,7 +4776,9 @@ extendArray( NeuroModelCollection, NeuroQuery,
 
   sync: function()
   {
-    var models = this.database.getModels();
+    var where = this.where;
+    var map = this.map;
+    var models = this.database.models;
 
     this.map.reset();
 
@@ -4776,9 +4786,9 @@ extendArray( NeuroModelCollection, NeuroQuery,
     {
       var model = models[ i ];
 
-      if ( this.where( model ) )
+      if ( where( model ) )
       {
-        this.map.put( model.$key(), model );
+        map.put( model.$key(), model );
       }
     }
 
@@ -6641,7 +6651,7 @@ extend( NeuroRelation, NeuroHasMany,
       isRelated: isRelated,
       initial: initial,
       pending: {},
-      models: collection.map,
+      models: collection,
       saving: false,
       delaySorting: false,
       delaySaving: false,
@@ -6733,7 +6743,7 @@ extend( NeuroRelation, NeuroHasMany,
       var relatedDatabase = this.model.Database;
       var relation = model.$relations[ this.name ];
       var existing = relation.models;
-      var given = new NeuroMap();
+      var given = new NeuroModelCollection( relatedDatabase );
 
       if ( this.isModelArray( input ) )
       {
@@ -6743,7 +6753,7 @@ extend( NeuroRelation, NeuroHasMany,
 
           if ( related )
           {
-            given.put( related.$key(), related );
+            given.add( related );
           }
         }
       }
@@ -6753,12 +6763,12 @@ extend( NeuroRelation, NeuroHasMany,
 
         if ( related )
         {
-          given.put( related.$key(), related );
+          given.add( related );
         }
       }
 
-      var removing = existing.subtract( given ).values;
-      var adding = given.subtract( existing ).values;
+      var removing = existing.subtract( given );
+      var adding = given.subtract( existing );
       
       this.bulk( relation, function()
       {
@@ -6838,7 +6848,7 @@ extend( NeuroRelation, NeuroHasMany,
     }
     else
     {
-      var all = relation.models.values;
+      var all = relation.models;
 
       this.bulk( relation, function()
       { 
@@ -6884,7 +6894,7 @@ extend( NeuroRelation, NeuroHasMany,
   {
     var relation = model.$relations[ this.name ];
 
-    return relation.models.values;
+    return relation.models;
   },
 
   encode: function(model, out, forSaving)
@@ -6894,7 +6904,7 @@ extend( NeuroRelation, NeuroHasMany,
 
     if ( relation && mode )
     {
-      out[ this.name ] = this.getStoredArray( relation.models.values, mode );
+      out[ this.name ] = this.getStoredArray( relation.models, mode );
     }
   },
 
@@ -6909,7 +6919,7 @@ extend( NeuroRelation, NeuroHasMany,
       relation.saving = true;
       relation.delaySaving = true;
 
-      var models = relation.models.values;
+      var models = relation.models;
 
       for (var i = 0; i < models.length; i++)
       {
@@ -6936,7 +6946,7 @@ extend( NeuroRelation, NeuroHasMany,
 
       this.bulk( relation, function()
       {
-        var models = relation.models.values;
+        var models = relation.models;
 
         for (var i = 0; i < models.length; i++)
         {
@@ -6996,16 +7006,15 @@ extend( NeuroRelation, NeuroHasMany,
   {
     return function (relatedDatabase)
     {
-      var related = relatedDatabase.models.filter( relation.isRelated ); // TODO
-      var models = related.values;
+      var related = relatedDatabase.models.filter( relation.isRelated );
 
-      Neuro.debug( Neuro.Debugs.HASMANY_LAZY_LOAD, this, relation, models );
+      Neuro.debug( Neuro.Debugs.HASMANY_LAZY_LOAD, this, relation, related );
 
       this.bulk( relation, function()
       {
-        for (var i = 0; i < models.length; i++)
+        for (var i = 0; i < related.length; i++)
         {
-          this.addModel( relation, models[ i ] );
+          this.addModel( relation, related[ i ] );
         }
       });
     };
@@ -7143,7 +7152,7 @@ extend( NeuroRelation, NeuroHasMany,
   {
     if ( this.property )
     {
-      relation.parent[ this.name ] = relation.models.values;
+      relation.parent[ this.name ] = relation.models;
     }
   },
 
@@ -7153,12 +7162,9 @@ extend( NeuroRelation, NeuroHasMany,
     
     if ( !relation.delaySorting )
     {
-      if ( !related.isSorted( this.comparator ) )
-      {
-        Neuro.debug( Neuro.Debugs.HASMANY_SORT, this, relation );
+      Neuro.debug( Neuro.Debugs.HASMANY_SORT, this, relation );
 
-        related.sort( this.comparator );
-      }
+      related.resort( this.comparator );
 
       relation.parent.$trigger( NeuroModel.Events.RelationUpdate, [this, relation] );
     }
@@ -7240,7 +7246,7 @@ extend( NeuroRelation, NeuroHasManyThrough,
       isRelated: isRelated,
       initial: initial,
       pending: {},
-      models: collection.map,
+      models: collection,
       throughs: new NeuroMap(),
       saving: false,
       delaySorting: false,
@@ -7282,29 +7288,6 @@ extend( NeuroRelation, NeuroHasManyThrough,
 
     // When models are added to the related database, check if it's related to this model
     throughDatabase.on( NeuroDatabase.Events.ModelAdded, this.handleModelAdded( relation ), this );
-
-    // Add convenience methods to the underlying array
-    var related = relation.models.values;
-    
-    related.set = function(input)
-    {
-      that.set( model, input );
-    };
-
-    related.relate = function(input)
-    {
-      that.relate( model, input );
-    };
-    
-    related.unrelate = function(input)
-    {
-      that.unrelate( model, input );
-    };
-    
-    related.isRelated = function(input)
-    {
-      return that.isRelated( model, input );
-    };
 
     // If the model's initial value is an array, populate the relation from it!
     if ( isArray( initial ) )
@@ -7356,7 +7339,7 @@ extend( NeuroRelation, NeuroHasManyThrough,
       var relatedDatabase = this.model.Database;
       var relation = model.$relations[ this.name ];
       var existing = relation.models;
-      var given = new NeuroMap();
+      var given = new NeuroModelCollection( relatedDatabase );
 
       if ( this.isModelArray( input ) )
       {
@@ -7366,7 +7349,7 @@ extend( NeuroRelation, NeuroHasManyThrough,
 
           if ( related )
           {
-            given.put( related.$key(), related );
+            given.add( related );
           }
         }
       }
@@ -7376,12 +7359,12 @@ extend( NeuroRelation, NeuroHasManyThrough,
 
         if ( related )
         {
-          given.put( related.$key(), related );
+          given.add( related );
         }
       }
 
-      var removing = existing.subtract( given ).values;
-      var adding = given.subtract( existing ).values;
+      var removing = existing.subtract( given );
+      var adding = given.subtract( existing );
       
       this.bulk( relation, function()
       {
@@ -7461,7 +7444,7 @@ extend( NeuroRelation, NeuroHasManyThrough,
     }
     else
     {
-      var all = relation.models.values;
+      var all = relation.models;
 
       this.bulk( relation, function()
       { 
@@ -7507,7 +7490,7 @@ extend( NeuroRelation, NeuroHasManyThrough,
   {
     var relation = model.$relations[ this.name ];
 
-    return relation.models.values;
+    return relation.models;
   },
 
   encode: function(model, out, forSaving)
@@ -7517,7 +7500,7 @@ extend( NeuroRelation, NeuroHasManyThrough,
 
     if ( relation && mode )
     {
-      out[ this.name ] = this.getStoredArray( relation.models.values, mode );
+      out[ this.name ] = this.getStoredArray( relation.models, mode );
     }
   },
 
@@ -7532,7 +7515,7 @@ extend( NeuroRelation, NeuroHasManyThrough,
       relation.saving = true;
       relation.delaySaving = true;
 
-      var models = relation.models.values;
+      var models = relation.models;
 
       for (var i = 0; i < models.length; i++)
       {
@@ -7559,7 +7542,7 @@ extend( NeuroRelation, NeuroHasManyThrough,
 
       this.bulk( relation, function()
       {
-        var models = relation.throughs.values;
+        var models = relation.throughs;
 
         for (var i = 0; i < models.length; i++)
         {
@@ -7620,8 +7603,7 @@ extend( NeuroRelation, NeuroHasManyThrough,
     return function (throughDatabase)
     {
       var throughsAll = throughDatabase.models;
-      var throughsRelated = throughsAll.filter( relation.isRelated ); // TODO
-      var throughs = throughsRelated.values;
+      var throughs = throughsAll.filter( relation.isRelated );
 
       if ( throughs.length === 0 )
       {
@@ -7839,7 +7821,7 @@ extend( NeuroRelation, NeuroHasManyThrough,
   {
     if ( this.property )
     {
-      relation.parent[ this.name ] = relation.models.values;
+      relation.parent[ this.name ] = relation.models;
     }
   },
 
@@ -7849,13 +7831,10 @@ extend( NeuroRelation, NeuroHasManyThrough,
     
     if ( !relation.delaySorting )
     {
-      if ( !related.isSorted( this.comparator ) )
-      {
-        Neuro.debug( Neuro.Debugs.HASMANYTHRU_SORT, this, relation );
+      Neuro.debug( Neuro.Debugs.HASMANYTHRU_SORT, this, relation );
 
-        related.sort( this.comparator );
-      }
-
+      related.resort( this.comparator );
+     
       relation.parent.$trigger( NeuroModel.Events.RelationUpdate, [this, relation] );
     }
   },

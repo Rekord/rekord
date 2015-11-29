@@ -7,7 +7,7 @@ test( 'all', function(assert)
     fields: ['id']
   });
 
-  deepEqual( all.all(), [] );
+  deepEqual( all.all().toArray(), [] );
 
   var a0 = all.create();
   var a1 = all.create();
@@ -15,11 +15,11 @@ test( 'all', function(assert)
   var a3 = all.create();
   var a4 = all.create();
 
-  deepEqual( all.all(), [a0, a1, a2, a3, a4] );
+  deepEqual( all.all().toArray(), [a0, a1, a2, a3, a4] );
 
   a3.$remove();
 
-  deepEqual( all.all(), [a0, a1, a2, a4] );
+  deepEqual( all.all().toArray(), [a0, a1, a2, a4] );
 });
 
 test( 'create', function(assert)

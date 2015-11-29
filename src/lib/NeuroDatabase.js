@@ -38,8 +38,7 @@ function NeuroDatabase(options)
   }
 
   // Properties
-  // this.models = new NeuroModelCollection();
-  this.models = new NeuroMap();
+  this.models = new NeuroModelCollection( this );
   this.className = this.className || toCamelCase( this.name );
   this.initialized = false;
   this.pendingRefresh = false;
@@ -469,8 +468,7 @@ NeuroDatabase.prototype =
   // with a minus in the front to sort in reverse, or a comparator function.
   setComparator: function(comparator, nullsFirst)
   {
-    this.comparatorFunction = createComparator( comparator, nullsFirst ); // TODO remove
-    // this.models.setComparator( comparator, nullsFirst );
+    this.models.setComparator( comparator, nullsFirst );
   },
 
   setSummarize: function(summarize)
@@ -498,18 +496,13 @@ NeuroDatabase.prototype =
   // Sorts the database if it isn't sorted.
   sort: function()
   {
-    if ( !this.isSorted() )
-    {
-      this.models.sort( this.comparatorFunction );
-    }
-    // this.models.resort(); TODO add
+    this.models.resort();
   },
 
   // Determines whether this database is sorted.
   isSorted: function()
   {
-    return this.models.isSorted( this.comparatorFunction );
-    // return this.models.isSorted();
+    return this.models.isSorted();
   },
 
   // Handles when we receive data from the server - either from
@@ -759,8 +752,7 @@ NeuroDatabase.prototype =
     {
       Neuro.debug( Neuro.Debugs.LOCAL_LOAD, db, records );
 
-      // db.models.clear();
-      db.models.reset();
+      db.models.clear();
 
       records = Array.prototype.slice.call( records );
       keys = Array.prototype.slice.call( keys );
@@ -884,7 +876,7 @@ NeuroDatabase.prototype =
         }
       }
 
-      var keys = db.models.keys; // TODO ()
+      var keys = db.models.keys();
 
       for (var i = 0; i < keys.length; i++)
       {
@@ -953,21 +945,10 @@ NeuroDatabase.prototype =
     }
   },
 
-  // The reference to all of the models in the database
-  getModels: function()
-  {
-    return this.models.values; // TOOD -.values
-  }, 
-
   // Returns a model
-  getModel: function(key)
+  get: function(key)
   {
-    if ( isArray( key ) )
-    {
-      key = this.buildKeyFromArray( key );
-    }
-
-    return this.models.get( key );
+    return this.models.get( this.buildKeyFromInput( key ) );
   },
 
   // Crates a function for handling real-time changes

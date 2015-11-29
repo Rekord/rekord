@@ -212,7 +212,7 @@ test( 'comparator prop', function(assert)
 
   var expected = [cp5, cp2, cp1, cp3, cp0, cp4];
 
-  deepEqual( comparator_prop.all(), expected );
+  deepEqual( comparator_prop.all().toArray(), expected );
 });
 
 test( 'comparator -prop', function(assert)
@@ -232,7 +232,7 @@ test( 'comparator -prop', function(assert)
 
   var expected = [cp0, cp3, cp1, cp2, cp5, cp4];
 
-  deepEqual( comparator__prop.all(), expected );
+  deepEqual( comparator__prop.all().toArray(), expected );
 });
 
 test( 'comparator props', function(assert)
@@ -252,7 +252,7 @@ test( 'comparator props', function(assert)
 
   var expected = [cp1, cp3, cp0, cp4, cp5, cp2];
 
-  deepEqual( comparator_props.all(), expected );
+  deepEqual( comparator_props.all().toArray(), expected );
 });
 
 test( 'custom comparator', function(assert)
@@ -277,7 +277,7 @@ test( 'custom comparator', function(assert)
 
   var expected = [cc0, cc4, cc1, cc2, cc3, cc5];
 
-  deepEqual( custom_comparator.all(), expected );
+  deepEqual( custom_comparator.all().toArray(), expected );
 });
 
 test( 'comparatorNullsFirst', function(assert)
@@ -297,7 +297,7 @@ test( 'comparatorNullsFirst', function(assert)
 
   var expected = [c4, c3, c1, c0, c2];
 
-  deepEqual( comparatorNullsFirst.all(), expected );
+  deepEqual( comparatorNullsFirst.all().toArray(), expected );
 });
 
 test( 'revision', function(assert)

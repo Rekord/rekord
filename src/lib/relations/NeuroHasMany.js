@@ -53,7 +53,7 @@ extend( NeuroRelation, NeuroHasMany,
       isRelated: isRelated,
       initial: initial,
       pending: {},
-      models: collection.map,
+      models: collection,
       saving: false,
       delaySorting: false,
       delaySaving: false,
@@ -145,7 +145,7 @@ extend( NeuroRelation, NeuroHasMany,
       var relatedDatabase = this.model.Database;
       var relation = model.$relations[ this.name ];
       var existing = relation.models;
-      var given = new NeuroMap();
+      var given = new NeuroModelCollection( relatedDatabase );
 
       if ( this.isModelArray( input ) )
       {
@@ -155,7 +155,7 @@ extend( NeuroRelation, NeuroHasMany,
 
           if ( related )
           {
-            given.put( related.$key(), related );
+            given.add( related );
           }
         }
       }
@@ -165,12 +165,12 @@ extend( NeuroRelation, NeuroHasMany,
 
         if ( related )
         {
-          given.put( related.$key(), related );
+          given.add( related );
         }
       }
 
-      var removing = existing.subtract( given ).values;
-      var adding = given.subtract( existing ).values;
+      var removing = existing.subtract( given );
+      var adding = given.subtract( existing );
       
       this.bulk( relation, function()
       {
@@ -250,7 +250,7 @@ extend( NeuroRelation, NeuroHasMany,
     }
     else
     {
-      var all = relation.models.values;
+      var all = relation.models;
 
       this.bulk( relation, function()
       { 
@@ -296,7 +296,7 @@ extend( NeuroRelation, NeuroHasMany,
   {
     var relation = model.$relations[ this.name ];
 
-    return relation.models.values;
+    return relation.models;
   },
 
   encode: function(model, out, forSaving)
@@ -306,7 +306,7 @@ extend( NeuroRelation, NeuroHasMany,
 
     if ( relation && mode )
     {
-      out[ this.name ] = this.getStoredArray( relation.models.values, mode );
+      out[ this.name ] = this.getStoredArray( relation.models, mode );
     }
   },
 
@@ -321,7 +321,7 @@ extend( NeuroRelation, NeuroHasMany,
       relation.saving = true;
       relation.delaySaving = true;
 
-      var models = relation.models.values;
+      var models = relation.models;
 
       for (var i = 0; i < models.length; i++)
       {
@@ -348,7 +348,7 @@ extend( NeuroRelation, NeuroHasMany,
 
       this.bulk( relation, function()
       {
-        var models = relation.models.values;
+        var models = relation.models;
 
         for (var i = 0; i < models.length; i++)
         {
@@ -408,16 +408,15 @@ extend( NeuroRelation, NeuroHasMany,
   {
     return function (relatedDatabase)
     {
-      var related = relatedDatabase.models.filter( relation.isRelated ); // TODO
-      var models = related.values;
+      var related = relatedDatabase.models.filter( relation.isRelated );
 
-      Neuro.debug( Neuro.Debugs.HASMANY_LAZY_LOAD, this, relation, models );
+      Neuro.debug( Neuro.Debugs.HASMANY_LAZY_LOAD, this, relation, related );
 
       this.bulk( relation, function()
       {
-        for (var i = 0; i < models.length; i++)
+        for (var i = 0; i < related.length; i++)
         {
-          this.addModel( relation, models[ i ] );
+          this.addModel( relation, related[ i ] );
         }
       });
     };
@@ -555,7 +554,7 @@ extend( NeuroRelation, NeuroHasMany,
   {
     if ( this.property )
     {
-      relation.parent[ this.name ] = relation.models.values;
+      relation.parent[ this.name ] = relation.models;
     }
   },
 
@@ -565,12 +564,9 @@ extend( NeuroRelation, NeuroHasMany,
     
     if ( !relation.delaySorting )
     {
-      if ( !related.isSorted( this.comparator ) )
-      {
-        Neuro.debug( Neuro.Debugs.HASMANY_SORT, this, relation );
+      Neuro.debug( Neuro.Debugs.HASMANY_SORT, this, relation );
 
-        related.sort( this.comparator );
-      }
+      related.resort( this.comparator );
 
       relation.parent.$trigger( NeuroModel.Events.RelationUpdate, [this, relation] );
     }
