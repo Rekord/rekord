@@ -419,3 +419,40 @@ test( 'filtered', function(assert)
   deepEqual( f.toArray(), [] );
 });
 
+test( 'page', function(assert)
+{
+  var c = Neuro.collect(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
+  var p = c.page( 4 );
+
+  deepEqual( p.toArray(), [1, 2, 3, 4] );
+
+  p.next();
+
+  deepEqual( p.toArray(), [5, 6, 7, 8] );
+
+  p.next();
+
+  deepEqual( p.toArray(), [9, 10, 11, 12] );
+
+  p.next();
+
+  deepEqual( p.toArray(), [13, 14, 15] );
+
+  p.first();
+
+  deepEqual( p.toArray(), [1, 2, 3, 4] );
+
+  p.last();
+
+  deepEqual( p.toArray(), [13, 14, 15] );
+
+  c.removeAll( [11, 12, 13, 14, 15] );
+
+  deepEqual( p.toArray(), [9, 10] );
+
+  c.clear();
+
+  strictEqual( p.length, 0 );
+  deepEqual( p.toArray(), [] );
+
+});

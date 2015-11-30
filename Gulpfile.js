@@ -26,6 +26,7 @@ var build = {
     './src/lib/NeuroMap.js',
     './src/lib/NeuroCollection.js',
     './src/lib/NeuroFilteredCollection.js',
+    './src/lib/NeuroPage.js',
     './src/lib/NeuroModelCollection.js',
     './src/lib/NeuroDiscriminatedModelCollection.js',
     './src/lib/NeuroQuery.js',

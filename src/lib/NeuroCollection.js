@@ -13,7 +13,7 @@ NeuroCollection.Events =
   Updates:        'updates',
   Reset:          'reset',
   Cleared:        'cleared',
-  Changes:        'add adds sort remove removes reset'
+  Changes:        'add adds sort remove removes updates reset cleared'
 };
 
 extendArray( Array, NeuroCollection, 
@@ -45,6 +45,11 @@ extendArray( Array, NeuroCollection,
     }
 
     return this;
+  },
+
+  page: function(pageSize, pageIndex)
+  {
+    return new NeuroPage( this, pageSize, pageIndex );
   },
 
   filtered: function(whereProperties, whereValue, whereEquals)
@@ -140,7 +145,6 @@ extendArray( Array, NeuroCollection,
 
     return target;
   },
-
 
   clear: function()
   {
@@ -275,11 +279,6 @@ extendArray( Array, NeuroCollection,
       this.resort();
     }
   },
-
-
-
-
-
 
   minModel: function(comparator)
   {

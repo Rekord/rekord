@@ -1,0 +1,119 @@
+function NeuroPage(collection, pageSize, pageIndex)
+{
+  this.onChanges = copyFunction( this.handleChanges );
+  this.pageSize = pageSize;
+  this.pageIndex = pageIndex || 0;
+  this.pageCount = 0;
+  this.setCollection( collection );
+}
+
+extendArray( Array, NeuroPage, 
+{
+
+  setPageSize: function(pageSize)
+  {
+    this.pageSize = pageSize;
+    this.handleChanges();
+  },
+
+  setPageIndex: function(pageIndex)
+  {
+    var actualIndex = Math.max( 0, Math.min( pageIndex, this.pageCount - 1 ) );
+
+    if ( actualIndex !== this.pageIndex )
+    {
+      this.pageIndex = actualIndex;
+      this.update();
+    }
+  },
+
+  setCollection: function(collection)
+  {
+    if ( collection !== this.collection )
+    {
+      if ( this.collection )
+      {
+        this.disconnect();
+      }
+
+      this.collection = collection;
+      this.connect();
+      this.handleChanges( true );
+    }
+  },
+
+  connect: function()
+  {
+    this.collection.on( NeuroCollection.Events.Changes, this.onChanges, this );
+  },
+
+  disconnect: function()
+  {
+    this.collection.off( NeuroCollection.Events.Changes, this.onChanges );
+  },
+
+  next: function()
+  {
+    this.setPageIndex( this.pageIndex + 1 );
+  },
+
+  prev: function()
+  {
+    this.setPageIndex( this.pageIndex - 1 );
+  },
+
+  jump: function(to)
+  {
+    this.setPageIndex( to );
+  },
+
+  first: function()
+  {
+    this.setPageIndex( 0 );
+  },
+
+  last: function()
+  {
+    this.setPageIndex( this.pageCount - 1 );
+  },
+
+  handleChanges: function(forceApply)
+  {
+    var n = this.collection.length;
+    var pageCount = Math.ceil( n / this.pageSize );
+    var pageIndex = Math.max( 0, Math.min( this.pageIndex, pageCount - 1 ) );
+    var apply = forceApply || this.pageIndex !== pageIndex || this.length !== this.pageSize;
+
+    this.pageIndex = pageIndex;
+    this.pageCount = pageCount;
+    
+    if ( apply )
+    {
+      this.update(); 
+    }
+  },
+
+  update: function()
+  {
+    var source = this.collection;
+    var n = source.length;
+    var start = this.pageIndex * this.pageSize;
+    var end = Math.min( start + this.pageSize, n );
+    var length = end - start;
+
+    this.length = length;
+
+    for (var i = 0; i < length; i++)
+    {
+      this[ i ] = source[ start++ ];
+    }
+  },
+
+  toArray: function()
+  {
+    var out = [];
+    out.push.apply( out, this );
+    return out;
+  }
+
+});
