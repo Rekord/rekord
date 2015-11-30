@@ -4801,6 +4801,11 @@ function NeuroPage(collection, pageSize, pageIndex)
   this.setCollection( collection );
 }
 
+NeuroPage.Events = 
+{
+  Change:       'change'
+};
+
 extendArray( Array, NeuroPage, 
 {
 
@@ -4818,6 +4823,7 @@ extendArray( Array, NeuroPage,
     {
       this.pageIndex = actualIndex;
       this.update();
+      this.trigger( NeuroPage.Events.Change, [ this ] );
     }
   },
 
@@ -4877,6 +4883,7 @@ extendArray( Array, NeuroPage,
     var pageCount = Math.ceil( n / this.pageSize );
     var pageIndex = Math.max( 0, Math.min( this.pageIndex, pageCount - 1 ) );
     var apply = forceApply || this.pageIndex !== pageIndex || this.length !== this.pageSize;
+    var changes = apply || this.pageCount !== pageCount;
 
     this.pageIndex = pageIndex;
     this.pageCount = pageCount;
@@ -4884,6 +4891,10 @@ extendArray( Array, NeuroPage,
     if ( apply )
     {
       this.update(); 
+    }
+    if ( changes )
+    {
+      this.trigger( NeuroPage.Events.Change, [ this ] );
     }
   },
 
@@ -4911,6 +4922,8 @@ extendArray( Array, NeuroPage,
   }
 
 });
+
+eventize( NeuroPage.prototype );
 function NeuroModelCollection(database, models, remoteData)
 {
   this.init( database, models, remoteData );
@@ -8940,6 +8953,7 @@ extendArray( NeuroModelCollection, NeuroRelationCollection,
   global.Neuro.ModelCollection = NeuroModelCollection;
   global.Neuro.Query = NeuroQuery;
   global.Neuro.RemoteQuery = NeuroRemoteQuery;
+  global.Neuro.Page = NeuroPage;
 
   /* Utility Functions */
   global.Neuro.isNeuro = isNeuro;

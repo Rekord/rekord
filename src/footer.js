@@ -12,6 +12,7 @@
   global.Neuro.ModelCollection = NeuroModelCollection;
   global.Neuro.Query = NeuroQuery;
   global.Neuro.RemoteQuery = NeuroRemoteQuery;
+  global.Neuro.Page = NeuroPage;
 
   /* Utility Functions */
   global.Neuro.isNeuro = isNeuro;
