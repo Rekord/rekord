@@ -164,6 +164,7 @@ NeuroDatabase.Defaults =
   key:                  'id',
   keySeparator:         '/',
   fields:               [],
+  ignoredFields:        {},
   defaults:             {},
   comparator:           null,
   comparatorNullsFirst: null,
@@ -223,6 +224,25 @@ NeuroDatabase.prototype =
     }
 
     return invoked;
+  },
+
+  // Determines whether the given object has data to save
+  hasData: function(saving)
+  {
+    if ( !isObject( saving ) )
+    {
+      return false;
+    }
+
+    for (var prop in saving)
+    {
+      if ( !this.ignoredFields[ prop ] )
+      {
+        return true;
+      }
+    }
+
+    return false;
   },
 
   // Grab a model with the given input and notify the callback

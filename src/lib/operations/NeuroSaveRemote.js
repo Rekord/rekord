@@ -18,7 +18,7 @@ extend( NeuroOperation, NeuroSaveRemote,
 
       this.finish();
     }
-    else if ( isEmpty( model.$saving ) )
+    else if ( !db.hasData( model.$saving ) )
     {
       this.markSynced( model, true );
 
@@ -150,15 +150,19 @@ extend( NeuroOperation, NeuroSaveRemote,
       db.putRemoteData( data, model.$key(), model );
     }    
 
-    // Publish saved data to everyone else
-    Neuro.debug( Neuro.Debugs.SAVE_PUBLISH, model, publishing );
 
-    db.live(
+    if ( db.hasData( model.$publish ) )
     {
-      op:     NeuroDatabase.Live.Save,
-      model:  model.$publish,
-      key:    model.$key()
-    });
+      // Publish saved data to everyone else
+      Neuro.debug( Neuro.Debugs.SAVE_PUBLISH, model, publishing );
+
+      db.live(
+      {
+        op:     NeuroDatabase.Live.Save,
+        model:  model.$publish,
+        key:    model.$key()
+      });
+    }
 
     this.markSynced( model, false );
     

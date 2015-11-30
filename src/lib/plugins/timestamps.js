@@ -66,6 +66,8 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
   {
     addTimestamp( field );
 
+    db.ignoredFields[ field ] = true;
+
     var $save = model.prototype.$save;
 
     model.prototype.$save = function()

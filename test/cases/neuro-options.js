@@ -980,6 +980,28 @@ test( 'timestamps custom', function(assert)
   isType( t0.done_at, 'number' );
 });
 
+test( 'timestamps updated_at saving skipped', function(assert)
+{
+  var prefix = 'timestamps_updated_at_';
+
+  var Todo = Neuro({
+    name: prefix + 'todo',
+    fields: ['name', 'done'],
+    defaults: { done: false },
+    timestamps: true
+  });
+
+  var remote = Todo.Database.rest;
+  
+  var t0 = Todo.create({name: 't0'});
+
+  remote.lastModel = null;
+
+  t0.$save();
+
+  strictEqual( remote.lastModel, null );
+});
+
 test( 'timestamps renamed', function(assert)
 {
   var done = assert.async();

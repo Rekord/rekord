@@ -1480,6 +1480,7 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 
   tryOverwrite( 'keySeparator' );
   tryMerge( 'defaults' );
+  tryMerge( 'ignoredFields' );
   tryOverwrite( 'loadRelations' );
   tryOverwrite( 'loadRemote' );
   tryOverwrite( 'autoRefresh' );
@@ -1656,6 +1657,8 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
   function addUpdatedAt(field)
   {
     addTimestamp( field );
+
+    db.ignoredFields[ field ] = true;
 
     var $save = model.prototype.$save;
 
@@ -2223,6 +2226,7 @@ NeuroDatabase.Defaults =
   key:                  'id',
   keySeparator:         '/',
   fields:               [],
+  ignoredFields:        {},
   defaults:             {},
   comparator:           null,
   comparatorNullsFirst: null,
@@ -2282,6 +2286,25 @@ NeuroDatabase.prototype =
     }
 
     return invoked;
+  },
+
+  // Determines whether the given object has data to save
+  hasData: function(saving)
+  {
+    if ( !isObject( saving ) )
+    {
+      return false;
+    }
+
+    for (var prop in saving)
+    {
+      if ( !this.ignoredFields[ prop ] )
+      {
+        return true;
+      }
+    }
+
+    return false;
   },
 
   // Grab a model with the given input and notify the callback
@@ -6096,7 +6119,7 @@ extend( NeuroOperation, NeuroSaveRemote,
 
       this.finish();
     }
-    else if ( isEmpty( model.$saving ) )
+    else if ( !db.hasData( model.$saving ) )
     {
       this.markSynced( model, true );
 
@@ -6228,15 +6251,19 @@ extend( NeuroOperation, NeuroSaveRemote,
       db.putRemoteData( data, model.$key(), model );
     }    
 
-    // Publish saved data to everyone else
-    Neuro.debug( Neuro.Debugs.SAVE_PUBLISH, model, publishing );
 
-    db.live(
+    if ( db.hasData( model.$publish ) )
     {
-      op:     NeuroDatabase.Live.Save,
-      model:  model.$publish,
-      key:    model.$key()
-    });
+      // Publish saved data to everyone else
+      Neuro.debug( Neuro.Debugs.SAVE_PUBLISH, model, publishing );
+
+      db.live(
+      {
+        op:     NeuroDatabase.Live.Save,
+        model:  model.$publish,
+        key:    model.$key()
+      });
+    }
 
     this.markSynced( model, false );
     

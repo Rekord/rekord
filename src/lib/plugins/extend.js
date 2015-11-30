@@ -53,6 +53,7 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 
   tryOverwrite( 'keySeparator' );
   tryMerge( 'defaults' );
+  tryMerge( 'ignoredFields' );
   tryOverwrite( 'loadRelations' );
   tryOverwrite( 'loadRemote' );
   tryOverwrite( 'autoRefresh' );
