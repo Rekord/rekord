@@ -391,9 +391,119 @@ test( 'Neuro.createComparator', function(assert)
   deepEqual( arr4.sort( c4 ), exp4 );
 });
 
+test( 'Neuro.saveComparator', function(assert)
+{
+  Neuro.saveComparator( 'compare0', 'name' );
 
+  var c1 = Neuro.createComparator( 'compare0' );
 
+  var m0 = {name: 'Adam', age: 22};
+  var m1 = {name: 'Barnabas', age: 22};
+  var m2 = {name: 'Connor', age: 19};
+  var m3 = {name: 'Dylan', age: 20};
 
+  var arr1 = [m3, m2, m0, m1, null];
+  var exp1 = [m0, m1, m2, m3, null];
+
+  deepEqual( arr1.sort( c1 ), exp1 );
+});
+
+test( 'Neuro.saveWhere', function(assert)
+{
+  Neuro.saveWhere( 'where0', 'age', 22 );
+  Neuro.saveWhere( 'where1', {name: 'Connor'} );
+  Neuro.saveWhere( 'where2', 'age', '22', Neuro.equalsCompare );
+
+  var m0 = {name: 'Adam', age: 22};
+  var m1 = {name: 'Barnabas', age: 22};
+  var m2 = {name: 'Connor', age: 19};
+  var m3 = {name: 'Dylan', age: 20};
+
+  ok(    Neuro.createWhere( 'where0' )( m0 ) );
+  ok(    Neuro.createWhere( 'where0' )( m1 ) );
+  notOk( Neuro.createWhere( 'where0' )( m2 ) );
+  notOk( Neuro.createWhere( 'where0' )( m3 ) );
+
+  notOk( Neuro.createWhere( 'where1' )( m0 ) );
+  notOk( Neuro.createWhere( 'where1' )( m1 ) );
+  ok(    Neuro.createWhere( 'where1' )( m2 ) );
+  notOk( Neuro.createWhere( 'where1' )( m3 ) );
+
+  ok(    Neuro.createWhere( 'where2' )( m0 ) );
+  ok(    Neuro.createWhere( 'where2' )( m1 ) );
+  notOk( Neuro.createWhere( 'where2' )( m2 ) );
+  notOk( Neuro.createWhere( 'where2' )( m3 ) );
+});
+
+test( 'Neuro.savePropertyResolver', function(assert)
+{
+  Neuro.savePropertyResolver( 'prop0', 'name' );
+  Neuro.savePropertyResolver( 'prop1', ['name', 'age'] );
+  Neuro.savePropertyResolver( 'prop2' );
+
+  var p0 = Neuro.createPropertyResolver( 'prop0' );
+  var p1 = Neuro.createPropertyResolver( 'prop1' );
+  var p2 = Neuro.createPropertyResolver( 'prop2' );
+
+  var m0 = {name: 'Adam', age: 22};
+  var m1 = {name: 'Barnabas', age: 22};
+  var m2 = {name: 'Connor', age: 19};
+  var m3 = {name: 'Dylan', age: 20};
+
+  strictEqual( p0( m0 ), 'Adam' );
+  strictEqual( p0( m1 ), 'Barnabas' );
+  strictEqual( p0( m2 ), 'Connor' );
+  strictEqual( p0( m3 ), 'Dylan' );
+
+  strictEqual( p1( m0 ), 'Adam,22' );
+  strictEqual( p1( m1 ), 'Barnabas,22' );
+  strictEqual( p1( m2 ), 'Connor,19' );
+  strictEqual( p1( m3 ), 'Dylan,20' );
+
+  strictEqual( p2( m0 ), m0 );
+  strictEqual( p2( m1 ), m1 );
+  strictEqual( p2( m2 ), m2 );
+  strictEqual( p2( m3 ), m3 );
+});
+
+test( 'Neuro.saveNumberResolver', function(assert)
+{
+  Neuro.saveNumberResolver( 'num0', 'age' );
+  Neuro.saveNumberResolver( 'num1' );
+
+  var n0 = Neuro.createNumberResolver( 'num0' );
+  var n1 = Neuro.createNumberResolver( 'num1' );
+
+  var m0 = {name: 'Adam', age: 22};
+  var m1 = {name: 'Barnabas', age: 23};
+  var m2 = 45;
+
+  deepEqual( n0( m0 ), 22 );
+  deepEqual( n0( m1 ), 23 );
+  deepEqual( n0( m2 ), NaN );
+
+  deepEqual( n1( m0 ), NaN );
+  deepEqual( n1( m1 ), NaN );
+  deepEqual( n1( m2 ), 45 );
+});
+
+test( 'Neuro.saveHaving', function(assert)
+{
+  Neuro.saveHaving( 'have0', 'name' );
+  Neuro.saveHaving( 'have1' );
+
+  var h0 = Neuro.createHaving( 'have0' );
+  var h1 = Neuro.createHaving( 'have1' );
+
+  var m0 = {name: 'Phil', age: 26};
+  var m1 = {title: 'Mr', age: 69};
+
+  strictEqual( h0( m0 ), true );
+  strictEqual( h0( m1 ), false );
+
+  strictEqual( h1( m0 ), true );
+  strictEqual( h1( m1 ), true );
+});
 
 
 

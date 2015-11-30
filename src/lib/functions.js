@@ -559,6 +559,13 @@ function isSorted(comparator, array)
   return true;
 }
 
+Neuro.Comparators = {};
+
+function saveComparator(name, comparator, nullsFirst)
+{
+  return Neuro.Comparators[ name ] = createComparator( comparator, nullsFirst );
+}
+
 function createComparator(comparator, nullsFirst)
 {
   if ( isFunction( comparator ) )
@@ -567,6 +574,11 @@ function createComparator(comparator, nullsFirst)
   }
   else if ( isString( comparator ) )
   {
+    if ( comparator in Neuro.Comparators )
+    {
+      return Neuro.Comparators[ comparator ];
+    }
+
     if ( comparator.charAt(0) === '-' )
     {
       comparator = comparator.substring( 1 );
@@ -615,6 +627,13 @@ function createComparator(comparator, nullsFirst)
   return null;
 }
 
+Neuro.NumberResolvers = {};
+
+function saveNumberResolver(name, numbers)
+{
+  return Neuro.NumberResolvers[ name ] = createNumberResolver( numbers );
+}
+
 function createNumberResolver(numbers)
 {
   if ( isFunction( numbers ) )
@@ -623,6 +642,11 @@ function createNumberResolver(numbers)
   }
   else if ( isString( numbers ) )
   {
+    if ( numbers in Neuro.NumberResolvers )
+    {
+      return Neuro.NumberResolvers[ numbers ];
+    }
+
     return function resolveNumber(model)
     {
       return isValue( model ) ? parseFloat( model[ numbers ] ) : undefined;
@@ -637,6 +661,13 @@ function createNumberResolver(numbers)
   }
 }
 
+Neuro.PropertyResolvers = {};
+
+function savePropertyResolver(name, properties, delim)
+{
+  return Neuro.PropertyResolvers[ name ] = createPropertyResolver( properties, delim );
+}
+
 function createPropertyResolver(properties, delim)
 {
   if ( isFunction( properties ) )
@@ -645,6 +676,11 @@ function createPropertyResolver(properties, delim)
   }
   else if ( isString( properties ) )
   {
+    if ( properties in Neuro.PropertyResolvers )
+    {
+      return Neuro.PropertyResolvers[ properties ];
+    }
+
     return function resolveProperty(model)
     {
       return model[ properties ];
@@ -689,6 +725,13 @@ function createPropertyResolver(properties, delim)
   }
 }
 
+Neuro.Wheres = {};
+
+function saveWhere(name, properties, values, equals)
+{
+  return Neuro.Wheres[ name ] = createWhere( properties, values, equals );
+}
+
 function createWhere(properties, value, equals)
 {
   var equality = equals || equalsStrict;
@@ -697,7 +740,7 @@ function createWhere(properties, value, equals)
   {
     return properties;
   }
-  if ( isObject( properties ) )
+  else if ( isObject( properties ) )
   {
     return function whereEqualsObject(model)
     {
@@ -714,6 +757,11 @@ function createWhere(properties, value, equals)
   }
   else if ( isString( properties ) )
   {
+    if ( properties in Neuro.Wheres )
+    {
+      return Neuro.Wheres[ properties ];
+    }
+
     if ( isValue( value ) )
     { 
       return function whereEqualsValue(model)
@@ -738,6 +786,13 @@ function createWhere(properties, value, equals)
   }
 }
 
+Neuro.Havings = {};
+
+function saveHaving(name, having)
+{
+  return Neuro.Havings[ name ] = createHaving( having );
+}
+
 function createHaving(having)
 {
   if ( isFunction( having ) )
@@ -746,6 +801,11 @@ function createHaving(having)
   }
   else if ( isString( having ) )
   {
+    if ( having in Neuro.Havings )
+    {
+      return Neuro.Havings[ having ];
+    }
+
     return function hasValue(model)
     {
       return isValue( model ) && isValue( model[ having ] );

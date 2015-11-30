@@ -38,10 +38,19 @@
   global.Neuro.equalsCompare = equalsCompare;
 
   global.Neuro.isSorted = isSorted;
-
-  global.Neuro.createWhere = createWhere;
-  global.Neuro.createPropertyResolver = createPropertyResolver;
-  global.Neuro.createNumberResolver = createNumberResolver;
+  global.Neuro.saveComparator = saveComparator;
   global.Neuro.createComparator = createComparator;
+
+  global.Neuro.saveWhere = saveWhere;
+  global.Neuro.createWhere = createWhere;
+
+  global.Neuro.savePropertyResolver = savePropertyResolver;
+  global.Neuro.createPropertyResolver = createPropertyResolver;
+
+  global.Neuro.saveNumberResolver = saveNumberResolver;
+  global.Neuro.createNumberResolver = createNumberResolver;
+
+  global.Neuro.saveHaving = saveHaving;
+  global.Neuro.createHaving = createHaving;
 
 })(window);
