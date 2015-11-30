@@ -49,7 +49,7 @@
 
     <script src="../../build/neurosync.js"></script>
     <script src="http://rawgit.com/ClickerMonkey/neurosync-pubsub/master/build/neurosync-pubsub.min.js"></script>
-    <script src="http://rawgit.com/ClickerMonkey/neurosync-storkjs/master/build/neurosync-storkjs.min.js"></script>
+    <script src="http://rawgit.com/ClickerMonkey/neurosync-storkjs/master/build/neurosync-stork.min.js"></script>
     <script src="http://rawgit.com/ClickerMonkey/neurosync-angular/master/build/neurosync-angular.min.js"></script>
     <script src="http://rawgit.com/ClickerMonkey/neurosync-debug/master/build/neurosync-debug.min.js"></script>
 
@@ -87,17 +87,13 @@
         {
           var Task = Neuro({
             name: 'task',
-            className: 'Task',
             api: RESTBASE + 'task/',
             pubsub: PUBSUB,
             channel: 'tasks',
             token: 'root',
-            key: 'id',
-            autoRefresh: true,
-            fields: ['id', 'task_list_id', 'name', 'finished_at', 'updated_at', 'created_at'],
+            fields: ['task_list_id', 'name'],
+            timestamps: ['created_at', 'updated_at', 'finished_at'],
             defaults: {
-              updated_at: Date.now,
-              created_at: Date.now,
               finished_at: null
             },
             belongsTo: {
@@ -105,7 +101,12 @@
                 model: 'TaskList'
               }
             },
-            toString: function(task) {
+            methods: {
+              setFinished: function(finished) {
+                this.$save('finished_at', finished ? Date.now() : null);
+              }
+            },
+            summarize: function(task) {
               return task.name;
             }
           });
@@ -119,31 +120,23 @@
         {
           var TaskList = Neuro({
             name: 'task_list',
-            className: 'TaskList',
             api: RESTBASE + 'task_list/',
             pubsub: PUBSUB,
             channel: 'task_lists',
             token: 'root',
-            key: 'id',
-            autoRefresh: true,
-            fields: ['id', 'name', 'updated_at', 'created_at'],
+            fields: ['name'],
+            timestamps: true,
             comparator: '-created_at',
-            defaults: {
-              updated_at: Date.now,
-              created_at: Date.now
-            },
             hasMany: {
               tasks: {
                 model: 'Task',
                 property: true,
                 cascadeRemove: true,
-                comparator: function(a, b) {
-                  return -Neuro.compare( a.finished_at, b.finished_at ) ||
-                         -Neuro.compare( a.created_at, b.created_at );
-                }
+                comparator: ['-finished_at', '-created_at'],
+                comparatorNullsFirst: true
               }
             },
-            toString: function(taskList) {
+            summarize: function(taskList) {
               return taskList.name;
             }
           });
@@ -174,9 +167,7 @@
               };
               scope.save = function() {
                 if (!scope.model.name) return;
-                scope.model.$save({
-                  updated_at: Date.now()
-                });
+                scope.model.$save();
                 scope.editing = false;
               };
               scope.edit = function() {
@@ -191,7 +182,6 @@
               scope.addTask = function() {
                 if (!scope.task.name) return;
                 scope.task.$save({
-                  updated_at: Date.now(),
                   created_at: Date.now()
                 });
                 scope.model.tasks.relate( scope.task );
@@ -226,17 +216,12 @@
               };
               scope.save = function() {
                 if (!scope.model.name) return;
-                scope.model.$save({
-                  updated_at: Date.now()
-                });
+                scope.model.$save();
                 scope.editing = false;
               };
 
               scope.$watch('$.finished', function(finished) {
-                scope.model.$save({
-                  finished_at: finished ? Date.now() : null,
-                  updated_at: Date.now()
-                });
+                scope.model.setFinished( finished );
               }.skip() );
 
               function updateFinished() {

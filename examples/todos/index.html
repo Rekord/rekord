@@ -31,7 +31,7 @@
 
     <script src="../../build/neurosync.js"></script>
     <script src="http://rawgit.com/ClickerMonkey/neurosync-pubsub/master/build/neurosync-pubsub.min.js"></script>
-    <script src="http://rawgit.com/ClickerMonkey/neurosync-storkjs/master/build/neurosync-storkjs.min.js"></script>
+    <script src="http://rawgit.com/ClickerMonkey/neurosync-storkjs/master/build/neurosync-stork.min.js"></script>
     <script src="http://rawgit.com/ClickerMonkey/neurosync-angular/master/build/neurosync-angular.min.js"></script>
     <script src="http://rawgit.com/ClickerMonkey/neurosync-debug/master/build/neurosync-debug.min.js"></script>
 
@@ -53,19 +53,19 @@
         {
           var Todo = Neuro({
             name: 'todos',
-            className: 'Todo',
             api: RESTBASE + 'todos/',
             pubsub: PUBSUB,
             channel: 'todos',
             token: 'root',
-            key: 'id',
-            fields: ['id', 'name', 'done', 'created_at', 'updated_at'],
+            fields: ['name', 'done', 'created_at', 'updated_at'],
+            timestamps: true,
             defaults: {
-              done: false,
-              created_at: Date.now,
-              updated_at: Date.now
+              done: false
             },
-            comparator: '-created_at'
+            comparator: '-created_at',
+            summarize: function(model) {
+              return model.name;
+            }
           });
 
           window.Todo = Todo;
@@ -103,9 +103,7 @@
                 scope.model.$remove();
               },
               scope.saveTodo = function() {
-                scope.model.$save({
-                  updated_at: Date.now()
-                });
+                scope.model.$save();
                 scope.editing = false;
               };
             }
@@ -136,8 +134,7 @@
           this.addTodo = function() {
             if ( this.todo.name ) {
               this.todo.$save({
-                created_at: Date.now(),
-                updated_at: Date.now()
+                created_at: Date.now()
               });
               this.newTodo();
             }

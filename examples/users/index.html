@@ -95,7 +95,7 @@
 
     <script src="../../build/neurosync.js"></script>
     <!--<script src="http://rawgit.com/ClickerMonkey/neurosync-pubsub/master/build/neurosync-pubsub.min.js"></script>-->
-    <script src="http://rawgit.com/ClickerMonkey/neurosync-storkjs/master/build/neurosync-storkjs.min.js"></script>
+    <script src="http://rawgit.com/ClickerMonkey/neurosync-storkjs/master/build/neurosync-stork.min.js"></script>
     <script src="http://rawgit.com/ClickerMonkey/neurosync-angular/master/build/neurosync-angular.min.js"></script>
     <script src="http://rawgit.com/ClickerMonkey/neurosync-debug/master/build/neurosync-debug.min.js"></script>
 
@@ -132,12 +132,8 @@
           var User = Neuro({
             name: 'user',
             api: RESTBASE + 'user/',
-            key: 'id',
-            fields: ['id', 'name', 'updated_at', 'created_at'],
-            defaults: {
-              updated_at: Date.now,
-              created_at: Date.now
-            },
+            fields: ['name'],
+            timestamps: true,
             comparator: '-created_at',
             hasMany: {
               userGroups: {
@@ -150,7 +146,7 @@
                 through: 'UserGroup'
               }
             },
-            toString: function(user) {
+            summarize: function(user) {
               return user.name;
             }
           });
@@ -167,10 +163,7 @@
             api: RESTBASE + 'user_group/',
             fullSave: true,
             key: ['user_id', 'group_id'],
-            fields: ['user_id', 'group_id', 'created_at'],
-            defaults: {
-              created_at: Date.now
-            },
+            timestamps: 'created_at',
             belongsTo: {
               user: {
                 model: 'User'
@@ -179,7 +172,7 @@
                 model: 'Group'
               }
             },
-            toString: function(userGroup) {
+            summarize: function(userGroup) {
               return userGroup.user_id + ' in ' + userGroup.group_id;
             }
           });
@@ -193,14 +186,10 @@
         {
           var Group = Neuro({
             name: 'group',
-            className: 'Group',
             api: RESTBASE + 'group/',
             key: 'id',
-            fields: ['id', 'name', 'updated_at', 'created_at'],
-            defaults: {
-              updated_at: Date.now,
-              created_at: Date.now
-            },
+            fields: ['name'],
+            timestamps: true,
             comparator: '-created_at',
             hasMany: {
               userGroups: {
@@ -213,7 +202,7 @@
                 through: 'UserGroup'
               }
             },
-            toString: function(group) {
+            summarize: function(group) {
               return group.name;
             }
           });
@@ -246,9 +235,7 @@
               };
               scope.save = function() {
                 if (!scope.model.name) return;
-                scope.model.$save({
-                  updated_at: Date.now()
-                });
+                scope.model.$save();
                 scope.editing = false;
               };
             }
@@ -259,7 +246,7 @@
         {
           NeuroBind( $scope, User );
 
-          this.users = User.Database.getModels();
+          this.users = User.all();
 
           this.newUser = function() {
             this.user = new User({
@@ -270,8 +257,7 @@
           this.addUser = function() {
             if (!this.user.name) return;
             this.user.$save({
-              created_at: Date.now(),
-              updated_at: Date.now()
+              created_at: Date.now()
             });
             this.newUser();
           };
@@ -296,8 +282,7 @@
           this.addGroup = function() {
             if (!this.group.name) return;
             this.group.$save({
-              created_at: Date.now(),
-              updated_at: Date.now()
+              created_at: Date.now()
             });
             this.newGroup();
           };
