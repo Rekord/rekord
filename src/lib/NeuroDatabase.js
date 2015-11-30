@@ -97,6 +97,41 @@ function NeuroDatabase(options)
   }
 }
 
+function defaultEncode(data)
+{
+  var encodings = this.encodings;
+
+  for (var prop in data)
+  {
+    if ( prop in encodings )
+    {
+      data[ prop ] = encodings[ prop ]( data[ prop ] );
+    }
+  }
+
+  return data;
+}
+
+function defaultDecode(rawData)
+{
+  var decodings = this.decodings;
+
+  for (var prop in rawData)
+  {
+    if ( prop in decodings )
+    {
+      rawData[ prop ] = decodings[ prop ]( rawData[ prop ] );
+    }
+  }
+
+  return rawData;
+}
+
+function defaultSummarize(model)
+{
+  return model.$key();
+}
+
 NeuroDatabase.Events = 
 {
   NoLoad:       'no-load',
@@ -139,9 +174,11 @@ NeuroDatabase.Defaults =
   cache:                Neuro.Cache.All,
   fullSave:             false,
   fullPublish:          false,
-  encode:               function(data) { return data; },
-  decode:               function(rawData) { return rawData; },
-  summarize:            function(model) { return model.$key(); }
+  encodings:            {},
+  decodings:            {},
+  encode:               defaultEncode,
+  decode:               defaultDecode,
+  summarize:            defaultSummarize
 };
 
 NeuroDatabase.prototype =

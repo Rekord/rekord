@@ -888,3 +888,109 @@ test( 'events', function(assert)
     name: 'Joe'
   });
 });
+
+test( 'timestamps default', function(assert)
+{
+  var done = assert.async();
+
+  var prefix = 'timestamps_default_';
+
+  var Todo = Neuro({
+    name: prefix + 'todo',
+    fields: ['name', 'done'],
+    defaults: { done: false },
+    timestamps: true,
+    timestampsAsDate: true
+  });
+
+  deepEqual( Todo.Database.fields, ['id', 'name', 'done', 'created_at', 'updated_at'] );
+
+  var t0 = Todo.create({name: 't0'});
+
+  strictEqual( t0.name, 't0' );
+  strictEqual( t0.done, false );
+  isInstance( t0.created_at, Date, t0.created_at );
+  isInstance( t0.updated_at, Date, t0.updated_at );
+
+  isType( t0.$saved.updated_at, 'number' );
+  isType( t0.$saved.created_at, 'number' );
+
+  var t1 = Todo.boot({id: 5, name: 't0', created_at: 1448800534000, updated_at: 1448850534000});
+
+  isInstance( t1.created_at, Date, t1.created_at );
+  isInstance( t1.updated_at, Date, t1.updated_at );
+
+  var time0 = t0.updated_at;
+
+  wait( 2, function()
+  {
+    t0.$save('done', true);
+
+    notDeepEqual( t0.updated_at, time0, t0.updated_at );  
+
+    done();
+  });
+});
+
+test( 'timestamps custom', function(assert)
+{
+  var prefix = 'timestamps_custom_';
+
+  var Todo = Neuro({
+    name: prefix + 'todo',
+    fields: ['name', 'done'],
+    defaults: { done: false },
+    timestamps: 'done_at'
+  });
+
+  deepEqual( Todo.Database.fields, ['id', 'name', 'done', 'done_at'] );
+
+  var t0 = Todo.create({name: 't0'});
+
+  strictEqual( t0.name, 't0' );
+  strictEqual( t0.done, false );
+  isType( t0.done_at, 'number' );
+});
+
+test( 'timestamps renamed', function(assert)
+{
+  var done = assert.async();
+
+  var prefix = 'timestamps_renamed_';
+
+  var Todo = Neuro({
+    name: prefix + 'todo',
+    fields: ['name', 'done'],
+    defaults: { done: false },
+    timestamps: {created_at: 'created_tms', updated_at: 'updated_tms'},
+    timestampsAsDate: true
+  });
+
+  deepEqual( Todo.Database.fields, ['id', 'name', 'done', 'created_tms', 'updated_tms'] );
+
+  var t0 = Todo.create({name: 't0'});
+
+  strictEqual( t0.name, 't0' );
+  strictEqual( t0.done, false );
+  isInstance( t0.created_tms, Date, t0.created_tms );
+  isInstance( t0.updated_tms, Date, t0.updated_tms );
+
+  isType( t0.$saved.updated_tms, 'number' );
+  isType( t0.$saved.created_tms, 'number' );
+
+  var t1 = Todo.boot({id: 5, name: 't0', created_tms: 1448800534000, updated_tms: 1448850534000});
+
+  isInstance( t1.created_tms, Date, t1.created_tms );
+  isInstance( t1.updated_tms, Date, t1.updated_tms );
+
+  var time0 = t0.updated_tms;
+
+  wait( 2, function()
+  {
+    t0.$save('done', true);
+
+    notDeepEqual( t0.updated_tms, time0, t0.updated_tms );  
+
+    done();
+  });
+});

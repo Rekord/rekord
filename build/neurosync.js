@@ -566,7 +566,7 @@ Neuro.Comparators = {};
 
 function saveComparator(name, comparator, nullsFirst)
 {
-  Neuro.Comparators[ name ] = createComparator( comparator, nullsFirst );
+  return Neuro.Comparators[ name ] = createComparator( comparator, nullsFirst );
 }
 
 function createComparator(comparator, nullsFirst)
@@ -634,7 +634,7 @@ Neuro.NumberResolvers = {};
 
 function saveNumberResolver(name, numbers)
 {
-  Neuro.NumberResolvers[ name ] = createNumberResolver( numbers );
+  return Neuro.NumberResolvers[ name ] = createNumberResolver( numbers );
 }
 
 function createNumberResolver(numbers)
@@ -668,7 +668,7 @@ Neuro.PropertyResolvers = {};
 
 function savePropertyResolver(name, properties, delim)
 {
-  Neuro.PropertyResolvers[ name ] = createPropertyResolver( properties, delim );
+  return Neuro.PropertyResolvers[ name ] = createPropertyResolver( properties, delim );
 }
 
 function createPropertyResolver(properties, delim)
@@ -732,7 +732,7 @@ Neuro.Wheres = {};
 
 function saveWhere(name, properties, values, equals)
 {
-  Neuro.Wheres[ name ] = createWhere( properties, values, equals );
+  return Neuro.Wheres[ name ] = createWhere( properties, values, equals );
 }
 
 function createWhere(properties, value, equals)
@@ -793,7 +793,7 @@ Neuro.Havings = {};
 
 function saveHaving(name, having)
 {
-  Neuro.Havings[ name ] = createHaving( having );
+  return Neuro.Havings[ name ] = createHaving( having );
 }
 
 function createHaving(having)
@@ -1186,13 +1186,6 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 });
 Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 {
-  model.bootCollection = function( input )
-  {
-    return new NeuroModelCollection( db, input, true );
-  };
-});
-Neuro.on( Neuro.Events.Plugins, function(model, db, options)
-{
   model.collect = function(a)
   {
     var models = arguments.length > 1 || !isArray(a) ?
@@ -1466,6 +1459,120 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 
     return q;
   };
+});
+Neuro.on( Neuro.Events.Plugins, function(model, db, options)
+{
+  var time = options.timestamps;
+  var timeAsDate = options.timestampsAsDate;
+  var currentTimestamp = timeAsDate ? currentDate : currentTime;
+
+  if ( !time )
+  {
+    return;
+  }
+
+  function currentTime()
+  {
+    return new Date().getTime();
+  }
+
+  function currentDate()
+  {
+    return new Date();
+  }
+
+  function encode(x)
+  {
+    return x instanceof Date ? x.getTime() : x;
+  }
+
+  function decode(x)
+  {
+    return isNumber( x ) ? new Date( x ) : (isString( x ) && Date.parse ? Date.parse( x ) : x);
+  }
+
+  function addTimestamp(field)
+  {
+    var i = indexOf( db.fields, field );
+
+    if ( i === false )
+    {
+      db.fields.push( field );
+      db.saveFields.push( field );
+    }
+
+    if ( !(field in db.defaults) )
+    {
+      db.defaults[ field ] = currentTimestamp;
+    }
+
+    if ( options.timestampsAsDate )
+    {
+      if ( !(field in db.encodings) )
+      {
+        db.encodings[ field ] = encode;
+      }
+      if ( !(field in db.decodings ) )
+      {
+        db.decodings[ field ] = decode;
+      }
+    }
+  }
+
+  function addCreatedAt(field)
+  {
+    addTimestamp( field );
+  }
+
+  function addUpdatedAt(field)
+  {
+    addTimestamp( field );
+
+    var $save = model.prototype.$save;
+
+    model.prototype.$save = function()
+    {
+      this[ field ] = currentTimestamp();
+
+      $save.apply( this, arguments );
+    };
+  }
+
+  function addTimestampField(type, field)
+  {
+    switch (type) {
+      case 'created_at':
+        return addCreatedAt( field );
+      case 'updated_at':
+        return addUpdatedAt( field );
+      default:
+        return addTimestamp( field );
+    }
+  }
+
+  if ( isString( time ) )
+  {
+    addTimestampField( time, time );
+  }
+  else if ( isArray( time ) )
+  {
+    for (var i = 0; i < time.length; i++)
+    {
+      addTimestampField( time[ i ], time[ i ] );
+    }
+  }
+  else if ( isObject( time ) )
+  {
+    for (var prop in time)
+    {
+      addTimestampField( prop, time[ prop ] );
+    }
+  }
+  else
+  {
+    addCreatedAt( 'created_at' );
+    addUpdatedAt( 'updated_at' );
+  }
 });
 Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 {
@@ -1920,6 +2027,41 @@ function NeuroDatabase(options)
   }
 }
 
+function defaultEncode(data)
+{
+  var encodings = this.encodings;
+
+  for (var prop in data)
+  {
+    if ( prop in encodings )
+    {
+      data[ prop ] = encodings[ prop ]( data[ prop ] );
+    }
+  }
+
+  return data;
+}
+
+function defaultDecode(rawData)
+{
+  var decodings = this.decodings;
+
+  for (var prop in rawData)
+  {
+    if ( prop in decodings )
+    {
+      rawData[ prop ] = decodings[ prop ]( rawData[ prop ] );
+    }
+  }
+
+  return rawData;
+}
+
+function defaultSummarize(model)
+{
+  return model.$key();
+}
+
 NeuroDatabase.Events = 
 {
   NoLoad:       'no-load',
@@ -1962,9 +2104,11 @@ NeuroDatabase.Defaults =
   cache:                Neuro.Cache.All,
   fullSave:             false,
   fullPublish:          false,
-  encode:               function(data) { return data; },
-  decode:               function(rawData) { return rawData; },
-  summarize:            function(model) { return model.$key(); }
+  encodings:            {},
+  decodings:            {},
+  encode:               defaultEncode,
+  decode:               defaultDecode,
+  summarize:            defaultSummarize
 };
 
 NeuroDatabase.prototype =
