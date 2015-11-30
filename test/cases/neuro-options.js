@@ -1022,3 +1022,51 @@ test( 'timestamps renamed', function(assert)
     done();
   });
 });
+
+test( 'extend', function(assert)
+{
+  var prefix = 'extend_';
+
+  var User = Neuro({
+    name: prefix + 'user',
+    fields: ['name']
+  });
+
+  var Todo = Neuro({
+    name: prefix + 'todo',
+    fields: ['name', 'done', 'created_by'],
+    defaults: { done: false },
+    timestamps: true,
+    loadRemote: false,
+    comparator: 'name',
+    belongsTo: {
+      creator: {
+        model: User,
+        local: 'created_by'
+      }
+    }
+  });
+
+  var TodoUpdatable = Neuro({
+    name: prefix + 'todo_extended',
+    extend: Todo,
+    fields: ['updated_by'],
+    loadRemote: true,
+    belongsTo: {
+      updater: {
+        model: User,
+        local: 'updated_by'
+      }
+    }
+  });
+
+  var db = TodoUpdatable.Database;
+
+  deepEqual( db.fields, ['id', 'name', 'done', 'created_by', 'created_at', 'updated_at', 'updated_by'] );
+  strictEqual( db.loadRemote, true );
+  ok( 'created_at' in db.defaults );
+  ok( 'updated_at' in db.defaults );
+  ok( 'done' in db.defaults );
+  ok( 'updater' in db.relations );
+  ok( 'creator' in db.relations );
+});
