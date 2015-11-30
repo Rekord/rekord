@@ -889,6 +889,34 @@ test( 'events', function(assert)
   });
 });
 
+test( 'encodings decodings', function(assert)
+{
+  var prefix = 'encodings_decodings_';
+
+  var Todo = Neuro({
+    name: prefix + 'todo',
+    fields: ['name', 'times'],
+    encodings: {
+      times: String
+    },
+    decodings: {
+      times: parseInt
+    }
+  });
+
+  var t0 = Todo.boot({
+    id: 5,
+    name: 't0',
+    times: '456'
+  });
+
+  isType( t0.times, 'number' );
+  strictEqual( t0.times, 456 );
+
+  isType( t0.$saved.times, 'string' );
+  strictEqual( t0.$saved.times, '456' );
+});
+
 test( 'timestamps default', function(assert)
 {
   var done = assert.async();
