@@ -18,6 +18,7 @@
   global.Neuro.uuid = uuid;
   global.Neuro.indexOf = indexOf;
   global.Neuro.propsMatch = propsMatch;
+  global.Neuro.hasFields = hasFields;
   
   global.Neuro.extend = extend;
   global.Neuro.extendArray = extendArray;

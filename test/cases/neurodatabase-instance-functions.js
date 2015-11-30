@@ -176,34 +176,6 @@ test( 'buildKeyFromArray', function(assert)
   strictEqual( db.buildKeyFromArray( i1 ), e1 );
 });
 
-test( 'hasFields', function(assert)
-{
-  var hasFields = Neuro({
-    name: 'hasFields',
-    fields: ['id', 'name']
-  });
-
-  var exists = function(x) {
-    return !!x;
-  };
-  var isString = function(x) {
-    return typeof x === 'string';
-  };
-
-  var db = hasFields.Database;
-
-  var m0 = hasFields.create({name: 'name0'});
-
-  ok( db.hasFields( m0, 'name', exists ) );
-  ok( db.hasFields( m0, 'id', exists ) );
-  ok( db.hasFields( m0, ['id', 'name'], exists ) );
-  ok( db.hasFields( m0, [], exists ) );
-  ok( db.hasFields( m0, ['id', 'name'], isString ) );
-
-  notOk( db.hasFields( m0, 'noprop', exists ) );
-  notOk( db.hasFields( m0, ['id', 'noprop'], exists ) );
-});
-
 test( 'setRevision', function(assert)
 {
   var Todo = Neuro({

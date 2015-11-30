@@ -361,7 +361,7 @@ NeuroModel.prototype =
 
   $hasKey: function()
   {
-    return this.$db.hasFields( this, this.$db.key, isValue );
+    return hasFields( this, this.$db.key, isValue );
   },
 
   $isDeleted: function()

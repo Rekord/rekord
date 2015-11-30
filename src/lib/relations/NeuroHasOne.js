@@ -6,14 +6,17 @@ Neuro.Relations.hasOne = NeuroHasOne;
 
 NeuroHasOne.Defaults = 
 {
-  model:      undefined,
-  store:      Neuro.Store.None,
-  save:       Neuro.Save.None,
-  auto:       true,
-  property:   true,
-  dynamic:    false,
-  local:      null,
-  cascade:    true
+  model:                null,
+  store:                Neuro.Store.None,
+  save:                 Neuro.Save.None,
+  auto:                 true,
+  property:             true,
+  dynamic:              false,
+  local:                null,
+  cascade:              true,
+  discriminator:        'discriminator',
+  discriminators:       {},
+  discriminatorToModel: {}
 };
 
 extend( NeuroRelation, NeuroHasOne, 
@@ -28,9 +31,12 @@ extend( NeuroRelation, NeuroHasOne,
 
   onInitialized: function(database, field, options)
   {
-    var relatedDatabase = this.model.Database;
+    if ( !this.discriminated )
+    {
+      var relatedDatabase = this.model.Database;
 
-    this.local = this.local || ( relatedDatabase.name + '_' + relatedDatabase.key );
+      this.local = this.local || ( relatedDatabase.name + '_' + relatedDatabase.key );
+    }
 
     Neuro.debug( Neuro.Debugs.HASONE_INIT, this );
     
@@ -41,7 +47,6 @@ extend( NeuroRelation, NeuroHasOne,
   {
     var that = this;
     var isRelated = this.isRelatedFactory( model );
-    var relatedDatabase = this.model.Database;
     var initial = model[ this.name ];
 
     var relation = model.$relations[ this.name ] = 
@@ -79,18 +84,21 @@ extend( NeuroRelation, NeuroHasOne,
     model.$on( NeuroModel.Events.PreSave, this.preSave, this );
     model.$on( NeuroModel.Events.PostRemove, this.postRemove, this );
 
-    if ( isEmpty( initial ) && relatedDatabase.hasFields( model, this.local, isValue ) )
+    if ( isEmpty( initial ) )
     {
-      initial = pull( model, this.local );
-
-      Neuro.debug( Neuro.Debugs.HASONE_INITIAL_PULLED, this, model, initial );
+      initial = this.grabInitial( model, this.local );
+      
+      if ( initial )
+      {
+        Neuro.debug( Neuro.Debugs.HASONE_INITIAL_PULLED, this, model, initial );        
+      }
     }
 
     if ( !isEmpty( initial ) )
     {
       Neuro.debug( Neuro.Debugs.HASONE_INITIAL, this, model, initial );
 
-      relatedDatabase.grabModel( initial, this.handleModel( relation ), this, remoteData );      
+      this.grabModel( initial, this.handleModel( relation ), remoteData );      
     }
   },
 
@@ -102,8 +110,7 @@ extend( NeuroRelation, NeuroHasOne,
     }
     else
     {
-      var relatedDatabase = this.model.Database;
-      var related = relatedDatabase.parseModel( input, remoteData );
+      var related = this.parseModel( input, remoteData );
       var relation = model.$relations[ this.name ];
 
       if ( related && !relation.isRelated( related ) )
@@ -116,8 +123,7 @@ extend( NeuroRelation, NeuroHasOne,
 
   relate: function(model, input)
   {
-    var relatedDatabase = this.model.Database;
-    var related = relatedDatabase.parseModel( input );
+    var related = this.parseModel( input );
     var relation = model.$relations[ this.name ];
     
     if ( related )
@@ -132,9 +138,8 @@ extend( NeuroRelation, NeuroHasOne,
 
   unrelate: function(model, input)
   {
-    var relatedDatabase = this.model.Database;
     var relation = model.$relations[ this.name ];
-    var related = relatedDatabase.parseModel( input );
+    var related = this.parseModel( input );
 
     if ( !related || relation.related === related )
     {
@@ -144,29 +149,10 @@ extend( NeuroRelation, NeuroHasOne,
 
   isRelated: function(model, input)
   {
-    var relatedDatabase = this.model.Database;
     var relation = model.$relations[ this.name ];
-    var related = relatedDatabase.parseModel( input );
+    var related = this.parseModel( input );
 
     return related === relation.related;
-  },
-
-  get: function(model)
-  {
-    var relation = model.$relations[ this.name ];
-    
-    return relation.related;
-  },
-
-  encode: function(model, out, forSaving)
-  {
-    var relation = model.$relations[ this.name ];
-    var mode = forSaving ? this.save : this.store;
-
-    if ( relation && mode )
-    {
-      out[ this.name ] = this.getStored( relation.related, mode );
-    }
   },
 
   preSave: function(model)
@@ -284,13 +270,11 @@ extend( NeuroRelation, NeuroHasOne,
 
   isRelatedFactory: function(model)
   {
-    var relatedDatabase = this.model.Database;
     var local = this.local;
-    var foreign = relatedDatabase.key;
 
     return function hasForeignKey(related)
     {
-      return propsMatch( model, local, related, foreign );
+      return propsMatch( model, local, related, related.$db.key );
     };
   },
 
@@ -305,9 +289,8 @@ extend( NeuroRelation, NeuroHasOne,
 
   updateForeignKey: function(model, related)
   {
-    var relatedDatabase = this.model.Database;
     var local = this.local;
-    var foreign = relatedDatabase.key;
+    var foreign = related.$db.key;
 
     Neuro.debug( Neuro.Debugs.HASONE_UPDATE_KEY, this, model, local, related, foreign );
 

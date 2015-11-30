@@ -6,7 +6,7 @@ Neuro.Relations.hasMany = NeuroHasMany;
 
 NeuroHasMany.Defaults = 
 {
-  model:                undefined,
+  model:                null,
   store:                Neuro.Store.None,
   save:                 Neuro.Save.None,
   auto:                 true,
@@ -16,7 +16,10 @@ NeuroHasMany.Defaults =
   comparator:           null,
   comparatorNullsFirst: false,
   cascadeRemove:        true,
-  cascadeSave:          true
+  cascadeSave:          true,
+  discriminator:        'discriminator',
+  discriminators:       {},
+  discriminatorToModel: {}
 };
 
 extend( NeuroRelation, NeuroHasMany, 
@@ -43,9 +46,8 @@ extend( NeuroRelation, NeuroHasMany,
   handleLoad: function(model, remoteData)
   {
     var that = this;
-    var relatedDatabase = this.model.Database;
     var isRelated = this.isRelatedFactory( model );
-    var collection = new NeuroRelationCollection( relatedDatabase, model, this );
+    var collection = this.createRelationCollection( model );
     var initial = model[ this.name ];
  
     var relation = model.$relations[ this.name ] =
@@ -94,27 +96,20 @@ extend( NeuroRelation, NeuroHasMany,
     model.$on( NeuroModel.Events.PreRemove, this.preRemove, this );
 
     // When models are added to the related database, check if it's related to this model
-    relatedDatabase.on( NeuroDatabase.Events.ModelAdded, this.handleModelAdded( relation ), this );
+    this.listenToModelAdded( this.handleModelAdded( relation ) );
 
     // If the model's initial value is an array, populate the relation from it!
     if ( isArray( initial ) )
     {
       Neuro.debug( Neuro.Debugs.HASMANY_INITIAL, this, model, relation, initial );
 
-      for (var i = 0; i < initial.length; i++)
-      {
-        var input = initial[ i ];
-        var key = relatedDatabase.buildKeyFromInput( input );
-
-        relation.pending[ key ] = true;
-        relatedDatabase.grabModel( input, this.handleModel( relation ), this, remoteData );
-      }
-    } 
+      this.grabModels( initial, this.handleModel( relation ), remoteData );
+    }
     else
     {
       Neuro.debug( Neuro.Debugs.HASMANY_INITIAL_PULLED, this, model, relation );
 
-      relatedDatabase.ready( this.handleLazyLoad( relation ), this );
+      this.ready( this.handleLazyLoad( relation ) );
     }
 
     // We only need to set the property once since the underlying array won't change.
@@ -143,16 +138,15 @@ extend( NeuroRelation, NeuroHasMany,
     }
     else
     {
-      var relatedDatabase = this.model.Database;
       var relation = model.$relations[ this.name ];
       var existing = relation.related;
-      var given = new NeuroModelCollection( relatedDatabase );
+      var given = this.createCollection();
 
       if ( this.isModelArray( input ) )
       {
         for (var i = 0; i < input.length; i++)
         {
-          var related = relatedDatabase.parseModel( input[ i ], remoteData );
+          var related = this.parseModel( input[ i ], remoteData );
 
           if ( related )
           {
@@ -162,7 +156,7 @@ extend( NeuroRelation, NeuroHasMany,
       }
       else
       {
-        var related = relatedDatabase.parseModel( input, remoteData );
+        var related = this.parseModel( input, remoteData );
 
         if ( related )
         {
@@ -191,7 +185,6 @@ extend( NeuroRelation, NeuroHasMany,
 
   relate: function(model, input)
   {
-    var relatedDatabase = this.model.Database;
     var relation = model.$relations[ this.name ];
 
     if ( this.isModelArray( input ) )
@@ -200,7 +193,7 @@ extend( NeuroRelation, NeuroHasMany,
       {
         for (var i = 0; i < input.length; i++)
         {
-          var related = relatedDatabase.parseModel( input[ i ] );
+          var related = this.parseModel( input[ i ] );
 
           if ( related )
           {
@@ -211,7 +204,7 @@ extend( NeuroRelation, NeuroHasMany,
     }
     else if ( isValue( input ) )
     {
-      var related = relatedDatabase.parseModel( input );
+      var related = this.parseModel( input );
 
       if ( related )
       {
@@ -222,7 +215,6 @@ extend( NeuroRelation, NeuroHasMany,
 
   unrelate: function(model, input)
   {
-    var relatedDatabase = this.model.Database;
     var relation = model.$relations[ this.name ];
 
     if ( this.isModelArray( input ) )
@@ -231,7 +223,7 @@ extend( NeuroRelation, NeuroHasMany,
       { 
         for (var i = 0; i < input.length; i++)
         {
-          var related = relatedDatabase.parseModel( input[ i ] );
+          var related = this.parseModel( input[ i ] );
 
           if ( related )
           {
@@ -242,7 +234,7 @@ extend( NeuroRelation, NeuroHasMany,
     }
     else if ( isValue( input ) )
     {
-      var related = relatedDatabase.parseModel( input );
+      var related = this.parseModel( input );
 
       if ( related )
       {
@@ -265,7 +257,6 @@ extend( NeuroRelation, NeuroHasMany,
 
   isRelated: function(model, input)
   {
-    var relatedDatabase = this.model.Database;
     var relation = model.$relations[ this.name ];
     var existing = relation.related;
     
@@ -273,7 +264,7 @@ extend( NeuroRelation, NeuroHasMany,
     {
       for (var i = 0; i < input.length; i++)
       {
-        var related = relatedDatabase.parseModel( input[ i ] );
+        var related = this.parseModel( input[ i ] );
 
         if ( related && !existing.has( related.$key() ) )
         {
@@ -285,30 +276,12 @@ extend( NeuroRelation, NeuroHasMany,
     }
     else if ( isValue( input ) )
     {
-      var related = relatedDatabase.parseModel( input );
+      var related = this.parseModel( input );
 
       return related && existing.has( related.$key() );
     }
 
     return false;
-  },
-
-  get: function(model)
-  {
-    var relation = model.$relations[ this.name ];
-
-    return relation.related;
-  },
-
-  encode: function(model, out, forSaving)
-  {
-    var relation = model.$relations[ this.name ];
-    var mode = forSaving ? this.save : this.store;
-
-    if ( relation && mode )
-    {
-      out[ this.name ] = this.getStoredArray( relation.related, mode );
-    }
   },
 
   postSave: function(model)

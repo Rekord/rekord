@@ -6,7 +6,7 @@ Neuro.Relations.hasManyThrough = NeuroHasManyThrough;
 
 NeuroHasManyThrough.Defaults = 
 {
-  model:                undefined,
+  model:                null,
   store:                Neuro.Store.None,
   save:                 Neuro.Save.None,
   auto:                 true,
@@ -19,7 +19,10 @@ NeuroHasManyThrough.Defaults =
   comparatorNullsFirst: false,
   cascadeRemove:        true,
   cascadeSave:          true,
-  cascadeSaveRelated:   false
+  cascadeSaveRelated:   false,
+  discriminator:        'discriminator',
+  discriminators:       {},
+  discriminatorToModel: {}
 };
 
 extend( NeuroRelation, NeuroHasManyThrough, 
@@ -34,9 +37,13 @@ extend( NeuroRelation, NeuroHasManyThrough,
 
   onInitialized: function(database, field, options)
   {
-    var relatedDatabase = this.model.Database;
+    if ( !this.discriminated )
+    {
+      var relatedDatabase = this.model.Database;
 
-    this.foreign = this.foreign || ( relatedDatabase.name + '_' + relatedDatabase.key );
+      this.foreign = this.foreign || ( relatedDatabase.name + '_' + relatedDatabase.key );
+    }
+
     this.local = this.local || ( database.name + '_' + database.key );
     this.comparator = createComparator( this.comparator, this.comparatorNullsFirst );
 
@@ -62,9 +69,8 @@ extend( NeuroRelation, NeuroHasManyThrough,
   handleLoad: function(model, remoteData)
   {
     var that = this;
-    var relatedDatabase = this.model.Database;
     var throughDatabase = this.through.Database;
-    var collection = new NeuroRelationCollection( relatedDatabase, model, this );
+    var collection = this.createRelationCollection( model );
     var isRelated = this.isRelatedFactory( model );
     var initial = model[ this.name ];
  
@@ -122,14 +128,7 @@ extend( NeuroRelation, NeuroHasManyThrough,
     {
       Neuro.debug( Neuro.Debugs.HASMANYTHRU_INITIAL, this, model, relation, initial );
 
-      for (var i = 0; i < initial.length; i++)
-      {
-        var input = initial[ i ];
-        var key = relatedDatabase.buildKeyFromInput( input );
-
-        relation.pending[ key ] = true;
-        relatedDatabase.grabModel( input, this.handleModel( relation ), this, remoteData );
-      }
+      this.grabModels( initial, this.handleModel( relation ), remoteData );
     }
     else
     {
@@ -164,16 +163,15 @@ extend( NeuroRelation, NeuroHasManyThrough,
     }
     else
     {
-      var relatedDatabase = this.model.Database;
       var relation = model.$relations[ this.name ];
       var existing = relation.related;
-      var given = new NeuroModelCollection( relatedDatabase );
+      var given = this.createCollection();
 
       if ( this.isModelArray( input ) )
       {
         for (var i = 0; i < input.length; i++)
         {
-          var related = relatedDatabase.parseModel( input[ i ], remoteData );
+          var related = this.parseModel( input[ i ], remoteData );
 
           if ( related )
           {
@@ -183,7 +181,7 @@ extend( NeuroRelation, NeuroHasManyThrough,
       }
       else
       {
-        var related = relatedDatabase.parseModel( input, remoteData );
+        var related = this.parseModel( input, remoteData );
 
         if ( related )
         {
@@ -212,7 +210,6 @@ extend( NeuroRelation, NeuroHasManyThrough,
 
   relate: function(model, input)
   {
-    var relatedDatabase = this.model.Database;
     var relation = model.$relations[ this.name ];
 
     if ( this.isModelArray( input ) )
@@ -221,7 +218,7 @@ extend( NeuroRelation, NeuroHasManyThrough,
       {
         for (var i = 0; i < input.length; i++)
         {
-          var related = relatedDatabase.parseModel( input[ i ] );
+          var related = this.parseModel( input[ i ] );
 
           if ( related )
           {
@@ -232,7 +229,7 @@ extend( NeuroRelation, NeuroHasManyThrough,
     }
     else if ( isValue( input ) )
     {
-      var related = relatedDatabase.parseModel( input );
+      var related = this.parseModel( input );
 
       if ( related )
       {
@@ -243,7 +240,6 @@ extend( NeuroRelation, NeuroHasManyThrough,
 
   unrelate: function(model, input)
   {
-    var relatedDatabase = this.model.Database;
     var relation = model.$relations[ this.name ];
 
     if ( this.isModelArray( input ) )
@@ -252,7 +248,7 @@ extend( NeuroRelation, NeuroHasManyThrough,
       { 
         for (var i = 0; i < input.length; i++)
         {
-          var related = relatedDatabase.parseModel( input[ i ] );
+          var related = this.parseModel( input[ i ] );
 
           if ( related )
           {
@@ -263,7 +259,7 @@ extend( NeuroRelation, NeuroHasManyThrough,
     }
     else if ( isValue( input ) )
     {
-      var related = relatedDatabase.parseModel( input );
+      var related = this.parseModel( input );
 
       if ( related )
       {
@@ -286,7 +282,6 @@ extend( NeuroRelation, NeuroHasManyThrough,
 
   isRelated: function(model, input)
   {
-    var relatedDatabase = this.model.Database;
     var relation = model.$relations[ this.name ];
     var existing = relation.related;
     
@@ -294,7 +289,7 @@ extend( NeuroRelation, NeuroHasManyThrough,
     {
       for (var i = 0; i < input.length; i++)
       {
-        var related = relatedDatabase.parseModel( input[ i ] );
+        var related = this.parseModel( input[ i ] );
 
         if ( related && !existing.has( related.$key() ) )
         {
@@ -306,30 +301,12 @@ extend( NeuroRelation, NeuroHasManyThrough,
     }
     else if ( isValue( input ) )
     {
-      var related = relatedDatabase.parseModel( input );
+      var related = this.parseModel( input );
 
       return related && existing.has( related.$key() );
     }
 
     return false;
-  },
-
-  get: function(model)
-  {
-    var relation = model.$relations[ this.name ];
-
-    return relation.related;
-  },
-
-  encode: function(model, out, forSaving)
-  {
-    var relation = model.$relations[ this.name ];
-    var mode = forSaving ? this.save : this.store;
-
-    if ( relation && mode )
-    {
-      out[ this.name ] = this.getStoredArray( relation.related, mode );
-    }
   },
 
   postSave: function(model)
@@ -490,6 +467,7 @@ extend( NeuroRelation, NeuroHasManyThrough,
       return;
     }
 
+    // TODO polymoprhic logic
     var relatedDatabase = this.model.Database;
     var relatedKey = relatedDatabase.buildKey( through, this.foreign );
 

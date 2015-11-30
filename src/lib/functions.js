@@ -118,6 +118,27 @@ function propsMatch(test, testFields, expected, expectedFields)
   return false;
 }
 
+// Determines whether the given model has the given fields
+function hasFields(model, fields, exists)
+{
+  if ( isArray( fields ) )
+  {
+    for (var i = 0; i < fields.length; i++) 
+    {
+      if ( !exists( model[ fields[ i ] ] ) )
+      {
+        return false;
+      }
+    }
+
+    return true;
+  }
+  else // isString( fields )
+  {
+    return exists( model[ fields ] );
+  }
+}
+
 // Copies a constructor function returning a function that can be called to 
 // return an instance and doesn't invoke the original constructor.
 function copyConstructor(func)

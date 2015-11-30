@@ -505,6 +505,32 @@ test( 'Neuro.saveHaving', function(assert)
   strictEqual( h1( m1 ), true );
 });
 
+test( 'Neuro.hasFields', function(assert)
+{
+  var hasFields = Neuro({
+    name: 'hasFields',
+    fields: ['id', 'name']
+  });
+
+  var exists = function(x) {
+    return !!x;
+  };
+  var isString = function(x) {
+    return typeof x === 'string';
+  };
+
+  var m0 = hasFields.create({name: 'name0'});
+
+  ok( Neuro.hasFields( m0, 'name', exists ) );
+  ok( Neuro.hasFields( m0, 'id', exists ) );
+  ok( Neuro.hasFields( m0, ['id', 'name'], exists ) );
+  ok( Neuro.hasFields( m0, [], exists ) );
+  ok( Neuro.hasFields( m0, ['id', 'name'], isString ) );
+
+  notOk( Neuro.hasFields( m0, 'noprop', exists ) );
+  notOk( Neuro.hasFields( m0, ['id', 'noprop'], exists ) );
+});
+
 
 
 

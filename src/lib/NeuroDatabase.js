@@ -445,27 +445,6 @@ NeuroDatabase.prototype =
     return db.instantiate( props );
   },
 
-  // Determines whether the given model has the given fields
-  hasFields: function(model, fields, exists)
-  {
-    if ( isArray( fields ) )
-    {
-      for (var i = 0; i < fields.length; i++) 
-      {
-        if ( !exists( model[ fields[ i ] ] ) )
-        {
-          return false;
-        }
-      }
-
-      return true;
-    }
-    else // isString( fields )
-    {
-      return exists( model[ fields ] );
-    }
-  },
-
   // Sorts the models & notifies listeners that the database has been updated.
   updated: function()
   {

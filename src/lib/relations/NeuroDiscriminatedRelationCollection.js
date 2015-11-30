@@ -1,13 +1,13 @@
 
-function NeuroRelationCollection(database, model, relator)
+function NeuroDiscriminatedRelationCollection(model, relator)
 {
   this.model = model;
   this.relator = relator;
-  
-  this.init( database );
+
+  this.init();
 }
 
-extendArray( NeuroModelCollection, NeuroRelationCollection,
+extendArray( NeuroDiscriminatedModelCollection, NeuroDiscriminatedRelationCollection,
 {
 
   set: function(input)

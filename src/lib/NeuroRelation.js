@@ -22,12 +22,15 @@ Neuro.Save = {
 
 NeuroRelation.Defaults = 
 {
-  model:      undefined,
-  store:      Neuro.Store.None,
-  save:       Neuro.Save.None,
-  auto:       true,
-  property:   true,
-  dynamic:    false
+  model:                null,
+  store:                Neuro.Store.None,
+  save:                 Neuro.Save.None,
+  auto:                 true,
+  property:             true,
+  dynamic:              false,
+  discriminator:        'discriminator',
+  discriminators:       {},
+  discriminatorToModel: {}
 };
 
 NeuroRelation.prototype =
@@ -56,20 +59,26 @@ NeuroRelation.prototype =
     this.pendingLoads = [];
     this.pendingRemoteDatas = [];
     this.initialized = false;
-
-    this.discriminator = options.discriminator || 'discriminator';
-    this.discriminators = options.discriminators || {};
-    this.discriminated = !!options.discriminators;
+    this.property = this.property || (indexOf( database.fields, this.name ) !== false);
+    this.discriminated = !isEmpty( this.discriminators );
     
-    var setNeuro = this.setNeuro( database, field, options );
-
-    if ( !isNeuro( options.model ) )
+    if ( this.discriminated )
     {
-      Neuro.get( options.model, setNeuro, this );
+      transfer( NeuroPolymorphic, this );
+    }
+
+    this.setReferences( database, field, options );
+  },
+
+  setReferences: function(database, field, options)
+  {
+    if ( !isNeuro( this.model ) )
+    {
+      Neuro.get( this.model, this.setModelReference( database, field, options ), this );
     }
     else
     {
-      setNeuro.call( this, options.model );
+      this.onInitialized( database, field, options );
     }
   },
 
@@ -77,21 +86,11 @@ NeuroRelation.prototype =
    * 
    * @param {[type]} neuro [description]
    */
-  setNeuro: function(database, field, options)
+  setModelReference: function(database, field, options)
   {
     return function(neuro)
     {
       this.model = neuro;
-
-      if ( !this.property )
-      {
-        this.property = indexOf( database.fields, this.name ) !== false;        
-      }
-
-      if ( this.discriminated )
-      {
-        this.loadDiscriminators();
-      }
 
       this.onInitialized( database, field, options );
     };
@@ -174,12 +173,80 @@ NeuroRelation.prototype =
 
   get: function(model)
   {
-
+    return model.$relations[ this.name ].related;
   },
 
   encode: function(model, out, forSaving)
   {
-    
+    var relation = model.$relations[ this.name ];
+    var mode = forSaving ? this.save : this.store;
+
+    if ( relation && mode )
+    {
+      var related = relation.related;
+
+      if ( isArray( related ) )
+      {
+        out[ this.name ] = this.getStoredArray( related, mode );        
+      }
+      else // if ( isObject( related ) )
+      {
+        out[ this.name ] = this.getStored( related, mode );
+      }
+    }
+  },
+
+  ready: function(callback)
+  {
+    this.model.Database.ready( callback, this );
+  },
+
+  listenToModelAdded: function(callback)
+  {
+    this.model.Database.on( NeuroDatabase.Events.ModelAdded, callback, this );
+  },
+
+  createRelationCollection: function(model)
+  {
+    return new NeuroRelationCollection( this.model.Database, model, this );
+  },
+
+  createCollection: function()
+  {
+    return new NeuroModelCollection( this.model.Database );
+  },
+
+  parseModel: function(input, remoteData)
+  {
+    return this.model.Database.parseModel( input, remoteData );
+  },
+
+  grabInitial: function( model, fields )
+  {
+    if ( hasFields( model, fields, isValue ) )
+    {
+      return pull( model, fields );
+    }
+  },
+
+  grabModel: function(input, callback, remoteData)
+  {
+    this.model.Database.grabModel( input, callback, this, remoteData );
+  },
+
+  grabModels: function(initial, callback, remoteData)
+  {
+    var db = this.model.Database;
+
+    for (var i = 0; i < initial.length; i++)
+    {
+      var input = initial[ i ];
+      var key = db.buildKeyFromInput( input );
+
+      relation.pending[ key ] = true;
+
+      db.grabModel( input, callback, this, remoteData );
+    }
   },
 
   setProperty: function(relation)
@@ -258,6 +325,18 @@ NeuroRelation.prototype =
 
   clearFields: function(target, targetFields, remoteData)
   {
+    var changes = this.clearFieldsReturnChanges( target, targetFields );
+
+    if ( changes && !remoteData && this.auto && !target.$isNew() )
+    {
+      target.$save();
+    }
+    
+    return changes;
+  },
+
+  clearFieldsReturnChanges: function(target, targetFields)
+  {
     var changes = false;
 
     if ( isString( targetFields ) )
@@ -282,15 +361,27 @@ NeuroRelation.prototype =
       }
     }
 
-    if ( changes && !remoteData && this.auto && !target.$isNew() )
-    {
-      target.$save();
-    }
-    
     return changes;
   },
 
   updateFields: function(target, targetFields, source, sourceFields, remoteData)
+  {
+    var changes = this.updateFieldsReturnChanges( target, targetFields, source, sourceFields );
+
+    if ( changes )
+    {
+      if ( this.auto && !target.$isNew() && !remoteData )
+      {
+        target.$save();
+      }
+
+      target.$trigger( NeuroModel.Events.KeyUpdate, [target, source, targetFields, sourceFields] );      
+    }
+
+    return changes;
+  },
+
+  updateFieldsReturnChanges: function(target, targetFields, source, sourceFields)
   {
     var changes = false;
 
@@ -299,11 +390,11 @@ NeuroRelation.prototype =
     if ( isString( targetFields ) ) // && isString( sourceFields )
     {
       var targetValue = target[ targetFields ];
-      var sourveValue = source[ sourceFields ];
+      var sourceValue = source[ sourceFields ];
 
-      if ( !equals( targetValue, sourveValue ) )
+      if ( !equals( targetValue, sourceValue ) )
       {
-        target[ targetFields ] = sourveValue;
+        target[ targetFields ] = sourceValue;
         changes = true;
       }
     }
@@ -322,16 +413,6 @@ NeuroRelation.prototype =
           changes = true;
         }
       }
-    }
-
-    if ( changes )
-    {
-      if ( this.auto && !target.$isNew() && !remoteData )
-      {
-        target.$save();
-      }
-
-      target.$trigger( NeuroModel.Events.KeyUpdate, [target, source, targetFields, sourceFields] );      
     }
 
     return changes;
@@ -397,154 +478,6 @@ NeuroRelation.prototype =
     }
 
     return null;
-  },
-
-  /* Polymorphic Relationships */
-
-  loadDiscriminators: function()
-  {
-    for (var discriminator in this.discriminators)
-    {
-      var name = this.discriminators[ discriminator ];
-
-      Neuro.get( name, this.setDiscriminated, this );
-    }
-  },
-
-  setDiscriminated: function(discriminator)
-  {
-    return function(neuro)
-    {
-      this.discriminators[ discriminator ] = neuro;
-    };
-  },
-
-  getDiscriminator: function(model)
-  {
-    return model[ this.discriminator ];
-  },
-
-  getDiscriminatorDatabase: function(model)
-  {
-    var discriminator = this.getDiscriminator( model );
-
-    if ( discriminator in this.discriminators )
-    {
-      var model = this.discriminators[ discriminator ];
-
-      return model.Database;
-    }
-
-    return false;
-  },
-
-  parseDiscriminated: function(input)
-  {
-    if ( isObject( input ) )
-    {
-      var db = this.getDiscriminatorDatabase( input );
-
-      return db.parseModel( input );
-    }
-
-    return false;
-  },
-
-  grabModel: function(isRelated, forModel, input, callback)
-  {
-    if ( this.discriminated )
-    {
-      if ( this.grabDiscriminated( input, callback ) )
-      {
-        return true;
-      }
-      else
-      {
-        var discriminator = this.getDiscriminatorByType( forModel );
-
-        
-      }
-    }
-  },
-
-  grabDiscriminated: function(input, callback)
-  {
-    if ( isObject( input ) )
-    {
-      var db = this.getDiscriminatorDatabase( input );
-
-      if ( db !== false )
-      {
-        db.grabModel( input, callack, this );
-
-        return true;
-      }
-    }
-
-    return true;
-  },
-
-  getDiscriminatorByType: function(model)
-  {
-    for (var discriminator in this.discriminators)
-    {
-      var type = this.discriminators[ discriminator ];
-
-      if ( model instanceof type )
-      {
-        return discriminator;
-      }
-    }
-
-    return false;
-  },
-
-  loadAllRelated: function(isRelated, callback)
-  {
-    if ( this.discriminated )
-    {
-      this.loadAllDiscriminated( isRelated, callback );
-    }
-    else
-    {
-      var relatedDatabase = this.model.Database;
-
-      relatedDatabase.ready( this.loadAllReady( isRelated, callback ), this );
-    }
-  },
-
-  loadAllReady: function(isRelated, callback)
-  {
-    return function(db)
-    {
-      var related = db.models.filter( isRelated ); // TODO
-
-      callback.call( this, related );
-    };
-  },
-
-  loadAllDiscriminated: function(isRelated, callback)
-  {
-    var related = new NeuroMap();
-    var callbackContext = this;
-    var total = sizeof( this.discriminators );
-    var current = 0;
-
-    for (var discriminator in this.discriminators)
-    {
-      var type = this.discriminators[ discriminator ];
-      var db = type.Database;
-
-      db.ready(function(db)
-      {
-        db.models.filter( isRelated, related ); // TODO
-
-        if ( ++current === total )
-        {
-          callback.call( callbackContext, related );
-        }
-      });
-    }
   }
 
 };

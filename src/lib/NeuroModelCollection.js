@@ -25,10 +25,18 @@ extendArray( NeuroCollection, NeuroModelCollection,
     }
   },
 
+  buildKeyFromInput: function(input)
+  {
+    return this.database.buildKeyFromInput( input );
+  },
+
+  parseModel: function(input, remoteData)
+  {
+    return this.database.parseModel( input, remoteData );
+  },
 
   subtract: function(models, out)
   {
-    var db = this.database;
     var target = out || new this.constructor();
 
     for (var i = 0; i < this.length; i++)
@@ -45,7 +53,7 @@ extendArray( NeuroCollection, NeuroModelCollection,
       {
         for (var i = 0; i < models.length && !exists; i++)
         {
-          var modelKey = db.buildKeyFromInput( models[ i ] );
+          var modelKey = this.buildKeyFromInput( models[ i ] );
 
           exists = (key === modelKey);
         }
@@ -62,13 +70,12 @@ extendArray( NeuroCollection, NeuroModelCollection,
 
   intersect: function(models, out)
   {
-    var db = this.database;
     var target = out || new this.constructor();
 
     for (var i = 0; i < models.length; i++)
     {
       var a = models[ i ];
-      var key = db.buildKeyFromInput( a );
+      var key = this.buildKeyFromInput( a );
 
       if ( this.has( key ) )
       {
@@ -81,13 +88,12 @@ extendArray( NeuroCollection, NeuroModelCollection,
 
   complement: function(models, out)
   {
-    var db = this.database;
     var target = out || new this.constructor();
 
     for (var i = 0; i < models.length; i++)
     {
       var a = models[ i ];
-      var key = db.buildKeyFromInput( a );
+      var key = this.buildKeyFromInput( a );
 
       if ( !this.has( key ) )
       {
@@ -108,14 +114,12 @@ extendArray( NeuroCollection, NeuroModelCollection,
   {
     if ( isArray( models ) )
     {
-      var db = this.database;
-
       this.map.reset();
 
       for (var i = 0; i < models.length; i++)
       {
         var model = models[ i ];
-        var parsed = db.parseModel( model, remoteData );
+        var parsed = this.parseModel( model, remoteData );
 
         if ( parsed )
         {
@@ -182,8 +186,7 @@ extendArray( NeuroCollection, NeuroModelCollection,
 
   remove: function(input, delaySort)
   {
-    var db = this.database;
-    var key = db.buildKeyFromInput( input );
+    var key = this.buildKeyFromInput( input );
     var removing = this.map.get( key );
 
     if ( removing )
@@ -200,12 +203,11 @@ extendArray( NeuroCollection, NeuroModelCollection,
 
   removeAll: function(inputs, delaySort)
   {
-    var db = this.database;
     var removed = [];
 
     for (var i = 0; i < inputs.length; i++)
     {
-      var key = db.buildKeyFromInput( inputs[ i ] );
+      var key = this.buildKeyFromInput( inputs[ i ] );
       var removing = this.map.get( key );
 
       if ( removing )
@@ -227,8 +229,7 @@ extendArray( NeuroCollection, NeuroModelCollection,
 
   indexOf: function(input)
   {
-    var db = this.database;
-    var key = db.buildKeyFromInput( input );
+    var key = this.buildKeyFromInput( input );
     var index = this.map.indices[ key ];
 
     return index === undefined ? -1 : index;
@@ -314,6 +315,6 @@ extendArray( NeuroCollection, NeuroModelCollection,
     this.resort();
 
     return updated;
-  },
+  }
 
 });
