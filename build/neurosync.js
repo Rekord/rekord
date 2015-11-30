@@ -1585,7 +1585,10 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
   {
     var q = new NeuroRemoteQuery( db, query );
 
-    q.sync();
+    if ( isValue( query ) )
+    {
+      q.sync();      
+    }
 
     return q;
   };
