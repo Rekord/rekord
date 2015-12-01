@@ -87,13 +87,3 @@ existing.on('saved', function() { ... });
 existing.on('removed', function() { ... });
 
 ```
-
-https://www.reddit.com/user/factshack?count=375&after=t1_cokcxlp
-https://www.reddit.com/r/redditgetsdrawn/comments/2vkumj/draw_my_favorite_picture_of_me_featuring_good/
-http://greatwhitefork.tumblr.com/post/110770965269/reddit-gets-drawn-factshack-paint-tool-sai-on
-http://imgur.com/rPbpCjr
-http://i.imgur.com/Bxk0Sy4.jpg
-http://www.discogs.com/user/nicebison/collection?header=1
-http://www.whathifi.com/news/10-gift-ideas-vinyl-record-lovers
-http://www.notonthehighstreet.com/vinylvillage/product/set-of-six-vinyl-record-coasters-45-s
-http://www.vinylclocks.com/cart/
