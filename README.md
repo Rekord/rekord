@@ -1,6 +1,8 @@
 # Neurosync
 
-![Travis CI](https://travis-ci.org/ClickerMonkey/neurosync.svg)
+[![Build Status](https://travis-ci.org/ClickerMonkey/neurosync.svg?branch=master)](https://travis-ci.org/ClickerMonkey/neurosync)
+[![devDependency Status](https://david-dm.org/ClickerMonkey/neurosync/dev-status.svg)](https://david-dm.org/ClickerMonkey/neurosync#info=devDependencies)
+[![Dependency Status](https://david-dm.org/ClickerMonkey/neurosync.svg)](https://david-dm.org/ClickerMonkey/neurosync)
 
 Neurosync is a javascript ORM that is offline & real-time capable.
 
