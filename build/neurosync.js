@@ -4554,9 +4554,7 @@ extendArray( Array, NeuroCollection,
 
   toArray: function()
   {
-    var arr = [];
-    arr.push.apply( arr, this );
-    return arr;
+    return this.slice();
   },
 
   group: function(grouping)
@@ -4919,9 +4917,7 @@ extendArray( Array, NeuroPage,
 
   toArray: function()
   {
-    var out = [];
-    out.push.apply( out, this );
-    return out;
+    return this.slice();
   }
 
 });

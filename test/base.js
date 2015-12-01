@@ -33,6 +33,7 @@ function online()
 function noline()
 {
   Neuro.off( 'online offline' );
+  online();
 }
 
 function restart()

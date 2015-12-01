@@ -55,4 +55,4 @@
   global.Neuro.saveHaving = saveHaving;
   global.Neuro.createHaving = createHaving;
 
-})(window);
+})(this);

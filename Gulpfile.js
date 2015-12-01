@@ -4,6 +4,7 @@ var gulp = require('gulp');
 var sourcemaps = require('gulp-sourcemaps');
 var plugins = require('gulp-load-plugins')();
 var gutil = require('gulp-util');
+var qunit = require('gulp-qunit');
 var shell = require('gulp-shell');
 
 var build = {
@@ -64,7 +65,15 @@ var executeBuild = function(props)
   };
 };
 
+var executeTest = function(file)
+{
+  return function() {
+    return gulp.src( file ).pipe( qunit() );
+  };
+};
+
 gulp.task( 'docs', shell.task(['./node_modules/.bin/jsdoc -c jsdoc.json']));
+gulp.task( 'test', executeTest( './test/index.html' ) );
 
 gulp.task( 'js:min', executeMinifiedBuild( build ) );
 gulp.task( 'js', executeBuild( build ) );

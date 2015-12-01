@@ -122,9 +122,7 @@ extendArray( Array, NeuroPage,
 
   toArray: function()
   {
-    var out = [];
-    out.push.apply( out, this );
-    return out;
+    return this.slice();
   }
 
 });

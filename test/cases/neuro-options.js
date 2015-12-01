@@ -1,3 +1,5 @@
+online();
+
 module( 'Neuro options' );
 
 test( 'default key', function(assert)
@@ -302,17 +304,21 @@ test( 'comparatorNullsFirst', function(assert)
 
 test( 'revision', function(assert)
 {
+  var now = Date.now();
+
   var Todo = Neuro({
     name: 'revision_todo',
     fields: ['id', 'name', 'done', 'updated_at', 'created_at'],
     defaults: {
       name: null,
       done: false,
-      updated_at: Date.now,
-      created_at: Date.now
+      updated_at: now,
+      created_at: now
     },
     revision: 'updated_at'
   });
+
+  var live = Todo.Database.live.live;
 
   isType( Todo.Database.revisionFunction, 'function' );
 
@@ -322,18 +328,18 @@ test( 'revision', function(assert)
 
   strictEqual( t0.done, false );
 
-  Neuro.live.revision_todo.save({
+  live.save({
     id: t0.id,
     done: true,
-    updated_at: Date.now() + 100
+    updated_at: now + 100
   });
 
   strictEqual( t0.done, true );
 
-  Neuro.live.revision_todo.save({
+  live.save({
     id: t0.id,
     done: false,
-    updated_at: Date.now() - 100
+    updated_at: now - 100
   });
 
   strictEqual( t0.done, true );
@@ -358,12 +364,11 @@ test( 'loadRemote true', function(assert)
 
   strictEqual( loadRemote_true.all().length, 0 );
 
-  setTimeout(function() {
-
+  wait(15, function()
+  {
     strictEqual( loadRemote_true.all().length, 4 );
     done();
-
-  }, 15);
+  });
   
 });
 
