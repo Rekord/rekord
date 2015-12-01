@@ -42,81 +42,108 @@ Neurosync is a javascript ORM that is offline & real-time capable.
 - All collections have the following operations: filter, subtract, intersect, complement, removeWhere, min, max, first, last, sum, avg, count, pluck, reduce, random, chunk, where, & group
 - Model collections have the following operations: removeWhere, update, & updateWhere
 
-**Simple Example**
+**Simple Todo Example**
 ```javascript
-// Setup a new type
 var Todo = Neuro({
-
-  // Local Storage
-  name: 'todos',
-
-  // Rest
-  api: 'http://yourwebsite.com/api/1.0/todos/',
-  
-  // Real-time
-  pubsub: 'http://yourwebsite.com:3000',
-  channel: 'todos',
-  token: 'a_valid_token', 
-  
-  // Definition
-  className: 'Todo',
-  key: 'id',
-  fields: ['id', 'name', 'done', 'created_at', 'updated_at'],
-  defaults: {
-    done: false,
-    created_at: Date.now,
-    updated_at: Date.now
+  name: 'todo',
+  api: '/api/1.0/todo/',
+  fields: ['name', 'finished_at'],
+  timestamps: true,
+  comparator: ['-finished_at', '-created_at'], // finished go to bottom, most recently created are at the top
+  methods: {
+    finish: function(finished) {
+      this.$save('finished_at', finished ? Date.now() null);
+    }
   },
-
-  // Sort Todo.Database by this field (function can also be used)
-  comparator: '-created_at'
+  dynamic: {
+    done: function() {
+      return !this.finished_at;
+    }
+  }
 });
 
-// Create an instance
-var t = Todo.create({
-  name: 'Use Neurosync'
+var t0 = Todo.create({name: 'Download Neurosync'});
+t0.$isSaved(); // true
+t0.finish( true );
+t0.done; // true
+t0.$remove();
+
+var t1 = new Todo({name: 'Use Neurosync'});
+t1.$isSaved(); // false
+t1.id; // undefined
+t1.$save();
+
+var t2 = Todo.boot({id: 34, name: 'Profit'});
+t2.$isSaved(); // true
+t2.name = '???';
+t2.$hasChanges(); // true
+
+var t3 = Todo.fetch(45);
+
+Todo.all(); // [t1, t2, t3]
+```
+
+**Less Simple Task List Example**
+```javascript
+var User = Neuro({
+  name: 'user',
+  api: '/api/1.0/user/',
+  fields: ['name', 'email'],
+  loadRemote: false,
+  hasMany: {
+    created: {
+      model: 'Task',
+      foreign: 'created_by'
+    },
+    tasks: {
+      model: 'Task',
+      foreign: 'assigned_to'
+    }
+  }
+);
+
+var Task = Neuro({
+  name: 'task',
+  api: '/api/1.0/task/',
+  fields: ['task_list_id', 'name', 'done', 'created_by', 'assigned_to'],
+  defaults: { done: false },
+  timestamps: true,
+  loadRemote: false,
+  belongsTo: {
+    creator: {
+      model: 'User',
+      local: 'created_by',
+      cascade: false
+    },
+    assignee: {
+      model: 'User',
+      local: 'assigned_to',
+      cascade: false
+    },
+    list: {
+      model: 'TaskList'
+    }
+  }
 });
 
-// Update an instance
-t.name = 'Using Neurosync';
-// or
-t.$set('updated_at', Date.now());
-// or
-t.$set({
-  done: true
-});
-// finally
-t.$save();
-
-// Checking whether an instance has been saved via REST
-if ( t.$isSaved() ) {
-  
-}
-
-// Checking whether an instance has unsaved changes
-if ( t.$hasChanges() ) {
-  
-}
-
-// Removing an instance
-t.$remove()
-
-// Checking if an instance has been removed
-if ( t.$isDeleted() ) {
-  
-}
-
-// Get reference to todos array (this reference doesn't change)
-var todos = Todo.all();
-
-// Listen for database changes
-Todo.Database.on('updated', function() {
-  // Todos added, updated, or removed
+var TaskList = Neuro({
+  name: 'task_list',
+  api: '/api/1.0/task_list/',
+  fields: ['name'],
+  timestamps: true,
+  hasMany: {
+    tasks: {
+      model: 'Task'
+      save: Neuro.Save.Model,
+      store: Neuro.Store.Model
+    }
+  }
 });
 
-// Get a specific model and listen for it's changes
-var existing = Todo.get('some-uuid');
-existing.on('saved', function() { ... });
-existing.on('removed', function() { ... });
+var t0 = Task.create({name: 'Task#0'});
+var t1 = new Task({name: 'Task#1'});
+var l0 = TaskList.create({name: 'List#1', tasks: [
+  t0, t1, {name: 'Task #2'}
+]});
 
 ```
