@@ -21,9 +21,7 @@
     "gulp-sourcemaps": "^1.3.0",
     "gulp-util": "^3.0.4",
     "jsdoc": "^3.3.3",
-    "jaguarjs-jsdoc": "0.0.1"
-  },
-  "dependencies": {
+    "jaguarjs-jsdoc": "0.0.1",
     "gulp-qunit": "^1.3.0"
   }
 }
