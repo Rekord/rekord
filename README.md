@@ -1,14 +1,46 @@
 # Neurosync
 
-A javascript library for creating applications that work offline and in real-time.
+![Travis CI](https://travis-ci.org/ClickerMonkey/neurosync.svg)
 
-Neurosync is a client-side ORM that saves data locally, attempts to save remotely, and when successful it publishes any changes to a pubsub channel for other applications to see.
+Neurosync is a javascript ORM that is offline & real-time capable.
 
-The real-time feature ensures local changes are not lost - and any conflicts
-causes events to be thrown.
+**Neurosync's life-cycle is simple:**
+- Save pending changes to local storage
+- Make REST call
+- If REST call succeeds: remove pending changes, mark as saved, publish to real-time API
+- If REST call fails because application is offline, wait until application comes back online to proceed with changes
+- If the application restarts with pending operations, they will be resumed
 
-### Simple Example
+**Features**
+- Stores data locally through `Neuro.store` interface (ex: https://github.com/ClickerMonkey/neurosync-storkjs)
+- Stores data remotely through `Neuro.rest` interface (ex: https://github.com/ClickerMonkey/neurosync-angular)
+- Publishes changes through `Neuro.live` interface (ex: https://github.com/ClickerMonkey/neurosync-pubsub)
+- Relationships `hasOne`, `belongsTo`, `hasMany`, & `hasManyThrough`
+- Polymorphic relationships for `hasOne`, `belongsTo` & `hasMany`
+- Extend an existing model
+- Look at a subset of models with `model.where( properties to match or custom function )`
+- Query REST API with `model.query( URL or HTTP options )`
+- Fetch a single model from the REST API with `model.fetch( key )`
+- Load bootstrapped data with `model.boot( model or array of models )`
+- Supports composite keys
+- Specify default values
+- Handle collisions with a "revision" field
+- Automatically refresh when application becomes online
+- Cache all data or only pending changes
+- Send only changed values to REST/real-time APIs or entire object
+- Convert values between client & server data types
+- Easily order by field, combination of fields, or custom function
+- Control what information from relationships (if any) is stored locally or sent to the REST api
+- Add `updated_at` and `created_at` timestamps and their automatic behavior with a single option
+- Add custom methods to the model objects
+- Add global event listeners to the "database" or all model instances
+- Add dynamic fields to model objects (setting & getting)
+- Create a live filtered view of any collection
+- Create a live paginated view of any collection
+- All collections have the following operations: filter, subtract, intersect, complement, removeWhere, min, max, first, last, sum, avg, count, pluck, reduce, random, chunk, where, & group
+- Model collections have the following operations: removeWhere, update, & updateWhere
 
+**Simple Example**
 ```javascript
 // Setup a new type
 var Todo = Neuro({
@@ -39,10 +71,9 @@ var Todo = Neuro({
 });
 
 // Create an instance
-var t = new Todo.Model({
+var t = Todo.create({
   name: 'Use Neurosync'
 });
-t.$save();
 
 // Update an instance
 t.name = 'Using Neurosync';
@@ -69,12 +100,12 @@ if ( t.$hasChanges() ) {
 t.$remove()
 
 // Checking if an instance has been removed
-if ( t.$deleted ) {
+if ( t.$isDeleted() ) {
   
 }
 
 // Get reference to todos array (this reference doesn't change)
-var todos = Todo.Database.getModels()
+var todos = Todo.all();
 
 // Listen for database changes
 Todo.Database.on('updated', function() {
@@ -82,7 +113,7 @@ Todo.Database.on('updated', function() {
 });
 
 // Get a specific model and listen for it's changes
-var existing = Todo.Database.getModel('some-uuid');
+var existing = Todo.get('some-uuid');
 existing.on('saved', function() { ... });
 existing.on('removed', function() { ... });
 
