@@ -19,7 +19,7 @@
   /* Utility Functions */
   global.Neuro.isNeuro = isNeuro;
   global.Neuro.isDefined = isDefined;
-  global.Neuro.isFunction = isFunctio;
+  global.Neuro.isFunction = isFunction;
   global.Neuro.isString = isString;
   global.Neuro.isNumber = isNumber;
   global.Neuro.isBoolean = isBoolean;
