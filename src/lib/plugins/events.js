@@ -7,20 +7,11 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
     var modelEvents = [];
     var databaseEvents = [];
 
-    var $init = model.prototype.$init;
-
-    model.prototype.$init = function()
-    {
-      $init.apply( this, arguments );
-
-      applyEventListeners( this, modelEvents );
-    };
-
     for ( var eventType in events )
     {
       var callback = events[ eventType ];
       var eventName = toCamelCase( eventType );
-      
+
       var databaseEventString = NeuroDatabase.Events[ eventName ];
       var modelEventString = NeuroModel.Events[ eventName ];
 
@@ -36,6 +27,18 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
     }
 
     applyEventListeners( db, databaseEvents );
+
+    if ( modelEvents.length )
+    {
+      var $init = model.prototype.$init;
+
+      model.prototype.$init = function()
+      {
+        $init.apply( this, arguments );
+
+        applyEventListeners( this, modelEvents );
+      };
+    }
   }
 
 });

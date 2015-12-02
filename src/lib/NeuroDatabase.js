@@ -489,7 +489,7 @@ NeuroDatabase.prototype =
         var ar = isObject( a ) && revision in a ? a[ revision ] : undefined;
         var br = isObject( b ) && revision in b ? b[ revision ] : undefined;
 
-        return ar === undefined || br === undefined ? false : compare( ar, br );
+        return ar === undefined || br === undefined ? false : compare( ar, br ) > 0;
       };
     }
     else
@@ -558,9 +558,9 @@ NeuroDatabase.prototype =
 
     if ( model )
     {
-      var revisionCompare = this.revisionFunction( model, encoded );
+      var revisionRejected = this.revisionFunction( model, encoded );
 
-      if ( revisionCompare !== false && revisionCompare > 0 )
+      if ( revisionRejected )
       {
         Neuro.debug( Neuro.Debugs.SAVE_OLD_REVISION, db, model, encoded );
 

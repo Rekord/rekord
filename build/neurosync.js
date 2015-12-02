@@ -1371,20 +1371,11 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
     var modelEvents = [];
     var databaseEvents = [];
 
-    var $init = model.prototype.$init;
-
-    model.prototype.$init = function()
-    {
-      $init.apply( this, arguments );
-
-      applyEventListeners( this, modelEvents );
-    };
-
     for ( var eventType in events )
     {
       var callback = events[ eventType ];
       var eventName = toCamelCase( eventType );
-      
+
       var databaseEventString = NeuroDatabase.Events[ eventName ];
       var modelEventString = NeuroModel.Events[ eventName ];
 
@@ -1400,6 +1391,18 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
     }
 
     applyEventListeners( db, databaseEvents );
+
+    if ( modelEvents.length )
+    {
+      var $init = model.prototype.$init;
+
+      model.prototype.$init = function()
+      {
+        $init.apply( this, arguments );
+
+        applyEventListeners( this, modelEvents );
+      };
+    }
   }
 
 });
@@ -2622,7 +2625,7 @@ NeuroDatabase.prototype =
         var ar = isObject( a ) && revision in a ? a[ revision ] : undefined;
         var br = isObject( b ) && revision in b ? b[ revision ] : undefined;
 
-        return ar === undefined || br === undefined ? false : compare( ar, br );
+        return ar === undefined || br === undefined ? false : compare( ar, br ) > 0;
       };
     }
     else
@@ -2691,9 +2694,9 @@ NeuroDatabase.prototype =
 
     if ( model )
     {
-      var revisionCompare = this.revisionFunction( model, encoded );
+      var revisionRejected = this.revisionFunction( model, encoded );
 
-      if ( revisionCompare !== false && revisionCompare > 0 )
+      if ( revisionRejected )
       {
         Neuro.debug( Neuro.Debugs.SAVE_OLD_REVISION, db, model, encoded );
 
