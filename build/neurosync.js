@@ -5999,8 +5999,8 @@ extend( NeuroOperation, NeuroRemoveRemote,
 
   onFailure: function(data, status)
   {
-    var key = this.key;
     var model = this.model;
+    var key = model.$key();
 
     if ( status === 404 || status === 410 )
     {
@@ -6030,8 +6030,8 @@ extend( NeuroOperation, NeuroRemoveRemote,
   finishRemove: function()
   {
     var db = this.db;
-    var key = this.key;
     var model = this.model;
+    var key = model.$key();
 
     Neuro.debug( Neuro.Debugs.REMOVE_REMOTE, model, key );
 
