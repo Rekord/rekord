@@ -3,7 +3,7 @@
   "version": "1.0.4",
   "description": "neurosync - build real-time & offline capable applications",
   "author": "Philip Diffenderfer",
-  "license": "proprietary",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git://github.com/ClickerMonkey/neurosync.git"

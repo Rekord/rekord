@@ -29,6 +29,7 @@
   global.Neuro.grab = grab;
   global.Neuro.pull = pull;
   global.Neuro.copy = copy;
+  global.Neuro.copyFunction = copyFunction;
   global.Neuro.diff = diff;
   global.Neuro.sizeof = sizeof;
   global.Neuro.isEmpty = isEmpty;
