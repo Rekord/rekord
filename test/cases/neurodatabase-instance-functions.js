@@ -422,3 +422,28 @@ test( 'getModel', function(assert)
   strictEqual( db.get(4), void 0 );
   strictEqual( db.get(23), void 0 );
 });
+
+test( 'change', function(assert)
+{
+  var change = Neuro({
+    name: 'change',
+    fields: ['id', 'name']
+  });
+
+  var db = change.Database;
+
+  expect(2);
+
+  var off = db.change(function()
+  {
+    notOk();
+  });
+
+  db.updated();
+  db.updated();
+
+  off();
+
+  db.updated();
+
+});

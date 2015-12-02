@@ -9,7 +9,8 @@ function NeuroPage(collection, pageSize, pageIndex)
 
 NeuroPage.Events = 
 {
-  Change:       'change'
+  Change:       'change',
+  Changes:      'change'
 };
 
 extendArray( Array, NeuroPage, 
@@ -128,3 +129,4 @@ extendArray( Array, NeuroPage,
 });
 
 eventize( NeuroPage.prototype );
+addEventFunction( NeuroPage.prototype, 'change', NeuroPage.Events.Changes );

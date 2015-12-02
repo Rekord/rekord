@@ -613,5 +613,25 @@ test( '$push $pop $discard', function(assert)
   deepEqual( l0.tasks.toArray(), [], 'tasks removed' );
 });
 
+test( '$change', function(assert)
+{
+  var prefix = 'Model_change_';
 
+  var Task = Neuro({
+    name: prefix + 'task',
+    fields: ['list_id', 'name', 'done']
+  });
+
+  var t0 = new Task({name: 't0'});
+
+  expect(1);
+
+  t0.$change(function() 
+  {
+    notOk();
+  });
+
+  t0.$save();
+
+});
 

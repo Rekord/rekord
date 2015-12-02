@@ -141,7 +141,8 @@ NeuroDatabase.Events =
   ModelAdded:   'model-added',
   ModelUpdated: 'model-updated',
   ModelRemoved: 'model-removed',
-  Loads:        'no-load remote-load local-load'
+  Loads:        'no-load remote-load local-load',
+  Changes:      'updated'
 };
 
 NeuroDatabase.Live = 
@@ -1121,3 +1122,4 @@ NeuroDatabase.prototype =
 };
 
 eventize( NeuroDatabase.prototype );
+addEventFunction( NeuroDatabase.prototype, 'change', NeuroDatabase.Events.Changes );

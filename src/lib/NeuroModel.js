@@ -425,3 +425,4 @@ NeuroModel.prototype =
 };
 
 eventize( NeuroModel.prototype, true );
+addEventFunction( NeuroModel.prototype, '$change', NeuroModel.Events.Changes, true );

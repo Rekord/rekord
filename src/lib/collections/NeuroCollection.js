@@ -734,3 +734,4 @@ extendArray( Array, NeuroCollection,
 });
 
 eventize( NeuroCollection.prototype );
+addEventFunction( NeuroCollection.prototype, 'change', NeuroCollection.Events.Changes );

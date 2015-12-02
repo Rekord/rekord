@@ -1,4 +1,39 @@
 
+function addEventFunction(target, functionName, events, secret)
+{
+  var on = secret ? '$on' : 'on';
+  var off = secret ? '$off' : 'off';
+
+  target[ functionName ] = function(callback, context)
+  {
+    var subject = this;
+    var unlistened = false;
+
+    function listener() 
+    {
+      var result = callback.apply( context || subject, arguments );
+
+      if ( result === false )
+      {
+        unlistener();
+      }
+    };
+
+    function unlistener()
+    {
+      if ( !unlistened )
+      {
+        subject[ off ]( events, listener );
+        unlistened = true;
+      }
+    }
+
+    subject[ on ]( events, listener );
+
+    return unlistener;
+  };
+}
+
 /**
  * Adds functions to the given object (or prototype) so you can listen for any 
  * number of events on the given object, optionally once. Listeners can be 

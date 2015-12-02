@@ -456,3 +456,43 @@ test( 'page', function(assert)
   deepEqual( p.toArray(), [] );
 
 });
+
+test( 'change', function(assert)
+{
+  var c = Neuro.collect();
+
+  expect(2);
+
+  var off = c.change(function() 
+  {
+    strictEqual( this[0], 23 );
+  });
+
+  c.add( 23 );
+  c.add( 45 );
+
+  off();
+
+  c.add( 56 );
+
+});
+
+test( 'page change', function(assert)
+{
+  var c = Neuro.collect(1, 2, 3, 4, 5);
+  var p = c.page( 2 );
+
+  expect(1);
+
+  p.change(function()
+  {
+    notOk();
+
+    return false;
+  });
+
+  p.next();
+
+  p.next();
+
+});
