@@ -7,6 +7,8 @@
   global.Neuro.Database = NeuroDatabase;
   global.Neuro.Relation = NeuroRelation;
   global.Neuro.Operation = NeuroOperation;
+
+  /* Collections */
   global.Neuro.Map = NeuroMap;
   global.Neuro.Collection = NeuroCollection;
   global.Neuro.ModelCollection = NeuroModelCollection;
@@ -20,6 +22,8 @@
   global.Neuro.indexOf = indexOf;
   global.Neuro.propsMatch = propsMatch;
   global.Neuro.hasFields = hasFields;
+
+  global.Neuro.eventize = eventize;
   
   global.Neuro.extend = extend;
   global.Neuro.extendArray = extendArray;
