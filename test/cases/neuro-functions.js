@@ -408,6 +408,36 @@ test( 'Neuro.saveComparator', function(assert)
   deepEqual( arr1.sort( c1 ), exp1 );
 });
 
+test( 'Neuro.addComparator', function(assert)
+{
+  var c0 = Neuro.collect([
+    {id: 1, name: 'a'},
+    {id: 2, name: 'c'},
+    {id: 3, name: 'a'},
+    {id: 4, name: 'b'},
+    {id: 6, name: 'c'},
+    {id: 5, name: 'd'}
+  ]);
+
+  c0.setComparator( 'id' );
+
+  strictEqual( c0[0].id, 1 );
+  strictEqual( c0[1].id, 2 );
+  strictEqual( c0[2].id, 3 );
+  strictEqual( c0[3].id, 4 );
+  strictEqual( c0[4].id, 5 );
+  strictEqual( c0[5].id, 6 );
+
+  c0.addComparator( 'name' );
+
+  strictEqual( c0[0].id, 1 );
+  strictEqual( c0[1].id, 3 );
+  strictEqual( c0[2].id, 4 );
+  strictEqual( c0[3].id, 2 );
+  strictEqual( c0[4].id, 6 );
+  strictEqual( c0[5].id, 5 );
+});
+
 test( 'Neuro.saveWhere', function(assert)
 {
   Neuro.saveWhere( 'where0', 'age', 22 );

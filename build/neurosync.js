@@ -590,6 +590,23 @@ function saveComparator(name, comparator, nullsFirst)
   return Neuro.Comparators[ name ] = createComparator( comparator, nullsFirst );
 }
 
+function addComparator(second, comparator, nullsFirst)
+{
+  var first = createComparator( comparator, nullsFirst );
+
+  if ( !isFunction( second ) )
+  {
+    return first;
+  }
+
+  return function compareCascading(a, b) 
+  {
+    var d = first( a, b );
+
+    return d !== 0 ? d : second( a, b );
+  };
+}
+
 function createComparator(comparator, nullsFirst)
 {
   if ( isFunction( comparator ) )
@@ -2588,6 +2605,11 @@ NeuroDatabase.prototype =
     this.models.setComparator( comparator, nullsFirst );
   },
 
+  addComparator: function(comparator, nullsFirst)
+  {
+    this.models.addComparator( comparator, nullsFirst );
+  },
+
   setSummarize: function(summarize)
   {
     if ( isFunction( summarize ) )
@@ -3962,24 +3984,32 @@ NeuroCollection.Events =
 extendArray( Array, NeuroCollection, 
 {
 
-  setComparator: function(comparator, comparatorNullsFirst)
+  setComparator: function(comparator, nullsFirst)
   {
-    this.comparator = createComparator( comparator, comparatorNullsFirst );
+    this.comparator = createComparator( comparator, nullsFirst );
     this.resort();
 
     return this;
   },
 
-  isSorted: function(comparator, comparatorNullsFirst)
+  addComparator: function(comparator, nullsFirst)
   {
-    var cmp = comparator ? createComparator( comparator, comparatorNullsFirst ) : this.comparator;
+    this.comparator = addComparator( this.comparator, comparator, nullsFirst );
+    this.resort();
+
+    return this;
+  },
+
+  isSorted: function(comparator, nullsFirst)
+  {
+    var cmp = comparator ? createComparator( comparator, nullsFirst ) : this.comparator;
 
     return isSorted( cmp, this );
   },
 
-  resort: function(comparator, comparatorNullsFirst)
+  resort: function(comparator, nullsFirst)
   {
-    var cmp = comparator ? createComparator( comparator, comparatorNullsFirst ) : this.comparator;
+    var cmp = comparator ? createComparator( comparator, nullsFirst ) : this.comparator;
 
     if ( !isSorted( cmp, this ) )
     {
@@ -4819,136 +4849,6 @@ extendArray( NeuroCollection, NeuroFilteredCollection,
   }
 
 });
-function NeuroPage(collection, pageSize, pageIndex)
-{
-  this.onChanges = copyFunction( this.handleChanges );
-  this.pageSize = pageSize;
-  this.pageIndex = pageIndex || 0;
-  this.pageCount = 0;
-  this.setCollection( collection );
-}
-
-NeuroPage.Events = 
-{
-  Change:       'change'
-};
-
-extendArray( Array, NeuroPage, 
-{
-
-  setPageSize: function(pageSize)
-  {
-    this.pageSize = pageSize;
-    this.handleChanges();
-  },
-
-  setPageIndex: function(pageIndex)
-  {
-    var actualIndex = Math.max( 0, Math.min( pageIndex, this.pageCount - 1 ) );
-
-    if ( actualIndex !== this.pageIndex )
-    {
-      this.pageIndex = actualIndex;
-      this.update();
-      this.trigger( NeuroPage.Events.Change, [ this ] );
-    }
-  },
-
-  setCollection: function(collection)
-  {
-    if ( collection !== this.collection )
-    {
-      if ( this.collection )
-      {
-        this.disconnect();
-      }
-
-      this.collection = collection;
-      this.connect();
-      this.handleChanges( true );
-    }
-  },
-
-  connect: function()
-  {
-    this.collection.on( NeuroCollection.Events.Changes, this.onChanges, this );
-  },
-
-  disconnect: function()
-  {
-    this.collection.off( NeuroCollection.Events.Changes, this.onChanges );
-  },
-
-  next: function()
-  {
-    this.setPageIndex( this.pageIndex + 1 );
-  },
-
-  prev: function()
-  {
-    this.setPageIndex( this.pageIndex - 1 );
-  },
-
-  jump: function(to)
-  {
-    this.setPageIndex( to );
-  },
-
-  first: function()
-  {
-    this.setPageIndex( 0 );
-  },
-
-  last: function()
-  {
-    this.setPageIndex( this.pageCount - 1 );
-  },
-
-  handleChanges: function(forceApply)
-  {
-    var n = this.collection.length;
-    var pageCount = Math.ceil( n / this.pageSize );
-    var pageIndex = Math.max( 0, Math.min( this.pageIndex, pageCount - 1 ) );
-    var apply = forceApply || this.pageIndex !== pageIndex || this.length !== this.pageSize;
-    var changes = apply || this.pageCount !== pageCount;
-
-    this.pageIndex = pageIndex;
-    this.pageCount = pageCount;
-    
-    if ( apply )
-    {
-      this.update(); 
-    }
-    if ( changes )
-    {
-      this.trigger( NeuroPage.Events.Change, [ this ] );
-    }
-  },
-
-  update: function()
-  {
-    var source = this.collection;
-    var n = source.length;
-    var start = this.pageIndex * this.pageSize;
-    var end = Math.min( start + this.pageSize, n );
-    var length = end - start;
-
-    this.length = length;
-
-    for (var i = 0; i < length; i++)
-    {
-      this[ i ] = source[ start++ ];
-    }
-  },
-
-  toArray: function()
-  {
-    return this.slice();
-  }
-
-});
-
-eventize( NeuroPage.prototype );
 function NeuroModelCollection(database, models, remoteData)
 {
   this.init( database, models, remoteData );
@@ -5524,6 +5424,136 @@ extendArray( NeuroQuery, NeuroRemoteQuery,
   }
 
 });
+function NeuroPage(collection, pageSize, pageIndex)
+{
+  this.onChanges = copyFunction( this.handleChanges );
+  this.pageSize = pageSize;
+  this.pageIndex = pageIndex || 0;
+  this.pageCount = 0;
+  this.setCollection( collection );
+}
+
+NeuroPage.Events = 
+{
+  Change:       'change'
+};
+
+extendArray( Array, NeuroPage, 
+{
+
+  setPageSize: function(pageSize)
+  {
+    this.pageSize = pageSize;
+    this.handleChanges();
+  },
+
+  setPageIndex: function(pageIndex)
+  {
+    var actualIndex = Math.max( 0, Math.min( pageIndex, this.pageCount - 1 ) );
+
+    if ( actualIndex !== this.pageIndex )
+    {
+      this.pageIndex = actualIndex;
+      this.update();
+      this.trigger( NeuroPage.Events.Change, [ this ] );
+    }
+  },
+
+  setCollection: function(collection)
+  {
+    if ( collection !== this.collection )
+    {
+      if ( this.collection )
+      {
+        this.disconnect();
+      }
+
+      this.collection = collection;
+      this.connect();
+      this.handleChanges( true );
+    }
+  },
+
+  connect: function()
+  {
+    this.collection.on( NeuroCollection.Events.Changes, this.onChanges, this );
+  },
+
+  disconnect: function()
+  {
+    this.collection.off( NeuroCollection.Events.Changes, this.onChanges );
+  },
+
+  next: function()
+  {
+    this.setPageIndex( this.pageIndex + 1 );
+  },
+
+  prev: function()
+  {
+    this.setPageIndex( this.pageIndex - 1 );
+  },
+
+  jump: function(to)
+  {
+    this.setPageIndex( to );
+  },
+
+  first: function()
+  {
+    this.setPageIndex( 0 );
+  },
+
+  last: function()
+  {
+    this.setPageIndex( this.pageCount - 1 );
+  },
+
+  handleChanges: function(forceApply)
+  {
+    var n = this.collection.length;
+    var pageCount = Math.ceil( n / this.pageSize );
+    var pageIndex = Math.max( 0, Math.min( this.pageIndex, pageCount - 1 ) );
+    var apply = forceApply || this.pageIndex !== pageIndex || this.length !== this.pageSize;
+    var changes = apply || this.pageCount !== pageCount;
+
+    this.pageIndex = pageIndex;
+    this.pageCount = pageCount;
+    
+    if ( apply )
+    {
+      this.update(); 
+    }
+    if ( changes )
+    {
+      this.trigger( NeuroPage.Events.Change, [ this ] );
+    }
+  },
+
+  update: function()
+  {
+    var source = this.collection;
+    var n = source.length;
+    var start = this.pageIndex * this.pageSize;
+    var end = Math.min( start + this.pageSize, n );
+    var length = end - start;
+
+    this.length = length;
+
+    for (var i = 0; i < length; i++)
+    {
+      this[ i ] = source[ start++ ];
+    }
+  },
+
+  toArray: function()
+  {
+    return this.slice();
+  }
+
+});
+
+eventize( NeuroPage.prototype );
 
 /* Removing?
 Neuro.Cascade = {
@@ -9008,6 +9038,7 @@ extendArray( NeuroModelCollection, NeuroRelationCollection,
   global.Neuro.isSorted = isSorted;
   global.Neuro.saveComparator = saveComparator;
   global.Neuro.createComparator = createComparator;
+  global.Neuro.addComparator = addComparator;
 
   global.Neuro.saveWhere = saveWhere;
   global.Neuro.createWhere = createWhere;

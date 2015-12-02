@@ -587,6 +587,23 @@ function saveComparator(name, comparator, nullsFirst)
   return Neuro.Comparators[ name ] = createComparator( comparator, nullsFirst );
 }
 
+function addComparator(second, comparator, nullsFirst)
+{
+  var first = createComparator( comparator, nullsFirst );
+
+  if ( !isFunction( second ) )
+  {
+    return first;
+  }
+
+  return function compareCascading(a, b) 
+  {
+    var d = first( a, b );
+
+    return d !== 0 ? d : second( a, b );
+  };
+}
+
 function createComparator(comparator, nullsFirst)
 {
   if ( isFunction( comparator ) )

@@ -19,24 +19,32 @@ NeuroCollection.Events =
 extendArray( Array, NeuroCollection, 
 {
 
-  setComparator: function(comparator, comparatorNullsFirst)
+  setComparator: function(comparator, nullsFirst)
   {
-    this.comparator = createComparator( comparator, comparatorNullsFirst );
+    this.comparator = createComparator( comparator, nullsFirst );
     this.resort();
 
     return this;
   },
 
-  isSorted: function(comparator, comparatorNullsFirst)
+  addComparator: function(comparator, nullsFirst)
   {
-    var cmp = comparator ? createComparator( comparator, comparatorNullsFirst ) : this.comparator;
+    this.comparator = addComparator( this.comparator, comparator, nullsFirst );
+    this.resort();
+
+    return this;
+  },
+
+  isSorted: function(comparator, nullsFirst)
+  {
+    var cmp = comparator ? createComparator( comparator, nullsFirst ) : this.comparator;
 
     return isSorted( cmp, this );
   },
 
-  resort: function(comparator, comparatorNullsFirst)
+  resort: function(comparator, nullsFirst)
   {
-    var cmp = comparator ? createComparator( comparator, comparatorNullsFirst ) : this.comparator;
+    var cmp = comparator ? createComparator( comparator, nullsFirst ) : this.comparator;
 
     if ( !isSorted( cmp, this ) )
     {

@@ -507,6 +507,11 @@ NeuroDatabase.prototype =
     this.models.setComparator( comparator, nullsFirst );
   },
 
+  addComparator: function(comparator, nullsFirst)
+  {
+    this.models.addComparator( comparator, nullsFirst );
+  },
+
   setSummarize: function(summarize)
   {
     if ( isFunction( summarize ) )

@@ -42,6 +42,7 @@
   global.Neuro.isSorted = isSorted;
   global.Neuro.saveComparator = saveComparator;
   global.Neuro.createComparator = createComparator;
+  global.Neuro.addComparator = addComparator;
 
   global.Neuro.saveWhere = saveWhere;
   global.Neuro.createWhere = createWhere;
