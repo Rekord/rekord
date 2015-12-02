@@ -19,7 +19,7 @@ The easiest way to install neurosync is through bower via `bower install neurosy
 
 **Features**
 - Stores data locally through `Neuro.store` interface (ex: [neurosync-storkjs](https://github.com/ClickerMonkey/neurosync-storkjs))
-- Stores data remotely through `Neuro.rest` interface (ex: [neurosync-angular](https://github.com/ClickerMonkey/neurosync-angular))
+- Stores data remotely through `Neuro.rest` interface (ex: [neurosync-angular](https://github.com/ClickerMonkey/neurosync-angular) or [neurosync-jquery](https://github.com/ClickerMonkey/neurosync-jquery))
 - Publishes changes through `Neuro.live` interface (ex: [neurosync-pubsub](https://github.com/ClickerMonkey/neurosync-pubsub))
 - Relationships `hasOne`, `belongsTo`, `hasMany`, & `hasManyThrough`
 - Polymorphic relationships for `hasOne`, `belongsTo` & `hasMany`
@@ -51,6 +51,7 @@ The easiest way to install neurosync is through bower via `bower install neurosy
 Bindings are used to implement core pieces of functionality in neurosync - these interfaces allows any library to work with neurosync.
 
 - [Angular](https://github.com/ClickerMonkey/neurosync-angular) - implements `Neuro.rest`
+- [jQuery](https://github.com/ClickerMonkey/neurosync-jquery) - implements `Neuro.rest`
 - [StorkJS](https://github.com/ClickerMonkey/neurosync-storkjs) - implements `Neuro.store`
 - [PubSub](https://github.com/ClickerMonkey/neurosync-pubsub) - implements `Neuro.live`
 - [Debugging](https://github.com/ClickerMonkey/neurosync-debug) - implements `Neuro.debug`
