@@ -6,6 +6,10 @@
 
 Neurosync is a javascript ORM that is offline & real-time capable.
 
+**Installation**
+
+The easiest way to install neurosync is through bower via `bower install neurosync`.
+
 **Neurosync's life-cycle is simple:**
 - Save pending changes to local storage
 - Make REST call
@@ -14,9 +18,9 @@ Neurosync is a javascript ORM that is offline & real-time capable.
 - If the application restarts with pending operations, they will be resumed
 
 **Features**
-- Stores data locally through `Neuro.store` interface (ex: https://github.com/ClickerMonkey/neurosync-storkjs)
-- Stores data remotely through `Neuro.rest` interface (ex: https://github.com/ClickerMonkey/neurosync-angular)
-- Publishes changes through `Neuro.live` interface (ex: https://github.com/ClickerMonkey/neurosync-pubsub)
+- Stores data locally through `Neuro.store` interface (ex: [neurosync-storkjs](https://github.com/ClickerMonkey/neurosync-storkjs))
+- Stores data remotely through `Neuro.rest` interface (ex: [neurosync-angular](https://github.com/ClickerMonkey/neurosync-angular))
+- Publishes changes through `Neuro.live` interface (ex: [neurosync-pubsub](https://github.com/ClickerMonkey/neurosync-pubsub))
 - Relationships `hasOne`, `belongsTo`, `hasMany`, & `hasManyThrough`
 - Polymorphic relationships for `hasOne`, `belongsTo` & `hasMany`
 - Extend an existing model
@@ -42,6 +46,14 @@ Neurosync is a javascript ORM that is offline & real-time capable.
 - Create a live paginated view of any collection
 - All collections have the following operations: filter, subtract, intersect, complement, removeWhere, min, max, first, last, sum, avg, count, pluck, reduce, random, chunk, where, & group
 - Model collections have the following operations: removeWhere, update, & updateWhere
+
+**Bindings**  
+Bindings are used to implement core pieces of functionality in neurosync - these interfaces allows any library to work with neurosync.
+
+- [Angular](https://github.com/ClickerMonkey/neurosync-angular) - implements `Neuro.rest`
+- [StorkJS](https://github.com/ClickerMonkey/neurosync-storkjs) - implements `Neuro.store`
+- [PubSub](https://github.com/ClickerMonkey/neurosync-pubsub) - implements `Neuro.live`
+- [Debugging](https://github.com/ClickerMonkey/neurosync-debug) - implements `Neuro.debug`
 
 **Simple Todo Example**
 ```javascript
