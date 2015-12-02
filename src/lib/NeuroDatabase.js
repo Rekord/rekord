@@ -890,7 +890,7 @@ NeuroDatabase.prototype =
   },
 
   // Loads all data remotely
-  refresh: function()
+  refresh: function(onFinish)
   {
     var db = this;
 
@@ -939,6 +939,11 @@ NeuroDatabase.prototype =
       db.updated();
 
       Neuro.debug( Neuro.Debugs.REMOTE_LOAD, db, models );
+
+      if ( onFinish )
+      {
+        onFinish( db.models );
+      }
     }
 
     function onLoadError(models, status) 
@@ -962,6 +967,11 @@ NeuroDatabase.prototype =
 
         db.initialized = true;
         db.trigger( NeuroDatabase.Events.NoLoad, [db] );
+      }
+
+      if ( onFinish )
+      {
+        onFinish( db.models );
       }
     }
   

@@ -1558,6 +1558,15 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 });
 Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 {
+  model.fetchAll = function(onFinish)
+  {
+    db.refresh( onFinish );
+
+    return db.models;
+  };
+});
+Neuro.on( Neuro.Events.Plugins, function(model, db, options)
+{
   model.get = function( input, callback, context )
   {
     if ( isFunction( callback ) )
@@ -1591,6 +1600,13 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
     }
 
     return q;
+  };
+});
+Neuro.on( Neuro.Events.Plugins, function(model, db, options)
+{
+  model.ready = function( callback, context, persistent )
+  {
+    db.ready( callback, context, persistent );
   };
 });
 Neuro.on( Neuro.Events.Plugins, function(model, db, options)
@@ -2955,7 +2971,7 @@ NeuroDatabase.prototype =
   },
 
   // Loads all data remotely
-  refresh: function()
+  refresh: function(onFinish)
   {
     var db = this;
 
@@ -3004,6 +3020,11 @@ NeuroDatabase.prototype =
       db.updated();
 
       Neuro.debug( Neuro.Debugs.REMOTE_LOAD, db, models );
+
+      if ( onFinish )
+      {
+        onFinish( db.models );
+      }
     }
 
     function onLoadError(models, status) 
@@ -3027,6 +3048,11 @@ NeuroDatabase.prototype =
 
         db.initialized = true;
         db.trigger( NeuroDatabase.Events.NoLoad, [db] );
+      }
+
+      if ( onFinish )
+      {
+        onFinish( db.models );
       }
     }
   
@@ -8995,4 +9021,4 @@ extendArray( NeuroModelCollection, NeuroRelationCollection,
   global.Neuro.saveHaving = saveHaving;
   global.Neuro.createHaving = createHaving;
 
-})(window);
+})(this);

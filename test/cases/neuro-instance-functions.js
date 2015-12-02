@@ -358,7 +358,54 @@ test( 'query failure', function(assert)
 
 });
 
+test( 'ready', function(assert)
+{
+  var done = assert.async();
+  var prefix = 'Neuro_ready_';
 
+  var Todo = Neuro({
+    name: prefix + 'todo',
+    fields: ['name', 'done']
+  });
+
+  expect(1);
+
+  Todo.ready(function(db) 
+  {
+    strictEqual( db, Todo.Database );
+
+    done();
+  });
+
+});
+
+test( 'fetchAll', function(assert)
+{
+  var done = assert.async();
+  var prefix = 'Neuro_fetchAll_';
+
+  var Todo = Neuro({
+    name: prefix + 'todo',
+    fields: ['name', 'done']
+  });
+
+  var remote = Todo.Database.rest;
+
+  remote.map.put( 1, {id: 1, name: 't1' } );
+  remote.map.put( 2, {id: 2, name: 't2' } );
+  remote.map.put( 3, {id: 3, name: 't3' } );
+
+  remote.delay = 10;
+
+  var todos = Todo.fetchAll(function(loadedTodos)
+  {
+    strictEqual( todos, loadedTodos );
+    strictEqual( todos.length, 3 );
+    
+    done();
+  });
+
+});
 
 
 
