@@ -9058,6 +9058,17 @@ extendArray( NeuroModelCollection, NeuroRelationCollection,
 
   /* Utility Functions */
   global.Neuro.isNeuro = isNeuro;
+  global.Neuro.isDefined = isDefined;
+  global.Neuro.isFunction = isFunctio;
+  global.Neuro.isString = isString;
+  global.Neuro.isNumber = isNumber;
+  global.Neuro.isBoolean = isBoolean;
+  global.Neuro.isDate = isDate;
+  global.Neuro.isRegExp = isRegExp;
+  global.Neuro.isArray = isArray;
+  global.Neuro.isObject = isObject;
+  global.Neuro.isValue = isValue;
+
   global.Neuro.uuid = uuid;
   global.Neuro.indexOf = indexOf;
   global.Neuro.propsMatch = propsMatch;
