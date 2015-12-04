@@ -15,6 +15,8 @@ extend( NeuroOperation, NeuroSaveLocal,
     if ( model.$isDeleted() )
     {
       Neuro.debug( Neuro.Debugs.SAVE_LOCAL_DELETED, model );
+    
+      model.$trigger( NeuroModel.Events.LocalSaveFailure, [model] );
 
       this.finish();
     }
@@ -27,6 +29,8 @@ extend( NeuroOperation, NeuroSaveLocal,
           this.markSaving( db, model );  
         }
       }
+
+      model.$trigger( NeuroModel.Events.LocalSave, [model] );
 
       this.finish();
     }
@@ -98,6 +102,8 @@ extend( NeuroOperation, NeuroSaveLocal,
     {
       this.clearLocal( model );
     }
+
+    model.$trigger( NeuroModel.Events.LocalSave, [model] );
   },
 
   onFailure: function(e)
@@ -114,6 +120,8 @@ extend( NeuroOperation, NeuroSaveLocal,
     {
       this.clearLocal( model );
     }
+    
+    model.$trigger( NeuroModel.Events.LocalSaveFailure, [model] );
   }
 
 });

@@ -18,6 +18,8 @@ extend( NeuroOperation, NeuroRemoveLocal,
     {
       Neuro.debug( Neuro.Debugs.REMOVE_LOCAL_NONE, model );
 
+      model.$trigger( NeuroModel.Events.LocalRemove, [model] );
+
       this.insertNext( NeuroRemoveRemote );
       this.finish();
     }
@@ -41,6 +43,8 @@ extend( NeuroOperation, NeuroRemoveLocal,
 
     Neuro.debug( Neuro.Debugs.REMOVE_LOCAL, model );
 
+    model.$trigger( NeuroModel.Events.LocalRemove, [model] );
+
     if ( model.$saved && this.cascade )
     {
       model.$addOperation( NeuroRemoveRemote );
@@ -52,6 +56,8 @@ extend( NeuroOperation, NeuroRemoveLocal,
     var model = this.model;
 
     Neuro.debug( Neuro.Debugs.REMOVE_LOCAL_ERROR, model, e );
+
+    model.$trigger( NeuroModel.Events.LocalRemoveFailure, [model] );
 
     if ( model.$saved && this.cascade )
     {

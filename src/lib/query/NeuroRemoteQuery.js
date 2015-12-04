@@ -2,7 +2,7 @@ function NeuroRemoteQuery(database, query)
 {
   this.init( database );
   this.query = query;
-  this.status = NeuroRemoteQuery.Status.Pending;
+  this.status = NeuroRemoteQuery.Status.Success;
 
   this.onSuccess = this.handleSuccess();
   this.onFailure = this.handleFailure();
@@ -10,9 +10,9 @@ function NeuroRemoteQuery(database, query)
 
 NeuroRemoteQuery.Status =
 {
-  Pending:  0,
-  Success:  1,
-  Failure:  2
+  Pending:    'pending',
+  Success:    'success',
+  Failure:    'failure'
 };
 
 NeuroRemoteQuery.Events = 
@@ -104,26 +104,26 @@ extendArray( NeuroQuery, NeuroRemoteQuery,
 
   handleSuccess: function()
   {
-    var that = this;
+    var query = this;
 
     return function(models)
     {
-      that.status = NeuroRemoteQuery.Status.Success;
-      that.reset( models, true );
-      that.trigger( NeuroRemoteQuery.Events.Success, [that] );
-      that.trigger( NeuroRemoteQuery.Events.Ready, [that] );
+      query.status = NeuroRemoteQuery.Status.Success;
+      query.reset( models, true );
+      query.trigger( NeuroRemoteQuery.Events.Success, [query] );
+      query.trigger( NeuroRemoteQuery.Events.Ready, [query] );
     };
   },
 
   handleFailure: function()
   {
-    var that = this;
+    var query = this;
 
     return function(models, error)
     {
-      that.status = NeuroRemoteQuery.Status.Failure;
-      that.trigger( NeuroRemoteQuery.Events.Failure, [that] );
-      that.trigger( NeuroRemoteQuery.Events.Ready, [that] );
+      query.status = NeuroRemoteQuery.Status.Failure;
+      query.trigger( NeuroRemoteQuery.Events.Failure, [query] );
+      query.trigger( NeuroRemoteQuery.Events.Ready, [query] );
     };
   }
 

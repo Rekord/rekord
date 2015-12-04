@@ -3290,27 +3290,34 @@ function NeuroModel(db)
 
 NeuroModel.Events = 
 {
-  Created:          'created',
-  Saved:            'saved',
-  PreSave:          'pre-save',
-  PostSave:         'post-save',
-  PreRemove:        'pre-remove',
-  PostRemove:       'post-remove',
-  PartialUpdate:    'partial-update',
-  FullUpdate:       'full-update',
-  Updated:          'updated',
-  Detach:           'detach',
-  Change:           'change',
-  CreateAndSave:    'created saved',
-  UpdateAndSave:    'updated saved',
-  KeyUpdate:        'key-update',
-  RelationUpdate:   'relation-update',
-  Removed:          'removed',
-  RemoteUpdate:     'remote-update',
-  RemoteRemove:     'remote-remove',
-  RemoteAndRemove:  'remote-remove removed',
-  SavedRemoteUpdate:'saved remote-update',
-  Changes:          'saved remote-update key-update relation-update removed change'
+  Created:              'created',
+  Saved:                'saved',
+  PreSave:              'pre-save',
+  PostSave:             'post-save',
+  PreRemove:            'pre-remove',
+  PostRemove:           'post-remove',
+  PartialUpdate:        'partial-update',
+  FullUpdate:           'full-update',
+  Updated:              'updated',
+  Detach:               'detach',
+  Change:               'change',
+  CreateAndSave:        'created saved',
+  UpdateAndSave:        'updated saved',
+  KeyUpdate:            'key-update',
+  RelationUpdate:       'relation-update',
+  Removed:              'removed',
+  RemoteUpdate:         'remote-update',
+  LocalSave:            'local-save',
+  LocalSaveFailure:     'local-save-failure',
+  RemoteSave:           'remote-save',
+  RemoteSaveFailure:    'remote-save-failure',
+  LocalRemove:          'local-remove',
+  LocalRemoveFailure:   'local-remove-failure',
+  RemoteRemove:         'remote-remove',
+  RemoteRemoveFailure:  'remote-remove-failure',
+  RemoteAndRemove:      'remote-remove removed',
+  SavedRemoteUpdate:    'saved remote-update',
+  Changes:              'saved remote-update key-update relation-update removed change'
 };
 
 NeuroModel.Status =
@@ -5340,7 +5347,7 @@ function NeuroRemoteQuery(database, query)
 {
   this.init( database );
   this.query = query;
-  this.status = NeuroRemoteQuery.Status.Pending;
+  this.status = NeuroRemoteQuery.Status.Success;
 
   this.onSuccess = this.handleSuccess();
   this.onFailure = this.handleFailure();
@@ -5348,9 +5355,9 @@ function NeuroRemoteQuery(database, query)
 
 NeuroRemoteQuery.Status =
 {
-  Pending:  0,
-  Success:  1,
-  Failure:  2
+  Pending:    'pending',
+  Success:    'success',
+  Failure:    'failure'
 };
 
 NeuroRemoteQuery.Events = 
@@ -5442,26 +5449,26 @@ extendArray( NeuroQuery, NeuroRemoteQuery,
 
   handleSuccess: function()
   {
-    var that = this;
+    var query = this;
 
     return function(models)
     {
-      that.status = NeuroRemoteQuery.Status.Success;
-      that.reset( models, true );
-      that.trigger( NeuroRemoteQuery.Events.Success, [that] );
-      that.trigger( NeuroRemoteQuery.Events.Ready, [that] );
+      query.status = NeuroRemoteQuery.Status.Success;
+      query.reset( models, true );
+      query.trigger( NeuroRemoteQuery.Events.Success, [query] );
+      query.trigger( NeuroRemoteQuery.Events.Ready, [query] );
     };
   },
 
   handleFailure: function()
   {
-    var that = this;
+    var query = this;
 
     return function(models, error)
     {
-      that.status = NeuroRemoteQuery.Status.Failure;
-      that.trigger( NeuroRemoteQuery.Events.Failure, [that] );
-      that.trigger( NeuroRemoteQuery.Events.Ready, [that] );
+      query.status = NeuroRemoteQuery.Status.Failure;
+      query.trigger( NeuroRemoteQuery.Events.Failure, [query] );
+      query.trigger( NeuroRemoteQuery.Events.Ready, [query] );
     };
   }
 
@@ -5877,6 +5884,8 @@ extend( NeuroOperation, NeuroRemoveLocal,
     {
       Neuro.debug( Neuro.Debugs.REMOVE_LOCAL_NONE, model );
 
+      model.$trigger( NeuroModel.Events.LocalRemove, [model] );
+
       this.insertNext( NeuroRemoveRemote );
       this.finish();
     }
@@ -5900,6 +5909,8 @@ extend( NeuroOperation, NeuroRemoveLocal,
 
     Neuro.debug( Neuro.Debugs.REMOVE_LOCAL, model );
 
+    model.$trigger( NeuroModel.Events.LocalRemove, [model] );
+
     if ( model.$saved && this.cascade )
     {
       model.$addOperation( NeuroRemoveRemote );
@@ -5911,6 +5922,8 @@ extend( NeuroOperation, NeuroRemoveLocal,
     var model = this.model;
 
     Neuro.debug( Neuro.Debugs.REMOVE_LOCAL_ERROR, model, e );
+
+    model.$trigger( NeuroModel.Events.LocalRemoveFailure, [model] );
 
     if ( model.$saved && this.cascade )
     {
@@ -6011,6 +6024,8 @@ extend( NeuroOperation, NeuroRemoveRemote,
     else if ( status !== 0 ) 
     {
       Neuro.debug( Neuro.Debugs.REMOVE_ERROR, model, status, key );
+
+      model.$trigger( NeuroModel.Events.RemoteRemoveFailure, [model] );
     }
     else
     {
@@ -6021,6 +6036,10 @@ extend( NeuroOperation, NeuroRemoveRemote,
       if (!Neuro.online) 
       {
         Neuro.once( 'online', this.handleOnline, this );
+      }
+      else
+      {
+        model.$trigger( NeuroModel.Events.RemoteRemoveFailure, [model] );
       }
 
       Neuro.debug( Neuro.Debugs.REMOVE_OFFLINE, model );
@@ -6037,6 +6056,9 @@ extend( NeuroOperation, NeuroRemoveRemote,
 
     // Successfully removed!
     model.$status = NeuroModel.Status.Removed;
+
+    // Successfully Removed!
+    model.$trigger( NeuroModel.Events.RemoteRemove, [model] );
 
     // Remove from local storage now
     this.insertNext( NeuroRemoveNow );
@@ -6080,6 +6102,8 @@ extend( NeuroOperation, NeuroSaveLocal,
     if ( model.$isDeleted() )
     {
       Neuro.debug( Neuro.Debugs.SAVE_LOCAL_DELETED, model );
+    
+      model.$trigger( NeuroModel.Events.LocalSaveFailure, [model] );
 
       this.finish();
     }
@@ -6092,6 +6116,8 @@ extend( NeuroOperation, NeuroSaveLocal,
           this.markSaving( db, model );  
         }
       }
+
+      model.$trigger( NeuroModel.Events.LocalSave, [model] );
 
       this.finish();
     }
@@ -6163,6 +6189,8 @@ extend( NeuroOperation, NeuroSaveLocal,
     {
       this.clearLocal( model );
     }
+
+    model.$trigger( NeuroModel.Events.LocalSave, [model] );
   },
 
   onFailure: function(e)
@@ -6179,6 +6207,8 @@ extend( NeuroOperation, NeuroSaveLocal,
     {
       this.clearLocal( model );
     }
+    
+    model.$trigger( NeuroModel.Events.LocalSaveFailure, [model] );
   }
 
 });
@@ -6229,11 +6259,13 @@ extend( NeuroOperation, NeuroSaveRemote,
     {
       Neuro.debug( Neuro.Debugs.SAVE_REMOTE_DELETED, model );
 
+      this.markSynced( model, true, NeuroModel.Events.RemoteSaveFailure );
+
       this.finish();
     }
     else if ( !db.hasData( model.$saving ) )
     {
-      this.markSynced( model, true );
+      this.markSynced( model, true, NeuroModel.Events.RemoteSave );
 
       this.finish();
     }
@@ -6279,12 +6311,14 @@ extend( NeuroOperation, NeuroSaveRemote,
       Neuro.debug( Neuro.Debugs.SAVE_UPDATE_FAIL, model );
 
       this.insertNext( NeuroRemoveNow );
+
+      model.$trigger( NeuroModel.Events.RemoteSaveFailure, [model] );
     }
     else if ( status !== 0 ) 
     {          
       Neuro.debug( Neuro.Debugs.SAVE_ERROR, model, status );
 
-      this.markSynced( model, true );
+      this.markSynced( model, true, NeuroModel.Events.RemoteSaveFailure );
     } 
     else 
     {
@@ -6298,14 +6332,14 @@ extend( NeuroOperation, NeuroSaveRemote,
       }
       else
       {
-        this.markSynced( model, true );
+        this.markSynced( model, true, NeuroModel.Events.RemoteSaveFailure );
       }
 
       Neuro.debug( Neuro.Debugs.SAVE_OFFLINE, model );
     }
   },
 
-  markSynced: function(model, saveNow)
+  markSynced: function(model, saveNow, eventType)
   {
     model.$status = NeuroModel.Status.Synced;
 
@@ -6314,6 +6348,11 @@ extend( NeuroOperation, NeuroSaveRemote,
     if ( saveNow )
     {
       this.insertNext( NeuroSaveNow ); 
+    }
+
+    if ( eventType )
+    {
+      model.$trigger( eventType, [model] );
     }
   },
 
@@ -6363,7 +6402,6 @@ extend( NeuroOperation, NeuroSaveRemote,
       db.putRemoteData( data, model.$key(), model );
     }    
 
-
     if ( db.hasData( model.$publish ) )
     {
       // Publish saved data to everyone else
@@ -6377,7 +6415,7 @@ extend( NeuroOperation, NeuroSaveRemote,
       });
     }
 
-    this.markSynced( model, false );
+    this.markSynced( model, false, NeuroModel.Events.RemoteSave );
     
     if ( db.cache === Neuro.Cache.Pending )
     {

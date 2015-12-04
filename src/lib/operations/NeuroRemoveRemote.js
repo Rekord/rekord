@@ -36,6 +36,8 @@ extend( NeuroOperation, NeuroRemoveRemote,
     else if ( status !== 0 ) 
     {
       Neuro.debug( Neuro.Debugs.REMOVE_ERROR, model, status, key );
+
+      model.$trigger( NeuroModel.Events.RemoteRemoveFailure, [model] );
     }
     else
     {
@@ -46,6 +48,10 @@ extend( NeuroOperation, NeuroRemoveRemote,
       if (!Neuro.online) 
       {
         Neuro.once( 'online', this.handleOnline, this );
+      }
+      else
+      {
+        model.$trigger( NeuroModel.Events.RemoteRemoveFailure, [model] );
       }
 
       Neuro.debug( Neuro.Debugs.REMOVE_OFFLINE, model );
@@ -62,6 +68,9 @@ extend( NeuroOperation, NeuroRemoveRemote,
 
     // Successfully removed!
     model.$status = NeuroModel.Status.Removed;
+
+    // Successfully Removed!
+    model.$trigger( NeuroModel.Events.RemoteRemove, [model] );
 
     // Remove from local storage now
     this.insertNext( NeuroRemoveNow );

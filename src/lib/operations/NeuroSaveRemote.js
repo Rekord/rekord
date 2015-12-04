@@ -16,11 +16,13 @@ extend( NeuroOperation, NeuroSaveRemote,
     {
       Neuro.debug( Neuro.Debugs.SAVE_REMOTE_DELETED, model );
 
+      this.markSynced( model, true, NeuroModel.Events.RemoteSaveFailure );
+
       this.finish();
     }
     else if ( !db.hasData( model.$saving ) )
     {
-      this.markSynced( model, true );
+      this.markSynced( model, true, NeuroModel.Events.RemoteSave );
 
       this.finish();
     }
@@ -66,12 +68,14 @@ extend( NeuroOperation, NeuroSaveRemote,
       Neuro.debug( Neuro.Debugs.SAVE_UPDATE_FAIL, model );
 
       this.insertNext( NeuroRemoveNow );
+
+      model.$trigger( NeuroModel.Events.RemoteSaveFailure, [model] );
     }
     else if ( status !== 0 ) 
     {          
       Neuro.debug( Neuro.Debugs.SAVE_ERROR, model, status );
 
-      this.markSynced( model, true );
+      this.markSynced( model, true, NeuroModel.Events.RemoteSaveFailure );
     } 
     else 
     {
@@ -85,14 +89,14 @@ extend( NeuroOperation, NeuroSaveRemote,
       }
       else
       {
-        this.markSynced( model, true );
+        this.markSynced( model, true, NeuroModel.Events.RemoteSaveFailure );
       }
 
       Neuro.debug( Neuro.Debugs.SAVE_OFFLINE, model );
     }
   },
 
-  markSynced: function(model, saveNow)
+  markSynced: function(model, saveNow, eventType)
   {
     model.$status = NeuroModel.Status.Synced;
 
@@ -101,6 +105,11 @@ extend( NeuroOperation, NeuroSaveRemote,
     if ( saveNow )
     {
       this.insertNext( NeuroSaveNow ); 
+    }
+
+    if ( eventType )
+    {
+      model.$trigger( eventType, [model] );
     }
   },
 
@@ -150,7 +159,6 @@ extend( NeuroOperation, NeuroSaveRemote,
       db.putRemoteData( data, model.$key(), model );
     }    
 
-
     if ( db.hasData( model.$publish ) )
     {
       // Publish saved data to everyone else
@@ -164,7 +172,7 @@ extend( NeuroOperation, NeuroSaveRemote,
       });
     }
 
-    this.markSynced( model, false );
+    this.markSynced( model, false, NeuroModel.Events.RemoteSave );
     
     if ( db.cache === Neuro.Cache.Pending )
     {
