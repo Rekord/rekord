@@ -465,6 +465,21 @@ test( 'Neuro.saveWhere', function(assert)
   notOk( Neuro.createWhere( 'where2' )( m3 ) );
 });
 
+test( 'Neuro.createWhere array', function(assert)
+{
+  var m0 = {name: 'Adam', age: 22};
+  var m1 = {name: 'Barnabas', age: 22};
+  var m2 = {name: 'Connor', age: 19};
+  var m3 = {name: 'Dylan', age: 20};
+
+  var c0 = Neuro.createWhere( [{age: 22}, ['name', 'Adam']] );
+
+  ok(    c0( m0 ) );
+  notOk( c0( m1 ) );
+  notOk( c0( m2 ) );
+  notOk( c0( m3 ) );
+});
+
 test( 'Neuro.savePropertyResolver', function(assert)
 {
   Neuro.savePropertyResolver( 'prop0', 'name' );

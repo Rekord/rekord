@@ -778,6 +778,30 @@ function createWhere(properties, value, equals)
   {
     return properties;
   }
+  else if ( isArray( properties ) )
+  {
+    var parsed = [];
+
+    for (var i = 0; i < properties.length; i++)
+    {
+      var where = properties[ i ];
+
+      parsed.push( isArray( where ) ? createWhere.apply( this, where ) : createWhere( where ) );
+    }
+
+    return function whereMultiple(model)
+    {
+      for (var i = 0; i < parsed.length; i++)
+      {
+        if ( !parsed[ i ]( model ) )
+        {
+          return false;
+        }
+      }
+
+      return true;
+    };
+  }
   else if ( isObject( properties ) )
   {
     return function whereEqualsObject(model)
