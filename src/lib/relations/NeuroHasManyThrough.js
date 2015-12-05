@@ -17,9 +17,9 @@ NeuroHasManyThrough.Defaults =
   foreign:              null,
   comparator:           null,
   comparatorNullsFirst: false,
-  cascadeRemove:        true,
-  cascadeSave:          true,
-  cascadeSaveRelated:   false,
+  cascadeRemove:        Neuro.Cascade.NoRest,
+  cascadeSave:          Neuro.Cascade.All,
+  cascadeSaveRelated:   Neuro.Cascade.None,
   discriminator:        'discriminator',
   discriminators:       {},
   discriminatorToModel: {}
@@ -70,17 +70,14 @@ extend( NeuroRelation, NeuroHasManyThrough,
   {
     var that = this;
     var throughDatabase = this.through.Database;
-    var collection = this.createRelationCollection( model );
-    var isRelated = this.isRelatedFactory( model );
     var initial = model[ this.name ];
  
     var relation = model.$relations[ this.name ] =
     {
       parent: model,
-      isRelated: isRelated,
-      initial: initial,
+      isRelated: this.isRelatedFactory( model ),
       pending: {},
-      related: collection,
+      related: this.createRelationCollection( model ),
       throughs: new NeuroMap(),
       saving: false,
       delaySorting: false,
@@ -328,7 +325,7 @@ extend( NeuroRelation, NeuroHasManyThrough,
 
         if ( !related.$isDeleted() && related.$hasChanges() )
         {
-          related.$save();
+          related.$save( this.cascadeSaveRelated );
         }
       }
 
@@ -347,13 +344,13 @@ extend( NeuroRelation, NeuroHasManyThrough,
 
       this.bulk( relation, function()
       {
-        var models = relation.throughs;
+        var throughs = relation.throughs;
 
-        for (var i = 0; i < models.length; i++)
+        for (var i = 0; i < throughs.length; i++)
         {
-          var related = models[ i ];
+          var through = throughs[ i ];
 
-          related.$remove();
+          through.$remove( this.cascadeRemove );
         }
       });
     }
@@ -501,7 +498,7 @@ extend( NeuroRelation, NeuroHasManyThrough,
 
       if ( !remoteData && this.cascadeSave )
       {
-        through.$save();
+        through.$save( this.cascadeSave );
       }
     }
   },
@@ -577,9 +574,9 @@ extend( NeuroRelation, NeuroHasManyThrough,
 
       through.$off( NeuroModel.Events.Removed, relation.onThroughRemoved );
 
-      if ( callRemove )
+      if ( callRemove && this.cascadeRemove )
       {
-        through.$remove();
+        through.$remove( this.cascadeRemove );
       }
 
       throughs.remove( throughKey );

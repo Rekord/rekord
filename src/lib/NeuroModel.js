@@ -54,6 +54,10 @@ NeuroModel.Events =
   LocalRemoveFailure:   'local-remove-failure',
   RemoteRemove:         'remote-remove',
   RemoteRemoveFailure:  'remote-remove-failure',
+  LocalGet:             'local-get',
+  LocalGetFailure:      'local-get-failure',
+  RemoteGet:            'remote-get',
+  RemoteGetFailure:     'remote-get-failure',
   RemoteAndRemove:      'remote-remove removed',
   SavedRemoteUpdate:    'saved remote-update',
   Changes:              'saved remote-update key-update relation-update removed change'
@@ -263,15 +267,17 @@ NeuroModel.prototype =
   $save: function(setProperties, setValue, cascade)
   {
     var cascade = 
-      (arguments.length === 3 ? cascade !== false : 
-        (arguments.length === 2 && isObject( setProperties ) ? setValue !== false : 
-          (arguments.length === 1 ? setProperties !== false : true ) ) );
+      (arguments.length === 3 ? cascade : 
+        (arguments.length === 2 && isObject( setProperties ) && isNumber( setValue ) ? setValue : 
+          (arguments.length === 1 && isNumber( setProperties ) ?  setProperties : Neuro.Cascade.All ) ) );
+
+    var existing = this.$db.preSave( this );
 
     this.$set( setProperties, setValue );
 
     this.$trigger( NeuroModel.Events.PreSave, [this] );
 
-    this.$db.save( this, cascade );
+    this.$db.save( this, cascade, existing );
 
     this.$trigger( NeuroModel.Events.PostSave, [this] );
   },

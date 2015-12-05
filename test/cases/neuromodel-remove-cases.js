@@ -27,15 +27,14 @@ test( 'delete while in the middle of save', function(assert)
 
   t0.$remove();
 
-  setTimeout(function()
+  wait(15, function()
   {
     strictEqual( rest.map.values.length, 0 );
     strictEqual( t0.$saved, void 0 )
     ok( t0.$isDeleted() );
 
     done();
-
-  }, 15);
+  });
 
 });
 

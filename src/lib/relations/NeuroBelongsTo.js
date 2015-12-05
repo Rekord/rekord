@@ -13,7 +13,7 @@ NeuroBelongsTo.Defaults =
   property:             true,
   dynamic:              false,
   local:                null,
-  cascade:              true,
+  cascade:              Neuro.Cascade.Local,
   discriminator:        'discriminator',
   discriminators:       {},
   discriminatorToModel: {}
@@ -45,45 +45,30 @@ extend( NeuroRelation, NeuroBelongsTo,
 
   handleLoad: function(model, remoteData)
   {
-    var that = this;
-    var isRelated = this.isRelatedFactory( model );
     var initial = model[ this.name ];
-
     var relation = model.$relations[ this.name ] = 
     {
       parent: model,
-      initial: initial,
-      isRelated: isRelated,
+      isRelated: this.isRelatedFactory( model ),
       related: null,
       loaded: false,
 
       onRemoved: function() 
       {
-        Neuro.debug( Neuro.Debugs.BELONGSTO_NINJA_REMOVE, that, model, relation );
+        Neuro.debug( Neuro.Debugs.BELONGSTO_NINJA_REMOVE, this, model, relation );
 
-        if ( this.cascade )
+        model.$remove( this.cascade );
+        this.clearRelated( relation );
+      },
+      
+      onSaved: function()
+      {
+        Neuro.debug( Neuro.Debugs.BELONGSTO_NINJA_SAVE, this, model, relation );
+
+        if ( !relation.isRelated( relation.related ) )
         {
           model.$remove( this.cascade );
-        }
-        else
-        {
           this.clearRelated( relation );
-        }
-      },
-      onSaved: function() 
-      {
-        Neuro.debug( Neuro.Debugs.BELONGSTO_NINJA_SAVE, that, model, relation );
-
-        if ( !isRelated( relation.related ) )
-        {
-          if ( this.cascade )
-          {
-            model.$remove( this.cascade ); 
-          }
-          else
-          {
-            this.clearRelated( relation );
-          }
         }
       }
     };

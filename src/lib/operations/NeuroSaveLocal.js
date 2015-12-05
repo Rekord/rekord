@@ -6,6 +6,8 @@ function NeuroSaveLocal(model, cascade)
 extend( NeuroOperation, NeuroSaveLocal,
 {
 
+  cascading: Neuro.Cascade.Local,
+
   interrupts: false,
 
   type: 'NeuroSaveLocal',
@@ -20,9 +22,9 @@ extend( NeuroOperation, NeuroSaveLocal,
 
       this.finish();
     }
-    else if ( db.cache === Neuro.Cache.None )
+    else if ( db.cache === Neuro.Cache.None || !this.canCascade() )
     {
-      if ( this.cascade )
+      if ( this.canCascade( Neuro.Cascade.Remote ) )
       {
         if ( this.tryNext( NeuroSaveRemote ) )
         {

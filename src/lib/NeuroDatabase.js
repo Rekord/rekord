@@ -1040,8 +1040,7 @@ NeuroDatabase.prototype =
     return new this.Model( data, remoteData );
   },
 
-  // Save the model
-  save: function(model, cascade)
+  preSave: function(model)
   {
     var db = this;
 
@@ -1054,30 +1053,51 @@ NeuroDatabase.prototype =
     }
 
     // Place the model and trigger a database update.
-    this.saveToModels( model );
+    return this.saveToModels( model );
+  },
+
+  // Save the model
+  save: function(model, cascade, existing)
+  {
+    var db = this;
+
+    // If the model is deleted, return immediately!
+    if ( model.$isDeleted() )
+    {
+      Neuro.debug( Neuro.Debugs.SAVE_DELETED, db, model );
+
+      return;
+    }
+
+    if ( existing )
+    {
+      db.trigger( NeuroDatabase.Events.ModelUpdated, [model] );
+
+      model.$trigger( NeuroModel.Events.UpdateAndSave );
+    }
+    else
+    {
+      db.trigger( NeuroDatabase.Events.ModelAdded, [model] );
+
+      model.$trigger( NeuroModel.Events.CreateAndSave );
+    }
 
     model.$addOperation( NeuroSaveLocal, cascade );
   },
 
-  saveToModels: function(model, remoteData)
+  saveToModels: function(model)
   {
     var db = this;
     var key = model.$key();
+    var existing = db.models.has( key );
 
-    if ( !db.models.has( key ) )
+    if ( !existing )
     {
-      db.models.put( key, model );
-      db.trigger( NeuroDatabase.Events.ModelAdded, [model, remoteData] );
+      db.models.put( key, model ); 
       db.updated();
-
-      model.$trigger( NeuroModel.Events.CreateAndSave );
     }
-    else
-    {
-      db.trigger( NeuroDatabase.Events.ModelUpdated, [model, remoteData] );
 
-      model.$trigger( NeuroModel.Events.UpdateAndSave );
-    }
+    return existing;
   },
 
   // Remove the model 
@@ -1096,7 +1116,7 @@ NeuroDatabase.prototype =
 
     model.$status = NeuroModel.Status.RemovePending;
 
-    model.$addOperation( NeuroRemoveLocal );
+    model.$addOperation( NeuroRemoveLocal, cascade );
   },
 
   removeFromModels: function(model)

@@ -1,6 +1,6 @@
 function NeuroPage(collection, pageSize, pageIndex)
 {
-  this.onChanges = copyFunction( this.handleChanges );
+  this.onChanges = bind( this, this.handleChanges );
   this.pageSize = pageSize;
   this.pageIndex = pageIndex || 0;
   this.pageCount = 0;
@@ -51,7 +51,7 @@ extendArray( Array, NeuroPage,
 
   connect: function()
   {
-    this.collection.on( NeuroCollection.Events.Changes, this.onChanges, this );
+    this.collection.on( NeuroCollection.Events.Changes, this.onChanges );
   },
 
   disconnect: function()

@@ -6,6 +6,8 @@ function NeuroSaveNow(model, cascade)
 extend( NeuroOperation, NeuroSaveNow,
 {
 
+  cascading: Neuro.Cascade.Local,
+
   interrupts: false,
 
   type: 'NeuroSaveNow',
@@ -15,7 +17,7 @@ extend( NeuroOperation, NeuroSaveNow,
     var key = model.$key();
     var local = model.$local;
 
-    if ( db.cache === Neuro.Cache.All && key && local )
+    if ( db.cache === Neuro.Cache.All && key && local && this.canCascade() )
     {
       db.store.put( key, local, this.success(), this.failure() );
     }

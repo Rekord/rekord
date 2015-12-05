@@ -200,28 +200,33 @@ test( 'poly hasMany', function()
   var p0 = Person.create({first: 'Phil', last: 'Diffy', contacts: [c0, c1, c2]});
 
   deepEqual( p0.contacts.toArray(), [c0, c1, c2] );
+  notOk( c0.$isDeleted() );
   strictEqual( c0.parent_id, p0.id );
   strictEqual( c0.parent_type, Discriminators.Person );
+  notOk( c1.$isDeleted() );
   strictEqual( c1.parent_id, p0.id );
   strictEqual( c1.parent_type, Discriminators.Person );
+  notOk( c2.$isDeleted() );
   strictEqual( c2.parent_id, p0.id );
   strictEqual( c2.parent_type, Discriminators.Person );
 
   c1.$remove();
 
   deepEqual( p0.contacts.toArray(), [c0, c2] );
+  notOk( c0.$isDeleted() );
   strictEqual( c0.parent_id, p0.id );
   strictEqual( c0.parent_type, Discriminators.Person );
-  strictEqual( c1.parent_id, null );
-  strictEqual( c1.parent_type, null );
+  ok( c1.$isDeleted() );
+  strictEqual( c1.parent_id, p0.id, 'foreign key does not get cleared' );
+  strictEqual( c1.parent_type, Discriminators.Person, 'discriminator does not get cleared' );
+  notOk( c2.$isDeleted() );
   strictEqual( c2.parent_id, p0.id );
   strictEqual( c2.parent_type, Discriminators.Person );
 
   p0.contacts = null;
 
   deepEqual( p0.contacts.toArray(), [] );
-  strictEqual( c0.parent_id, null );
-  strictEqual( c0.parent_type, null );
-  strictEqual( c2.parent_id, null );
-  strictEqual( c2.parent_type, null );
+  ok( c0.$isDeleted() );
+  ok( c1.$isDeleted() );
+  ok( c2.$isDeleted() );
 });

@@ -13,7 +13,7 @@ NeuroHasOne.Defaults =
   property:             true,
   dynamic:              false,
   local:                null,
-  cascade:              true,
+  cascade:              Neuro.Cascade.All,
   discriminator:        'discriminator',
   discriminators:       {},
   discriminatorToModel: {}
@@ -45,15 +45,11 @@ extend( NeuroRelation, NeuroHasOne,
 
   handleLoad: function(model, remoteData)
   {
-    var that = this;
-    var isRelated = this.isRelatedFactory( model );
     var initial = model[ this.name ];
-
     var relation = model.$relations[ this.name ] = 
     {
       parent: model,
-      initial: initial,
-      isRelated: isRelated,
+      isRelated: this.isRelatedFactory( model ),
       related: null,
       loaded: false,
       dirty: false,
@@ -61,23 +57,9 @@ extend( NeuroRelation, NeuroHasOne,
 
       onRemoved: function() 
       {
-        Neuro.debug( Neuro.Debugs.HASONE_NINJA_REMOVE, that, model, relation );
+        Neuro.debug( Neuro.Debugs.HASONE_NINJA_REMOVE, this, model, relation );
 
         this.clearRelated( relation );
-      },
-      onSaved: function() 
-      {
-        if ( relation.saving )
-        {
-          return;
-        }
-
-        Neuro.debug( Neuro.Debugs.HASONE_NINJA_SAVE, that, model, relation );
-
-        if ( !isRelated( relation.related ) )
-        {
-          this.clearRelated( relation );
-        }
       }
     };
 
@@ -217,12 +199,11 @@ extend( NeuroRelation, NeuroHasOne,
     {
       Neuro.debug( Neuro.Debugs.HASONE_CLEAR_MODEL, this, relation );
 
-      related.$off( NeuroModel.Events.Saved, relation.onSaved );
       related.$off( NeuroModel.Events.Removed, relation.onRemoved );
 
       if ( this.cascade && !related.$isDeleted() )
       {
-        related.$remove();
+        related.$remove( this.cascade );
       }
 
       relation.related = null;
@@ -233,7 +214,6 @@ extend( NeuroRelation, NeuroHasOne,
 
   setModel: function(relation, related)
   {
-    related.$on( NeuroModel.Events.Saved, relation.onSaved, this );
     related.$on( NeuroModel.Events.Removed, relation.onRemoved, this );
 
     relation.related = related;

@@ -4,21 +4,17 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
   {
     if ( !isObject( props ) )
     {
-      var model = db.instantiate();
+      var instance = db.instantiate();
 
-      model.$save();
+      instance.$save();
 
-      return model;
+      return instance;
     }
 
     var fields = grab( props, db.fields );
-    var model = db.instantiate( fields );
-    var key = model.$key();
+    var instance = db.instantiate( fields );
+    var key = instance.$key();
     var relations = {};
-
-    db.models.put( key, model );
-    db.trigger( NeuroDatabase.Events.ModelAdded, [model, false] );
-    db.updated();
 
     for (var i = 0; i < db.relationNames.length; i++)
     {
@@ -30,8 +26,8 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
       }
     }
 
-    model.$save( relations );
+    instance.$save( relations );
 
-    return model;
+    return instance;
   };
 });

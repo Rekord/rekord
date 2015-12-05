@@ -4,8 +4,8 @@ function NeuroRemoteQuery(database, query)
   this.query = query;
   this.status = NeuroRemoteQuery.Status.Success;
 
-  this.onSuccess = this.handleSuccess();
-  this.onFailure = this.handleFailure();
+  this.onSuccess = bind( this, this.handleSuccess );
+  this.onFailure = bind( this, this.handleFailure );
 }
 
 NeuroRemoteQuery.Status =
@@ -102,29 +102,19 @@ extendArray( NeuroQuery, NeuroRemoteQuery,
     return this;
   },
 
-  handleSuccess: function()
+  handleSuccess: function(models)
   {
-    var query = this;
-
-    return function(models)
-    {
-      query.status = NeuroRemoteQuery.Status.Success;
-      query.reset( models, true );
-      query.trigger( NeuroRemoteQuery.Events.Success, [query] );
-      query.trigger( NeuroRemoteQuery.Events.Ready, [query] );
-    };
+    this.status = NeuroRemoteQuery.Status.Success;
+    this.reset( models, true );
+    this.trigger( NeuroRemoteQuery.Events.Success, [this] );
+    this.trigger( NeuroRemoteQuery.Events.Ready, [this] );
   },
 
-  handleFailure: function()
+  handleFailure: function(models, error)
   {
-    var query = this;
-
-    return function(models, error)
-    {
-      query.status = NeuroRemoteQuery.Status.Failure;
-      query.trigger( NeuroRemoteQuery.Events.Failure, [query] );
-      query.trigger( NeuroRemoteQuery.Events.Ready, [query] );
-    };
+    this.status = NeuroRemoteQuery.Status.Failure;
+    this.trigger( NeuroRemoteQuery.Events.Failure, [this] );
+    this.trigger( NeuroRemoteQuery.Events.Ready, [this] );
   }
 
 });

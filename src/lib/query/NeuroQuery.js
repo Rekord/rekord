@@ -1,8 +1,8 @@
 function NeuroQuery(database, whereProperties, whereValue, whereEquals)
 {
-  this.onModelAdd = copyFunction( this.handleModelAdded );
-  this.onModelRemoved = copyFunction( this.handleModelRemoved );
-  this.onModelUpdated = copyFunction( this.handleModelUpdated );
+  this.onModelAdd     = bind( this, this.handleModelAdded );
+  this.onModelRemoved = bind( this, this.handleModelRemoved );
+  this.onModelUpdated = bind( this, this.handleModelUpdated );
 
   this.init( database );
   this.connect();
@@ -20,9 +20,9 @@ extendArray( NeuroModelCollection, NeuroQuery,
 
   connect: function()
   {
-    this.database.on( NeuroDatabase.Events.ModelAdded, this.onModelAdd, this );
-    this.database.on( NeuroDatabase.Events.ModelRemoved, this.onModelRemoved, this );
-    this.database.on( NeuroDatabase.Events.ModelUpdated, this.onModelUpdated, this );
+    this.database.on( NeuroDatabase.Events.ModelAdded, this.onModelAdd );
+    this.database.on( NeuroDatabase.Events.ModelRemoved, this.onModelRemoved );
+    this.database.on( NeuroDatabase.Events.ModelUpdated, this.onModelUpdated );
   },
 
   disconnect: function()
@@ -38,7 +38,7 @@ extendArray( NeuroModelCollection, NeuroQuery,
     var map = this.map;
     var models = this.database.models;
 
-    this.map.reset();
+    map.reset();
 
     for (var i = 0; i < models.length; i++)
     {

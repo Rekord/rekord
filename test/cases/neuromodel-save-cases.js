@@ -130,7 +130,7 @@ test( 'save while offline, resume save online', function(assert)
 test( 'save, then delete, then save finishes', function(assert)
 {
   noline();
-  
+
   var Todo = Neuro({
     name: 'save_offline',
     fields: ['id', 'name']
@@ -213,12 +213,12 @@ test( 'save remote and cache pending should remove locally', function(assert)
   ok( local.map.has( t0.id ) );
   notOk( remote.map.has( t0.id ) );
 
-  setTimeout(function()
+  wait(15, function()
   {
     ok( t0.$isSaved() );
     notOk( local.map.has( t0.id ) );
     ok( remote.map.has( t0.id ) );
     done();
 
-  }, 15);
+  });
 });

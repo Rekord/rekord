@@ -569,9 +569,9 @@ test( 'local custom', function(assert)
   strictEqual( t0.created_by, u0.id );
 });
 
-test( 'cascade true', function(assert)
+test( 'cascade none', function(assert)
 { 
-  var prefix = 'hasOne_cascade_true_';
+  var prefix = 'hasOne_cascade_none_';
 
   var User = Neuro({
     name: prefix + 'user',
@@ -585,7 +585,7 @@ test( 'cascade true', function(assert)
       creator: {
         model: User,
         local: 'created_by',
-        cascade: true
+        cascade: Neuro.Cascade.None
       }
     }
   });
@@ -593,48 +593,386 @@ test( 'cascade true', function(assert)
   var u0 = User.create({name: 'You'});
   var t0 = Task.create({name: 'This', creator: u0});
 
+  var db = User.Database;
+  var rest = db.rest;
+  var live = db.live.live;
+  var local = db.store;
+
   ok( u0.$isSaved() );
   notOk( u0.$isDeleted() );
   ok( t0.$isSaved() );
   notOk( t0.$isDeleted() );
+
+  rest.lastModel = null;
+  live.lastMessage = null;
+  local.lastKey = null;
+
+  t0.$remove();
+
+  notOk( u0.$isDeleted(), 'user deleted' );
+  ok( t0.$isDeleted(), 'task deleted' );
+
+  strictEqual( rest.lastModel, null, 'no rest' );
+  strictEqual( live.lastMessage, null, 'no live' );
+  strictEqual( local.lastKey, null, 'no local' );
+
+  strictEqual( t0.creator, u0, 'reference not cleared' );
+  strictEqual( t0.created_by, u0.id, 'foreign key not cleared' );
+});
+
+test( 'cascade local', function(assert)
+{ 
+  var prefix = 'hasOne_cascade_local_';
+
+  var User = Neuro({
+    name: prefix + 'user',
+    fields: ['id', 'name']
+  });
+
+  var Task = Neuro({
+    name: prefix + 'task',
+    fields: ['id', 'name', 'created_by'],
+    hasOne: {
+      creator: {
+        model: User,
+        local: 'created_by',
+        cascade: Neuro.Cascade.Local
+      }
+    }
+  });
+
+  var u0 = User.create({name: 'You'});
+  var t0 = Task.create({name: 'This', creator: u0});
+
+  var db = User.Database;
+  var rest = db.rest;
+  var live = db.live.live;
+  var local = db.store;
+
+  ok( u0.$isSaved() );
+  notOk( u0.$isDeleted() );
+  ok( t0.$isSaved() );
+  notOk( t0.$isDeleted() );
+
+  rest.lastModel = null;
+  live.lastMessage = null;
+  local.lastKey = null;
+
+  t0.$remove();
+
+  ok( u0.$isDeleted(), 'user deleted' );
+  ok( t0.$isDeleted(), 'task deleted' );
+
+  strictEqual( rest.lastModel, null, 'no rest' );
+  strictEqual( live.lastMessage, null, 'no live' );
+  strictEqual( local.lastKey, u0.id, 'local' );
+
+  strictEqual( t0.creator, u0, 'reference not cleared' );
+  strictEqual( t0.created_by, u0.id, 'foreign key not cleared' );
+});
+
+test( 'cascade rest', function(assert)
+{ 
+  var prefix = 'hasOne_cascade_rest_';
+
+  var User = Neuro({
+    name: prefix + 'user',
+    fields: ['id', 'name']
+  });
+
+  var Task = Neuro({
+    name: prefix + 'task',
+    fields: ['id', 'name', 'created_by'],
+    hasOne: {
+      creator: {
+        model: User,
+        local: 'created_by',
+        cascade: Neuro.Cascade.Rest
+      }
+    }
+  });
+
+  var u0 = User.create({name: 'You'});
+  var t0 = Task.create({name: 'This', creator: u0});
+
+  var db = User.Database;
+  var rest = db.rest;
+  var live = db.live.live;
+  var local = db.store;
+
+  ok( u0.$isSaved() );
+  notOk( u0.$isDeleted() );
+  ok( t0.$isSaved() );
+  notOk( t0.$isDeleted() );
+
+  rest.lastModel = null;
+  live.lastMessage = null;
+  local.lastKey = null;
+
+  t0.$remove();
+
+  ok( u0.$isDeleted(), 'user deleted' );
+  ok( t0.$isDeleted(), 'task deleted' );
+
+  strictEqual( rest.lastModel, u0, 'rest' );
+  strictEqual( live.lastMessage, null, 'no live' );
+  strictEqual( local.lastKey, null, 'no local' );
+
+  strictEqual( t0.creator, u0, 'reference not cleared' );
+  strictEqual( t0.created_by, u0.id, 'foreign key not cleared' );
+});
+
+test( 'cascade nolive', function(assert)
+{ 
+  var prefix = 'hasOne_cascade_nolive_';
+
+  var User = Neuro({
+    name: prefix + 'user',
+    fields: ['id', 'name']
+  });
+
+  var Task = Neuro({
+    name: prefix + 'task',
+    fields: ['id', 'name', 'created_by'],
+    hasOne: {
+      creator: {
+        model: User,
+        local: 'created_by',
+        cascade: Neuro.Cascade.NoLive
+      }
+    }
+  });
+
+  var u0 = User.create({name: 'You'});
+  var t0 = Task.create({name: 'This', creator: u0});
+
+  var db = User.Database;
+  var rest = db.rest;
+  var live = db.live.live;
+  var local = db.store;
+
+  ok( u0.$isSaved() );
+  notOk( u0.$isDeleted() );
+  ok( t0.$isSaved() );
+  notOk( t0.$isDeleted() );
+
+  rest.lastModel = null;
+  live.lastMessage = null;
+  local.lastKey = null;
+
+  t0.$remove();
+
+  ok( u0.$isDeleted(), 'user deleted' );
+  ok( t0.$isDeleted(), 'task deleted' );
+
+  strictEqual( rest.lastModel, u0, 'rest' );
+  strictEqual( live.lastMessage, null, 'no live' );
+  strictEqual( local.lastKey, u0.id, 'local' );
+
+  strictEqual( t0.creator, u0, 'reference not cleared' );
+  strictEqual( t0.created_by, u0.id, 'foreign key not cleared' );
+});
+
+test( 'cascade live', function(assert)
+{ 
+  var prefix = 'hasOne_cascade_live_';
+
+  var User = Neuro({
+    name: prefix + 'user',
+    fields: ['id', 'name']
+  });
+
+  var Task = Neuro({
+    name: prefix + 'task',
+    fields: ['id', 'name', 'created_by'],
+    hasOne: {
+      creator: {
+        model: User,
+        local: 'created_by',
+        cascade: Neuro.Cascade.Live
+      }
+    }
+  });
+
+  var u0 = User.create({name: 'You'});
+  var t0 = Task.create({name: 'This', creator: u0});
+
+  var db = User.Database;
+  var rest = db.rest;
+  var live = db.live.live;
+  var local = db.store;
+
+  ok( u0.$isSaved() );
+  notOk( u0.$isDeleted() );
+  ok( t0.$isSaved() );
+  notOk( t0.$isDeleted() );
+
+  rest.lastModel = null;
+  live.lastMessage = null;
+  local.lastKey = null;
+
+  t0.$remove();
+
+  ok( u0.$isDeleted(), 'user deleted' );
+  ok( t0.$isDeleted(), 'task deleted' );
+
+  strictEqual( rest.lastModel, null, 'rest' );
+  strictEqual( live.lastMessage.key, u0.id, 'live' );
+  strictEqual( local.lastKey, null, 'local' );
+
+  strictEqual( t0.creator, u0, 'reference not cleared' );
+  strictEqual( t0.created_by, u0.id, 'foreign key not cleared' );
+});
+
+test( 'cascade norest', function(assert)
+{ 
+  var prefix = 'hasOne_cascade_norest_';
+
+  var User = Neuro({
+    name: prefix + 'user',
+    fields: ['id', 'name']
+  });
+
+  var Task = Neuro({
+    name: prefix + 'task',
+    fields: ['id', 'name', 'created_by'],
+    hasOne: {
+      creator: {
+        model: User,
+        local: 'created_by',
+        cascade: Neuro.Cascade.NoRest
+      }
+    }
+  });
+
+  var u0 = User.create({name: 'You'});
+  var t0 = Task.create({name: 'This', creator: u0});
+
+  var db = User.Database;
+  var rest = db.rest;
+  var live = db.live.live;
+  var local = db.store;
+
+  ok( u0.$isSaved() );
+  notOk( u0.$isDeleted() );
+  ok( t0.$isSaved() );
+  notOk( t0.$isDeleted() );
+
+  rest.lastModel = null;
+  live.lastMessage = null;
+  local.lastKey = null;
+
+  t0.$remove();
+
+  ok( u0.$isDeleted(), 'user deleted' );
+  ok( t0.$isDeleted(), 'task deleted' );
+
+  strictEqual( rest.lastModel, null, 'rest' );
+  strictEqual( live.lastMessage.key, u0.id, 'live' );
+  strictEqual( local.lastKey, u0.id, 'local' );
+
+  strictEqual( t0.creator, u0, 'reference not cleared' );
+  strictEqual( t0.created_by, u0.id, 'foreign key not cleared' );
+});
+
+test( 'cascade remote', function(assert)
+{ 
+  var prefix = 'hasOne_cascade_remote_';
+
+  var User = Neuro({
+    name: prefix + 'user',
+    fields: ['id', 'name']
+  });
+
+  var Task = Neuro({
+    name: prefix + 'task',
+    fields: ['id', 'name', 'created_by'],
+    hasOne: {
+      creator: {
+        model: User,
+        local: 'created_by',
+        cascade: Neuro.Cascade.Remote
+      }
+    }
+  });
+
+  var u0 = User.create({name: 'You'});
+  var t0 = Task.create({name: 'This', creator: u0});
+
+  var db = User.Database;
+  var rest = db.rest;
+  var live = db.live.live;
+  var local = db.store;
+
+  ok( u0.$isSaved() );
+  notOk( u0.$isDeleted() );
+  ok( t0.$isSaved() );
+  notOk( t0.$isDeleted() );
+
+  rest.lastModel = null;
+  live.lastMessage = null;
+  local.lastKey = null;
+
+  t0.$remove();
+
+  ok( u0.$isDeleted(), 'user deleted' );
+  ok( t0.$isDeleted(), 'task deleted' );
+
+  strictEqual( rest.lastModel, u0, 'rest' );
+  strictEqual( live.lastMessage.key, u0.id, 'live' );
+  strictEqual( local.lastKey, null, 'local' );
+
+  strictEqual( t0.creator, u0, 'reference not cleared' );
+  strictEqual( t0.created_by, u0.id, 'foreign key not cleared' );
+});
+
+test( 'cascade all', function(assert)
+{ 
+  var prefix = 'hasOne_cascade_all_';
+
+  var User = Neuro({
+    name: prefix + 'user',
+    fields: ['id', 'name']
+  });
+
+  var Task = Neuro({
+    name: prefix + 'task',
+    fields: ['id', 'name', 'created_by'],
+    hasOne: {
+      creator: {
+        model: User,
+        local: 'created_by',
+        cascade: Neuro.Cascade.All
+      }
+    }
+  });
+
+  var u0 = User.create({name: 'You'});
+  var t0 = Task.create({name: 'This', creator: u0});
+
+  var db = User.Database;
+  var rest = db.rest;
+  var live = db.live.live;
+  var local = db.store;
+
+  ok( u0.$isSaved() );
+  notOk( u0.$isDeleted() );
+  ok( t0.$isSaved() );
+  notOk( t0.$isDeleted() );
+
+  rest.lastModel = null;
+  live.lastMessage = null;
+  local.lastKey = null;
 
   t0.$remove();
 
   ok( u0.$isDeleted() );
   ok( t0.$isDeleted() );
-});
 
-test( 'cascade false', function(assert)
-{
-  var prefix = 'hasOne_cascade_false_';
+  strictEqual( rest.lastModel, u0 );
+  strictEqual( live.lastMessage.key, u0.id );
+  strictEqual( local.lastKey, u0.id );
 
-  var User = Neuro({
-    name: prefix + 'user',
-    fields: ['id', 'name']
-  });
-
-  var Task = Neuro({
-    name: prefix + 'task',
-    fields: ['id', 'name', 'created_by'],
-    hasOne: {
-      creator: {
-        model: User,
-        local: 'created_by',
-        cascade: false
-      }
-    }
-  });
-
-  var u0 = User.create({name: 'You'});
-  var t0 = Task.create({name: 'This', creator: u0});
-
-  ok( u0.$isSaved() );
-  notOk( u0.$isDeleted() );
-  ok( t0.$isSaved() );
-  notOk( t0.$isDeleted() );
-
-  t0.$remove();
-
-  notOk( u0.$isDeleted() );
-  ok( t0.$isDeleted() );
+  strictEqual( t0.creator, u0, 'reference not cleared' );
+  strictEqual( t0.created_by, u0.id, 'foreign key not cleared' );
 });

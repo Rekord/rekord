@@ -29,6 +29,8 @@ var build = {
     './src/lib/collections/NeuroFilteredCollection.js',
     './src/lib/collections/NeuroModelCollection.js',
     './src/lib/collections/NeuroDiscriminatedModelCollection.js',
+    './src/lib/collections/NeuroRelationCollection.js',
+    './src/lib/collections/NeuroDiscriminatedRelationCollection.js',
     './src/lib/query/NeuroQuery.js',
     './src/lib/query/NeuroRemoteQuery.js',
     './src/lib/NeuroPage.js',

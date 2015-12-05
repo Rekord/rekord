@@ -6,6 +6,8 @@ function NeuroRemoveCache(model, cascade)
 extend( NeuroOperation, NeuroRemoveCache,
 {
 
+  cascading: Neuro.Cascade.None,
+
   interrupts: true,
 
   type: 'NeuroRemoveCache',

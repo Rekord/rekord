@@ -6,6 +6,8 @@ function NeuroRemoveLocal(model, cascade)
 extend( NeuroOperation, NeuroRemoveLocal, 
 {
 
+  cascading: Neuro.Cascade.Local,
+
   interrupts: true,
 
   type: 'NeuroRemoveLocal',
@@ -14,7 +16,7 @@ extend( NeuroOperation, NeuroRemoveLocal,
   {
     model.$status = NeuroModel.Status.RemovePending;
 
-    if ( db.cache === Neuro.Cache.None || !model.$local )
+    if ( db.cache === Neuro.Cache.None || !model.$local || !this.canCascade() )
     {
       Neuro.debug( Neuro.Debugs.REMOVE_LOCAL_NONE, model );
 
@@ -45,9 +47,9 @@ extend( NeuroOperation, NeuroRemoveLocal,
 
     model.$trigger( NeuroModel.Events.LocalRemove, [model] );
 
-    if ( model.$saved && this.cascade )
+    if ( model.$saved && this.canCascade( Neuro.Cascade.Remote ) )
     {
-      model.$addOperation( NeuroRemoveRemote );
+      model.$addOperation( NeuroRemoveRemote, this.cascade );
     }
   },
 
@@ -59,9 +61,9 @@ extend( NeuroOperation, NeuroRemoveLocal,
 
     model.$trigger( NeuroModel.Events.LocalRemoveFailure, [model] );
 
-    if ( model.$saved && this.cascade )
+    if ( model.$saved && this.canCascade( Neuro.Cascade.Remote ) )
     {
-      model.$addOperation( NeuroRemoveRemote );
+      model.$addOperation( NeuroRemoveRemote, this.cascade );
     }
   }
 

@@ -48,28 +48,6 @@ function wait(millis, func)
   setTimeout( func, millis );
 }
 
-Array.prototype.pluck = function(property)
-{
-  var plucked = [];
-
-  for (var i = 0; i < this.length; i++)
-  {
-    var item = this[ i ];
-
-    if ( item !== null && item !== void 0 )
-    {
-      var value = item[ property ];
-
-      if ( value !== null && value !== void 0 )
-      {
-        plucked.push( value );
-      }
-    }
-  }
-
-  return plucked;
-};
-
 // Neuro.store."database name".(put|remove|all)
 
 Neuro.store = function(database)
@@ -100,11 +78,11 @@ TestStore.prototype =
 
     if ( store.delay > 0 )
     {
-      setTimeout(function()
+      wait( store.delay, function()
       {
         store.finish( success, failure, arg0, arg1 );
 
-      }, store.delay );
+      });
     }
     else
     {
@@ -275,11 +253,11 @@ TestRest.prototype =
 
     if ( rest.delay > 0 )
     {
-      setTimeout(function()
+      wait( rest.delay, function()
       {
         rest.finish( success, failure, returnValue );
 
-      }, rest.delay );
+      });
     }
     else
     {

@@ -1,14 +1,15 @@
 
-/* Removing?
-Neuro.Cascade = {
-  None:     0,
-  Local:    1,
-  Rest:     2,
-  Live:     4,
-  Remote:   6,
-  All:      7
+Neuro.Cascade =
+{
+  None:       0,
+  Local:      1,
+  Rest:       2,
+  NoLive:     3,
+  Live:       4,
+  NoRest:     5,
+  Remote:     6,
+  All:        7
 };
-*/
 
 function NeuroOperation()
 {
@@ -19,10 +20,25 @@ NeuroOperation.prototype =
   reset: function(model, cascade)
   {
     this.model = model;
-    this.cascade = cascade !== false;
+    this.cascade = isNumber( cascade ) ? cascade : Neuro.Cascade.All;
     this.db = model.$db;
     this.next = null;
     this.finished = false;
+  },
+
+  canCascade: function(cascade)
+  {
+    var expected = cascade || this.cascading;
+    var actual = this.cascade;
+
+    return (expected & actual) !== 0;
+  },
+
+  notCascade: function(expected)
+  {
+    var actual = this.cascade;
+
+    return (expected & actual) === 0;
   },
 
   queue: function(operation)
@@ -35,6 +51,26 @@ NeuroOperation.prototype =
     {
       this.next = operation;
     }
+  },
+
+  tryNext: function(OperationType)
+  {
+    var setNext = !this.next;
+
+    if ( setNext )
+    {
+      this.next = new OperationType( this.model, this.cascade );
+    }
+
+    return setNext;
+  },
+
+  insertNext: function(OperationType)
+  {
+    var op = new OperationType( this.model, this.cascade );
+
+    op.next = this.next;
+    this.next = op;
   },
 
   execute: function()
@@ -71,35 +107,15 @@ NeuroOperation.prototype =
     return this;
   },
 
-  tryNext: function(OperationType, cascade)
-  {
-    var setNext = !this.next;
-
-    if ( setNext )
-    {
-      this.next = new OperationType( this.model, cascade );
-    }
-
-    return setNext;
-  },
-
-  insertNext: function(OperationType, cascade)
-  {
-    var op = new OperationType( this.model, cascade );
-
-    op.next = this.next;
-    this.next = op;
-  },
-
   success: function()
   {
-    var op = this;
+    return bind( this, this.handleSuccess );
+  },
 
-    return function handleSuccess() 
-    {
-      op.onSuccess.apply( op, arguments );
-      op.finish();
-    };
+  handleSuccess: function()
+  {
+    this.onSuccess.apply( this, arguments );
+    this.finish();
   },
 
   onSuccess: function()
@@ -109,13 +125,13 @@ NeuroOperation.prototype =
 
   failure: function()
   {
-    var op = this;
+    return bind( this, this.handleFailure );
+  },
 
-    return function handleFailure() 
-    {
-      op.onFailure.apply( op, arguments );
-      op.finish();
-    };
+  handleFailure: function() 
+  {
+    this.onFailure.apply( this, arguments );
+    this.finish();
   },
 
   onFailure: function()

@@ -15,8 +15,8 @@ NeuroHasMany.Defaults =
   foreign:              null,
   comparator:           null,
   comparatorNullsFirst: false,
-  cascadeRemove:        true,
-  cascadeSave:          true,
+  cascadeRemove:        Neuro.Cascade.Local,
+  cascadeSave:          Neuro.Cascade.None,
   discriminator:        'discriminator',
   discriminators:       {},
   discriminatorToModel: {}
@@ -45,27 +45,23 @@ extend( NeuroRelation, NeuroHasMany,
 
   handleLoad: function(model, remoteData)
   {
-    var that = this;
-    var isRelated = this.isRelatedFactory( model );
-    var collection = this.createRelationCollection( model );
+    var relator = this;
     var initial = model[ this.name ];
- 
     var relation = model.$relations[ this.name ] =
     {
       parent: model,
-      isRelated: isRelated,
-      initial: initial,
       pending: {},
-      related: collection,
+      isRelated: this.isRelatedFactory( model ),
+      related: this.createRelationCollection( model ),
       saving: false,
       delaySorting: false,
       delaySaving: false,
 
       onRemoved: function() // this = model removed
       {
-        Neuro.debug( Neuro.Debugs.HASMANY_NINJA_REMOVE, that, model, this, relation );
+        Neuro.debug( Neuro.Debugs.HASMANY_NINJA_REMOVE, relator, model, this, relation );
 
-        that.removeModel( relation, this, true );
+        relator.removeModel( relation, this, true );
       },
 
       onSaved: function() // this = model saved
@@ -75,16 +71,16 @@ extend( NeuroRelation, NeuroHasMany,
           return;
         }
 
-        Neuro.debug( Neuro.Debugs.HASMANY_NINJA_SAVE, that, model, this, relation );
+        Neuro.debug( Neuro.Debugs.HASMANY_NINJA_SAVE, relator, model, this, relation );
 
-        if ( !isRelated( this ) )
+        if ( !relation.isRelated( this ) )
         {
-          that.removeModel( relation, this );
+          relator.removeModel( relation, this );
         }
         else
         {
-          that.sort( relation );
-          that.checkSave( relation );
+          relator.sort( relation );
+          relator.checkSave( relation );
         }
       }
 
@@ -303,7 +299,7 @@ extend( NeuroRelation, NeuroHasMany,
 
         if ( !related.$isDeleted() && related.$hasChanges() )
         {
-          related.$save();
+          related.$save( this.cascadeSave );
         }
       }
 
@@ -324,11 +320,11 @@ extend( NeuroRelation, NeuroHasMany,
       {
         var models = relation.related;
 
-        for (var i = 0; i < models.length; i++)
+        for (var i = models.length - 1; i >= 0; i--)
         {
           var related = models[ i ];
 
-          related.$remove();
+          related.$remove( this.cascadeRemove );
         }
       });
     }
@@ -446,10 +442,9 @@ extend( NeuroRelation, NeuroHasMany,
 
       if ( !alreadyRemoved && this.cascadeRemove )
       {
-        related.$remove();
+        related.$remove( this.cascadeRemove );
       }
-
-      this.clearForeignKey( related );
+      
       this.sort( relation );
       this.checkSave( relation );
     }
@@ -503,13 +498,13 @@ extend( NeuroRelation, NeuroHasMany,
     this.updateFields( related, foreign, model, local, remoteData );
   },
 
-  clearForeignKey: function(related)
+  clearForeignKey: function(related, cascade)
   {
     if ( this.clearKey )
     {
       var foreign = this.foreign;
 
-      this.clearFields( related, foreign );
+      this.clearFields( related, foreign, false, cascade );
     }
   },
 

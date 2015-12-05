@@ -6,6 +6,8 @@ function NeuroRemoveNow(model, cascade)
 extend( NeuroOperation, NeuroRemoveNow,
 {
 
+  cascading: Neuro.Cascade.Local,
+
   interrupts: true,
 
   type: 'NeuroRemoveNow',
@@ -18,7 +20,7 @@ extend( NeuroOperation, NeuroRemoveNow,
 
     db.removeFromModels( model );
 
-    if ( db.cache === Neuro.Cache.None )
+    if ( db.cache === Neuro.Cache.None || !this.canCascade() )
     {
       this.finishRemove();
       this.finish();

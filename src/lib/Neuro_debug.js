@@ -78,7 +78,6 @@ Neuro.Debugs = {
 
   HASONE_INIT: 53,            // NeuroHasOne
   HASONE_NINJA_REMOVE: 49,    // NeuroModel, relation
-  HASONE_NINJA_SAVE: 50,      // NeuroModel, relation
   HASONE_INITIAL_PULLED: 51,  // NeuroModel, initial
   HASONE_INITIAL: 52,         // NeuroModel, initial
   HASONE_CLEAR_MODEL: 54,     // relation
@@ -134,5 +133,5 @@ Neuro.Debugs = {
   HASMANYTHRU_THRU_ADD: 103,        // relation, NeuroModel
   HASMANYTHRU_THRU_REMOVE: 68       // relation, NeuroModel, NeuroModel
 
-
+  // 50
 };

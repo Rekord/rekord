@@ -6,15 +6,28 @@ function NeuroRemoveRemote(model, cascade)
 extend( NeuroOperation, NeuroRemoveRemote,
 {
 
+  cascading: Neuro.Cascade.Remote,
+
   interrupts: true,
 
   type: 'NeuroRemoveRemote',
 
   run: function(db, model)
   {
-    model.$status = NeuroModel.Status.RemovePending;
+    if ( this.notCascade( Neuro.Cascade.Rest ) )
+    {
+      this.liveRemove();
 
-    db.rest.remove( model, this.success(), this.failure() );
+      model.$trigger( NeuroModel.Events.RemoteRemove, [model] );
+
+      this.finish();
+    }
+    else 
+    {
+      model.$status = NeuroModel.Status.RemovePending;
+
+      db.rest.remove( model, this.success(), this.failure() );
+    }
   },
 
   onSuccess: function(data)
@@ -75,14 +88,27 @@ extend( NeuroOperation, NeuroRemoveRemote,
     // Remove from local storage now
     this.insertNext( NeuroRemoveNow );
 
-    // Publish REMOVE
-    Neuro.debug( Neuro.Debugs.REMOVE_PUBLISH, model, key );
+    // Remove it live!
+    this.liveRemove();
+  },
 
-    db.live(
+  liveRemove: function()
+  {
+    if ( this.canCascade( Neuro.Cascade.Live ) )
     {
-      op:   NeuroDatabase.Live.Remove,
-      key:  key
-    });
+      var db = this.db;
+      var model = this.model;
+      var key = model.$key();
+
+      // Publish REMOVE
+      Neuro.debug( Neuro.Debugs.REMOVE_PUBLISH, model, key );
+
+      db.live(
+      {
+        op:   NeuroDatabase.Live.Remove,
+        key:  key
+      });
+    }
   },
 
   handleOnline: function()

@@ -1,6 +1,6 @@
 module( 'Neuro hasManyThrough options' );
 
-function createUserGroups( prefix, usersGroupsOptions, groupsUsersOptions )
+function createUserGroups1( prefix, usersGroupsOptions, groupsUsersOptions )
 {
   var UserName = prefix + 'user';
   var GroupName = prefix + 'group';
@@ -67,6 +67,51 @@ function createUserGroups( prefix, usersGroupsOptions, groupsUsersOptions )
   };
 }
 
+function createUserGroups2( prefix, usersGroupsOptions, groupsUsersOptions )
+{
+  var UserName = prefix + 'user';
+  var GroupName = prefix + 'group';
+  var UserGroupName = prefix + 'user_group';
+
+  var User = Neuro({
+    name: UserName,
+    fields: ['id', 'name'],
+    hasManyThrough: {
+      groups: Neuro.transfer( usersGroupsOptions || {}, {
+        model: GroupName,
+        through: UserGroupName,
+        local: 'user_id',
+        foreign: 'group_id'
+      })
+    }
+  });
+
+  var Group = Neuro({
+    name: GroupName,
+    fields: ['id', 'name'],
+    hasManyThrough: {
+      users: Neuro.transfer( groupsUsersOptions || {}, {
+        model: UserName,
+        through: UserGroupName,
+        local: 'group_id',
+        foreign: 'user_id'
+      })
+    }
+  });
+
+  var UserGroup = Neuro({
+    name: UserGroupName,
+    key: ['user_id', 'group_id'],
+    fields: ['user_id', 'group_id']
+  });
+
+  return {
+    User: User,
+    Group: Group,
+    UserGroup: UserGroup
+  };
+}
+
 function seedUserGroups1( test )
 {
   var User = test.User;
@@ -106,11 +151,49 @@ function seedUserGroups1( test )
   test.ug1 = ug1;
 }
 
+function seedUserGroups2( test )
+{
+  var User = test.User;
+  var Group = test.Group;
+  var UserGroup = test.UserGroup;
+
+  var g0 = Group.create({name: 'g0'});
+  var g1 = Group.create({name: 'g1'});
+  var g2 = Group.create({name: 'g2'});
+  var u0 = User.create({name: 'u0', groups: [g0, g1, g2]});
+
+  var ug0 = UserGroup.get( [u0.id, g0.id] );
+  var ug1 = UserGroup.get( [u0.id, g1.id] );
+  var ug2 = UserGroup.get( [u0.id, g2.id] );
+
+  strictEqual( g0.users.length, 1 );
+  strictEqual( g0.users[0], u0 );
+
+  strictEqual( g1.users.length, 1 );
+  strictEqual( g1.users[0], u0 );
+
+  strictEqual( g2.users.length, 1 );
+  strictEqual( g2.users[0], u0 );
+
+  strictEqual( u0.groups.length, 3 );
+  strictEqual( u0.groups[0], g0 );
+  strictEqual( u0.groups[1], g1 );
+  strictEqual( u0.groups[2], g2 );
+
+  test.g0 = g0;
+  test.g1 = g1;
+  test.g2 = g2;
+  test.u0 = u0;
+  test.ug0 = ug0;
+  test.ug1 = ug1;
+  test.ug2 = ug2;
+}
+
 test( 'model string', function(assert)
 {
   var prefix = 'hasManyThrough_model_string_';
 
-  var test = createUserGroups( prefix );
+  var test = createUserGroups1( prefix );
   var User = test.User;
   var Group = test.Group;
   var UserGroup = test.UserGroup;
@@ -135,7 +218,7 @@ test( 'store none', function(assert)
     store: Neuro.Store.None
   };
 
-  var test = createUserGroups( prefix, options, options );
+  var test = createUserGroups1( prefix, options, options );
   var User = test.User;
   var Group = test.Group;
   var UserGroup = test.UserGroup;
@@ -166,7 +249,7 @@ test( 'store model', function(assert)
     store: Neuro.Store.Model
   };
 
-  var test = createUserGroups( prefix, userOptions );
+  var test = createUserGroups1( prefix, userOptions );
   var User = test.User;
   var Group = test.Group;
   var UserGroup = test.UserGroup;
@@ -201,7 +284,7 @@ test( 'store key', function(assert)
     store: Neuro.Store.Key
   };
 
-  var test = createUserGroups( prefix, userOptions );
+  var test = createUserGroups1( prefix, userOptions );
   var User = test.User;
   var Group = test.Group;
   var UserGroup = test.UserGroup;
@@ -242,7 +325,7 @@ test( 'save none', function(assert)
     save: Neuro.Save.None
   };
 
-  var test = createUserGroups( prefix, userOptions );
+  var test = createUserGroups1( prefix, userOptions );
   var User = test.User;
   var Group = test.Group;
   var UserGroup = test.UserGroup;
@@ -273,7 +356,7 @@ test( 'save model', function(assert)
     save: Neuro.Save.Model
   };
 
-  var test = createUserGroups( prefix, userOptions );
+  var test = createUserGroups1( prefix, userOptions );
   var User = test.User;
   var Group = test.Group;
   var UserGroup = test.UserGroup;
@@ -307,7 +390,7 @@ test( 'save key', function(assert)
     save: Neuro.Save.Key
   };
 
-  var test = createUserGroups( prefix, userOptions );
+  var test = createUserGroups1( prefix, userOptions );
   var User = test.User;
   var Group = test.Group;
   var UserGroup = test.UserGroup;
@@ -341,7 +424,7 @@ test( 'property true', function(assert)
     property: true
   };
 
-  var test = createUserGroups( prefix, options, options );
+  var test = createUserGroups1( prefix, options, options );
   var User = test.User;
   var Group = test.Group;
   var UserGroup = test.UserGroup;
@@ -357,7 +440,7 @@ test( 'property false', function(assert)
     property: false
   };
 
-  var test = createUserGroups( prefix, options, options );
+  var test = createUserGroups1( prefix, options, options );
   var User = test.User;
   var Group = test.Group;
   var UserGroup = test.UserGroup;
@@ -394,7 +477,7 @@ test( 'dynamic true', function(assert)
     dynamic: true
   };
 
-  var test = createUserGroups( prefix, options, options );
+  var test = createUserGroups1( prefix, options, options );
   var User = test.User;
   var Group = test.Group;
   var UserGroup = test.UserGroup;
@@ -424,7 +507,7 @@ test( 'comparator', function(assert)
     comparator: 'name'
   };
 
-  var test = createUserGroups( prefix, options, options );
+  var test = createUserGroups1( prefix, options, options );
   var User = test.User;
   var Group = test.Group;
   var UserGroup = test.UserGroup;
@@ -448,7 +531,7 @@ test( 'comparatorNullsFirst', function(assert)
     comparatorNullsFirst: true
   };
 
-  var test = createUserGroups( prefix, options, options );
+  var test = createUserGroups1( prefix, options, options );
   var User = test.User;
   var Group = test.Group;
   var UserGroup = test.UserGroup;
@@ -463,80 +546,1007 @@ test( 'comparatorNullsFirst', function(assert)
   deepEqual( u0.groups.toArray(), expected );
 });
 
-test( 'cascadeRemove true', function(assert)
+test( 'cascadeRemove none', function(assert)
 { 
-  var prefix = 'hasManyThrough_cascadeRemove_true_';
+  var prefix = 'hasManyThrough_cascadeRemove_none_';
 
   var options = {
-    cascadeRemove: true
+    cascadeRemove: Neuro.Cascade.None
   };
 
-  var test = createUserGroups( prefix, options, options );
+  var test = createUserGroups2( prefix, options, options );
   var User = test.User;
   var Group = test.Group;
   var UserGroup = test.UserGroup;
 
-  seedUserGroups1( test );
+  var db = UserGroup.Database;
+  var rest = db.rest;
+  var local = db.store;
+  var live = db.live.live;
+
+  seedUserGroups2( test );
 
   var g0 = test.g0;
   var g1 = test.g1;
+  var g2 = test.g2;
   var u0 = test.u0;
   var ug0 = test.ug0;
   var ug1 = test.ug1;
+  var ug2 = test.ug2;
 
   ok( ug0.$exists() );
   ok( ug1.$exists() );
+  ok( ug2.$exists() );
+  deepEqual( u0.groups.toArray(), [g0, g1, g2] );
+
+  // onRemoved
+
+  rest.lastModel = null;
+  local.lastKey = null;
+  live.lastMessage = null;
 
   g0.$remove();
 
-  notOk( ug0.$exists() );
-  ok( ug1.$exists() );
+  deepEqual( u0.groups.toArray(), [g2, g1] );
+  notOk( ug0.$isDeleted() );
+  notOk( ug1.$isDeleted() );
+  notOk( ug2.$isDeleted() );
+
+  strictEqual( rest.lastModel, null, 'no rest' );
+  strictEqual( live.lastMessage, null, 'no live' );
+  strictEqual( local.lastKey, null, 'no local' );
+
+  // onThroughRemoved
+
+  rest.lastModel = null;
+  local.lastKey = null;
+  live.lastMessage = null;
+
+  ug2.$remove();
+
+  deepEqual( u0.groups.toArray(), [g1] );
+  notOk( ug0.$isDeleted() );
+  notOk( ug1.$isDeleted() );
+  ok( ug2.$isDeleted() );
+
+  strictEqual( rest.lastModel, ug2, 'rest' );
+  deepEqual( live.lastMessage, {op: 'REMOVE', key: ug2.$key()}, 'live' );
+  strictEqual( local.lastKey, ug2.$key(), 'local' );
+
+  // preRemove
+
+  rest.lastModel = null;
+  local.lastKey = null;
+  live.lastMessage = null;
+
+  u0.$remove();
+
+  ok( u0.$isDeleted() );
+  deepEqual( u0.groups.toArray(), [g1] );
+  notOk( ug0.$isDeleted() );
+  notOk( ug1.$isDeleted() );
+  ok( ug2.$isDeleted() );
+
+  strictEqual( rest.lastModel, null, 'no rest' );
+  strictEqual( live.lastMessage, null, 'no live' );
+  strictEqual( local.lastKey, null, 'no local' );
 });
 
-test( 'cascadeRemove false', function(assert)
-{
-  var prefix = 'hasManyThrough_cascadeRemove_false_';
+test( 'cascadeRemove local', function(assert)
+{ 
+  var prefix = 'hasManyThrough_cascadeRemove_local_';
 
   var options = {
-    cascadeRemove: false
+    cascadeRemove: Neuro.Cascade.Local
   };
 
-  var test = createUserGroups( prefix, options, options );
+  var test = createUserGroups2( prefix, options, options );
   var User = test.User;
   var Group = test.Group;
   var UserGroup = test.UserGroup;
 
-  seedUserGroups1( test );
+  var db = UserGroup.Database;
+  var rest = db.rest;
+  var local = db.store;
+  var live = db.live.live;
+
+  seedUserGroups2( test );
 
   var g0 = test.g0;
   var g1 = test.g1;
+  var g2 = test.g2;
   var u0 = test.u0;
   var ug0 = test.ug0;
   var ug1 = test.ug1;
+  var ug2 = test.ug2;
 
   ok( ug0.$exists() );
   ok( ug1.$exists() );
+  ok( ug2.$exists() );
+  deepEqual( u0.groups.toArray(), [g0, g1, g2] );
+
+  // onRemoved
+
+  rest.lastModel = null;
+  local.lastKey = null;
+  live.lastMessage = null;
 
   g0.$remove();
 
-  notOk( ug0.$exists() );
-  ok( ug1.$exists() );
+  deepEqual( u0.groups.toArray(), [g2, g1] );
+  ok( ug0.$isDeleted() );
+  notOk( ug1.$isDeleted() );
+  notOk( ug2.$isDeleted() );
+
+  strictEqual( rest.lastModel, null, 'no rest' );
+  strictEqual( live.lastMessage, null, 'no live' );
+  strictEqual( local.lastKey, ug0.$key(), 'local' );
+
+  // onThroughRemoved
+  
+  rest.lastModel = null;
+  local.lastKey = null;
+  live.lastMessage = null;
+
+  ug2.$remove();
+
+  deepEqual( u0.groups.toArray(), [g1] );
+  ok( ug0.$isDeleted() );
+  notOk( ug1.$isDeleted() );
+  ok( ug2.$isDeleted() );
+
+  strictEqual( rest.lastModel, ug2, 'rest' );
+  deepEqual( live.lastMessage, {op: 'REMOVE', key: ug2.$key()}, 'live' );
+  strictEqual( local.lastKey, ug2.$key(), 'local' );
+
+  // preRemove
+
+  rest.lastModel = null;
+  local.lastKey = null;
+  live.lastMessage = null;
+
+  u0.$remove();
+
+  ok( u0.$isDeleted() );
+  deepEqual( u0.groups.toArray(), [] );
+  ok( ug0.$isDeleted() );
+  ok( ug1.$isDeleted() );
+  ok( ug2.$isDeleted() );
+
+  strictEqual( rest.lastModel, null, 'no rest' );
+  strictEqual( live.lastMessage, null, 'no live' );
+  strictEqual( local.lastKey, ug1.$key(), 'local' );
 });
 
-test( 'cascadeSave true', function(assert)
-{
-  var prefix = 'hasManyThrough_cascadeSave_true_';
+test( 'cascadeRemove rest', function(assert)
+{ 
+  var prefix = 'hasManyThrough_cascadeRemove_rest_';
 
   var options = {
-    cascadeSaveRelated: true
+    cascadeRemove: Neuro.Cascade.Rest
   };
 
-  var test = createUserGroups( prefix, options, options );
+  var test = createUserGroups2( prefix, options, options );
   var User = test.User;
   var Group = test.Group;
   var UserGroup = test.UserGroup;
 
-  seedUserGroups1( test );
+  var db = UserGroup.Database;
+  var rest = db.rest;
+  var local = db.store;
+  var live = db.live.live;
+
+  seedUserGroups2( test );
+
+  var g0 = test.g0;
+  var g1 = test.g1;
+  var g2 = test.g2;
+  var u0 = test.u0;
+  var ug0 = test.ug0;
+  var ug1 = test.ug1;
+  var ug2 = test.ug2;
+
+  ok( ug0.$exists() );
+  ok( ug1.$exists() );
+  ok( ug2.$exists() );
+  deepEqual( u0.groups.toArray(), [g0, g1, g2] );
+
+  // onRemoved
+
+  rest.lastModel = null;
+  local.lastKey = null;
+  live.lastMessage = null;
+
+  g0.$remove();
+
+  deepEqual( u0.groups.toArray(), [g2, g1] );
+  ok( ug0.$isDeleted() );
+  notOk( ug1.$isDeleted() );
+  notOk( ug2.$isDeleted() );
+
+  strictEqual( rest.lastModel, ug0, 'rest' );
+  strictEqual( live.lastMessage, null, 'no live' );
+  strictEqual( local.lastKey, null, 'no local' );
+
+  // onThroughRemoved
+  
+  rest.lastModel = null;
+  local.lastKey = null;
+  live.lastMessage = null;
+
+  ug2.$remove();
+
+  deepEqual( u0.groups.toArray(), [g1] );
+  ok( ug0.$isDeleted() );
+  notOk( ug1.$isDeleted() );
+  ok( ug2.$isDeleted() );
+
+  strictEqual( rest.lastModel, ug2, 'rest' );
+  deepEqual( live.lastMessage, {op: 'REMOVE', key: ug2.$key()}, 'live' );
+  strictEqual( local.lastKey, ug2.$key(), 'local' );
+
+  // preRemove
+
+  rest.lastModel = null;
+  local.lastKey = null;
+  live.lastMessage = null;
+
+  u0.$remove();
+
+  ok( u0.$isDeleted() );
+  deepEqual( u0.groups.toArray(), [] );
+  ok( ug0.$isDeleted() );
+  ok( ug1.$isDeleted() );
+  ok( ug2.$isDeleted() );
+
+  strictEqual( rest.lastModel, ug1, 'rest' );
+  strictEqual( live.lastMessage, null, 'no live' );
+  strictEqual( local.lastKey, null, 'no local' );
+});
+
+test( 'cascadeRemove nolive', function(assert)
+{ 
+  var prefix = 'hasManyThrough_cascadeRemove_nolive_';
+
+  var options = {
+    cascadeRemove: Neuro.Cascade.NoLive
+  };
+
+  var test = createUserGroups2( prefix, options, options );
+  var User = test.User;
+  var Group = test.Group;
+  var UserGroup = test.UserGroup;
+
+  var db = UserGroup.Database;
+  var rest = db.rest;
+  var local = db.store;
+  var live = db.live.live;
+
+  seedUserGroups2( test );
+
+  var g0 = test.g0;
+  var g1 = test.g1;
+  var g2 = test.g2;
+  var u0 = test.u0;
+  var ug0 = test.ug0;
+  var ug1 = test.ug1;
+  var ug2 = test.ug2;
+
+  ok( ug0.$exists() );
+  ok( ug1.$exists() );
+  ok( ug2.$exists() );
+  deepEqual( u0.groups.toArray(), [g0, g1, g2] );
+
+  // onRemoved
+
+  rest.lastModel = null;
+  local.lastKey = null;
+  live.lastMessage = null;
+
+  g0.$remove();
+
+  deepEqual( u0.groups.toArray(), [g2, g1] );
+  ok( ug0.$isDeleted() );
+  notOk( ug1.$isDeleted() );
+  notOk( ug2.$isDeleted() );
+
+  strictEqual( rest.lastModel, ug0, 'rest' );
+  strictEqual( live.lastMessage, null, 'no live' );
+  strictEqual( local.lastKey, ug0.$key(), 'local' );
+
+  // onThroughRemoved
+  
+  rest.lastModel = null;
+  local.lastKey = null;
+  live.lastMessage = null;
+
+  ug2.$remove();
+
+  deepEqual( u0.groups.toArray(), [g1] );
+  ok( ug0.$isDeleted() );
+  notOk( ug1.$isDeleted() );
+  ok( ug2.$isDeleted() );
+
+  strictEqual( rest.lastModel, ug2, 'rest' );
+  deepEqual( live.lastMessage, {op: 'REMOVE', key: ug2.$key()}, 'live' );
+  strictEqual( local.lastKey, ug2.$key(), 'local' );
+
+  // preRemove
+
+  rest.lastModel = null;
+  local.lastKey = null;
+  live.lastMessage = null;
+
+  u0.$remove();
+
+  ok( u0.$isDeleted() );
+  deepEqual( u0.groups.toArray(), [] );
+  ok( ug0.$isDeleted() );
+  ok( ug1.$isDeleted() );
+  ok( ug2.$isDeleted() );
+
+  strictEqual( rest.lastModel, ug1, 'rest' );
+  strictEqual( live.lastMessage, null, 'no live' );
+  strictEqual( local.lastKey, ug1.$key(), 'local' );
+});
+
+test( 'cascadeRemove live', function(assert)
+{ 
+  var prefix = 'hasManyThrough_cascadeRemove_live_';
+
+  var options = {
+    cascadeRemove: Neuro.Cascade.Live
+  };
+
+  var test = createUserGroups2( prefix, options, options );
+  var User = test.User;
+  var Group = test.Group;
+  var UserGroup = test.UserGroup;
+
+  var db = UserGroup.Database;
+  var rest = db.rest;
+  var local = db.store;
+  var live = db.live.live;
+
+  seedUserGroups2( test );
+
+  var g0 = test.g0;
+  var g1 = test.g1;
+  var g2 = test.g2;
+  var u0 = test.u0;
+  var ug0 = test.ug0;
+  var ug1 = test.ug1;
+  var ug2 = test.ug2;
+
+  ok( ug0.$exists() );
+  ok( ug1.$exists() );
+  ok( ug2.$exists() );
+  deepEqual( u0.groups.toArray(), [g0, g1, g2] );
+
+  // onRemoved
+
+  rest.lastModel = null;
+  local.lastKey = null;
+  live.lastMessage = null;
+
+  g0.$remove();
+
+  deepEqual( u0.groups.toArray(), [g2, g1] );
+  ok( ug0.$isDeleted() );
+  notOk( ug1.$isDeleted() );
+  notOk( ug2.$isDeleted() );
+
+  strictEqual( rest.lastModel, null, 'no rest' );
+  strictEqual( live.lastMessage.key, ug0.$key(), 'live' );
+  strictEqual( local.lastKey, null, 'no local' );
+
+  // onThroughRemoved
+  
+  rest.lastModel = null;
+  local.lastKey = null;
+  live.lastMessage = null;
+
+  ug2.$remove();
+
+  deepEqual( u0.groups.toArray(), [g1] );
+  ok( ug0.$isDeleted() );
+  notOk( ug1.$isDeleted() );
+  ok( ug2.$isDeleted() );
+
+  strictEqual( rest.lastModel, ug2, 'rest' );
+  deepEqual( live.lastMessage, {op: 'REMOVE', key: ug2.$key()}, 'live' );
+  strictEqual( local.lastKey, ug2.$key(), 'local' );
+
+  // preRemove
+
+  rest.lastModel = null;
+  local.lastKey = null;
+  live.lastMessage = null;
+
+  u0.$remove();
+
+  ok( u0.$isDeleted() );
+  deepEqual( u0.groups.toArray(), [] );
+  ok( ug0.$isDeleted() );
+  ok( ug1.$isDeleted() );
+  ok( ug2.$isDeleted() );
+
+  strictEqual( rest.lastModel, null, 'no rest' );
+  strictEqual( live.lastMessage.key, ug1.$key(), 'no live' );
+  strictEqual( local.lastKey, null, 'no local' );
+});
+
+test( 'cascadeRemove norest', function(assert)
+{ 
+  var prefix = 'hasManyThrough_cascadeRemove_norest_';
+
+  var options = {
+    cascadeRemove: Neuro.Cascade.NoRest
+  };
+
+  var test = createUserGroups2( prefix, options, options );
+  var User = test.User;
+  var Group = test.Group;
+  var UserGroup = test.UserGroup;
+
+  var db = UserGroup.Database;
+  var rest = db.rest;
+  var local = db.store;
+  var live = db.live.live;
+
+  seedUserGroups2( test );
+
+  var g0 = test.g0;
+  var g1 = test.g1;
+  var g2 = test.g2;
+  var u0 = test.u0;
+  var ug0 = test.ug0;
+  var ug1 = test.ug1;
+  var ug2 = test.ug2;
+
+  ok( ug0.$exists() );
+  ok( ug1.$exists() );
+  ok( ug2.$exists() );
+  deepEqual( u0.groups.toArray(), [g0, g1, g2] );
+
+  // onRemoved
+
+  rest.lastModel = null;
+  local.lastKey = null;
+  live.lastMessage = null;
+
+  g0.$remove();
+
+  deepEqual( u0.groups.toArray(), [g2, g1] );
+  ok( ug0.$isDeleted() );
+  notOk( ug1.$isDeleted() );
+  notOk( ug2.$isDeleted() );
+
+  strictEqual( rest.lastModel, null, 'no rest' );
+  strictEqual( live.lastMessage.key, ug0.$key(), 'live' );
+  strictEqual( local.lastKey, ug0.$key(), 'local' );
+
+  // onThroughRemoved
+  
+  rest.lastModel = null;
+  local.lastKey = null;
+  live.lastMessage = null;
+
+  ug2.$remove();
+
+  deepEqual( u0.groups.toArray(), [g1] );
+  ok( ug0.$isDeleted() );
+  notOk( ug1.$isDeleted() );
+  ok( ug2.$isDeleted() );
+
+  strictEqual( rest.lastModel, ug2, 'rest' );
+  deepEqual( live.lastMessage, {op: 'REMOVE', key: ug2.$key()}, 'live' );
+  strictEqual( local.lastKey, ug2.$key(), 'local' );
+
+  // preRemove
+
+  rest.lastModel = null;
+  local.lastKey = null;
+  live.lastMessage = null;
+
+  u0.$remove();
+
+  ok( u0.$isDeleted() );
+  deepEqual( u0.groups.toArray(), [] );
+  ok( ug0.$isDeleted() );
+  ok( ug1.$isDeleted() );
+  ok( ug2.$isDeleted() );
+
+  strictEqual( rest.lastModel, null, 'no rest' );
+  strictEqual( live.lastMessage.key, ug1.$key(), 'live' );
+  strictEqual( local.lastKey, ug1.$key(), 'local' );
+});
+
+test( 'cascadeRemove remote', function(assert)
+{ 
+  var prefix = 'hasManyThrough_cascadeRemove_remote_';
+
+  var options = {
+    cascadeRemove: Neuro.Cascade.Remote
+  };
+
+  var test = createUserGroups2( prefix, options, options );
+  var User = test.User;
+  var Group = test.Group;
+  var UserGroup = test.UserGroup;
+
+  var db = UserGroup.Database;
+  var rest = db.rest;
+  var local = db.store;
+  var live = db.live.live;
+
+  seedUserGroups2( test );
+
+  var g0 = test.g0;
+  var g1 = test.g1;
+  var g2 = test.g2;
+  var u0 = test.u0;
+  var ug0 = test.ug0;
+  var ug1 = test.ug1;
+  var ug2 = test.ug2;
+
+  ok( ug0.$exists() );
+  ok( ug1.$exists() );
+  ok( ug2.$exists() );
+  deepEqual( u0.groups.toArray(), [g0, g1, g2] );
+
+  // onRemoved
+
+  rest.lastModel = null;
+  local.lastKey = null;
+  live.lastMessage = null;
+
+  g0.$remove();
+
+  deepEqual( u0.groups.toArray(), [g2, g1] );
+  ok( ug0.$isDeleted() );
+  notOk( ug1.$isDeleted() );
+  notOk( ug2.$isDeleted() );
+
+  strictEqual( rest.lastModel, ug0, 'rest' );
+  strictEqual( live.lastMessage.key, ug0.$key(), 'live' );
+  strictEqual( local.lastKey, null, 'no local' );
+
+  // onThroughRemoved
+  
+  rest.lastModel = null;
+  local.lastKey = null;
+  live.lastMessage = null;
+
+  ug2.$remove();
+
+  deepEqual( u0.groups.toArray(), [g1] );
+  ok( ug0.$isDeleted() );
+  notOk( ug1.$isDeleted() );
+  ok( ug2.$isDeleted() );
+
+  strictEqual( rest.lastModel, ug2, 'rest' );
+  deepEqual( live.lastMessage, {op: 'REMOVE', key: ug2.$key()}, 'live' );
+  strictEqual( local.lastKey, ug2.$key(), 'local' );
+
+  // preRemove
+
+  rest.lastModel = null;
+  local.lastKey = null;
+  live.lastMessage = null;
+
+  u0.$remove();
+
+  ok( u0.$isDeleted() );
+  deepEqual( u0.groups.toArray(), [] );
+  ok( ug0.$isDeleted() );
+  ok( ug1.$isDeleted() );
+  ok( ug2.$isDeleted() );
+
+  strictEqual( rest.lastModel, ug1, 'rest' );
+  strictEqual( live.lastMessage.key, ug1.$key(), 'live' );
+  strictEqual( local.lastKey, null , 'no local' );
+});
+
+test( 'cascadeRemove all', function(assert)
+{ 
+  var prefix = 'hasManyThrough_cascadeRemove_all_';
+
+  var options = {
+    cascadeRemove: Neuro.Cascade.All
+  };
+
+  var test = createUserGroups2( prefix, options, options );
+  var User = test.User;
+  var Group = test.Group;
+  var UserGroup = test.UserGroup;
+
+  var db = UserGroup.Database;
+  var rest = db.rest;
+  var local = db.store;
+  var live = db.live.live;
+
+  seedUserGroups2( test );
+
+  var g0 = test.g0;
+  var g1 = test.g1;
+  var g2 = test.g2;
+  var u0 = test.u0;
+  var ug0 = test.ug0;
+  var ug1 = test.ug1;
+  var ug2 = test.ug2;
+
+  ok( ug0.$exists() );
+  ok( ug1.$exists() );
+  ok( ug2.$exists() );
+  deepEqual( u0.groups.toArray(), [g0, g1, g2] );
+
+  // onRemoved
+
+  rest.lastModel = null;
+  local.lastKey = null;
+  live.lastMessage = null;
+
+  g0.$remove();
+
+  deepEqual( u0.groups.toArray(), [g2, g1] );
+  ok( ug0.$isDeleted() );
+  notOk( ug1.$isDeleted() );
+  notOk( ug2.$isDeleted() );
+
+  strictEqual( rest.lastModel, ug0, 'rest' );
+  strictEqual( live.lastMessage.key, ug0.$key(), 'live' );
+  strictEqual( local.lastKey, ug0.$key(), 'local' );
+
+  // onThroughRemoved
+  
+  rest.lastModel = null;
+  local.lastKey = null;
+  live.lastMessage = null;
+
+  ug2.$remove();
+
+  deepEqual( u0.groups.toArray(), [g1] );
+  ok( ug0.$isDeleted() );
+  notOk( ug1.$isDeleted() );
+  ok( ug2.$isDeleted() );
+
+  strictEqual( rest.lastModel, ug2, 'rest' );
+  deepEqual( live.lastMessage, {op: 'REMOVE', key: ug2.$key()}, 'live' );
+  strictEqual( local.lastKey, ug2.$key(), 'local' );
+
+  // preRemove
+
+  rest.lastModel = null;
+  local.lastKey = null;
+  live.lastMessage = null;
+
+  u0.$remove();
+
+  ok( u0.$isDeleted() );
+  deepEqual( u0.groups.toArray(), [] );
+  ok( ug0.$isDeleted() );
+  ok( ug1.$isDeleted() );
+  ok( ug2.$isDeleted() );
+
+  strictEqual( rest.lastModel, ug1, 'rest' );
+  strictEqual( live.lastMessage.key, ug1.$key(), 'live' );
+  strictEqual( local.lastKey, ug1.$key() , 'local' );
+});
+
+test( 'cascadeSave local', function(assert)
+{
+  var prefix = 'hasManyThrough_cascadeSave_local_';
+
+  var options = {
+    cascadeSave: Neuro.Cascade.Local
+  };
+
+  var test = createUserGroups2( prefix, options, options );
+  var User = test.User;
+  var Group = test.Group;
+  var UserGroup = test.UserGroup;
+
+  var db = UserGroup.Database;
+  var rest = db.rest;
+  var live = db.live.live;
+  var local = db.store;
+
+  seedUserGroups2( test );
+
+  var u0 = test.u0;
+  var g3 = Group.create({name: 'g3'});
+
+  rest.lastModel = null;
+  live.lastMessage = null;
+  local.lastKey = null;
+
+  strictEqual( u0.groups.length, 3, '3 groups' );
+
+  u0.groups.relate( g3 );
+
+  var ug3 = UserGroup.get( [u0.id, g3.id] );
+
+  ok( ug3, 'has been created' );
+  notOk( ug3.$isSaved(), 'not saved' );
+  strictEqual( u0.groups.length, 4, '4 groups' );
+
+  strictEqual( rest.lastModel, null, 'no rest' );
+  strictEqual( live.lastMessage, null, 'no live' );
+  strictEqual( local.lastKey, ug3.$key(), 'local' );
+});
+
+test( 'cascadeSave rest', function(assert)
+{
+  var prefix = 'hasManyThrough_cascadeSave_rest_';
+
+  var options = {
+    cascadeSave: Neuro.Cascade.Rest
+  };
+
+  var test = createUserGroups2( prefix, options, options );
+  var User = test.User;
+  var Group = test.Group;
+  var UserGroup = test.UserGroup;
+
+  var db = UserGroup.Database;
+  var rest = db.rest;
+  var live = db.live.live;
+  var local = db.store;
+
+  seedUserGroups2( test );
+
+  var u0 = test.u0;
+  var g3 = Group.create({name: 'g3'});
+
+  rest.lastModel = null;
+  live.lastMessage = null;
+  local.lastKey = null;
+
+  strictEqual( u0.groups.length, 3, '3 groups' );
+
+  u0.groups.relate( g3 );
+
+  var ug3 = UserGroup.get( [u0.id, g3.id] );
+
+  ok( ug3, 'has been created' );
+  ok( ug3.$isSaved(), 'saved' );
+  strictEqual( u0.groups.length, 4, '4 groups' );
+
+  strictEqual( rest.lastModel, ug3, 'no rest' );
+  strictEqual( live.lastMessage, null, 'no live' );
+  strictEqual( local.lastKey, null, 'no local' );
+});
+
+test( 'cascadeSave nolive', function(assert)
+{
+  var prefix = 'hasManyThrough_cascadeSave_nolive_';
+
+  var options = {
+    cascadeSave: Neuro.Cascade.NoLive
+  };
+
+  var test = createUserGroups2( prefix, options, options );
+  var User = test.User;
+  var Group = test.Group;
+  var UserGroup = test.UserGroup;
+
+  var db = UserGroup.Database;
+  var rest = db.rest;
+  var live = db.live.live;
+  var local = db.store;
+
+  seedUserGroups2( test );
+
+  var u0 = test.u0;
+  var g3 = Group.create({name: 'g3'});
+
+  rest.lastModel = null;
+  live.lastMessage = null;
+  local.lastKey = null;
+
+  strictEqual( u0.groups.length, 3, '3 groups' );
+
+  u0.groups.relate( g3 );
+
+  var ug3 = UserGroup.get( [u0.id, g3.id] );
+
+  ok( ug3, 'has been created' );
+  ok( ug3.$isSaved(), 'saved' );
+  strictEqual( u0.groups.length, 4, '4 groups' );
+
+  strictEqual( rest.lastModel, ug3, 'rest' );
+  strictEqual( live.lastMessage, null, 'no live' );
+  strictEqual( local.lastKey, ug3.$key(), 'local' );
+});
+
+test( 'cascadeSave live', function(assert)
+{
+  var prefix = 'hasManyThrough_cascadeSave_live_';
+
+  var options = {
+    cascadeSave: Neuro.Cascade.Live
+  };
+
+  var test = createUserGroups2( prefix, options, options );
+  var User = test.User;
+  var Group = test.Group;
+  var UserGroup = test.UserGroup;
+
+  var db = UserGroup.Database;
+  var rest = db.rest;
+  var live = db.live.live;
+  var local = db.store;
+
+  seedUserGroups2( test );
+
+  var u0 = test.u0;
+  var g3 = Group.create({name: 'g3'});
+
+  rest.lastModel = null;
+  live.lastMessage = null;
+  local.lastKey = null;
+
+  strictEqual( u0.groups.length, 3, '3 groups' );
+
+  u0.groups.relate( g3 );
+
+  var ug3 = UserGroup.get( [u0.id, g3.id] );
+
+  ok( ug3, 'has been created' );
+  notOk( ug3.$isSaved(), 'saved' );
+  strictEqual( u0.groups.length, 4, '4 groups' );
+
+  strictEqual( rest.lastModel, null, 'no rest' );
+  strictEqual( live.lastMessage.key, ug3.$key(), 'live' );
+  strictEqual( local.lastKey, null, 'no local' );
+});
+
+test( 'cascadeSave norest', function(assert)
+{
+  var prefix = 'hasManyThrough_cascadeSave_norest_';
+
+  var options = {
+    cascadeSave: Neuro.Cascade.NoRest
+  };
+
+  var test = createUserGroups2( prefix, options, options );
+  var User = test.User;
+  var Group = test.Group;
+  var UserGroup = test.UserGroup;
+
+  var db = UserGroup.Database;
+  var rest = db.rest;
+  var live = db.live.live;
+  var local = db.store;
+
+  seedUserGroups2( test );
+
+  var u0 = test.u0;
+  var g3 = Group.create({name: 'g3'});
+
+  rest.lastModel = null;
+  live.lastMessage = null;
+  local.lastKey = null;
+
+  strictEqual( u0.groups.length, 3, '3 groups' );
+
+  u0.groups.relate( g3 );
+
+  var ug3 = UserGroup.get( [u0.id, g3.id] );
+
+  ok( ug3, 'has been created' );
+  notOk( ug3.$isSaved(), 'saved' );
+  strictEqual( u0.groups.length, 4, '4 groups' );
+
+  strictEqual( rest.lastModel, null, 'no rest' );
+  strictEqual( live.lastMessage.key, ug3.$key(), 'live' );
+  strictEqual( local.lastKey, ug3.$key(), 'local' );
+});
+
+test( 'cascadeSave remote', function(assert)
+{
+  var prefix = 'hasManyThrough_cascadeSave_remote_';
+
+  var options = {
+    cascadeSave: Neuro.Cascade.Remote
+  };
+
+  var test = createUserGroups2( prefix, options, options );
+  var User = test.User;
+  var Group = test.Group;
+  var UserGroup = test.UserGroup;
+
+  var db = UserGroup.Database;
+  var rest = db.rest;
+  var live = db.live.live;
+  var local = db.store;
+
+  seedUserGroups2( test );
+
+  var u0 = test.u0;
+  var g3 = Group.create({name: 'g3'});
+
+  rest.lastModel = null;
+  live.lastMessage = null;
+  local.lastKey = null;
+
+  strictEqual( u0.groups.length, 3, '3 groups' );
+
+  u0.groups.relate( g3 );
+
+  var ug3 = UserGroup.get( [u0.id, g3.id] );
+
+  ok( ug3, 'has been created' );
+  ok( ug3.$isSaved(), 'saved' );
+  strictEqual( u0.groups.length, 4, '4 groups' );
+
+  strictEqual( rest.lastModel, ug3, 'rest' );
+  strictEqual( live.lastMessage.key, ug3.$key(), 'live' );
+  strictEqual( local.lastKey, null, 'no local' );
+});
+
+test( 'cascadeSave all', function(assert)
+{
+  var prefix = 'hasManyThrough_cascadeSave_all_';
+
+  var options = {
+    cascadeSave: Neuro.Cascade.All
+  };
+
+  var test = createUserGroups2( prefix, options, options );
+  var User = test.User;
+  var Group = test.Group;
+  var UserGroup = test.UserGroup;
+
+  var db = UserGroup.Database;
+  var rest = db.rest;
+  var live = db.live.live;
+  var local = db.store;
+
+  seedUserGroups2( test );
+
+  var u0 = test.u0;
+  var g3 = Group.create({name: 'g3'});
+
+  rest.lastModel = null;
+  live.lastMessage = null;
+  local.lastKey = null;
+
+  strictEqual( u0.groups.length, 3, '3 groups' );
+
+  u0.groups.relate( g3 );
+
+  var ug3 = UserGroup.get( [u0.id, g3.id] );
+
+  ok( ug3, 'has been created' );
+  ok( ug3.$isSaved(), 'saved' );
+  strictEqual( u0.groups.length, 4, '4 groups' );
+
+  strictEqual( rest.lastModel, ug3, 'rest' );
+  strictEqual( live.lastMessage.key, ug3.$key(), 'live' );
+  strictEqual( local.lastKey, ug3.$key(), 'local' );
+});
+
+test( 'cascadeSaveRelated none', function(assert)
+{
+  var prefix = 'hasManyThrough_cascadeSaveRelated_none_';
+
+  var options = {
+    cascadeSaveRelated: Neuro.Cascade.None
+  };
+
+  var test = createUserGroups2( prefix, options, options );
+  var User = test.User;
+  var Group = test.Group;
+  var UserGroup = test.UserGroup;
+
+  var db = Group.Database;
+  var rest = db.rest;
+  var live = db.live.live;
+  var local = db.store;
+
+  seedUserGroups2( test );
 
   var g0 = test.g0;
   var g1 = test.g1;
@@ -544,41 +1554,312 @@ test( 'cascadeSave true', function(assert)
 
   strictEqual( g0.$saved.name, 'g0' );
 
-  g0.name = 'g0a';
-
-  u0.$save();
-
-  strictEqual( g0.$saved.name, 'g0a' );
-});
-
-test( 'cascadeSave false', function(assert)
-{
-  var prefix = 'hasManyThrough_cascadeSave_false_';
-
-  var options = {
-    cascadeSaveRelated: false
-  };
-
-  var test = createUserGroups( prefix, options, options );
-  var User = test.User;
-  var Group = test.Group;
-  var UserGroup = test.UserGroup;
-
-  seedUserGroups1( test );
-
-  var g0 = test.g0;
-  var g1 = test.g1;
-  var u0 = test.u0;
-
-  strictEqual( g0.$saved.name, 'g0' );
+  rest.lastModel = null;
+  live.lastMessage = null;
+  local.lastKey = null;
 
   g0.name = 'g0a';
 
   u0.$save();
+
+  strictEqual( rest.lastModel, null, 'no rest' );
+  strictEqual( live.lastMessage, null, 'no live' );
+  strictEqual( local.lastKey, null, 'no local' );
 
   strictEqual( g0.$saved.name, 'g0' );
 
   g0.$save();
+
+  strictEqual( g0.$saved.name, 'g0a' );
+});
+
+test( 'cascadeSaveRelated local', function(assert)
+{
+  var prefix = 'hasManyThrough_cascadeSaveRelated_local_';
+
+  var options = {
+    cascadeSaveRelated: Neuro.Cascade.Local
+  };
+
+  var test = createUserGroups2( prefix, options, options );
+  var User = test.User;
+  var Group = test.Group;
+  var UserGroup = test.UserGroup;
+
+  var db = Group.Database;
+  var rest = db.rest;
+  var live = db.live.live;
+  var local = db.store;
+
+  seedUserGroups2( test );
+
+  var g0 = test.g0;
+  var g1 = test.g1;
+  var u0 = test.u0;
+
+  strictEqual( g0.$saved.name, 'g0' );
+
+  rest.lastModel = null;
+  live.lastMessage = null;
+  local.lastKey = null;
+
+  g0.name = 'g0a';
+
+  u0.$save();
+
+  strictEqual( rest.lastModel, null, 'no rest' );
+  strictEqual( live.lastMessage, null, 'no live' );
+  strictEqual( local.lastKey, g0.id, 'local' );
+
+  strictEqual( g0.$saved.name, 'g0' );
+
+  g0.$save();
+
+  strictEqual( g0.$saved.name, 'g0a' );
+});
+
+test( 'cascadeSaveRelated rest', function(assert)
+{
+  var prefix = 'hasManyThrough_cascadeSaveRelated_rest_';
+
+  var options = {
+    cascadeSaveRelated: Neuro.Cascade.Rest
+  };
+
+  var test = createUserGroups2( prefix, options, options );
+  var User = test.User;
+  var Group = test.Group;
+  var UserGroup = test.UserGroup;
+
+  var db = Group.Database;
+  var rest = db.rest;
+  var live = db.live.live;
+  var local = db.store;
+
+  seedUserGroups2( test );
+
+  var g0 = test.g0;
+  var g1 = test.g1;
+  var u0 = test.u0;
+
+  strictEqual( g0.$saved.name, 'g0' );
+
+  rest.lastModel = null;
+  live.lastMessage = null;
+  local.lastKey = null;
+
+  g0.name = 'g0a';
+
+  u0.$save();
+
+  strictEqual( rest.lastModel, g0, 'rest' );
+  strictEqual( live.lastMessage, null, 'no live' );
+  strictEqual( local.lastKey, null, 'no local' );
+
+  strictEqual( g0.$saved.name, 'g0a' );
+});
+
+test( 'cascadeSaveRelated nolive', function(assert)
+{
+  var prefix = 'hasManyThrough_cascadeSaveRelated_nolive_';
+
+  var options = {
+    cascadeSaveRelated: Neuro.Cascade.NoLive
+  };
+
+  var test = createUserGroups2( prefix, options, options );
+  var User = test.User;
+  var Group = test.Group;
+  var UserGroup = test.UserGroup;
+
+  var db = Group.Database;
+  var rest = db.rest;
+  var live = db.live.live;
+  var local = db.store;
+
+  seedUserGroups2( test );
+
+  var g0 = test.g0;
+  var g1 = test.g1;
+  var u0 = test.u0;
+
+  strictEqual( g0.$saved.name, 'g0' );
+
+  rest.lastModel = null;
+  live.lastMessage = null;
+  local.lastKey = null;
+
+  g0.name = 'g0a';
+
+  u0.$save();
+
+  strictEqual( rest.lastModel, g0, 'rest' );
+  strictEqual( live.lastMessage, null, 'no live' );
+  strictEqual( local.lastKey, g0.id, 'local' );
+
+  strictEqual( g0.$saved.name, 'g0a' );
+});
+
+test( 'cascadeSaveRelated live', function(assert)
+{
+  var prefix = 'hasManyThrough_cascadeSaveRelated_live_';
+
+  var options = {
+    cascadeSaveRelated: Neuro.Cascade.Live
+  };
+
+  var test = createUserGroups2( prefix, options, options );
+  var User = test.User;
+  var Group = test.Group;
+  var UserGroup = test.UserGroup;
+
+  var db = Group.Database;
+  var rest = db.rest;
+  var live = db.live.live;
+  var local = db.store;
+
+  seedUserGroups2( test );
+
+  var g0 = test.g0;
+  var g1 = test.g1;
+  var u0 = test.u0;
+
+  strictEqual( g0.$saved.name, 'g0' );
+
+  rest.lastModel = null;
+  live.lastMessage = null;
+  local.lastKey = null;
+
+  g0.name = 'g0a';
+
+  u0.$save();
+
+  strictEqual( rest.lastModel, null, 'rest' );
+  strictEqual( live.lastMessage.key, g0.id, 'live' );
+  strictEqual( local.lastKey, null, 'no local' );
+
+  strictEqual( g0.$saved.name, 'g0' );
+});
+
+test( 'cascadeSaveRelated norest', function(assert)
+{
+  var prefix = 'hasManyThrough_cascadeSaveRelated_norest_';
+
+  var options = {
+    cascadeSaveRelated: Neuro.Cascade.NoRest
+  };
+
+  var test = createUserGroups2( prefix, options, options );
+  var User = test.User;
+  var Group = test.Group;
+  var UserGroup = test.UserGroup;
+
+  var db = Group.Database;
+  var rest = db.rest;
+  var live = db.live.live;
+  var local = db.store;
+
+  seedUserGroups2( test );
+
+  var g0 = test.g0;
+  var g1 = test.g1;
+  var u0 = test.u0;
+
+  strictEqual( g0.$saved.name, 'g0' );
+
+  rest.lastModel = null;
+  live.lastMessage = null;
+  local.lastKey = null;
+
+  g0.name = 'g0a';
+
+  u0.$save();
+
+  strictEqual( rest.lastModel, null, 'rest' );
+  strictEqual( live.lastMessage.key, g0.id, 'live' );
+  strictEqual( local.lastKey, g0.id, 'local' );
+
+  strictEqual( g0.$saved.name, 'g0' );
+});
+
+test( 'cascadeSaveRelated remote', function(assert)
+{
+  var prefix = 'hasManyThrough_cascadeSaveRelated_remote_';
+
+  var options = {
+    cascadeSaveRelated: Neuro.Cascade.Remote
+  };
+
+  var test = createUserGroups2( prefix, options, options );
+  var User = test.User;
+  var Group = test.Group;
+  var UserGroup = test.UserGroup;
+
+  var db = Group.Database;
+  var rest = db.rest;
+  var live = db.live.live;
+  var local = db.store;
+
+  seedUserGroups2( test );
+
+  var g0 = test.g0;
+  var g1 = test.g1;
+  var u0 = test.u0;
+
+  strictEqual( g0.$saved.name, 'g0' );
+
+  rest.lastModel = null;
+  live.lastMessage = null;
+  local.lastKey = null;
+
+  g0.name = 'g0a';
+
+  u0.$save();
+
+  strictEqual( rest.lastModel, g0, 'rest' );
+  strictEqual( live.lastMessage.key, g0.id, 'live' );
+  strictEqual( local.lastKey, null, 'no local' );
+
+  strictEqual( g0.$saved.name, 'g0a' );
+});
+
+test( 'cascadeSaveRelated all', function(assert)
+{
+  var prefix = 'hasManyThrough_cascadeSaveRelated_all_';
+
+  var options = {
+    cascadeSaveRelated: Neuro.Cascade.All
+  };
+
+  var test = createUserGroups2( prefix, options, options );
+  var User = test.User;
+  var Group = test.Group;
+  var UserGroup = test.UserGroup;
+
+  var db = Group.Database;
+  var rest = db.rest;
+  var live = db.live.live;
+  var local = db.store;
+
+  seedUserGroups2( test );
+
+  var g0 = test.g0;
+  var g1 = test.g1;
+  var u0 = test.u0;
+
+  strictEqual( g0.$saved.name, 'g0' );
+
+  rest.lastModel = null;
+  live.lastMessage = null;
+  local.lastKey = null;
+
+  g0.name = 'g0a';
+
+  u0.$save();
+
+  strictEqual( rest.lastModel, g0, 'rest' );
+  strictEqual( live.lastMessage.key, g0.id, 'live' );
+  strictEqual( local.lastKey, g0.id, 'local' );
 
   strictEqual( g0.$saved.name, 'g0a' );
 });

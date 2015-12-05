@@ -4,7 +4,7 @@ test( 'no initial value', function(assert)
 {
   var prefix = 'hasManyThrough_no_initial_';
 
-  var test = createUserGroups( prefix );
+  var test = createUserGroups1( prefix );
   var User = test.User;
   var Group = test.Group;
   var UserGroup = test.UserGroup;
@@ -18,7 +18,7 @@ test( 'initial value', function(assert)
 {
   var prefix = 'hasManyThrough_initial_';
 
-  var test = createUserGroups( prefix );
+  var test = createUserGroups1( prefix );
 
   seedUserGroups1( test );
 });
@@ -27,7 +27,7 @@ test( 'ninja remove', function(assert)
 {
   var prefix = 'hasManyThrough_ninja_remove_';
 
-  var test = createUserGroups( prefix );
+  var test = createUserGroups1( prefix );
 
   seedUserGroups1( test );
 
@@ -50,7 +50,7 @@ test( 'ninja save sort', function(assert)
     comparator: 'name'
   };
 
-  var test = createUserGroups( prefix, options, options );
+  var test = createUserGroups1( prefix, options, options );
 
   seedUserGroups1( test );
 
@@ -74,7 +74,7 @@ test( 'ninja save add', function(assert)
 {
   var prefix = 'hasManyThrough_ninja_save_add_';
 
-  var test = createUserGroups( prefix );
+  var test = createUserGroups1( prefix );
   var Group = test.Group;
   var UserGroup = test.UserGroup;
 
@@ -96,7 +96,7 @@ test( 'set', function(assert)
 {
   var prefix = 'hasManyThrough_set_';
 
-  var test = createUserGroups( prefix );
+  var test = createUserGroups1( prefix );
   var Group = test.Group;
   var UserGroup = test.UserGroup;
 
@@ -117,7 +117,7 @@ test( 'relate', function(assert)
 {
   var prefix = 'hasManyThrough_relate_';
 
-  var test = createUserGroups( prefix );
+  var test = createUserGroups1( prefix );
   var User = test.User;
   var Group = test.Group;
   var UserGroup = test.UserGroup;
@@ -153,7 +153,7 @@ test( 'unrelate', function(assert)
 {
   var prefix = 'hasManyThrough_unrelate_';
 
-  var test = createUserGroups( prefix );
+  var test = createUserGroups1( prefix );
   var User = test.User;
   var Group = test.Group;
   var UserGroup = test.UserGroup;
@@ -186,7 +186,7 @@ test( 'isRelated', function(assert)
 {
   var prefix = 'hasManyThrough_isRelated_';
 
-  var test = createUserGroups( prefix );
+  var test = createUserGroups1( prefix );
   var User = test.User;
   var Group = test.Group;
   var UserGroup = test.UserGroup;
@@ -210,7 +210,7 @@ test( 'get', function(assert)
 {
   var prefix = 'hasManyThrough_get_';
   
-  var test = createUserGroups( prefix );
+  var test = createUserGroups1( prefix );
   var User = test.User;
   var Group = test.Group;
   var UserGroup = test.UserGroup;
@@ -235,7 +235,7 @@ test( 'encode', function(assert)
     store: Neuro.Store.Model
   };
 
-  var test = createUserGroups( prefix, userOptions );
+  var test = createUserGroups1( prefix, userOptions );
   var User = test.User;
   var Group = test.Group;
   var UserGroup = test.UserGroup;
@@ -281,7 +281,7 @@ test( 'auto save parent', function(assert)
     save: Neuro.Save.Model
   };
 
-  var test = createUserGroups( prefix, userOptions );
+  var test = createUserGroups1( prefix, userOptions );
   var User = test.User;
   var Group = test.Group;
   var UserGroup = test.UserGroup;
@@ -314,7 +314,7 @@ test( 'test ninja through remove', function(assert)
 {
   var prefix = 'hasManyThrough_ninja_through_remove_';
   
-  var test = createUserGroups( prefix );
+  var test = createUserGroups1( prefix );
   var User = test.User;
   var Group = test.Group;
   var UserGroup = test.UserGroup;

@@ -104,7 +104,6 @@ extendArray( NeuroCollection, NeuroModelCollection,
     return target;
   },
 
-
   clear: function()
   {
     return this.map.reset();
@@ -114,7 +113,9 @@ extendArray( NeuroCollection, NeuroModelCollection,
   {
     if ( isArray( models ) )
     {
-      this.map.reset();
+      var map = this.map;
+
+      map.reset();
 
       for (var i = 0; i < models.length; i++)
       {
@@ -123,7 +124,7 @@ extendArray( NeuroCollection, NeuroModelCollection,
 
         if ( parsed )
         {
-          this.map.put( parsed.$key(), parsed );
+          map.put( parsed.$key(), parsed );
         }
       }
 
@@ -203,16 +204,17 @@ extendArray( NeuroCollection, NeuroModelCollection,
 
   removeAll: function(inputs, delaySort)
   {
+    var map = this.map;
     var removed = [];
 
     for (var i = 0; i < inputs.length; i++)
     {
       var key = this.buildKeyFromInput( inputs[ i ] );
-      var removing = this.map.get( key );
+      var removing = map.get( key );
 
       if ( removing )
       {
-        this.map.remove( key );
+        map.remove( key );
         removed.push( removing );
       }
     }

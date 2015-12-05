@@ -6,14 +6,16 @@ function NeuroRelation()
 
 Neuro.Relations = {};
 
-Neuro.Store = {
+Neuro.Store = 
+{
   None:   0,
   Model:  1,
   Key:    2,
   Keys:   3
 };
 
-Neuro.Save = {
+Neuro.Save = 
+{
   None:   0,
   Model:  4,
   Key:    5,
@@ -323,13 +325,13 @@ NeuroRelation.prototype =
     return false;
   },
 
-  clearFields: function(target, targetFields, remoteData)
+  clearFields: function(target, targetFields, remoteData, cascade)
   {
     var changes = this.clearFieldsReturnChanges( target, targetFields );
 
     if ( changes && !remoteData && this.auto && !target.$isNew() )
     {
-      target.$save();
+      target.$save( cascade );
     }
     
     return changes;

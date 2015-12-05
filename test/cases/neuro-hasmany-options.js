@@ -806,20 +806,14 @@ test( 'comparatorNullsFirst', function(assert)
   deepEqual( l0.tasks.toArray(), expected );
 });
 
-test( 'cascadeRemove true', function(assert)
+test( 'cascadeRemove none', function(assert)
 { 
-  var prefix = 'hasMany_cascadeRemove_true_';
+  var prefix = 'hasMany_cascadeRemove_none_';
 
   var Task = Neuro({
     name: prefix + 'task',
     fields: ['id', 'task_list_id', 'name', 'done', 'created_at'],
-    defaults: { done: false, created_at: Date.now },
-    belongsTo: {
-      list: {
-        model: prefix + 'list',
-        local: 'task_list_id'
-      }
-    }
+    defaults: { done: false, created_at: Date.now }
   });
 
   var TaskList = Neuro({
@@ -829,7 +823,7 @@ test( 'cascadeRemove true', function(assert)
       tasks: {
         model: Task,
         foreign: 'task_list_id',
-        cascadeRemove: true
+        cascadeRemove: Neuro.Cascade.None
       }
     }
   });
@@ -838,35 +832,43 @@ test( 'cascadeRemove true', function(assert)
   var t1 = Task.create({name: 't1'});
   var t2 = Task.create({name: 't2'});
   var l0 = TaskList.create({name: 'l0', tasks: [t0, t1, t2]});
+
+  var db = Task.Database;
+  var rest = db.rest;
+  var live = db.live.live;
+  var local = db.store;
 
   ok( t0.$exists() );
   ok( t1.$exists() );
   ok( t2.$exists() );
   ok( l0.$exists() );
 
+  rest.lastModel = null;
+  live.lastMessage = null;
+  local.lastKey = null;
+
   l0.$remove();
 
-  notOk( t0.$exists() );
-  notOk( t1.$exists() );
-  notOk( t2.$exists() );
-  notOk( l0.$exists() );
+  ok( l0.$isDeleted() );
+  notOk( t0.$isDeleted() );
+  notOk( t1.$isDeleted() );
+  notOk( t2.$isDeleted() );
+
+  strictEqual( rest.lastModel, null, 'no rest' );
+  strictEqual( live.lastMessage, null, 'no live' );
+  strictEqual( local.lastKey, null, 'no local' );
+
+  strictEqual( t0.task_list_id, l0.id, 'foreign key not cleared' );
 });
 
-test( 'cascadeRemove false', function(assert)
-{
-  var prefix = 'hasMany_cascadeRemove_false_';
+test( 'cascadeRemove local', function(assert)
+{ 
+  var prefix = 'hasMany_cascadeRemove_local_';
 
   var Task = Neuro({
     name: prefix + 'task',
     fields: ['id', 'task_list_id', 'name', 'done', 'created_at'],
-    defaults: { done: false, created_at: Date.now },
-    belongsTo: {
-      list: {
-        model: prefix + 'list',
-        local: 'task_list_id',
-        cascade: false
-      }
-    }
+    defaults: { done: false, created_at: Date.now }
   });
 
   var TaskList = Neuro({
@@ -876,7 +878,7 @@ test( 'cascadeRemove false', function(assert)
       tasks: {
         model: Task,
         foreign: 'task_list_id',
-        cascadeRemove: false
+        cascadeRemove: Neuro.Cascade.Local
       }
     }
   });
@@ -885,36 +887,98 @@ test( 'cascadeRemove false', function(assert)
   var t1 = Task.create({name: 't1'});
   var t2 = Task.create({name: 't2'});
   var l0 = TaskList.create({name: 'l0', tasks: [t0, t1, t2]});
+
+  var db = Task.Database;
+  var rest = db.rest;
+  var live = db.live.live;
+  var local = db.store;
 
   ok( t0.$exists() );
   ok( t1.$exists() );
   ok( t2.$exists() );
   ok( l0.$exists() );
 
+  rest.lastModel = null;
+  live.lastMessage = null;
+  local.lastKey = null;
+
   l0.$remove();
 
+  ok( l0.$isDeleted() );
+  ok( t0.$isDeleted() );
+  ok( t1.$isDeleted() );
+  ok( t2.$isDeleted() );
+
+  strictEqual( rest.lastModel, null, 'no rest' );
+  strictEqual( live.lastMessage, null, 'no live' );
+  strictEqual( local.lastKey, t0.id, 'local' );
+
+  strictEqual( t0.task_list_id, l0.id, 'foreign key not cleared' );
+});
+
+test( 'cascadeRemove rest', function(assert)
+{ 
+  var prefix = 'hasMany_cascadeRemove_rest_';
+
+  var Task = Neuro({
+    name: prefix + 'task',
+    fields: ['id', 'task_list_id', 'name', 'done', 'created_at'],
+    defaults: { done: false, created_at: Date.now }
+  });
+
+  var TaskList = Neuro({
+    name: prefix + 'list',
+    fields: ['id', 'name'],
+    hasMany: {
+      tasks: {
+        model: Task,
+        foreign: 'task_list_id',
+        cascadeRemove: Neuro.Cascade.Rest
+      }
+    }
+  });
+
+  var t0 = Task.create({name: 't0'});
+  var t1 = Task.create({name: 't1'});
+  var t2 = Task.create({name: 't2'});
+  var l0 = TaskList.create({name: 'l0', tasks: [t0, t1, t2]});
+
+  var db = Task.Database;
+  var rest = db.rest;
+  var live = db.live.live;
+  var local = db.store;
+
   ok( t0.$exists() );
-  strictEqual( t0.list, null );
-  strictEqual( t0.task_list_id, null );
   ok( t1.$exists() );
   ok( t2.$exists() );
-  notOk( l0.$exists() );
+  ok( l0.$exists() );
+
+  rest.lastModel = null;
+  live.lastMessage = null;
+  local.lastKey = null;
+
+  l0.$remove();
+
+  ok( l0.$isDeleted() );
+  ok( t0.$isDeleted() );
+  ok( t1.$isDeleted() );
+  ok( t2.$isDeleted() );
+
+  strictEqual( rest.lastModel, t0, 'rest' );
+  strictEqual( live.lastMessage, null, 'no live' );
+  strictEqual( local.lastKey, null, 'no local' );
+
+  strictEqual( t0.task_list_id, l0.id, 'foreign key not cleared' );
 });
 
-test( 'cascadeSave true', function(assert)
-{
-  var prefix = 'hasMany_cascadeSave_true_';
+test( 'cascadeRemove nolive', function(assert)
+{ 
+  var prefix = 'hasMany_cascadeRemove_nolive_';
 
   var Task = Neuro({
     name: prefix + 'task',
-    fields: ['id', 'task_list_id', 'name'],
-    defaults: { done: false, created_at: Date.now },
-    belongsTo: {
-      list: {
-        model: prefix + 'list',
-        local: 'task_list_id'
-      }
-    }
+    fields: ['id', 'task_list_id', 'name', 'done', 'created_at'],
+    defaults: { done: false, created_at: Date.now }
   });
 
   var TaskList = Neuro({
@@ -924,43 +988,52 @@ test( 'cascadeSave true', function(assert)
       tasks: {
         model: Task,
         foreign: 'task_list_id',
-        cascadeSave: true
+        cascadeRemove: Neuro.Cascade.NoLive
       }
     }
   });
-
-  var remote = Task.Database.rest;
 
   var t0 = Task.create({name: 't0'});
   var t1 = Task.create({name: 't1'});
   var t2 = Task.create({name: 't2'});
   var l0 = TaskList.create({name: 'l0', tasks: [t0, t1, t2]});
 
-  strictEqual( t1.$saved.name, 't1' );
+  var db = Task.Database;
+  var rest = db.rest;
+  var live = db.live.live;
+  var local = db.store;
 
-  t1.name = 't1a';
+  ok( t0.$exists() );
+  ok( t1.$exists() );
+  ok( t2.$exists() );
+  ok( l0.$exists() );
 
-  l0.$save();
+  rest.lastModel = null;
+  live.lastMessage = null;
+  local.lastKey = null;
 
-  strictEqual( t1.$saved.name, 't1a' );
-  deepEqual( remote.lastRecord, { name: t1.name });
+  l0.$remove();
+
+  ok( l0.$isDeleted() );
+  ok( t0.$isDeleted() );
+  ok( t1.$isDeleted() );
+  ok( t2.$isDeleted() );
+
+  strictEqual( rest.lastModel, t0, 'rest' );
+  strictEqual( live.lastMessage, null, 'no live' );
+  strictEqual( local.lastKey, t0.id, 'local' );
+
+  strictEqual( t0.task_list_id, l0.id, 'foreign key not cleared' );
 });
 
-
-test( 'cascadeSave false', function(assert)
-{
-  var prefix = 'hasMany_cascadeSave_false_';
+test( 'cascadeRemove live', function(assert)
+{ 
+  var prefix = 'hasMany_cascadeRemove_live_';
 
   var Task = Neuro({
     name: prefix + 'task',
-    fields: ['id', 'task_list_id', 'name'],
-    defaults: { done: false, created_at: Date.now },
-    belongsTo: {
-      list: {
-        model: prefix + 'list',
-        local: 'task_list_id'
-      }
-    }
+    fields: ['id', 'task_list_id', 'name', 'done', 'created_at'],
+    defaults: { done: false, created_at: Date.now }
   });
 
   var TaskList = Neuro({
@@ -970,12 +1043,235 @@ test( 'cascadeSave false', function(assert)
       tasks: {
         model: Task,
         foreign: 'task_list_id',
-        cascadeSave: false
+        cascadeRemove: Neuro.Cascade.Live
       }
     }
   });
 
-  var remote = Task.Database.rest;
+  var t0 = Task.create({name: 't0'});
+  var t1 = Task.create({name: 't1'});
+  var t2 = Task.create({name: 't2'});
+  var l0 = TaskList.create({name: 'l0', tasks: [t0, t1, t2]});
+
+  var db = Task.Database;
+  var rest = db.rest;
+  var live = db.live.live;
+  var local = db.store;
+
+  ok( t0.$exists() );
+  ok( t1.$exists() );
+  ok( t2.$exists() );
+  ok( l0.$exists() );
+
+  rest.lastModel = null;
+  live.lastMessage = null;
+  local.lastKey = null;
+
+  l0.$remove();
+
+  ok( l0.$isDeleted() );
+  ok( t0.$isDeleted() );
+  ok( t1.$isDeleted() );
+  ok( t2.$isDeleted() );
+
+  strictEqual( rest.lastModel, null, 'no rest' );
+  strictEqual( live.lastMessage.key, t0.id, 'live' );
+  strictEqual( local.lastKey, null, 'no local' );
+
+  strictEqual( t0.task_list_id, l0.id, 'foreign key not cleared' );
+});
+
+test( 'cascadeRemove norest', function(assert)
+{ 
+  var prefix = 'hasMany_cascadeRemove_norest_';
+
+  var Task = Neuro({
+    name: prefix + 'task',
+    fields: ['id', 'task_list_id', 'name', 'done', 'created_at'],
+    defaults: { done: false, created_at: Date.now }
+  });
+
+  var TaskList = Neuro({
+    name: prefix + 'list',
+    fields: ['id', 'name'],
+    hasMany: {
+      tasks: {
+        model: Task,
+        foreign: 'task_list_id',
+        cascadeRemove: Neuro.Cascade.NoRest
+      }
+    }
+  });
+
+  var t0 = Task.create({name: 't0'});
+  var t1 = Task.create({name: 't1'});
+  var t2 = Task.create({name: 't2'});
+  var l0 = TaskList.create({name: 'l0', tasks: [t0, t1, t2]});
+
+  var db = Task.Database;
+  var rest = db.rest;
+  var live = db.live.live;
+  var local = db.store;
+
+  ok( t0.$exists() );
+  ok( t1.$exists() );
+  ok( t2.$exists() );
+  ok( l0.$exists() );
+
+  rest.lastModel = null;
+  live.lastMessage = null;
+  local.lastKey = null;
+
+  l0.$remove();
+
+  ok( l0.$isDeleted() );
+  ok( t0.$isDeleted() );
+  ok( t1.$isDeleted() );
+  ok( t2.$isDeleted() );
+
+  strictEqual( rest.lastModel, null, 'no rest' );
+  strictEqual( live.lastMessage.key, t0.id, 'live' );
+  strictEqual( local.lastKey, t0.id, 'local' );
+
+  strictEqual( t0.task_list_id, l0.id, 'foreign key not cleared' );
+});
+
+test( 'cascadeRemove remote', function(assert)
+{ 
+  var prefix = 'hasMany_cascadeRemove_remote_';
+
+  var Task = Neuro({
+    name: prefix + 'task',
+    fields: ['id', 'task_list_id', 'name', 'done', 'created_at'],
+    defaults: { done: false, created_at: Date.now }
+  });
+
+  var TaskList = Neuro({
+    name: prefix + 'list',
+    fields: ['id', 'name'],
+    hasMany: {
+      tasks: {
+        model: Task,
+        foreign: 'task_list_id',
+        cascadeRemove: Neuro.Cascade.Remote
+      }
+    }
+  });
+
+  var t0 = Task.create({name: 't0'});
+  var t1 = Task.create({name: 't1'});
+  var t2 = Task.create({name: 't2'});
+  var l0 = TaskList.create({name: 'l0', tasks: [t0, t1, t2]});
+
+  var db = Task.Database;
+  var rest = db.rest;
+  var live = db.live.live;
+  var local = db.store;
+
+  ok( t0.$exists() );
+  ok( t1.$exists() );
+  ok( t2.$exists() );
+  ok( l0.$exists() );
+
+  rest.lastModel = null;
+  live.lastMessage = null;
+  local.lastKey = null;
+
+  l0.$remove();
+
+  ok( l0.$isDeleted() );
+  ok( t0.$isDeleted() );
+  ok( t1.$isDeleted() );
+  ok( t2.$isDeleted() );
+
+  strictEqual( rest.lastModel, t0, 'rest' );
+  strictEqual( live.lastMessage.key, t0.id, 'live' );
+  strictEqual( local.lastKey, null, 'no local' );
+
+  strictEqual( t0.task_list_id, l0.id, 'foreign key not cleared' );
+});
+
+test( 'cascadeRemove all', function(assert)
+{ 
+  var prefix = 'hasMany_cascadeRemove_all_';
+
+  var Task = Neuro({
+    name: prefix + 'task',
+    fields: ['id', 'task_list_id', 'name', 'done', 'created_at'],
+    defaults: { done: false, created_at: Date.now }
+  });
+
+  var TaskList = Neuro({
+    name: prefix + 'list',
+    fields: ['id', 'name'],
+    hasMany: {
+      tasks: {
+        model: Task,
+        foreign: 'task_list_id',
+        cascadeRemove: Neuro.Cascade.All
+      }
+    }
+  });
+
+  var t0 = Task.create({name: 't0'});
+  var t1 = Task.create({name: 't1'});
+  var t2 = Task.create({name: 't2'});
+  var l0 = TaskList.create({name: 'l0', tasks: [t0, t1, t2]});
+
+  var db = Task.Database;
+  var rest = db.rest;
+  var live = db.live.live;
+  var local = db.store;
+
+  ok( t0.$exists() );
+  ok( t1.$exists() );
+  ok( t2.$exists() );
+  ok( l0.$exists() );
+
+  rest.lastModel = null;
+  live.lastMessage = null;
+  local.lastKey = null;
+
+  l0.$remove();
+
+  ok( l0.$isDeleted() );
+  ok( t0.$isDeleted() );
+  ok( t1.$isDeleted() );
+  ok( t2.$isDeleted() );
+
+  strictEqual( rest.lastModel, t0, 'rest' );
+  strictEqual( live.lastMessage.key, t0.id, 'live' );
+  strictEqual( local.lastKey, t0.id, 'local' );
+
+  strictEqual( t0.task_list_id, l0.id, 'foreign key not cleared' );
+});
+
+test( 'cascadeSave none', function(assert)
+{
+  var prefix = 'hasMany_cascadeSave_none_';
+
+  var Task = Neuro({
+    name: prefix + 'task',
+    fields: ['id', 'task_list_id', 'name'],
+    defaults: { done: false, created_at: Date.now }
+  });
+
+  var TaskList = Neuro({
+    name: prefix + 'list',
+    fields: ['id', 'name'],
+    hasMany: {
+      tasks: {
+        model: Task,
+        foreign: 'task_list_id',
+        cascadeSave: Neuro.Cascade.None
+      }
+    }
+  });
+
+  var db = Task.Database;
+  var rest = db.rest;
+  var live = db.live.live;
+  var local = db.store;
 
   var t0 = Task.create({name: 't0'});
   var t1 = Task.create({name: 't1'});
@@ -984,14 +1280,344 @@ test( 'cascadeSave false', function(assert)
 
   strictEqual( t1.$saved.name, 't1' );
 
+  rest.lastRecord = null;
+  live.lastMessage = null;
+  local.lastKey = null;
+
   t1.name = 't1a';
 
   l0.$save();
 
+  deepEqual( rest.lastRecord, null, 'no rest' );
+  strictEqual( live.lastMessage, null, 'no live' );
+  strictEqual( local.lastKey, null, 'no local' );
+});
+
+test( 'cascadeSave local', function(assert)
+{
+  var prefix = 'hasMany_cascadeSave_local_';
+
+  var Task = Neuro({
+    name: prefix + 'task',
+    fields: ['id', 'task_list_id', 'name'],
+    defaults: { done: false, created_at: Date.now }
+  });
+
+  var TaskList = Neuro({
+    name: prefix + 'list',
+    fields: ['id', 'name'],
+    hasMany: {
+      tasks: {
+        model: Task,
+        foreign: 'task_list_id',
+        cascadeSave: Neuro.Cascade.Local
+      }
+    }
+  });
+
+  var db = Task.Database;
+  var rest = db.rest;
+  var live = db.live.live;
+  var local = db.store;
+
+  var t0 = Task.create({name: 't0'});
+  var t1 = Task.create({name: 't1'});
+  var t2 = Task.create({name: 't2'});
+  var l0 = TaskList.create({name: 'l0', tasks: [t0, t1, t2]});
+
   strictEqual( t1.$saved.name, 't1' );
 
-  t1.$save();
+  rest.lastRecord = null;
+  live.lastMessage = null;
+  local.lastKey = null;
 
-  strictEqual( t1.$saved.name, 't1a' );
-  deepEqual( remote.lastRecord, { name: t1.name });
+  t1.name = 't1a';
+
+  l0.$save();
+
+  deepEqual( rest.lastRecord, null, 'no rest' );
+  strictEqual( live.lastMessage, null, 'no live' );
+  strictEqual( local.lastKey, t1.id, 'local' );
+});
+
+test( 'cascadeSave rest', function(assert)
+{
+  var prefix = 'hasMany_cascadeSave_rest_';
+
+  var Task = Neuro({
+    name: prefix + 'task',
+    fields: ['id', 'task_list_id', 'name'],
+    defaults: { done: false, created_at: Date.now }
+  });
+
+  var TaskList = Neuro({
+    name: prefix + 'list',
+    fields: ['id', 'name'],
+    hasMany: {
+      tasks: {
+        model: Task,
+        foreign: 'task_list_id',
+        cascadeSave: Neuro.Cascade.Rest
+      }
+    }
+  });
+
+  var db = Task.Database;
+  var rest = db.rest;
+  var live = db.live.live;
+  var local = db.store;
+
+  var t0 = Task.create({name: 't0'});
+  var t1 = Task.create({name: 't1'});
+  var t2 = Task.create({name: 't2'});
+  var l0 = TaskList.create({name: 'l0', tasks: [t0, t1, t2]});
+
+  strictEqual( t1.$saved.name, 't1' );
+
+  rest.lastRecord = null;
+  live.lastMessage = null;
+  local.lastKey = null;
+
+  t1.name = 't1a';
+
+  l0.$save();
+
+  deepEqual( rest.lastRecord, {name: 't1a'}, 'rest' );
+  strictEqual( live.lastMessage, null, 'no live' );
+  strictEqual( local.lastKey, null, 'no local' );
+});
+
+test( 'cascadeSave nolive', function(assert)
+{
+  var prefix = 'hasMany_cascadeSave_nolive_';
+
+  var Task = Neuro({
+    name: prefix + 'task',
+    fields: ['id', 'task_list_id', 'name'],
+    defaults: { done: false, created_at: Date.now }
+  });
+
+  var TaskList = Neuro({
+    name: prefix + 'list',
+    fields: ['id', 'name'],
+    hasMany: {
+      tasks: {
+        model: Task,
+        foreign: 'task_list_id',
+        cascadeSave: Neuro.Cascade.NoLive
+      }
+    }
+  });
+
+  var db = Task.Database;
+  var rest = db.rest;
+  var live = db.live.live;
+  var local = db.store;
+
+  var t0 = Task.create({name: 't0'});
+  var t1 = Task.create({name: 't1'});
+  var t2 = Task.create({name: 't2'});
+  var l0 = TaskList.create({name: 'l0', tasks: [t0, t1, t2]});
+
+  strictEqual( t1.$saved.name, 't1' );
+
+  rest.lastRecord = null;
+  live.lastMessage = null;
+  local.lastKey = null;
+
+  t1.name = 't1a';
+
+  l0.$save();
+
+  deepEqual( rest.lastRecord, {name: 't1a'}, 'rest' );
+  strictEqual( live.lastMessage, null, 'no live' );
+  strictEqual( local.lastKey, t1.id, 'local' );
+});
+
+test( 'cascadeSave live', function(assert)
+{
+  var prefix = 'hasMany_cascadeSave_live_';
+
+  var Task = Neuro({
+    name: prefix + 'task',
+    fields: ['id', 'task_list_id', 'name'],
+    defaults: { done: false, created_at: Date.now }
+  });
+
+  var TaskList = Neuro({
+    name: prefix + 'list',
+    fields: ['id', 'name'],
+    hasMany: {
+      tasks: {
+        model: Task,
+        foreign: 'task_list_id',
+        cascadeSave: Neuro.Cascade.Live
+      }
+    }
+  });
+
+  var db = Task.Database;
+  var rest = db.rest;
+  var live = db.live.live;
+  var local = db.store;
+
+  var t0 = Task.create({name: 't0'});
+  var t1 = Task.create({name: 't1'});
+  var t2 = Task.create({name: 't2'});
+  var l0 = TaskList.create({name: 'l0', tasks: [t0, t1, t2]});
+
+  strictEqual( t1.$saved.name, 't1' );
+
+  rest.lastRecord = null;
+  live.lastMessage = null;
+  local.lastKey = null;
+
+  t1.name = 't1a';
+
+  l0.$save();
+
+  deepEqual( rest.lastRecord, null, 'no rest' );
+  strictEqual( live.lastMessage.key, t1.id, 'live' );
+  strictEqual( local.lastKey, null, 'no local' );
+});
+
+test( 'cascadeSave norest', function(assert)
+{
+  var prefix = 'hasMany_cascadeSave_norest_';
+
+  var Task = Neuro({
+    name: prefix + 'task',
+    fields: ['id', 'task_list_id', 'name'],
+    defaults: { done: false, created_at: Date.now }
+  });
+
+  var TaskList = Neuro({
+    name: prefix + 'list',
+    fields: ['id', 'name'],
+    hasMany: {
+      tasks: {
+        model: Task,
+        foreign: 'task_list_id',
+        cascadeSave: Neuro.Cascade.NoRest
+      }
+    }
+  });
+
+  var db = Task.Database;
+  var rest = db.rest;
+  var live = db.live.live;
+  var local = db.store;
+
+  var t0 = Task.create({name: 't0'});
+  var t1 = Task.create({name: 't1'});
+  var t2 = Task.create({name: 't2'});
+  var l0 = TaskList.create({name: 'l0', tasks: [t0, t1, t2]});
+
+  strictEqual( t1.$saved.name, 't1' );
+
+  rest.lastRecord = null;
+  live.lastMessage = null;
+  local.lastKey = null;
+
+  t1.name = 't1a';
+
+  l0.$save();
+
+  deepEqual( rest.lastRecord, null, 'no rest' );
+  strictEqual( live.lastMessage.key, t1.id, 'live' );
+  strictEqual( local.lastKey, t1.id, 'local' );
+});
+
+test( 'cascadeSave remote', function(assert)
+{
+  var prefix = 'hasMany_cascadeSave_remote_';
+
+  var Task = Neuro({
+    name: prefix + 'task',
+    fields: ['id', 'task_list_id', 'name'],
+    defaults: { done: false, created_at: Date.now }
+  });
+
+  var TaskList = Neuro({
+    name: prefix + 'list',
+    fields: ['id', 'name'],
+    hasMany: {
+      tasks: {
+        model: Task,
+        foreign: 'task_list_id',
+        cascadeSave: Neuro.Cascade.Remote
+      }
+    }
+  });
+
+  var db = Task.Database;
+  var rest = db.rest;
+  var live = db.live.live;
+  var local = db.store;
+
+  var t0 = Task.create({name: 't0'});
+  var t1 = Task.create({name: 't1'});
+  var t2 = Task.create({name: 't2'});
+  var l0 = TaskList.create({name: 'l0', tasks: [t0, t1, t2]});
+
+  strictEqual( t1.$saved.name, 't1' );
+
+  rest.lastRecord = null;
+  live.lastMessage = null;
+  local.lastKey = null;
+
+  t1.name = 't1a';
+
+  l0.$save();
+
+  deepEqual( rest.lastRecord, {name: 't1a'}, 'rest' );
+  strictEqual( live.lastMessage.key, t1.id, 'live' );
+  strictEqual( local.lastKey, null, 'no local' );
+});
+
+test( 'cascadeSave all', function(assert)
+{
+  var prefix = 'hasMany_cascadeSave_all_';
+
+  var Task = Neuro({
+    name: prefix + 'task',
+    fields: ['id', 'task_list_id', 'name'],
+    defaults: { done: false, created_at: Date.now }
+  });
+
+  var TaskList = Neuro({
+    name: prefix + 'list',
+    fields: ['id', 'name'],
+    hasMany: {
+      tasks: {
+        model: Task,
+        foreign: 'task_list_id',
+        cascadeSave: Neuro.Cascade.All
+      }
+    }
+  });
+
+  var db = Task.Database;
+  var rest = db.rest;
+  var live = db.live.live;
+  var local = db.store;
+
+  var t0 = Task.create({name: 't0'});
+  var t1 = Task.create({name: 't1'});
+  var t2 = Task.create({name: 't2'});
+  var l0 = TaskList.create({name: 'l0', tasks: [t0, t1, t2]});
+
+  strictEqual( t1.$saved.name, 't1' );
+
+  rest.lastRecord = null;
+  live.lastMessage = null;
+  local.lastKey = null;
+
+  t1.name = 't1a';
+
+  l0.$save();
+
+  deepEqual( rest.lastRecord, {name: 't1a'}, 'rest' );
+  strictEqual( live.lastMessage.key, t1.id, 'live' );
+  strictEqual( local.lastKey, t1.id, 'local' );
 });

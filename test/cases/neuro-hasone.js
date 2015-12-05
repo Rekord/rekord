@@ -112,38 +112,6 @@ test( 'ninja remove', function(assert)
   strictEqual( t0.created_by, null );
 });
 
-test( 'ninja save', function(assert)
-{
-  var prefix = 'hasOne_ninja_save_';
-
-  var User = Neuro({
-    name: prefix + 'user',
-    fields: ['id', 'name']
-  });
-
-  var Task = Neuro({
-    name: prefix + 'task',
-    fields: ['id', 'name', 'created_by'],
-    hasOne: {
-      creator: {
-        model: User,
-        local: 'created_by'
-      }
-    }
-  });
-
-  var u0 = User.create({name: 'You'});
-  var t0 = Task.create({name: 'This', creator: u0});
-
-  strictEqual( t0.creator, u0 );
-  strictEqual( t0.created_by, u0.id );
-
-  u0.$save( 'id', 6 );
-
-  strictEqual( t0.creator, null );
-  strictEqual( t0.created_by, null );
-});
-
 test( 'set', function(assert)
 {
   var prefix = 'hasOne_set_';
@@ -378,7 +346,7 @@ test( 'cascade remove', function(assert)
       creator: {
         model: User,
         local: 'created_by',
-        cascade: true
+        cascade: Neuro.Cascade.All
       }
     }
   });

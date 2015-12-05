@@ -6,6 +6,8 @@ function NeuroGetLocal(model, cascade)
 extend( NeuroOperation, NeuroGetLocal,
 {
 
+  cascading: Neuro.Cascade.Local,
+
   interrupts: false,
 
   type: 'NeuroGetLocal',
@@ -14,15 +16,19 @@ extend( NeuroOperation, NeuroGetLocal,
   {
     if ( model.$isDeleted() )
     {
+      model.$trigger( NeuroModel.Events.LocalGetFailure, [model] );
+
       this.finish();
     }
-    else if ( db.cache === Neuro.Cache.All )
+    else if ( this.canCascade() && db.cache === Neuro.Cache.All )
     {
       db.store.get( model.$key(), this.success(), this.failure() );
     }
-    else if ( this.cascade )
+    else
     {
       Neuro.debug( Neuro.Debugs.GET_LOCAL_SKIPPED, model );
+
+      model.$trigger( NeuroModel.Events.LocalGet, [model] );
 
       this.insertNext( NeuroGetRemote ); 
       this.finish();
@@ -40,7 +46,9 @@ extend( NeuroOperation, NeuroGetLocal,
 
     Neuro.debug( Neuro.Debugs.GET_LOCAL, model, encoded );
 
-    if ( this.cascade && !model.$isDeleted() )
+    model.$trigger( NeuroModel.Events.LocalGet, [model] );
+
+    if ( this.canCascade( Neuro.Cascade.Rest ) && !model.$isDeleted() )
     {
       this.insertNext( NeuroGetRemote );
     }
@@ -52,7 +60,9 @@ extend( NeuroOperation, NeuroGetLocal,
 
     Neuro.debug( Neuro.Debugs.GET_LOCAL, model, e );
 
-    if ( this.cascade && !model.$isDeleted()  )
+    model.$trigger( NeuroModel.Events.LocalGetFailure, [model] );
+
+    if ( this.canCascade( Neuro.Cascade.Rest ) && !model.$isDeleted()  )
     {
       this.insertNext( NeuroGetRemote );
     }

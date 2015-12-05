@@ -391,12 +391,11 @@ test( 'loadRemote false', function(assert)
 
   strictEqual( loadRemote_false.all().length, 0 );
 
-  setTimeout(function() {
-
+  wait(15, function() 
+  {
     strictEqual( loadRemote_false.all().length, 0 );
     done();
-
-  }, 15);
+  });
   
 });
 
@@ -848,7 +847,7 @@ test( 'events', function(assert)
   var context0 = {name: 'c0'};
   var context1 = {name: 'c1'};
 
-  expect( 12 );
+  expect( 10 );
 
   var Task = Neuro({
     name: 'events',

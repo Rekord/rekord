@@ -6,6 +6,8 @@ function NeuroSaveRemote(model, cascade)
 extend( NeuroOperation, NeuroSaveRemote,
 {
 
+  cascading: Neuro.Cascade.Remote,
+
   interrupts: false,
 
   type: 'NeuroSaveRemote',
@@ -17,13 +19,12 @@ extend( NeuroOperation, NeuroSaveRemote,
       Neuro.debug( Neuro.Debugs.SAVE_REMOTE_DELETED, model );
 
       this.markSynced( model, true, NeuroModel.Events.RemoteSaveFailure );
-
       this.finish();
     }
-    else if ( !db.hasData( model.$saving ) )
+    else if ( !db.hasData( model.$saving ) || this.notCascade( Neuro.Cascade.Rest ) )
     {
+      this.liveSave();
       this.markSynced( model, true, NeuroModel.Events.RemoteSave );
-
       this.finish();
     }
     else
@@ -132,7 +133,6 @@ extend( NeuroOperation, NeuroSaveRemote,
     var db = this.db;
     var model = this.model;
     var saving = model.$saving;
-    var publishing = model.$publish;
 
     // Check deleted one more time before updating model.
     if ( model.$isDeleted() )
@@ -151,6 +151,7 @@ extend( NeuroOperation, NeuroSaveRemote,
       model.$saved = model.$local ? (model.$local.$saved = {}) : {}; 
     }
 
+    // Tranfer all saved fields into the saved object
     transfer( saving, model.$saved );
     
     // Update the model with the return data
@@ -159,19 +160,7 @@ extend( NeuroOperation, NeuroSaveRemote,
       db.putRemoteData( data, model.$key(), model );
     }    
 
-    if ( db.hasData( model.$publish ) )
-    {
-      // Publish saved data to everyone else
-      Neuro.debug( Neuro.Debugs.SAVE_PUBLISH, model, publishing );
-
-      db.live(
-      {
-        op:     NeuroDatabase.Live.Save,
-        model:  model.$publish,
-        key:    model.$key()
-      });
-    }
-
+    this.liveSave();
     this.markSynced( model, false, NeuroModel.Events.RemoteSave );
     
     if ( db.cache === Neuro.Cache.Pending )
@@ -184,13 +173,32 @@ extend( NeuroOperation, NeuroSaveRemote,
     }
   },
 
+  liveSave: function()
+  {
+    var db = this.db;
+    var model = this.model;
+
+    if ( this.canCascade( Neuro.Cascade.Live ) && db.hasData( model.$publish ) )
+    {
+      // Publish saved data to everyone else
+      Neuro.debug( Neuro.Debugs.SAVE_PUBLISH, model, model.$publish );
+
+      db.live(
+      {
+        op:     NeuroDatabase.Live.Save,
+        model:  model.$publish,
+        key:    model.$key()
+      });
+    }
+  },
+
   handleOnline: function()
   {
     var model = this.model;
 
     if ( model.$status === NeuroModel.Status.SavePending )
     { 
-      model.$addOperation( NeuroSaveRemote );
+      model.$addOperation( NeuroSaveRemote, this.cascade );
 
       Neuro.debug( Neuro.Debugs.SAVE_RESUME, model );
     }

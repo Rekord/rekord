@@ -179,7 +179,7 @@ test( '$relate $unrelate $isRelated $getRelation', function(assert)
   l0.$unrelate( 'tasks', t0.id );
 
   strictEqual( l0.tasks.length, 0 );
-  strictEqual( t0.task_list_id, null );
+  strictEqual( t0.task_list_id, l0.id, 'foreign key not cleared, does not matter when you are removed' );
 
   notStrictEqual( l0.$getRelation( 'tasks' ), void 0 );
 });
@@ -473,13 +473,12 @@ test( '$isSavedLocally', function(assert)
   ok( i0.$isSavedLocally() );
   notOk( i0.$isSaved() );
 
-  setTimeout(function()
+  wait(15, function()
   {
     ok( i0.$isSavedLocally() );
     ok( i0.$isSaved() );
     done();
-
-  }, 15);
+  });
 
 });
 

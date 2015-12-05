@@ -6,6 +6,8 @@ function NeuroGetRemote(model, cascade)
 extend( NeuroOperation, NeuroGetRemote,
 {
 
+  cascading: Neuro.Cascade.Rest,
+
   interrupts: false,
 
   type: 'NeuroGetRemote',
@@ -14,11 +16,19 @@ extend( NeuroOperation, NeuroGetRemote,
   {
     if ( model.$isDeleted() )
     {
+      model.$trigger( NeuroModel.Events.RemoteGetFailure, [model] );
+
       this.finish();
+    }
+    else if ( this.canCascade() )
+    {
+      db.rest.get( model, this.success(), this.failure() );
     }
     else
     {
-      db.rest.get( model, this.success(), this.failure() );
+      model.$trigger( NeuroModel.Events.RemoteGet, [model] );
+
+      this.finish();
     }
   },
 
@@ -32,13 +42,17 @@ extend( NeuroOperation, NeuroGetRemote,
     }
 
     Neuro.debug( Neuro.Debugs.GET_REMOTE, model, data );
+
+    model.$trigger( NeuroModel.Events.RemoteGet, [model] );
   },
 
   onFailure: function(data, status)
   {
     var model = this.model;
 
-    Neuro.debug( Neuro.Debugs.GET_REMOTE_ERROR, model, data, status )
+    Neuro.debug( Neuro.Debugs.GET_REMOTE_ERROR, model, data, status );
+
+    model.$trigger( NeuroModel.Events.RemoteGetFailure, [model] );
   }
 
 });

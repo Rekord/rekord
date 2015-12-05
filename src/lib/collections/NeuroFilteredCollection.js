@@ -1,12 +1,12 @@
 function NeuroFilteredCollection(base, filter)
 {
-  this.onAdd = copyFunction( this.handleAdd );
-  this.onAdds = copyFunction( this.handleAdds );
-  this.onRemove = copyFunction( this.handleRemove );
-  this.onRemoves = copyFunction( this.handleRemoves );
-  this.onReset = copyFunction( this.handleReset );
-  this.onUpdates = copyFunction( this.handleUpdates );
-  this.onCleared = copyFunction( this.handleCleared );
+  this.onAdd      = bind( this, this.handleAdd );
+  this.onAdds     = bind( this, this.handleAdds );
+  this.onRemove   = bind( this, this.handleRemove );
+  this.onRemoves  = bind( this, this.handleRemoves );
+  this.onReset    = bind( this, this.handleReset );
+  this.onUpdates  = bind( this, this.handleUpdates );
+  this.onCleared  = bind( this, this.handleCleared );
 
   this.init( base, filter );
 }
@@ -38,13 +38,13 @@ extendArray( NeuroCollection, NeuroFilteredCollection,
 
   connect: function()
   {
-    this.base.on( NeuroCollection.Events.Add, this.onAdd, this );
-    this.base.on( NeuroCollection.Events.Adds, this.onAdds, this );
-    this.base.on( NeuroCollection.Events.Remove, this.onRemove, this );
-    this.base.on( NeuroCollection.Events.Removes, this.onRemoves, this );
-    this.base.on( NeuroCollection.Events.Reset, this.onReset, this );
-    this.base.on( NeuroCollection.Events.Updates, this.onUpdates, this );
-    this.base.on( NeuroCollection.Events.Cleared, this.onClear, this );
+    this.base.on( NeuroCollection.Events.Add, this.onAdd );
+    this.base.on( NeuroCollection.Events.Adds, this.onAdds );
+    this.base.on( NeuroCollection.Events.Remove, this.onRemove );
+    this.base.on( NeuroCollection.Events.Removes, this.onRemoves );
+    this.base.on( NeuroCollection.Events.Reset, this.onReset );
+    this.base.on( NeuroCollection.Events.Updates, this.onUpdates );
+    this.base.on( NeuroCollection.Events.Cleared, this.onClear );
   },
 
   disconnect: function()
