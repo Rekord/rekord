@@ -415,3 +415,60 @@ test( 'more than one hasOne relationship', function(assert)
   strictEqual( t0.edited_by, null );
   strictEqual( t0.editor, null );
 });
+
+test( 'wait until dependents are saved', function(assert) 
+{
+  var timescale = 30;
+  var done = assert.async();
+  var prefix = 'hasOne_wait_dependents_';
+
+  var User = Neuro({
+    name: prefix + 'user',
+    fields: ['name']
+  });
+
+  var Task = Neuro({
+    name: prefix + 'task',
+    fields: ['name', 'created_by'],
+    hasOne: {
+      creator: {
+        model: User,
+        local: 'created_by'
+      }
+    }
+  });
+
+  var trest = Task.Database.rest;
+  var urest = User.Database.rest;
+
+  var u0 = new User({name: 'u0'});
+  var t0 = new Task({name: 't0', creator: u0});
+
+  urest.delay = 2 * timescale;
+  trest.delay = 2 * timescale;
+
+  t0.$save();
+
+  notOk( t0.$isSaved(), 'task not saved since user not saved' );
+  notOk( u0.$isSaved(), 'user not saved' );
+
+  wait( 1 * timescale, function() 
+  {
+    notOk( t0.$isSaved(), 'task not saved since user not saved (2)' );
+    notOk( u0.$isSaved(), 'user not saved (2)' );
+  });
+
+  wait( 3 * timescale, function() 
+  {
+    notOk( t0.$isSaved(), 'task not saved since user not saved (3)' );
+    ok( u0.$isSaved(), 'user saved' );
+  });
+
+  wait( 5 * timescale, function() 
+  {
+    ok( t0.$isSaved(), 'task saved since user has saved' );
+    ok( u0.$isSaved(), 'user saved (2)' );
+
+    done();
+  });
+});

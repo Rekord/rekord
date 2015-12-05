@@ -610,3 +610,77 @@ test( 'auto save parent', function(assert)
     ]
   });
 });
+
+test( 'wait until dependents are saved', function(assert) 
+{
+  var timescale = 30;
+  var done = assert.async();
+  var prefix = 'hasMany_wait_dependents_';
+
+  var Task = Neuro({
+    name: prefix + 'task',
+    fields: ['name', 'created_by']
+  });
+
+  var User = Neuro({
+    name: prefix + 'user',
+    fields: ['name'],
+    hasMany: {
+      tasks: {
+        model: Task,
+        foreign: 'created_by',
+        cascadeSave: Neuro.Cascade.All
+      }
+    }
+  });
+
+  var trest = Task.Database.rest;
+  var urest = User.Database.rest;
+
+  var t0 = new Task({name: 't0'});
+  var t1 = new Task({name: 't1'});
+  var u0 = new User({name: 'u0', tasks: [t0, t1]});
+
+  ok( t0.$isSynced() );
+  ok( t1.$isSynced() );
+  notOk( t0.$isSaved() );
+  notOk( t1.$isSaved() );
+  notOk( u0.$isSaved() );
+  strictEqual( t0.created_by, u0.id );
+  strictEqual( t1.created_by, u0.id );
+
+  urest.delay = 2 * timescale;
+  trest.delay = 2 * timescale;
+
+  u0.$save();
+
+  notOk( t0.$isSynced() );
+  notOk( t1.$isSynced() );
+
+  notOk( t0.$isSaved(), 'task 0 not saved since user not saved' );
+  notOk( t1.$isSaved(), 'task 1 not saved since user not saved' );
+  notOk( u0.$isSaved(), 'user not saved' );
+
+  wait(1 * timescale, function()
+  {
+    notOk( t0.$isSaved(), 'task 0 not saved since user not saved (2)' );
+    notOk( t1.$isSaved(), 'task 1 not saved since user not saved (2)' );
+    notOk( u0.$isSaved(), 'user not saved (2)' );
+  });
+
+  wait(3* timescale, function()
+  {
+    notOk( t0.$isSaved(), 'task 0 not saved since user not saved (3)' );
+    notOk( t1.$isSaved(), 'task 1 not saved since user not saved (3)' );
+    ok( u0.$isSaved(), 'user saved' );
+  });
+
+  wait(5 * timescale, function()
+  {
+    ok( t0.$isSaved(), 'task 0 saved' );
+    ok( t1.$isSaved(), 'task 1 saved' );
+    ok( u0.$isSaved(), 'user saved' );
+
+    done();
+  });
+});

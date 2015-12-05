@@ -48,16 +48,22 @@ NeuroModel.Events =
   RemoteUpdate:         'remote-update',
   LocalSave:            'local-save',
   LocalSaveFailure:     'local-save-failure',
+  LocalSaves:           'local-save local-save-failure',
   RemoteSave:           'remote-save',
   RemoteSaveFailure:    'remote-save-failure',
+  RemoteSaves:          'remote-save remote-save-failure',
   LocalRemove:          'local-remove',
   LocalRemoveFailure:   'local-remove-failure',
+  LocalRemoves:         'local-remove local-remove-failure',
   RemoteRemove:         'remote-remove',
   RemoteRemoveFailure:  'remote-remove-failure',
+  RemoteRemoves:        'remote-remove remote-remove-failure',
   LocalGet:             'local-get',
   LocalGetFailure:      'local-get-failure',
+  LocalGets:            'local-get local-get-failure',
   RemoteGet:            'remote-get',
   RemoteGetFailure:     'remote-get-failure',
+  RemoteGets:           'remote-get remote-get-failure',
   RemoteAndRemove:      'remote-remove removed',
   SavedRemoteUpdate:    'saved remote-update',
   Changes:              'saved remote-update key-update relation-update removed change'
@@ -84,6 +90,7 @@ NeuroModel.prototype =
     this.$status = NeuroModel.Status.Synced;
     this.$operation = null;
     this.$relations = {};
+    this.$dependents = {};
 
     if ( remoteData )
     {
@@ -217,6 +224,25 @@ NeuroModel.prototype =
         return copyValues ? copy( this[ props ] ) : this[ props ];
       }
     }
+  },
+
+  $isDependentsSaved: function(callbackOnSaved, contextOnSaved)
+  {
+    var dependents = this.$dependents;
+
+    for (var uid in dependents)
+    {
+      var dependent = dependents[ uid ];
+
+      if ( !dependent.$isSaved() )
+      {
+        dependent.$once( NeuroModel.Events.RemoteSaves, callbackOnSaved, contextOnSaved );
+
+        return false;
+      }
+    }
+
+    return true;
   },
 
   $relate: function(prop, relate)
@@ -372,9 +398,19 @@ NeuroModel.prototype =
     return this.$db.getKeys( this );
   },
 
+  $uid: function()
+  {
+    return this.$db.name + '$' + this.$db.getKey( this );
+  },
+
   $hasKey: function()
   {
     return hasFields( this, this.$db.key, isValue );
+  },
+
+  $isSynced: function()
+  {
+    return this.$status === NeuroModel.Status.Synced;
   },
 
   $isDeleted: function()

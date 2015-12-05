@@ -333,3 +333,93 @@ test( 'test ninja through remove', function(assert)
 
   deepEqual( u0.groups.toArray(), [g1] );
 });
+
+test( 'wait until dependents are saved', function(assert) 
+{
+  var timescale = 30;
+  var done = assert.async();
+  var prefix = 'hasManyThrough_wait_dependents_';
+
+  var UserGroup = Neuro({
+    name: prefix + 'user_group',
+    key: ['user_id', 'group_id']
+  });
+
+  var Group = Neuro({
+    name: prefix + 'group',
+    fields: ['name']
+  });
+
+  var User = Neuro({
+    name: prefix + 'user',
+    fields: ['name'],
+    hasManyThrough: {
+      groups: {
+        model: Group,
+        through: UserGroup,
+        local: 'user_id',
+        foreign: 'group_id'
+      }
+    }
+  });
+
+  var urest = User.Database.rest;
+  var ugrest = UserGroup.Database.rest;
+
+  var g0 = new Group({name: 'g0'});
+  var g1 = new Group({name: 'g1'});
+  var g2 = new Group({name: 'g2'});
+  var u0 = new User({name: 'u0', groups: [g0, g1, g2]});
+
+  var ug0 = UserGroup.get( [u0.id, g0.id] );
+  var ug1 = UserGroup.get( [u0.id, g1.id] );
+  var ug2 = UserGroup.get( [u0.id, g2.id] );
+
+  ok( ug0.$isSynced() );
+  ok( ug1.$isSynced() );
+  ok( ug2.$isSynced() );
+  notOk( ug0.$isSaved() );
+  notOk( ug1.$isSaved() );
+  notOk( ug2.$isSaved() );
+  notOk( u0.$isSaved() );
+  
+  urest.delay = 2 * timescale;
+  ugrest.delay = 2 * timescale;
+
+  u0.$save();
+
+  notOk( ug0.$isSynced() );
+  notOk( ug1.$isSynced() );
+  notOk( ug2.$isSynced() );
+
+  notOk( ug0.$isSaved(), 'group 0 not saved since user not saved' );
+  notOk( ug1.$isSaved(), 'group 1 not saved since user not saved' );
+  notOk( ug2.$isSaved(), 'group 1 not saved since user not saved' );
+  notOk( u0.$isSaved(), 'user not saved' );
+
+  wait( 1 * timescale, function()
+  {
+    notOk( ug0.$isSaved(), 'group 0 not saved since user not saved (2)' );
+    notOk( ug1.$isSaved(), 'group 1 not saved since user not saved (2)' );
+    notOk( ug2.$isSaved(), 'group 1 not saved since user not saved (2)' );
+    notOk( u0.$isSaved(), 'user not saved (2)' );
+  });
+
+  wait( 3 * timescale, function()
+  {
+    notOk( ug0.$isSaved(), 'group 0 not saved since user not saved (3)' );
+    notOk( ug1.$isSaved(), 'group 1 not saved since user not saved (3)' );
+    notOk( ug2.$isSaved(), 'group 2 not saved since user not saved (3)' );
+    ok( u0.$isSaved(), 'user saved' );
+  });
+
+  wait( 5 * timescale, function()
+  {
+    ok( ug0.$isSaved(), 'group 0 saved' );
+    ok( ug1.$isSaved(), 'group 1 saved' );
+    ok( ug2.$isSaved(), 'group 2 saved' );
+    ok( u0.$isSaved(), 'user saved' );
+
+    done();
+  });
+});

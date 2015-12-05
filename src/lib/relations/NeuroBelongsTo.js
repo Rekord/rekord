@@ -60,7 +60,7 @@ extend( NeuroRelation, NeuroBelongsTo,
         model.$remove( this.cascade );
         this.clearRelated( relation );
       },
-      
+
       onSaved: function()
       {
         Neuro.debug( Neuro.Debugs.BELONGSTO_NINJA_SAVE, this, model, relation );
@@ -151,7 +151,19 @@ extend( NeuroRelation, NeuroBelongsTo,
     return related === relation.related;
   },
 
-  // same as HasOne
+  postRemove: function(model)
+  {
+    var relation = model.$relations[ this.name ];
+
+    if ( relation )
+    {
+      Neuro.debug( Neuro.Debugs.BELONGSTO_POSTREMOVE, this, model, relation );
+
+      this.clearModel( relation );
+      this.setProperty( relation );
+    }
+  },
+
   setRelated: function(relation, related, remoteData)
   {
     if ( !related.$isDeleted() )
@@ -169,19 +181,6 @@ extend( NeuroRelation, NeuroBelongsTo,
     this.setProperty( relation );
   },
 
-  postRemove: function(model)
-  {
-    var relation = model.$relations[ this.name ];
-
-    if ( relation )
-    {
-      Neuro.debug( Neuro.Debugs.BELONGSTO_POSTREMOVE, this, model, relation );
-
-      this.clearModel( relation );
-      this.setProperty( relation );
-    }
-  },
-
   clearModel: function(relation)
   {
     var related = relation.related;
@@ -195,6 +194,8 @@ extend( NeuroRelation, NeuroBelongsTo,
 
       relation.related = null;
       relation.loaded = true;
+
+      delete relation.parent.$dependents[ related.$uid() ];
     }
   },
 
@@ -205,6 +206,8 @@ extend( NeuroRelation, NeuroBelongsTo,
 
     relation.related = related;
     relation.loaded = true;
+    
+    relation.parent.$dependents[ related.$uid() ] = related;
 
     Neuro.debug( Neuro.Debugs.BELONGSTO_SET_MODEL, this, relation );
   },

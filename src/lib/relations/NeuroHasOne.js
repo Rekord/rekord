@@ -209,6 +209,8 @@ extend( NeuroRelation, NeuroHasOne,
       relation.related = null;
       relation.dirty = true;
       relation.loaded = true;
+
+      delete relation.parent.$dependents[ related.$uid() ]; 
     }
   },
 
@@ -219,6 +221,8 @@ extend( NeuroRelation, NeuroHasOne,
     relation.related = related;
     relation.dirty = true;
     relation.loaded = true;
+
+    relation.parent.$dependents[ related.$uid() ] = related;
 
     Neuro.debug( Neuro.Debugs.HASONE_SET_MODEL, this, relation );
   },

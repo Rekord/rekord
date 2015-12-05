@@ -441,3 +441,37 @@ test( 'more than one belongsTo relationship', function(assert)
 
   ok( t0.$isDeleted() );
 });
+
+test( 'wait until dependents are saved', function(assert) 
+{
+  var prefix = 'belongsTo_wait_dependents_';
+
+  var User = Neuro({
+    name: prefix + 'user',
+    fields: ['name']
+  });
+
+  var Task = Neuro({
+    name: prefix + 'task',
+    fields: ['name', 'created_by'],
+    belongsTo: {
+      creator: {
+        model: User,
+        local: 'created_by'
+      }
+    }
+  });
+
+  var u0 = new User({name: 'u0'});
+  var t0 = new Task({name: 't0', creator: u0});
+
+  t0.$save();
+
+  notOk( t0.$isSaved(), 'task not saved since user not saved' );
+  notOk( u0.$isSaved(), 'user not saved' );
+
+  u0.$save();
+
+  ok( t0.$isSaved(), 'task saved since user has saved' );
+  ok( u0.$isSaved(), 'user saved' );
+});

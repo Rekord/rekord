@@ -21,6 +21,10 @@ extend( NeuroOperation, NeuroSaveRemote,
       this.markSynced( model, true, NeuroModel.Events.RemoteSaveFailure );
       this.finish();
     }
+    else if ( !model.$isDependentsSaved( this.tryAgain, this ) )
+    {
+      this.finish();
+    }
     else if ( !db.hasData( model.$saving ) || this.notCascade( Neuro.Cascade.Rest ) )
     {
       this.liveSave();
@@ -202,6 +206,13 @@ extend( NeuroOperation, NeuroSaveRemote,
 
       Neuro.debug( Neuro.Debugs.SAVE_RESUME, model );
     }
+  },
+
+  tryAgain: function()
+  {
+    var model = this.model;
+
+    model.$addOperation( NeuroSaveRemote, this.cascade );
   }
 
 });

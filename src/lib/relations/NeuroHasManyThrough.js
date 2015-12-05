@@ -310,6 +310,21 @@ extend( NeuroRelation, NeuroHasManyThrough,
   {
     var relation = model.$relations[ this.name ];
 
+    if ( relation && this.cascadeSave )
+    {
+      var throughs = relation.throughs.values;
+
+      for (var i = 0; i < throughs.length; i++)
+      {
+        var through = throughs[ i ];
+
+        if ( !through.$isDeleted() && through.$hasChanges() )
+        {
+          through.$save( this.cascadeSave );
+        }
+      }
+    }
+
     if ( relation && this.cascadeSaveRelated )
     {
       Neuro.debug( Neuro.Debugs.HASMANYTHRU_PRESAVE, this, model, relation );
@@ -344,7 +359,7 @@ extend( NeuroRelation, NeuroHasManyThrough,
 
       this.bulk( relation, function()
       {
-        var throughs = relation.throughs;
+        var throughs = relation.throughs.values;
 
         for (var i = 0; i < throughs.length; i++)
         {
@@ -485,6 +500,7 @@ extend( NeuroRelation, NeuroHasManyThrough,
 
   finishAddThrough: function(relation, through, remoteData)
   {
+    var model = relation.parent;
     var throughs = relation.throughs;
     var throughKey = through.$key();
 
@@ -496,9 +512,18 @@ extend( NeuroRelation, NeuroHasManyThrough,
 
       through.$on( NeuroModel.Events.Removed, relation.onThroughRemoved );
 
+      through.$dependents[ model.$uid() ] = model;
+
       if ( !remoteData && this.cascadeSave )
       {
-        through.$save( this.cascadeSave );
+        if ( model.$isSaved() )
+        {
+          through.$save( this.cascadeSave );
+        }
+        else
+        {
+          through.$save( Neuro.Cascade.None );
+        }
       }
     }
   },
@@ -563,6 +588,7 @@ extend( NeuroRelation, NeuroHasManyThrough,
 
   finishRemoveThrough: function(relation, through, related, callRemove)
   {
+    var model = relation.parent;
     var removing = !!through;
 
     if ( removing )
@@ -573,6 +599,8 @@ extend( NeuroRelation, NeuroHasManyThrough,
       var throughKey = through.$key();
 
       through.$off( NeuroModel.Events.Removed, relation.onThroughRemoved );
+
+      delete through.$dependents[ model.$uid() ];
 
       if ( callRemove && this.cascadeRemove )
       {

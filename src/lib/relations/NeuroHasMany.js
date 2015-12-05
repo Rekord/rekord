@@ -399,6 +399,7 @@ extend( NeuroRelation, NeuroHasMany,
       return;
     }
 
+    var model = relation.parent;
     var target = relation.related;
     var key = related.$key();
     var adding = !target.has( key );
@@ -412,7 +413,9 @@ extend( NeuroRelation, NeuroHasMany,
       related.$on( NeuroModel.Events.Removed, relation.onRemoved );
       related.$on( NeuroModel.Events.SavedRemoteUpdate, relation.onSaved );
 
-      this.updateForeignKey( relation.parent, related, remoteData );
+      related.$dependents[ model.$uid() ] = model;
+
+      this.updateForeignKey( model, related, remoteData );
 
       this.sort( relation );
 
@@ -427,6 +430,7 @@ extend( NeuroRelation, NeuroHasMany,
 
   removeModel: function(relation, related, alreadyRemoved)
   {
+    var model = relation.parent;
     var target = relation.related;
     var pending = relation.pending;
     var key = related.$key();
@@ -439,6 +443,8 @@ extend( NeuroRelation, NeuroHasMany,
 
       related.$off( NeuroModel.Events.Removed, relation.onRemoved );
       related.$off( NeuroModel.Events.SavedRemoteUpdate, relation.onSaved );
+
+      delete related.$dependents[ model.$uid() ];
 
       if ( !alreadyRemoved && this.cascadeRemove )
       {
