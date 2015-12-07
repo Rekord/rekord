@@ -38,10 +38,10 @@ test( 'create', function(assert)
   ok( c0.$isSaved() );
 });
 
-test( 'fetch', function(assert)
+test( 'fetch new', function(assert)
 {
   var Task = Neuro({
-    name: 'fetch',
+    name: 'fetch_new',
     fields: ['name', 'done']
   });
 
@@ -51,9 +51,40 @@ test( 'fetch', function(assert)
 
   var t0 = Task.fetch( 4 );
 
+  ok( t0.$isSaved() );
   strictEqual( t0.id, 4 );
   strictEqual( t0.name, 'This' );
   strictEqual( t0.done, true );
+});
+
+test( 'fetch existing', function(assert)
+{
+  var Task = Neuro({
+    name: 'fetch_existing',
+    fields: ['name', 'done']
+  });
+
+  var remote = Task.Database.rest;
+
+  remote.map.put( 4, {id: 4, name: 'This', done: true} );
+
+  Task.create({id: 4, name: 'That', done: false});
+
+  var t0 = Task.fetch( 4 );
+
+  ok( t0.$isSaved() );
+  strictEqual( t0.id, 4 );
+  strictEqual( t0.name, 'That' );
+  strictEqual( t0.done, false );
+
+  remote.map.get( 4 ).done = true;
+
+  var t1 = Task.fetch( 4 );
+  ok( t1.$isSaved() );
+  strictEqual( t1.id, 4 );
+  strictEqual( t1.name, 'That' );
+  strictEqual( t1.done, true );
+  strictEqual( t1, t0 );
 });
 
 test( 'boot', function(assert)

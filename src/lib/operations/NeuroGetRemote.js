@@ -34,11 +34,12 @@ extend( NeuroOperation, NeuroGetRemote,
 
   onSuccess: function(data)
   {
+    var db = this.db;
     var model = this.model;
 
     if ( isObject( data ) )
     {
-      model.$set( data, void 0, true );
+      db.putRemoteData( data, model.$key(), model, true );
     }
 
     Neuro.debug( Neuro.Debugs.GET_REMOTE, model, data );

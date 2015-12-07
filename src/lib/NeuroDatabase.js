@@ -556,7 +556,7 @@ NeuroDatabase.prototype =
 
   // Handles when we receive data from the server - either from
   // a publish, refresh, or values being returned on a save.
-  putRemoteData: function(encoded, key, model)
+  putRemoteData: function(encoded, key, model, overwrite)
   {
     var db = this;
     var key = key || db.getKey( encoded );
@@ -575,13 +575,18 @@ NeuroDatabase.prototype =
       }
     }
 
-    if ( model && model.$saved )
+    if ( model )
     {
       var missingModel = !db.models.has( key );
 
       if ( missingModel )
       {
         db.models.put( key, model );
+      }
+
+      if ( !model.$saved )
+      {
+        model.$saved = {};
       }
 
       var current = model.$toJSON( true );
@@ -608,7 +613,7 @@ NeuroDatabase.prototype =
         var currentValue = current[ prop ];
         var savedValue = model.$saved[ prop ];
 
-        if ( notReallySaved || equals( currentValue, savedValue ) )
+        if ( notReallySaved || overwrite || equals( currentValue, savedValue ) )
         {
           model[ prop ] = decoded[ prop ];
           updated[ prop ] = encoded[ prop ];
@@ -648,7 +653,7 @@ NeuroDatabase.prototype =
     else
     {
       model = db.instantiate( decoded, true );
-
+      
       model.$status = NeuroModel.Status.Synced;
 
       if ( db.cache === Neuro.Cache.All )
