@@ -78,25 +78,37 @@ function eventize(target, secret)
   {
     if ( !isFunction( callback ) )
     {
-      return;
+      return noop;
     }
 
     var events = toArray( events, ' ' );
-    
-    if ( !isDefined( $this[ property ] ) )
+    var listeners = $this[ property ];
+
+    if ( !isDefined( listeners ) )
     {
-      $this[ property ] = {};
+      listeners = $this[ property ] = {};
     }
     
     for (var i = 0; i < events.length; i++)
     {
-      if ( !isDefined( $this[ property ][ events[i] ] ) )
+      var eventName = events[ i ];
+      var eventListeners = listeners[ eventName ];
+
+      if ( !isDefined( eventListeners ) )
       {
-        $this[ property ][ events[i] ] = [];
+        eventListeners = listeners[ eventName ] = [];
       }
       
-      $this[ property ][ events[i] ].push( [ callback, context || $this, 0 ] );
+      eventListeners.push( [ callback, context || $this, 0 ] );
     }
+
+    return function ignore()
+    {
+      for (var i = 0; i < events.length; i++)
+      {
+        offListeners( listeners, events[ i ], callback );
+      }
+    };
   };
   
   /**
@@ -112,9 +124,7 @@ function eventize(target, secret)
    */
   function on(events, callback, context)
   {
-    onListeners( this, '$$on', events, callback, context );
-
-    return this;
+    return onListeners( this, '$$on', events, callback, context );
   }
   
   /**
@@ -130,16 +140,12 @@ function eventize(target, secret)
    */
   function once(events, callback, context)
   {
-    onListeners( this, '$$once', events, callback, context );
-
-    return this;
+    return onListeners( this, '$$once', events, callback, context );
   }
 
   function after(events, callback, context)
   {
-    onListeners( this, '$$after', events, callback, context );
-
-    return this;
+    return onListeners( this, '$$after', events, callback, context );
   }
   
   // Removes a listener from an array of listeners.

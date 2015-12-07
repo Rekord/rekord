@@ -106,6 +106,7 @@ extendArray( NeuroQuery, NeuroRemoteQuery,
   {
     this.status = NeuroRemoteQuery.Status.Success;
     this.reset( models, true );
+    this.off( NeuroRemoteQuery.Events.Failure, this.onFailure );
     this.trigger( NeuroRemoteQuery.Events.Success, [this] );
     this.trigger( NeuroRemoteQuery.Events.Ready, [this] );
   },
@@ -113,6 +114,7 @@ extendArray( NeuroQuery, NeuroRemoteQuery,
   handleFailure: function(models, error)
   {
     this.status = NeuroRemoteQuery.Status.Failure;
+    this.off( NeuroRemoteQuery.Events.Success, this.onSuccess );
     this.trigger( NeuroRemoteQuery.Events.Failure, [this] );
     this.trigger( NeuroRemoteQuery.Events.Ready, [this] );
   }

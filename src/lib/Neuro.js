@@ -59,6 +59,8 @@ Neuro.get = function(name, callback, context)
     }
     else
     {
+      var off = Neuro.on( Neuro.Events.Initialized, checkNeuro );
+
       function checkNeuro()
       {
         var cached = Neuro.cache[ name ];
@@ -66,12 +68,9 @@ Neuro.get = function(name, callback, context)
         if ( cached )
         {
           callback.call( callbackContext, cached );
-
-          Neuro.off( Neuro.Events.Initialized, checkNeuro );
+          off();
         }
       }
-
-      Neuro.on( Neuro.Events.Initialized, checkNeuro );
     }
   }
 

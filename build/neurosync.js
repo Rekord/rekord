@@ -1190,25 +1190,37 @@ function eventize(target, secret)
   {
     if ( !isFunction( callback ) )
     {
-      return;
+      return noop;
     }
 
     var events = toArray( events, ' ' );
-    
-    if ( !isDefined( $this[ property ] ) )
+    var listeners = $this[ property ];
+
+    if ( !isDefined( listeners ) )
     {
-      $this[ property ] = {};
+      listeners = $this[ property ] = {};
     }
     
     for (var i = 0; i < events.length; i++)
     {
-      if ( !isDefined( $this[ property ][ events[i] ] ) )
+      var eventName = events[ i ];
+      var eventListeners = listeners[ eventName ];
+
+      if ( !isDefined( eventListeners ) )
       {
-        $this[ property ][ events[i] ] = [];
+        eventListeners = listeners[ eventName ] = [];
       }
       
-      $this[ property ][ events[i] ].push( [ callback, context || $this, 0 ] );
+      eventListeners.push( [ callback, context || $this, 0 ] );
     }
+
+    return function ignore()
+    {
+      for (var i = 0; i < events.length; i++)
+      {
+        offListeners( listeners, events[ i ], callback );
+      }
+    };
   };
   
   /**
@@ -1224,9 +1236,7 @@ function eventize(target, secret)
    */
   function on(events, callback, context)
   {
-    onListeners( this, '$$on', events, callback, context );
-
-    return this;
+    return onListeners( this, '$$on', events, callback, context );
   }
   
   /**
@@ -1242,16 +1252,12 @@ function eventize(target, secret)
    */
   function once(events, callback, context)
   {
-    onListeners( this, '$$once', events, callback, context );
-
-    return this;
+    return onListeners( this, '$$once', events, callback, context );
   }
 
   function after(events, callback, context)
   {
-    onListeners( this, '$$after', events, callback, context );
-
-    return this;
+    return onListeners( this, '$$after', events, callback, context );
   }
   
   // Removes a listener from an array of listeners.
@@ -1471,6 +1477,8 @@ Neuro.get = function(name, callback, context)
     }
     else
     {
+      var off = Neuro.on( Neuro.Events.Initialized, checkNeuro );
+
       function checkNeuro()
       {
         var cached = Neuro.cache[ name ];
@@ -1478,12 +1486,9 @@ Neuro.get = function(name, callback, context)
         if ( cached )
         {
           callback.call( callbackContext, cached );
-
-          Neuro.off( Neuro.Events.Initialized, checkNeuro );
+          off();
         }
       }
-
-      Neuro.on( Neuro.Events.Initialized, checkNeuro );
     }
   }
 
@@ -2598,32 +2603,29 @@ NeuroDatabase.prototype =
     if ( db.initialized )
     {
       callback.call( callbackContext, db );
+      
       invoked = true;
     }
     else
     {
-      function onReadyRemove()
-      {
-        db.off( NeuroDatabase.Events.Loads, onReady );
-      }
+      var off = db.on( NeuroDatabase.Events.Loads, onReady );
 
       function onReady()
       {
         if ( !persistent )
         {
-          onReadyRemove();
+          off();
         }
         if ( !invoked || persistent )
         {
           if ( callback.call( callbackContext, db ) === false )
           {
-            onReadyRemove();
+            off();
           }
+
           invoked = true;
         }
       }
-
-      db.on( NeuroDatabase.Events.Loads, onReady );
     }
 
     return invoked;
@@ -3808,7 +3810,13 @@ NeuroModel.prototype =
 
       if ( !dependent.$isSaved() )
       {
-        dependent.$once( NeuroModel.Events.RemoteSaves, callbackOnSaved, contextOnSaved );
+        var off = dependent.$once( NeuroModel.Events.RemoteSaves, onDependentSave );
+
+        function onDependentSave()
+        {
+          callbackOnSaved.apply( contextOnSaved || this, arguments );
+          off();
+        }
 
         return false;
       }
@@ -5850,6 +5858,7 @@ extendArray( NeuroQuery, NeuroRemoteQuery,
   {
     this.status = NeuroRemoteQuery.Status.Success;
     this.reset( models, true );
+    this.off( NeuroRemoteQuery.Events.Failure, this.onFailure );
     this.trigger( NeuroRemoteQuery.Events.Success, [this] );
     this.trigger( NeuroRemoteQuery.Events.Ready, [this] );
   },
@@ -5857,6 +5866,7 @@ extendArray( NeuroQuery, NeuroRemoteQuery,
   handleFailure: function(models, error)
   {
     this.status = NeuroRemoteQuery.Status.Failure;
+    this.off( NeuroRemoteQuery.Events.Success, this.onSuccess );
     this.trigger( NeuroRemoteQuery.Events.Failure, [this] );
     this.trigger( NeuroRemoteQuery.Events.Ready, [this] );
   }

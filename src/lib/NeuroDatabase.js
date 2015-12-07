@@ -196,32 +196,29 @@ NeuroDatabase.prototype =
     if ( db.initialized )
     {
       callback.call( callbackContext, db );
+      
       invoked = true;
     }
     else
     {
-      function onReadyRemove()
-      {
-        db.off( NeuroDatabase.Events.Loads, onReady );
-      }
+      var off = db.on( NeuroDatabase.Events.Loads, onReady );
 
       function onReady()
       {
         if ( !persistent )
         {
-          onReadyRemove();
+          off();
         }
         if ( !invoked || persistent )
         {
           if ( callback.call( callbackContext, db ) === false )
           {
-            onReadyRemove();
+            off();
           }
+
           invoked = true;
         }
       }
-
-      db.on( NeuroDatabase.Events.Loads, onReady );
     }
 
     return invoked;
