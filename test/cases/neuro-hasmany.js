@@ -597,6 +597,7 @@ test( 'auto save parent', function(assert)
   var l0 = TaskList.create({name: 'l0', tasks: [t0]});
 
   deepEqual( remote.lastRecord, {
+    id: l0.id, name: 'l0',
     tasks: [
       {id: t0.id, name: 't0', task_list_id: l0.id}
     ]

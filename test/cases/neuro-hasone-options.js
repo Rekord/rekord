@@ -976,3 +976,97 @@ test( 'cascade all', function(assert)
   strictEqual( t0.creator, u0, 'reference not cleared' );
   strictEqual( t0.created_by, u0.id, 'foreign key not cleared' );
 });
+
+test( 'lazy true', function(assert)
+{
+  var prefix = 'hasOne_lazy_true_';
+
+  var User = Neuro({
+    name: prefix + 'user',
+    fields: ['id', 'name']
+  });
+
+  var Task = Neuro({
+    name: prefix + 'task',
+    fields: ['id', 'name', 'created_by'],
+    hasOne: {
+      creator: {
+        model: User,
+        local: 'created_by',
+        lazy: true
+      }
+    }
+  });
+
+  var u0 = User.create({name: 'u0'});
+  var t0 = Task.create({name: 't0', created_by: u0.id});
+
+  strictEqual( t0.creator, void 0 );
+  strictEqual( t0.$relations.creator, void 0 );
+
+  strictEqual( t0.$get('creator'), u0 );
+  strictEqual( t0.creator, u0 );
+  notStrictEqual( t0.$relations.creator, void 0 );
+});
+
+test( 'lazy false', function(assert)
+{
+  var prefix = 'hasOne_lazy_false_';
+
+  var User = Neuro({
+    name: prefix + 'user',
+    fields: ['id', 'name']
+  });
+
+  var Task = Neuro({
+    name: prefix + 'task',
+    fields: ['id', 'name', 'created_by'],
+    hasOne: {
+      creator: {
+        model: User,
+        local: 'created_by',
+        lazy: false
+      }
+    }
+  });
+
+  var u0 = User.create({name: 'u0'});
+  var t0 = Task.create({name: 't0', created_by: u0.id});
+
+  strictEqual( t0.creator, u0 );
+  notStrictEqual( t0.$relations.creator, void 0 );
+});
+
+test( 'query', function(assert)
+{
+  var prefix = 'hasOne_query_';
+
+  var User = Neuro({
+    name: prefix + 'user',
+    fields: ['id', 'name']
+  });
+
+  var Task = Neuro({
+    name: prefix + 'task',
+    fields: ['id', 'name', 'created_by'],
+    hasOne: {
+      creator: {
+        model: User,
+        local: 'created_by',
+        query: '/user/{created_by}'
+      }
+    }
+  });
+
+  var rest = User.Database.rest;
+
+  rest.queries.put( '/user/6', {
+    id: 6, name: 'u0'
+  });
+  
+  var t0 = Task.create({name: 't0', created_by: 6});
+
+  notStrictEqual( t0.creator, void 0 );
+  strictEqual( t0.creator.id, 6 );
+  strictEqual( t0.creator.name, 'u0' );
+});

@@ -110,14 +110,18 @@ NeuroModel.prototype =
       this.$reset( props );
     }
 
-    // Load relations after initialization?
     if ( this.$db.loadRelations )
     {
       var databaseRelations = this.$db.relations;
 
       for (var name in databaseRelations)
       {
-        this.$getRelation( name, remoteData );
+        var relation = databaseRelations[ name ];
+
+        if ( !relation.lazy )
+        {
+          this.$getRelation( name, remoteData ); 
+        }
       }
     }
   },

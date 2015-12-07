@@ -1,15 +1,9 @@
-function NeuroDiscriminatedModelCollection(discriminator, discriminatorsToModel, models, remoteData)
+function NeuroDiscriminateCollection(collection, discriminator, discriminatorsToModel)
 {
-  this.discriminator = discriminator;
-  this.discriminatorsToModel = discriminatorsToModel;
+  collection.discriminator = discriminator;
+  collection.discriminatorsToModel = discriminatorsToModel;
 
-  this.init( null, models, remoteData );
-}
-
-extendArray( NeuroModelCollection, NeuroDiscriminatedModelCollection, 
-{
-
-  buildKeyFromInput: function(input)
+  collection.buildKeyFromInput = function(input)
   {
     if ( isObject( input ) )
     {
@@ -23,14 +17,15 @@ extendArray( NeuroModelCollection, NeuroDiscriminatedModelCollection,
     }
     
     return input;
-  },
+  };
 
-  parseModel: function(input, remoteData)
+  collection.parseModel = function(input, remoteData)
   {
     var discriminatedValue = input[ this.discriminator ];
     var model = this.discriminatorsToModel[ discriminatedValue ];
 
     return model ? model.Database.parseModel( input, remoteData ) : null;
-  }
+  };
 
-});
+  return collection;
+}

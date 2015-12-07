@@ -7,6 +7,8 @@ Neuro.Relations.belongsTo = NeuroBelongsTo;
 NeuroBelongsTo.Defaults = 
 {
   model:                null,
+  lazy:                 false,
+  query:                false,
   store:                Neuro.Store.None,
   save:                 Neuro.Save.None,
   auto:                 true,
@@ -19,28 +21,21 @@ NeuroBelongsTo.Defaults =
   discriminatorToModel: {}
 };
 
-extend( NeuroRelation, NeuroBelongsTo, 
+extend( NeuroRelationSingle, NeuroBelongsTo, 
 {
 
   type: 'belongsTo',
 
+  debugInit:        Neuro.Debugs.BELONGSTO_INIT,
+  debugClearModel:  Neuro.Debugs.BELONGSTO_CLEAR_MODEL,
+  debugSetModel:    Neuro.Debugs.BELONGSTO_SET_MODEL,
+  debugLoaded:      Neuro.Debugs.BELONGSTO_LOADED,
+  debugClearKey:    Neuro.Debugs.BELONGSTO_CLEAR_KEY,
+  debugUpdateKey:   Neuro.Debugs.BELONGSTO_UPDATE_KEY,
+
   getDefaults: function(database, field, options)
   {
     return NeuroBelongsTo.Defaults;
-  },
-
-  onInitialized: function(database, field, options)
-  {
-    if ( !this.discriminated )
-    {
-      var relatedDatabase = this.model.Database;
-
-      this.local = this.local || ( relatedDatabase.name + '_' + relatedDatabase.key );
-    }
-
-    Neuro.debug( Neuro.Debugs.BELONGSTO_INIT, this );
-
-    this.finishInitialization();
   },
 
   handleLoad: function(model, remoteData)
@@ -73,8 +68,8 @@ extend( NeuroRelation, NeuroBelongsTo,
       }
     };
 
-    model.$on( NeuroModel.Events.KeyUpdate, this.onKeyUpdate, this );
     model.$on( NeuroModel.Events.PostRemove, this.postRemove, this );
+    model.$on( NeuroModel.Events.KeyUpdate, this.onKeyUpdate, this );
 
     if ( isEmpty( initial ) )
     {
@@ -92,63 +87,10 @@ extend( NeuroRelation, NeuroBelongsTo,
 
       this.grabModel( initial, this.handleModel( relation, remoteData ), remoteData );
     }
-  },
-
-  // same as HasOne
-  set: function(model, input, remoteData)
-  {
-    if ( isEmpty( input ) )
+    else if ( this.query )
     {
-      this.unrelate( model );
+      this.executeQuery( model );
     }
-    else
-    {
-      var relation = model.$relations[ this.name ];
-      var related = this.parseModel( input, remoteData );
-
-      if ( related && !relation.isRelated( related ) )
-      {
-        this.clearModel( relation );
-        this.setRelated( relation, related, remoteData );
-      }
-    }
-  },
-
-  // same as HasOne
-  relate: function(model, input)
-  {
-    var relation = model.$relations[ this.name ];
-    var related = this.parseModel( input );
-    
-    if ( related )
-    {
-      if ( relation.related !== related )
-      {
-        this.clearModel( relation );
-        this.setRelated( relation, related );
-      }
-    }
-  },
-
-  // same as HasOne
-  unrelate: function(model, input)
-  {
-    var relation = model.$relations[ this.name ];
-    var related = this.parseModel( input );
-
-    if ( !related || relation.related === related )
-    {
-      this.clearRelated( relation );
-    }
-  },
-
-  // same as HasOne
-  isRelated: function(model, input)
-  {
-    var relation = model.$relations[ this.name ];
-    var related = this.parseModel( input );
-
-    return related === relation.related;
   },
 
   postRemove: function(model)
@@ -162,112 +104,6 @@ extend( NeuroRelation, NeuroBelongsTo,
       this.clearModel( relation );
       this.setProperty( relation );
     }
-  },
-
-  setRelated: function(relation, related, remoteData)
-  {
-    if ( !related.$isDeleted() )
-    {
-      this.setModel( relation, related );
-      this.updateForeignKey( relation.parent, related, remoteData );
-      this.setProperty( relation );
-    }
-  },
-
-  clearRelated: function(relation)
-  {
-    this.clearModel( relation );
-    this.clearForeignKey( relation.parent );
-    this.setProperty( relation );
-  },
-
-  clearModel: function(relation)
-  {
-    var related = relation.related;
-
-    if ( related )
-    {
-      Neuro.debug( Neuro.Debugs.BELONGSTO_CLEAR_MODEL, this, relation );
-
-      related.$off( NeuroModel.Events.Saved, relation.onSaved );
-      related.$off( NeuroModel.Events.Removed, relation.onRemoved );
-
-      relation.related = null;
-      relation.loaded = true;
-
-      delete relation.parent.$dependents[ related.$uid() ];
-    }
-  },
-
-  setModel: function(relation, related)
-  {
-    related.$on( NeuroModel.Events.Saved, relation.onSaved, this );
-    related.$on( NeuroModel.Events.Removed, relation.onRemoved, this );
-
-    relation.related = related;
-    relation.loaded = true;
-    
-    relation.parent.$dependents[ related.$uid() ] = related;
-
-    Neuro.debug( Neuro.Debugs.BELONGSTO_SET_MODEL, this, relation );
-  },
-
-  // same as HasOne
-  handleModel: function(relation, remoteData)
-  {
-    return function(related) 
-    {
-      Neuro.debug( Neuro.Debugs.BELONGSTO_LOADED, this, relation.parent, relation, related );
-
-      if ( relation.loaded === false ) 
-      {
-        if ( related && !related.$isDeleted() ) 
-        {
-          this.setModel( relation, related, remoteData );
-          this.updateForeignKey( relation.parent, related, remoteData );
-        }
-        else
-        {
-          this.clearForeignKey( relation.parent, remoteData );
-        }
-
-        relation.loaded = true;
-
-        this.setProperty( relation );
-      }
-    };
-  },
-
-  // same as HasOne
-  isRelatedFactory: function(model)
-  {
-    var local = this.local;
-
-    return function hasForeignKey(related)
-    {
-      return propsMatch( model, local, related, related.$db.key );
-    };
-  },
-
-  // same as HasOne
-  clearForeignKey: function(model, remoteData)
-  {
-    var local = this.local;
-
-    Neuro.debug( Neuro.Debugs.BELONGSTO_CLEAR_KEY, this, model, local );
-
-    this.clearFields( model, local, remoteData );
-  },
-
-  // same as HasOne
-  updateForeignKey: function(model, related, remoteData)
-  {
-    var local = this.local;
-    var foreign = related.$db.key;
-
-    Neuro.debug( Neuro.Debugs.BELONGSTO_UPDATE_KEY, this, model, local, related, foreign );
-
-    this.updateFields( model, local, related, foreign, remoteData );
   },
 
   onKeyUpdate: function(model, related, modelFields, relatedFields)

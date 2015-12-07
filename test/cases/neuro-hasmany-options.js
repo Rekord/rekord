@@ -1621,3 +1621,107 @@ test( 'cascadeSave all', function(assert)
   strictEqual( live.lastMessage.key, t1.id, 'live' );
   strictEqual( local.lastKey, t1.id, 'local' );
 });
+
+test( 'lazy true', function(assert)
+{
+  var prefix = 'hasMany_lazy_true_';
+
+  var Task = Neuro({
+    name: prefix + 'task',
+    fields: ['id', 'task_list_id', 'name'],
+    defaults: { done: false, created_at: Date.now }
+  });
+
+  var TaskList = Neuro({
+    name: prefix + 'list',
+    fields: ['id', 'name'],
+    hasMany: {
+      tasks: {
+        model: Task,
+        foreign: 'task_list_id',
+        lazy: true
+      }
+    }
+  });
+
+  var l0 = TaskList.create({name: 'l0'});
+  var t0 = Task.create({name: 't0', task_list_id: l0.id});
+  var t1 = Task.create({name: 't1', task_list_id: l0.id});
+
+  strictEqual( l0.tasks, void 0 );
+  strictEqual( l0.$relations.tasks, void 0 );
+
+  isInstance( l0.$get('tasks'), Neuro.ModelCollection );
+  deepEqual( l0.tasks.toArray(), [t0, t1] );
+  notStrictEqual( l0.$relations.tasks, void 0 );
+});
+
+test( 'lazy false', function(assert)
+{
+  var prefix = 'hasMany_lazy_false_';
+
+  var Task = Neuro({
+    name: prefix + 'task',
+    fields: ['id', 'task_list_id', 'name'],
+    defaults: { done: false, created_at: Date.now }
+  });
+
+  var TaskList = Neuro({
+    name: prefix + 'list',
+    fields: ['id', 'name'],
+    hasMany: {
+      tasks: {
+        model: Task,
+        foreign: 'task_list_id',
+        lazy: false
+      }
+    }
+  });
+
+  var l0 = TaskList.create({name: 'l0'});
+  var t0 = Task.create({name: 't0', task_list_id: l0.id});
+  var t1 = Task.create({name: 't1', task_list_id: l0.id});
+
+  isInstance( l0.$get('tasks'), Neuro.ModelCollection );
+  deepEqual( l0.tasks.toArray(), [t0, t1] );
+  notStrictEqual( l0.$relations.tasks, void 0 );
+});
+
+test( 'query', function(assert)
+{
+  var prefix = 'hasMany_query_';
+
+  var Task = Neuro({
+    name: prefix + 'task',
+    fields: ['id', 'task_list_id', 'name'],
+    defaults: { done: false, created_at: Date.now }
+  });
+
+  var TaskList = Neuro({
+    name: prefix + 'list',
+    fields: ['id', 'name'],
+    hasMany: {
+      tasks: {
+        model: Task,
+        foreign: 'task_list_id',
+        query: '/tasks/{id}'
+      }
+    }
+  });
+
+  var rest = Task.Database.rest;
+
+  rest.queries.put( '/tasks/29', [
+    {id: 4, name: 't0'},
+    {id: 5, name: 't1'}
+  ]);
+
+  var l0 = TaskList.create({id: 29, name: 'l0'});
+
+  notStrictEqual( l0.tasks, void 0 );
+  strictEqual( l0.tasks.length, 2 );
+  strictEqual( l0.tasks[0].name, 't0' );
+  strictEqual( l0.tasks[0].task_list_id, l0.id );
+  strictEqual( l0.tasks[1].name, 't1' );
+  strictEqual( l0.tasks[1].task_list_id, l0.id );
+});

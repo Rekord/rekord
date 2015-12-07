@@ -650,6 +650,19 @@ test( 'summarize custom', function(assert)
   strictEqual( summarize_custom.Database.summarize( inst ), '4/name0' );
 });
 
+test( 'summarize format', function(assert)
+{
+  var summarize_format = Neuro({
+    name: 'summarize_format',
+    fields: ['id', 'name'],
+    summarize: '{id}/{name}'
+  });
+
+  var inst = summarize_format.create({id: 4, name: 'name0'});
+
+  strictEqual( summarize_format.Database.summarize( inst ), '4/name0' );
+});
+
 test( 'encode decode', function(assert)
 {
   function now() {

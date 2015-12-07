@@ -521,10 +521,17 @@ NeuroDatabase.prototype =
     }
     else if ( isString( summarize ) )
     {
-      this.summarize = function(model)
+      if ( indexOf( this.fields, summarize ) !== false )
       {
-        return isValue( model ) ? model[ summarize ] : model;
-      };
+        this.summarize = function(model)
+        {
+          return isValue( model ) ? model[ summarize ] : model;
+        };  
+      }
+      else
+      {
+        this.summarize = createFormatter( summarize );
+      }
     }
     else
     {

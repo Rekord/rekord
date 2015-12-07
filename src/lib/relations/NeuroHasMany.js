@@ -7,6 +7,8 @@ Neuro.Relations.hasMany = NeuroHasMany;
 NeuroHasMany.Defaults = 
 {
   model:                null,
+  lazy:                 false,
+  query:                false,
   store:                Neuro.Store.None,
   save:                 Neuro.Save.None,
   auto:                 true,
@@ -22,10 +24,14 @@ NeuroHasMany.Defaults =
   discriminatorToModel: {}
 };
 
-extend( NeuroRelation, NeuroHasMany, 
+extend( NeuroRelationMultiple, NeuroHasMany, 
 {
 
   type: 'hasMany',
+
+  debugAutoSave:        Neuro.Debugs.HASMANY_AUTO_SAVE,
+  debugInitialGrabbed:  Neuro.Debugs.HASMANY_INITIAL_GRABBED,
+  debugSort:            Neuro.Debugs.HASMANY_SORT,
 
   getDefaults: function(database, field, options)
   {
@@ -101,6 +107,10 @@ extend( NeuroRelation, NeuroHasMany,
 
       this.grabModels( initial, this.handleModel( relation ), remoteData );
     }
+    else if ( this.query )
+    {
+      this.executeQuery( model );
+    }
     else
     {
       Neuro.debug( Neuro.Debugs.HASMANY_INITIAL_PULLED, this, model, relation );
@@ -110,174 +120,6 @@ extend( NeuroRelation, NeuroHasMany,
 
     // We only need to set the property once since the underlying array won't change.
     this.setProperty( relation );
-  },
-
-  bulk: function(relation, callback, remoteData)
-  {
-    relation.delaySorting = true;
-    relation.delaySaving = true;
-
-    callback.apply( this );
-
-    relation.delaySorting = false;
-    relation.delaySaving = false;
-
-    this.sort( relation );
-    this.checkSave( relation, remoteData );
-  },
-
-  set: function(model, input, remoteData)
-  {
-    if ( isEmpty( input ) )
-    {
-      this.unrelate( model );
-    }
-    else
-    {
-      var relation = model.$relations[ this.name ];
-      var existing = relation.related;
-      var given = this.createCollection();
-
-      if ( this.isModelArray( input ) )
-      {
-        for (var i = 0; i < input.length; i++)
-        {
-          var related = this.parseModel( input[ i ], remoteData );
-
-          if ( related )
-          {
-            given.add( related );
-          }
-        }
-      }
-      else
-      {
-        var related = this.parseModel( input, remoteData );
-
-        if ( related )
-        {
-          given.add( related );
-        }
-      }
-
-      var removing = existing.subtract( given );
-      var adding = given.subtract( existing );
-      
-      this.bulk( relation, function()
-      {
-        for (var i = 0; i < adding.length; i++)
-        {
-          this.addModel( relation, adding[ i ], remoteData );
-        }
-
-        for (var i = 0; i < removing.length; i++)
-        {
-          this.removeModel( relation, removing[ i] );
-        }
-
-      }, remoteData);
-    }
-  },
-
-  relate: function(model, input)
-  {
-    var relation = model.$relations[ this.name ];
-
-    if ( this.isModelArray( input ) )
-    {
-      this.bulk( relation, function()
-      {
-        for (var i = 0; i < input.length; i++)
-        {
-          var related = this.parseModel( input[ i ] );
-
-          if ( related )
-          {
-            this.addModel( relation, related );
-          }
-        }
-      });
-    }
-    else if ( isValue( input ) )
-    {
-      var related = this.parseModel( input );
-
-      if ( related )
-      {
-        this.addModel( relation, related );
-      }
-    }
-  },
-
-  unrelate: function(model, input)
-  {
-    var relation = model.$relations[ this.name ];
-
-    if ( this.isModelArray( input ) )
-    {
-      this.bulk( relation, function()
-      { 
-        for (var i = 0; i < input.length; i++)
-        {
-          var related = this.parseModel( input[ i ] );
-
-          if ( related )
-          {
-            this.removeModel( relation, related );
-          }
-        }
-      });
-    }
-    else if ( isValue( input ) )
-    {
-      var related = this.parseModel( input );
-
-      if ( related )
-      {
-        this.removeModel( relation, related );
-      }
-    }
-    else
-    {
-      var all = relation.related;
-
-      this.bulk( relation, function()
-      { 
-        for (var i = all.length - 1; i >= 0; i--)
-        {
-          this.removeModel( relation, all[ i ] );
-        }
-      });
-    }
-  },
-
-  isRelated: function(model, input)
-  {
-    var relation = model.$relations[ this.name ];
-    var existing = relation.related;
-    
-    if ( this.isModelArray( input ) )
-    {
-      for (var i = 0; i < input.length; i++)
-      {
-        var related = this.parseModel( input[ i ] );
-
-        if ( related && !existing.has( related.$key() ) )
-        {
-          return false;
-        }
-      }
-
-      return input.length > 0;
-    }
-    else if ( isValue( input ) )
-    {
-      var related = this.parseModel( input );
-
-      return related && existing.has( related.$key() );
-    }
-
-    return false;
   },
 
   postSave: function(model)
@@ -330,19 +172,6 @@ extend( NeuroRelation, NeuroHasMany,
     }
   },
 
-  checkSave: function(relation, remoteData)
-  {
-    if ( !relation.delaySaving && !remoteData )
-    {
-      if ( this.store === Neuro.Store.Model || this.save === Neuro.Save.Model )
-      {
-        Neuro.debug( Neuro.Debugs.HASMANY_AUTO_SAVE, this, relation );
-
-        relation.parent.$save();
-      }
-    }
-  },
-
   handleModelAdded: function(relation)
   {
     return function (related, remoteData)
@@ -356,24 +185,6 @@ extend( NeuroRelation, NeuroHasMany,
     };
   },
 
-  handleModel: function(relation)
-  {
-    return function (related)
-    {
-      var pending = relation.pending;
-      var key = related.$key();
-
-      if ( key in pending )
-      {
-        Neuro.debug( Neuro.Debugs.HASMANY_INITIAL_GRABBED, this, relation, related );
-
-        this.addModel( relation, related, true );
-
-        delete pending[ key ];
-      }
-    };
-  },
-
   handleLazyLoad: function(relation)
   {
     return function (relatedDatabase)
@@ -382,13 +193,20 @@ extend( NeuroRelation, NeuroHasMany,
 
       Neuro.debug( Neuro.Debugs.HASMANY_LAZY_LOAD, this, relation, related );
 
-      this.bulk( relation, function()
+      if ( related.length )
       {
-        for (var i = 0; i < related.length; i++)
+        this.bulk( relation, function()
         {
-          this.addModel( relation, related[ i ] );
-        }
-      });
+          for (var i = 0; i < related.length; i++)
+          {
+            this.addModel( relation, related[ i ] );
+          }
+        });
+      }
+      else if ( this.query )
+      {
+        this.executeQuery( relation.parent );
+      }
     };
   },
 
@@ -523,20 +341,6 @@ extend( NeuroRelation, NeuroHasMany,
     {
       return propsMatch( related, foreign, model, local );
     };
-  },
-
-  sort: function(relation)
-  {
-    var related = relation.related;
-    
-    if ( !relation.delaySorting )
-    {
-      Neuro.debug( Neuro.Debugs.HASMANY_SORT, this, relation );
-
-      related.resort( this.comparator );
-
-      relation.parent.$trigger( NeuroModel.Events.RelationUpdate, [this, relation] );
-    }
   }
 
 });

@@ -68,12 +68,12 @@ var NeuroPolymorphic =
 
   createRelationCollection: function(model)
   {
-    return new NeuroDiscriminatedRelationCollection( model, this );
+    return NeuroDiscriminateCollection( new NeuroRelationCollection( undefined, model, this ), this.discriminator, this.discriminatorToModel );
   },
 
   createCollection: function()
   {
-    return new NeuroDiscriminatedModelCollection( this.discriminator, this.discriminatorToModel );
+    return NeuroDiscriminateCollection( new NeuroModelCollection(), this.discriminator, this.discriminatorToModel );
   },
 
   ready: function(callback)
@@ -98,6 +98,18 @@ var NeuroPolymorphic =
 
       model.Database.on( NeuroDatabase.Events.ModelAdded, callback, this );  
     }
+  },
+
+  executeQuery: function(model)
+  {
+    var queryOption = this.query;
+    var query = isString( queryOption ) ? format( queryOption, model ) : queryOption;
+    var remoteQuery = new NeuroRemoteQuery( model.$db, query );
+
+    NeuroDiscriminateCollection( remoteQuery, this.discriminator, this.discriminatorToModel );
+
+    remoteQuery.sync();
+    remoteQuery.ready( this.handleExecuteQuery( model ), this );
   },
 
   parseModel: function(input, remoteData)

@@ -25,6 +25,7 @@ Neuro.Save =
 NeuroRelation.Defaults = 
 {
   model:                null,
+  lazy:                 false,
   store:                Neuro.Store.None,
   save:                 Neuro.Save.None,
   auto:                 true,
@@ -151,7 +152,7 @@ NeuroRelation.prototype =
 
   },
 
-  relate: function(model, input)
+  relate: function(model, input, remoteData)
   {
 
   },
@@ -199,6 +200,26 @@ NeuroRelation.prototype =
   listenToModelAdded: function(callback)
   {
     this.model.Database.on( NeuroDatabase.Events.ModelAdded, callback, this );
+  },
+
+  executeQuery: function(model)
+  {
+    var queryOption = this.query;
+    var query = isString( queryOption ) ? format( queryOption, model ) : queryOption;
+    var remoteQuery = this.model.query( query );
+
+    remoteQuery.ready( this.handleExecuteQuery( model ), this );
+  },
+
+  handleExecuteQuery: function(model)
+  {
+    return function onExecuteQuery(query)
+    {
+      for (var i = 0; i < query.length; i++)
+      {
+        this.relate( model, query[ i ], true );
+      }
+    };
   },
 
   createRelationCollection: function(model)

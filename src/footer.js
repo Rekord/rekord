@@ -73,4 +73,8 @@
   global.Neuro.saveHaving = saveHaving;
   global.Neuro.createHaving = createHaving;
 
+  global.Neuro.parse = parse;
+  global.Neuro.format = format;
+  global.Neuro.createFormatter = createFormatter;
+
 })(this);

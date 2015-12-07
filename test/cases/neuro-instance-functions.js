@@ -358,6 +358,53 @@ test( 'query failure', function(assert)
 
 });
 
+test( 'query single', function(assert)
+{
+  var done = assert.async();
+  var prefix = 'Neuro_query_single_';
+
+  expect( 4 );
+
+  var Todo = Neuro({
+    name: prefix + 'todo',
+    fields: ['name', 'done'],
+    loadRemote: false
+  });
+
+  var remote = Todo.Database.rest;
+
+  remote.queries.put( 'http://neurosync.io', {id: 1, name: 't1', done: true} );
+
+  remote.delay = 10;
+
+  var q = Todo.query( 'http://neurosync.io' );
+
+  strictEqual( q.length, 0 );
+
+  q.ready(function()
+  {
+    strictEqual( q.length, 1, 'query ready and models loaded' );
+  });
+
+  q.success(function()
+  {
+    strictEqual( q.length, 1, 'query success and models loaded' );
+  });
+
+  q.failure(function()
+  {
+    ok();
+  });
+
+  wait( 15, function()
+  {
+    strictEqual( q.length, 1, 'times up, data loaded' );
+    done();
+
+  });
+
+});
+
 test( 'ready', function(assert)
 {
   var done = assert.async();

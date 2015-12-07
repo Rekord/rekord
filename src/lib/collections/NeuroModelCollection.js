@@ -111,12 +111,12 @@ extendArray( NeuroCollection, NeuroModelCollection,
 
   reset: function(models, remoteData)
   {
+    var map = this.map;
+
+    map.reset();
+
     if ( isArray( models ) )
     {
-      var map = this.map;
-
-      map.reset();
-
       for (var i = 0; i < models.length; i++)
       {
         var model = models[ i ];
@@ -127,10 +127,19 @@ extendArray( NeuroCollection, NeuroModelCollection,
           map.put( parsed.$key(), parsed );
         }
       }
-
-      this.trigger( NeuroCollection.Events.Reset, [this] );
-      this.resort();
     }
+    else if ( isObject( models ) )
+    {
+      var parsed = this.parseModel( models, remoteData );
+
+      if ( parsed )
+      {
+        map.put( parsed.$key(), parsed );
+      }
+    }
+
+    this.trigger( NeuroCollection.Events.Reset, [this] );
+    this.resort();
   },
 
   add: function(model, delaySort)

@@ -1863,3 +1863,87 @@ test( 'cascadeSaveRelated all', function(assert)
 
   strictEqual( g0.$saved.name, 'g0a' );
 });
+
+test( 'lazy true', function(assert)
+{
+  var prefix = 'hasManyThrough_lazy_true_';
+
+  var options = {
+    lazy: true
+  };
+
+  var test = createUserGroups2( prefix, options, options );
+  var User = test.User;
+  var Group = test.Group;
+  var UserGroup = test.UserGroup;
+
+  var u0 = User.create({name: 'u0'});
+  var g0 = Group.create({name: 'g0'});
+  var g1 = Group.create({name: 'g0'});
+  var ug0 = UserGroup.create({user_id: u0.id, group_id: g0.id});
+  var ug1 = UserGroup.create({user_id: u0.id, group_id: g1.id});
+
+  strictEqual( u0.groups, void 0 );
+  strictEqual( u0.$relations.groups, void 0 );
+
+  isInstance( u0.$get('groups'), Neuro.ModelCollection );
+  deepEqual( u0.groups.toArray(), [g0, g1] );
+  notStrictEqual( u0.$relations.groups, void 0 );
+});
+
+test( 'lazy false', function(assert)
+{
+  var prefix = 'hasManyThrough_lazy_false_';
+
+  var options = {
+    lazy: false
+  };
+
+  var test = createUserGroups2( prefix, options, options );
+  var User = test.User;
+  var Group = test.Group;
+  var UserGroup = test.UserGroup;
+
+  var u0 = User.create({name: 'u0'});
+  var g0 = Group.create({name: 'g0'});
+  var g1 = Group.create({name: 'g0'});
+  var ug0 = UserGroup.create({user_id: u0.id, group_id: g0.id});
+  var ug1 = UserGroup.create({user_id: u0.id, group_id: g1.id});
+
+  isInstance( u0.$get('groups'), Neuro.ModelCollection );
+  deepEqual( u0.groups.toArray(), [g0, g1] );
+  notStrictEqual( u0.$relations.groups, void 0 );
+});
+
+test( 'query', function(assert)
+{
+  var prefix = 'hasManyThrough_query_';
+
+  var options = {
+    query: '/groups/{id}'
+  };
+
+  var test = createUserGroups2( prefix, options, options );
+  var User = test.User;
+  var Group = test.Group;
+  var UserGroup = test.UserGroup;
+
+  var rest = Group.Database.rest;
+
+  rest.queries.put( '/groups/29', [
+    {id: 4, name: 'g0'},
+    {id: 5, name: 'g1'}
+  ]);
+
+  var u0 = User.create({id: 29, name: 'u0'});
+
+  var ug0 = UserGroup.get( [u0.id, 4] );
+  var ug1 = UserGroup.get( [u0.id, 5] );
+
+  notStrictEqual( u0.groups, void 0 );
+  strictEqual( u0.groups.length, 2 );
+  strictEqual( u0.groups[0].name, 'g0' );
+  strictEqual( u0.groups[1].name, 'g1' );
+  notStrictEqual( ug0, void 0 );
+  notStrictEqual( ug1, void 0 );
+});
