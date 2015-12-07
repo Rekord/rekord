@@ -49,7 +49,7 @@ extend( NeuroRelation, NeuroRelationMultiple,
   {
     if ( isEmpty( input ) )
     {
-      this.unrelate( model, input, remoteData );
+      this.unrelate( model, undefined, remoteData );
     }
     else
     {

@@ -31,7 +31,7 @@ extend( NeuroRelation, NeuroRelationSingle,
   {
     if ( isEmpty( input ) )
     {
-      this.unrelate( model, input, remoteData );
+      this.unrelate( model, undefined, remoteData );
     }
     else
     {

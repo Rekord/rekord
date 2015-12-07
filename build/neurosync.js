@@ -7474,7 +7474,7 @@ extend( NeuroRelation, NeuroRelationSingle,
   {
     if ( isEmpty( input ) )
     {
-      this.unrelate( model, input, remoteData );
+      this.unrelate( model, undefined, remoteData );
     }
     else
     {
@@ -7698,7 +7698,7 @@ extend( NeuroRelation, NeuroRelationMultiple,
   {
     if ( isEmpty( input ) )
     {
-      this.unrelate( model, input, remoteData );
+      this.unrelate( model, undefined, remoteData );
     }
     else
     {
@@ -8900,14 +8900,19 @@ extend( NeuroRelationMultiple, NeuroHasManyThrough,
   removeModel: function(relation, related, remoteData)
   {
     var relatedKey = related.$key();
+    var relateds = relation.related;
+    var actualRelated = relateds.get( relatedKey );
 
-    if ( this.finishRemoveRelated( relation, relatedKey, remoteData ) )
+    if ( actualRelated )
     {
-      this.removeThrough( relation, related );
+      if ( this.removeThrough( relation, related, remoteData ) )
+      {
+        this.finishRemoveRelated( relation, relatedKey, remoteData );
+      }
     }
   },
 
-  removeThrough: function(relation, related, alreadyRemoved)
+  removeThrough: function(relation, related, remoteData)
   {
     var throughDatabase = this.through.Database;
     var keyObject = this.createThroughKey( relation, related );
@@ -8915,7 +8920,7 @@ extend( NeuroRelationMultiple, NeuroHasManyThrough,
     var throughs = relation.throughs;
     var through = throughs.get( key );
 
-    this.finishRemoveThrough( relation, through, related, true );
+    return this.finishRemoveThrough( relation, through, related, true, remoteData );
   },
 
   removeModelFromThrough: function(relation, through)
@@ -8929,13 +8934,18 @@ extend( NeuroRelationMultiple, NeuroHasManyThrough,
     }
   },
 
-  finishRemoveThrough: function(relation, through, related, callRemove)
+  finishRemoveThrough: function(relation, through, related, callRemove, remoteData)
   {
     var model = relation.parent;
     var removing = !!through;
 
     if ( removing )
     {
+      if ( !this.canRemoveRelated( through, remoteData ) )
+      {
+        return false;
+      }
+
       Neuro.debug( Neuro.Debugs.HASMANYTHRU_THRU_REMOVE, this, relation, through, related );
 
       var throughs = relation.throughs;
@@ -8956,7 +8966,7 @@ extend( NeuroRelationMultiple, NeuroHasManyThrough,
     return removing;
   },
 
-  finishRemoveRelated: function(relation, relatedKey, remoteData)
+  finishRemoveRelated: function(relation, relatedKey)
   {
     var pending = relation.pending;
     var relateds = relation.related;
@@ -8964,11 +8974,6 @@ extend( NeuroRelationMultiple, NeuroHasManyThrough,
 
     if ( related )
     {
-      if ( !this.canRemoveRelated( related, remoteData ) )
-      {
-        return false;
-      }
-
       Neuro.debug( Neuro.Debugs.HASMANYTHRU_REMOVE, this, relation, related );
 
       relateds.remove( relatedKey );
