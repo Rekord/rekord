@@ -470,8 +470,13 @@ test( 'wait until dependents are saved', function(assert)
   notOk( t0.$isSaved(), 'task not saved since user not saved' );
   notOk( u0.$isSaved(), 'user not saved' );
 
+  Task.Database.rest.returnValue = { id: t0.id, name: 't0a' };
+
   u0.$save();
 
+  strictEqual( t0.name, 't0a' );
   ok( t0.$isSaved(), 'task saved since user has saved' );
   ok( u0.$isSaved(), 'user saved' );
+
+  strictEqual( t0.creator, u0 );
 });

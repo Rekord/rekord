@@ -456,7 +456,7 @@ test( 'wait until dependents are saved', function(assert)
   {
     notOk( t0.$isSaved(), 'task not saved since user not saved (2)' );
     notOk( u0.$isSaved(), 'user not saved (2)' );
-  });
+  }); 
 
   wait( 3 * timescale, function() 
   {
@@ -468,6 +468,8 @@ test( 'wait until dependents are saved', function(assert)
   {
     ok( t0.$isSaved(), 'task saved since user has saved' );
     ok( u0.$isSaved(), 'user saved (2)' );
+
+    strictEqual( t0.creator, u0 );
 
     done();
   });

@@ -653,6 +653,8 @@ test( 'wait until dependents are saved', function(assert)
   urest.delay = 2 * timescale;
   trest.delay = 2 * timescale;
 
+  User.Database.rest.returnValue = {id: u0.id, tasks: []};
+
   u0.$save();
 
   notOk( t0.$isSynced() );
@@ -681,6 +683,8 @@ test( 'wait until dependents are saved', function(assert)
     ok( t0.$isSaved(), 'task 0 saved' );
     ok( t1.$isSaved(), 'task 1 saved' );
     ok( u0.$isSaved(), 'user saved' );
+
+    deepEqual( u0.tasks.toArray(), [t0, t1] );
 
     done();
   });

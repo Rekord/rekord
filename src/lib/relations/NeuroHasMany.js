@@ -248,8 +248,13 @@ extend( NeuroRelationMultiple, NeuroHasMany,
     return adding;
   },
 
-  removeModel: function(relation, related, alreadyRemoved)
+  removeModel: function(relation, related, remoteData)
   {
+    if ( !this.canRemoveRelated( related, remoteData ) )
+    {
+      return;
+    }
+
     var model = relation.parent;
     var target = relation.related;
     var pending = relation.pending;
@@ -266,7 +271,7 @@ extend( NeuroRelationMultiple, NeuroHasMany,
 
       delete related.$dependents[ model.$uid() ];
 
-      if ( !alreadyRemoved && this.cascadeRemove )
+      if ( this.cascadeRemove )
       {
         related.$remove( this.cascadeRemove );
       }

@@ -3985,6 +3985,11 @@ NeuroModel.prototype =
     return this.$status === NeuroModel.Status.Synced;
   },
 
+  $isPending: function()
+  {
+    return this.$status === NeuroModel.Status.SavePending;
+  },
+
   $isDeleted: function()
   {
     return this.$status >= NeuroModel.Status.RemovePending;
@@ -7459,7 +7464,7 @@ extend( NeuroRelation, NeuroRelationSingle,
   {
     if ( isEmpty( input ) )
     {
-      this.unrelate( model );
+      this.unrelate( model, input, remoteData );
     }
     else
     {
@@ -7489,14 +7494,14 @@ extend( NeuroRelation, NeuroRelationSingle,
     }
   },
 
-  unrelate: function(model, input)
+  unrelate: function(model, input, remoteData)
   {
     var relation = model.$relations[ this.name ];
     var related = this.parseModel( input );
 
     if ( !related || relation.related === related )
     {
-      this.clearRelated( relation );
+      this.clearRelated( relation, remoteData );
     }
   },
 
@@ -7518,8 +7523,18 @@ extend( NeuroRelation, NeuroRelationSingle,
     }
   },
 
-  clearRelated: function(relation)
+  clearRelated: function(relation, remoteData)
   {
+    if ( remoteData )
+    {
+      var related = relation.related;
+
+      if ( related && related.$isPending() )
+      {
+        return;
+      }
+    }
+
     this.clearModel( relation );
     this.clearForeignKey( relation.parent );
     this.setProperty( relation );
@@ -7673,7 +7688,7 @@ extend( NeuroRelation, NeuroRelationMultiple,
   {
     if ( isEmpty( input ) )
     {
-      this.unrelate( model );
+      this.unrelate( model, input, remoteData );
     }
     else
     {
@@ -7715,7 +7730,7 @@ extend( NeuroRelation, NeuroRelationMultiple,
 
         for (var i = 0; i < removing.length; i++)
         {
-          this.removeModel( relation, removing[ i ] );
+          this.removeModel( relation, removing[ i ], remoteData );
         }
         
       }, remoteData);
@@ -7752,7 +7767,7 @@ extend( NeuroRelation, NeuroRelationMultiple,
     }
   },
 
-  unrelate: function(model, input)
+  unrelate: function(model, input, remoteData)
   {
     var relation = model.$relations[ this.name ];
 
@@ -7766,7 +7781,7 @@ extend( NeuroRelation, NeuroRelationMultiple,
 
           if ( related )
           {
-            this.removeModel( relation, related );
+            this.removeModel( relation, related, remoteData );
           }
         }
       });
@@ -7777,7 +7792,7 @@ extend( NeuroRelation, NeuroRelationMultiple,
 
       if ( related )
       {
-        this.removeModel( relation, related );
+        this.removeModel( relation, related, remoteData );
       }
     }
     else
@@ -7788,7 +7803,7 @@ extend( NeuroRelation, NeuroRelationMultiple,
       { 
         for (var i = all.length - 1; i >= 0; i--)
         {
-          this.removeModel( relation, all[ i ] );
+          this.removeModel( relation, all[ i ], remoteData );
         }
       });
     }
@@ -7821,6 +7836,11 @@ extend( NeuroRelation, NeuroRelationMultiple,
     }
 
     return false;
+  },
+
+  canRemoveRelated: function(related, remoteData)
+  {
+    return !remoteData || !related.$isPending();
   },
 
   checkSave: function(relation, remoteData)
@@ -8393,8 +8413,13 @@ extend( NeuroRelationMultiple, NeuroHasMany,
     return adding;
   },
 
-  removeModel: function(relation, related, alreadyRemoved)
+  removeModel: function(relation, related, remoteData)
   {
+    if ( !this.canRemoveRelated( related, remoteData ) )
+    {
+      return;
+    }
+
     var model = relation.parent;
     var target = relation.related;
     var pending = relation.pending;
@@ -8411,7 +8436,7 @@ extend( NeuroRelationMultiple, NeuroHasMany,
 
       delete related.$dependents[ model.$uid() ];
 
-      if ( !alreadyRemoved && this.cascadeRemove )
+      if ( this.cascadeRemove )
       {
         related.$remove( this.cascadeRemove );
       }
@@ -8862,13 +8887,13 @@ extend( NeuroRelationMultiple, NeuroHasManyThrough,
     return adding;
   },
 
-  removeModel: function(relation, related, alreadyRemoved)
+  removeModel: function(relation, related, remoteData)
   {
     var relatedKey = related.$key();
 
-    if ( this.finishRemoveRelated( relation, relatedKey ) )
+    if ( this.finishRemoveRelated( relation, relatedKey, remoteData ) )
     {
-      this.removeThrough( relation, related, alreadyRemoved );
+      this.removeThrough( relation, related );
     }
   },
 
@@ -8921,7 +8946,7 @@ extend( NeuroRelationMultiple, NeuroHasManyThrough,
     return removing;
   },
 
-  finishRemoveRelated: function(relation, relatedKey)
+  finishRemoveRelated: function(relation, relatedKey, remoteData)
   {
     var pending = relation.pending;
     var relateds = relation.related;
@@ -8929,6 +8954,11 @@ extend( NeuroRelationMultiple, NeuroHasManyThrough,
 
     if ( related )
     {
+      if ( !this.canRemoveRelated( related, remoteData ) )
+      {
+        return false;
+      }
+
       Neuro.debug( Neuro.Debugs.HASMANYTHRU_REMOVE, this, relation, related );
 
       relateds.remove( relatedKey );
@@ -9127,8 +9157,13 @@ extend( NeuroRelationMultiple, NeuroHasRemote,
     return adding;
   },
 
-  removeModel: function(relation, related)
+  removeModel: function(relation, related, remoteData)
   {
+    if ( !this.canRemoveRelated( related, remoteData ) )
+    {
+      return;
+    }
+
     var model = relation.parent;
     var target = relation.related;
     var pending = relation.pending;

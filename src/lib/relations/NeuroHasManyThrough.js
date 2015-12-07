@@ -369,13 +369,13 @@ extend( NeuroRelationMultiple, NeuroHasManyThrough,
     return adding;
   },
 
-  removeModel: function(relation, related, alreadyRemoved)
+  removeModel: function(relation, related, remoteData)
   {
     var relatedKey = related.$key();
 
-    if ( this.finishRemoveRelated( relation, relatedKey ) )
+    if ( this.finishRemoveRelated( relation, relatedKey, remoteData ) )
     {
-      this.removeThrough( relation, related, alreadyRemoved );
+      this.removeThrough( relation, related );
     }
   },
 
@@ -428,7 +428,7 @@ extend( NeuroRelationMultiple, NeuroHasManyThrough,
     return removing;
   },
 
-  finishRemoveRelated: function(relation, relatedKey)
+  finishRemoveRelated: function(relation, relatedKey, remoteData)
   {
     var pending = relation.pending;
     var relateds = relation.related;
@@ -436,6 +436,11 @@ extend( NeuroRelationMultiple, NeuroHasManyThrough,
 
     if ( related )
     {
+      if ( !this.canRemoveRelated( related, remoteData ) )
+      {
+        return false;
+      }
+
       Neuro.debug( Neuro.Debugs.HASMANYTHRU_REMOVE, this, relation, related );
 
       relateds.remove( relatedKey );

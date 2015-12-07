@@ -426,6 +426,11 @@ NeuroModel.prototype =
     return this.$status === NeuroModel.Status.Synced;
   },
 
+  $isPending: function()
+  {
+    return this.$status === NeuroModel.Status.SavePending;
+  },
+
   $isDeleted: function()
   {
     return this.$status >= NeuroModel.Status.RemovePending;

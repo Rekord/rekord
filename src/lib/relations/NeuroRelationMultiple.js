@@ -49,7 +49,7 @@ extend( NeuroRelation, NeuroRelationMultiple,
   {
     if ( isEmpty( input ) )
     {
-      this.unrelate( model );
+      this.unrelate( model, input, remoteData );
     }
     else
     {
@@ -91,7 +91,7 @@ extend( NeuroRelation, NeuroRelationMultiple,
 
         for (var i = 0; i < removing.length; i++)
         {
-          this.removeModel( relation, removing[ i ] );
+          this.removeModel( relation, removing[ i ], remoteData );
         }
         
       }, remoteData);
@@ -128,7 +128,7 @@ extend( NeuroRelation, NeuroRelationMultiple,
     }
   },
 
-  unrelate: function(model, input)
+  unrelate: function(model, input, remoteData)
   {
     var relation = model.$relations[ this.name ];
 
@@ -142,7 +142,7 @@ extend( NeuroRelation, NeuroRelationMultiple,
 
           if ( related )
           {
-            this.removeModel( relation, related );
+            this.removeModel( relation, related, remoteData );
           }
         }
       });
@@ -153,7 +153,7 @@ extend( NeuroRelation, NeuroRelationMultiple,
 
       if ( related )
       {
-        this.removeModel( relation, related );
+        this.removeModel( relation, related, remoteData );
       }
     }
     else
@@ -164,7 +164,7 @@ extend( NeuroRelation, NeuroRelationMultiple,
       { 
         for (var i = all.length - 1; i >= 0; i--)
         {
-          this.removeModel( relation, all[ i ] );
+          this.removeModel( relation, all[ i ], remoteData );
         }
       });
     }
@@ -197,6 +197,11 @@ extend( NeuroRelation, NeuroRelationMultiple,
     }
 
     return false;
+  },
+
+  canRemoveRelated: function(related, remoteData)
+  {
+    return !remoteData || !related.$isPending();
   },
 
   checkSave: function(relation, remoteData)

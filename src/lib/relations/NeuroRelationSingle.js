@@ -31,7 +31,7 @@ extend( NeuroRelation, NeuroRelationSingle,
   {
     if ( isEmpty( input ) )
     {
-      this.unrelate( model );
+      this.unrelate( model, input, remoteData );
     }
     else
     {
@@ -61,14 +61,14 @@ extend( NeuroRelation, NeuroRelationSingle,
     }
   },
 
-  unrelate: function(model, input)
+  unrelate: function(model, input, remoteData)
   {
     var relation = model.$relations[ this.name ];
     var related = this.parseModel( input );
 
     if ( !related || relation.related === related )
     {
-      this.clearRelated( relation );
+      this.clearRelated( relation, remoteData );
     }
   },
 
@@ -90,8 +90,18 @@ extend( NeuroRelation, NeuroRelationSingle,
     }
   },
 
-  clearRelated: function(relation)
+  clearRelated: function(relation, remoteData)
   {
+    if ( remoteData )
+    {
+      var related = relation.related;
+
+      if ( related && related.$isPending() )
+      {
+        return;
+      }
+    }
+
     this.clearModel( relation );
     this.clearForeignKey( relation.parent );
     this.setProperty( relation );

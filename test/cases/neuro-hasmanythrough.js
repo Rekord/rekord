@@ -386,6 +386,8 @@ test( 'wait until dependents are saved', function(assert)
   urest.delay = 2 * timescale;
   ugrest.delay = 2 * timescale;
 
+  User.Database.rest.returnValue = {id: u0.id, groups: []};
+
   u0.$save();
 
   notOk( ug0.$isSynced() );
@@ -419,6 +421,8 @@ test( 'wait until dependents are saved', function(assert)
     ok( ug1.$isSaved(), 'group 1 saved' );
     ok( ug2.$isSaved(), 'group 2 saved' );
     ok( u0.$isSaved(), 'user saved' );
+
+    deepEqual( u0.groups.toArray(), [g0, g1, g2] );
 
     done();
   });
