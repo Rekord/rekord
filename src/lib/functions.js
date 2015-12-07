@@ -1,68 +1,200 @@
+
+
+/**
+ * Determines whether the given variable is defined.
+ *
+ * @memberOf Neuro
+ * @param  {Any} x
+ *         The variable to test.
+ * @return {Boolean} -
+ *         True if the variable is defined, otherwise false.
+ */
 function isDefined(x)
 {
   return x !== undefined;
 }
 
+/**
+ * Determines whether the given variable is a function.
+ * 
+ * @memberOf Neuro
+ * @param  {Any} x
+ *         The variable to test.
+ * @return {Boolean} -
+ *         True if the variable is a function, otherwise false.
+ */
 function isFunction(x)
 {
   return !!(x && x.constructor && x.call && x.apply);
 }
 
+/**
+ * Determines whether the given variable is a Neuro object. A Neuro object is a
+ * constructor for a model and also has a Database variable. A Neuro object is
+ * strictly created by the Neuro function.
+ * 
+ * @memberOf Neuro
+ * @param  {Any} x
+ *         The variable to test.
+ * @return {Boolean} -
+ *         True if the variable is a Neuro object, otherwise false.
+ */
 function isNeuro(x)
 {
   return !!(x && x.Database && isFunction( x ) && x.prototype instanceof NeuroModel);
 }
 
+/**
+ * Determines whether the given variable is a string.
+ * 
+ * @memberOf Neuro
+ * @param  {Any} x
+ *         The variable to test.
+ * @return {Boolean} -
+ *         True if the variable is a string, otherwise false.
+ */
 function isString(x)
 {
   return typeof x === 'string';
 }
 
+/**
+ * Determines whether the given variable is a valid number. NaN and Infinity are
+ * not valid numbers.
+ * 
+ * @memberOf Neuro
+ * @param  {Any} x
+ *         The variable to test.
+ * @return {Boolean} -
+ *         True if the variable is a valid number, otherwise false.
+ */
 function isNumber(x)
 {
   return typeof x === 'number' && !isNaN(x);
 }
 
+/**
+ * Determines whether the given variable is a boolean value.
+ * 
+ * @memberOf Neuro
+ * @param  {Any} x
+ *         The variable to test.
+ * @return {Boolean} -
+ *         True if the variable is a boolean value, otherwise false.
+ */
 function isBoolean(x)
 {
   return typeof x === 'boolean';
 }
 
+/**
+ * Determines whether the given variable is an instance of Date.
+ * 
+ * @memberOf Neuro
+ * @param  {Any} x
+ *         The variable to test.
+ * @return {Boolean} -
+ *         True if the variable is an instance of Date, otherwise false.
+ */
 function isDate(x)
 {
   return x instanceof Date;
 }
 
+/**
+ * Determines whether the given variable is an instance of RegExp.
+ * 
+ * @memberOf Neuro
+ * @param  {Any} x
+ *         The variable to test.
+ * @return {Boolean} -
+ *         True if the variable is an instance of RegExp, otherwise false.
+ */
 function isRegExp(x)
 {
   return x instanceof RegExp;
 }
 
+/**
+ * Determines whether the given variable is an instance of Array.
+ * 
+ * @memberOf Neuro
+ * @param  {Any} x
+ *         The variable to test.
+ * @return {Boolean} -
+ *         True if the variable is an instance of Array, otherwise false.
+ */
 function isArray(x)
 {
   return x instanceof Array;
 }
 
+/**
+ * Determines whether the given variable is a non-null object. As a note, 
+ * Arrays are considered objects.
+ * 
+ * @memberOf Neuro
+ * @param  {Any} x
+ *         The variable to test.
+ * @return {Boolean} -
+ *         True if the variable is a non-null object, otherwise false.
+ */
 function isObject(x)
 {
   return x !== null && typeof x === 'object';
 }
 
-function toArray(x, split)
+/**
+ * Converts the given variable to an array of strings. If the variable is a 
+ * string it is split based on the delimiter given. If the variable is an 
+ * array then it is returned. If the variable is any other type it may result 
+ * in an error.
+ * 
+ * @memberOf Neuro
+ * @param  {String|String[]} x
+ *         The variable to convert to an Array.
+ * @param  {String} [delimiter]
+ *         The delimiter to split if the given variable is a string.
+ * @return {String[]} -
+ *         The array of strings created.
+ */
+function toArray(x, delimiter)
 {
-  return x instanceof Array ? x : x.split( split );
+  return x instanceof Array ? x : x.split( delimiter );
 }
 
-function isTruthy(x)
-{
-  return !!x;
-}
-
+/**
+ * Determines whether the given variable is not null and is not undefined.
+ * 
+ * @memberOf Neuro
+ * @param  {Any}  x
+ *         The variable to test.
+ * @return {Boolean} -
+ *         True if the variable is non-null and not undefined.
+ */
 function isValue(x)
 {
   return !!(x !== undefined && x !== null);
 }
 
+/**
+ * Finds the index of a variable in an array optionally using a custom 
+ * comparison function. If the variable is not found in the array then `false`
+ * is returned.
+ * 
+ * @memberOf Neuro
+ * @param  {Array} arr
+ *         The array to search through.
+ * @param  {Any} x
+ *         The variable to search for.
+ * @param  {Function} [comparator]
+ *         The function to use which compares two values and returns a truthy
+ *         value if they are considered equivalent. If a comparator is not given
+ *         then strict comparison is used to determine equivalence.
+ * @return {Number|Boolean} -
+ *         The index in the array the variable exists at, otherwise false if
+ *         the variable wasn't found in the array.
+ */
 function indexOf(arr, x, comparator)
 {
   var cmp = comparator || equalsStrict;
@@ -78,11 +210,29 @@ function indexOf(arr, x, comparator)
   return false;
 }
 
+/**
+ * A function that doesn't perform any operations.
+ * 
+ * @memberOf Neuro
+ */
 function noop()
 {
 
 }
 
+/**
+ * Returns the given function with the given context (`this`). This also has the
+ * benefits of returning a "copy" of the function which makes it ideal for use
+ * in listening on/once events and off events.
+ * 
+ * @memberOf Neuro
+ * @param  {Object} context
+ *         The value of `this` for the given function.
+ * @param  {Function}
+ *         The function to invoke with the given context.
+ * @return {Function} -
+ *         A new function which is a copy of the given function with a new context.
+ */
 function bind(context, func)
 {
   return function bindedFunction()
@@ -91,14 +241,21 @@ function bind(context, func)
   };
 }
 
+/**
+ * Generates a UUID using the random number method.
+ * 
+ * @memberOf Neuro
+ * @return {String} -
+ *         The generated UUID.
+ */
+function uuid() 
+{
+  return (S4()+S4()+"-"+S4()+"-"+S4()+"-"+S4()+"-"+S4()+S4()+S4());
+}
+
 function S4() 
 {
   return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
-}
-
-function uuid() 
-{
-    return (S4()+S4()+"-"+S4()+"-"+S4()+"-"+S4()+"-"+S4()+S4()+S4());
 }
 
 function propsMatch(test, testFields, expected, expectedFields)
@@ -273,8 +430,10 @@ function camelCaseReplacer(match)
 
 function toCamelCase(name)
 {
-  return name.replace( /(^.|_.)/g, camelCaseReplacer );
+  return name.replace( toCamelCase.REGEX, camelCaseReplacer );
 }
+
+toCamelCase.REGEX = /(^.|_.)/g;
 
 function collect(a)
 {

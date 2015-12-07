@@ -1,4 +1,13 @@
 
+/**
+ * An instance
+ * 
+ * @constructor
+ * @memberOf Neuro
+ * @alias Model
+ * @param {Neuro.Database} db
+ *        The database instance used in model instances.
+ */
 function NeuroModel(db)
 {
   this.$db = db;

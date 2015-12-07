@@ -46,10 +46,9 @@ NeuroRelation.prototype =
   /**
    * Initializes this relation with the given database, field, and options.
    * 
-   * @param  {[type]} database [description]
-   * @param  {[type]} field    [description]
-   * @param  {[type]} options  [description]
-   * @return {[type]}          [description]
+   * @param  {Neuro.Database} database [description]
+   * @param  {String} field    [description]
+   * @param  {Object} options  [description]
    */
   init: function(database, field, options)
   {
@@ -85,8 +84,7 @@ NeuroRelation.prototype =
   },
 
   /**
-   * 
-   * @param {[type]} neuro [description]
+   *
    */
   setModelReference: function(database, field, options)
   {
@@ -100,10 +98,6 @@ NeuroRelation.prototype =
 
   /**
    * 
-   * @param  {[type]} database [description]
-   * @param  {[type]} fields   [description]
-   * @param  {[type]} options  [description]
-   * @return {[type]}          [description]
    */
   onInitialized: function(database, fields, options)
   {
@@ -132,8 +126,7 @@ NeuroRelation.prototype =
    * to load models/keys. If it contains values that don't exist or aren't 
    * actually related
    * 
-   * @param  {[type]} model [description]
-   * @return {[type]}       [description]
+   * @param  {Neuro.Model} model [description]
    */
   load: function(model, remoteData)
   {

@@ -1,4 +1,12 @@
 
+/**
+ * Creates a Neuro object given a set of options. A Neuro object is also the 
+ * constructor for creating instances of the Neuro object defined.
+ * 
+ * @namespace 
+ * @param {Object} options
+ *        The options of 
+ */
 function Neuro(options)
 {
   if ( options.name in Neuro.cache )

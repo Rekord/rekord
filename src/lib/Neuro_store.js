@@ -43,11 +43,11 @@ Neuro.store = function(database)
      * 
      * @param  {String|Number} key
      *         The key to remove from the store.
-     * @param  {[type]} success
+     * @param  {function} success
      *         A function to invoke when the record doesn't exist in the store.
      *         The arguments of the function are the removedValue (if any) and
      *         the key passed to this function.
-     * @param  {[type]} failure
+     * @param  {function} failure
      *         A function to invoke when there was an issue removing the key
      *         from the store. The arguments of the function are the key given
      *         to this function and an error that occurred if available.

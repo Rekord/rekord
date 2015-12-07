@@ -1,0 +1,53 @@
+{
+  "source": {
+    "include": [
+      "src/lib/functions.js",
+      "src/lib/eventize.js",
+      "src/lib/Neuro.js",
+      "src/lib/Neuro_debug.js",
+      "src/lib/Neuro_rest.js",
+      "src/lib/Neuro_store.js",
+      "src/lib/Neuro_live.js",
+      "src/lib/Neuro_offline.js",
+      "src/lib/NeuroDatabase.js",
+      "src/lib/NeuroModel.js",
+      "src/lib/NeuroMap.js",
+      "src/lib/collections/NeuroCollection.js",
+      "src/lib/collections/NeuroFilteredCollection.js",
+      "src/lib/collections/NeuroModelCollection.js",
+      "src/lib/collections/NeuroDiscriminatedModelCollection.js",
+      "src/lib/collections/NeuroRelationCollection.js",
+      "src/lib/collections/NeuroDiscriminatedRelationCollection.js",
+      "src/lib/query/NeuroQuery.js",
+      "src/lib/query/NeuroRemoteQuery.js",
+      "src/lib/NeuroPage.js",
+      "src/lib/NeuroOperation.js",
+      "src/lib/operations/",
+      "src/lib/NeuroRelation.js",
+      "src/lib/relations/",
+      "src/lib/plugins/"
+    ]
+  },
+  "templates": {
+    "applicationName": "Neurosync",
+    "linenums": true,
+    "cleverLinks": true,
+    "default": {
+      "outputSourceFiles": true
+    }
+  },
+  "opts": {
+    "destination": "../neurosync-docs/docs/",
+    "recurse": "true",
+    "template": "./node_modules/jaguarjs-jsdoc",
+    "readme": "./README.md",
+    "pedantic": true,
+    "debug": true
+  },
+  "plugins": [
+    "plugins/markdown"
+  ],
+  "tags": {
+    "allowUnknownTags": true
+  }
+}

@@ -1,71 +1,203 @@
 (function(global, undefined)
 {
 
+
+
+/**
+ * Determines whether the given variable is defined.
+ *
+ * @memberOf Neuro
+ * @param  {Any} x
+ *         The variable to test.
+ * @return {Boolean} -
+ *         True if the variable is defined, otherwise false.
+ */
 function isDefined(x)
 {
   return x !== undefined;
 }
 
+/**
+ * Determines whether the given variable is a function.
+ * 
+ * @memberOf Neuro
+ * @param  {Any} x
+ *         The variable to test.
+ * @return {Boolean} -
+ *         True if the variable is a function, otherwise false.
+ */
 function isFunction(x)
 {
   return !!(x && x.constructor && x.call && x.apply);
 }
 
+/**
+ * Determines whether the given variable is a Neuro object. A Neuro object is a
+ * constructor for a model and also has a Database variable. A Neuro object is
+ * strictly created by the Neuro function.
+ * 
+ * @memberOf Neuro
+ * @param  {Any} x
+ *         The variable to test.
+ * @return {Boolean} -
+ *         True if the variable is a Neuro object, otherwise false.
+ */
 function isNeuro(x)
 {
   return !!(x && x.Database && isFunction( x ) && x.prototype instanceof NeuroModel);
 }
 
+/**
+ * Determines whether the given variable is a string.
+ * 
+ * @memberOf Neuro
+ * @param  {Any} x
+ *         The variable to test.
+ * @return {Boolean} -
+ *         True if the variable is a string, otherwise false.
+ */
 function isString(x)
 {
   return typeof x === 'string';
 }
 
+/**
+ * Determines whether the given variable is a valid number. NaN and Infinity are
+ * not valid numbers.
+ * 
+ * @memberOf Neuro
+ * @param  {Any} x
+ *         The variable to test.
+ * @return {Boolean} -
+ *         True if the variable is a valid number, otherwise false.
+ */
 function isNumber(x)
 {
   return typeof x === 'number' && !isNaN(x);
 }
 
+/**
+ * Determines whether the given variable is a boolean value.
+ * 
+ * @memberOf Neuro
+ * @param  {Any} x
+ *         The variable to test.
+ * @return {Boolean} -
+ *         True if the variable is a boolean value, otherwise false.
+ */
 function isBoolean(x)
 {
   return typeof x === 'boolean';
 }
 
+/**
+ * Determines whether the given variable is an instance of Date.
+ * 
+ * @memberOf Neuro
+ * @param  {Any} x
+ *         The variable to test.
+ * @return {Boolean} -
+ *         True if the variable is an instance of Date, otherwise false.
+ */
 function isDate(x)
 {
   return x instanceof Date;
 }
 
+/**
+ * Determines whether the given variable is an instance of RegExp.
+ * 
+ * @memberOf Neuro
+ * @param  {Any} x
+ *         The variable to test.
+ * @return {Boolean} -
+ *         True if the variable is an instance of RegExp, otherwise false.
+ */
 function isRegExp(x)
 {
   return x instanceof RegExp;
 }
 
+/**
+ * Determines whether the given variable is an instance of Array.
+ * 
+ * @memberOf Neuro
+ * @param  {Any} x
+ *         The variable to test.
+ * @return {Boolean} -
+ *         True if the variable is an instance of Array, otherwise false.
+ */
 function isArray(x)
 {
   return x instanceof Array;
 }
 
+/**
+ * Determines whether the given variable is a non-null object. As a note, 
+ * Arrays are considered objects.
+ * 
+ * @memberOf Neuro
+ * @param  {Any} x
+ *         The variable to test.
+ * @return {Boolean} -
+ *         True if the variable is a non-null object, otherwise false.
+ */
 function isObject(x)
 {
   return x !== null && typeof x === 'object';
 }
 
-function toArray(x, split)
+/**
+ * Converts the given variable to an array of strings. If the variable is a 
+ * string it is split based on the delimiter given. If the variable is an 
+ * array then it is returned. If the variable is any other type it may result 
+ * in an error.
+ * 
+ * @memberOf Neuro
+ * @param  {String|String[]} x
+ *         The variable to convert to an Array.
+ * @param  {String} [delimiter]
+ *         The delimiter to split if the given variable is a string.
+ * @return {String[]} -
+ *         The array of strings created.
+ */
+function toArray(x, delimiter)
 {
-  return x instanceof Array ? x : x.split( split );
+  return x instanceof Array ? x : x.split( delimiter );
 }
 
-function isTruthy(x)
-{
-  return !!x;
-}
-
+/**
+ * Determines whether the given variable is not null and is not undefined.
+ * 
+ * @memberOf Neuro
+ * @param  {Any}  x
+ *         The variable to test.
+ * @return {Boolean} -
+ *         True if the variable is non-null and not undefined.
+ */
 function isValue(x)
 {
   return !!(x !== undefined && x !== null);
 }
 
+/**
+ * Finds the index of a variable in an array optionally using a custom 
+ * comparison function. If the variable is not found in the array then `false`
+ * is returned.
+ * 
+ * @memberOf Neuro
+ * @param  {Array} arr
+ *         The array to search through.
+ * @param  {Any} x
+ *         The variable to search for.
+ * @param  {Function} [comparator]
+ *         The function to use which compares two values and returns a truthy
+ *         value if they are considered equivalent. If a comparator is not given
+ *         then strict comparison is used to determine equivalence.
+ * @return {Number|Boolean} -
+ *         The index in the array the variable exists at, otherwise false if
+ *         the variable wasn't found in the array.
+ */
 function indexOf(arr, x, comparator)
 {
   var cmp = comparator || equalsStrict;
@@ -81,11 +213,29 @@ function indexOf(arr, x, comparator)
   return false;
 }
 
+/**
+ * A function that doesn't perform any operations.
+ * 
+ * @memberOf Neuro
+ */
 function noop()
 {
 
 }
 
+/**
+ * Returns the given function with the given context (`this`). This also has the
+ * benefits of returning a "copy" of the function which makes it ideal for use
+ * in listening on/once events and off events.
+ * 
+ * @memberOf Neuro
+ * @param  {Object} context
+ *         The value of `this` for the given function.
+ * @param  {Function}
+ *         The function to invoke with the given context.
+ * @return {Function} -
+ *         A new function which is a copy of the given function with a new context.
+ */
 function bind(context, func)
 {
   return function bindedFunction()
@@ -94,14 +244,21 @@ function bind(context, func)
   };
 }
 
+/**
+ * Generates a UUID using the random number method.
+ * 
+ * @memberOf Neuro
+ * @return {String} -
+ *         The generated UUID.
+ */
+function uuid() 
+{
+  return (S4()+S4()+"-"+S4()+"-"+S4()+"-"+S4()+"-"+S4()+S4()+S4());
+}
+
 function S4() 
 {
   return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
-}
-
-function uuid() 
-{
-    return (S4()+S4()+"-"+S4()+"-"+S4()+"-"+S4()+"-"+S4()+S4()+S4());
 }
 
 function propsMatch(test, testFields, expected, expectedFields)
@@ -276,8 +433,10 @@ function camelCaseReplacer(match)
 
 function toCamelCase(name)
 {
-  return name.replace( /(^.|_.)/g, camelCaseReplacer );
+  return name.replace( toCamelCase.REGEX, camelCaseReplacer );
 }
+
+toCamelCase.REGEX = /(^.|_.)/g;
 
 function collect(a)
 {
@@ -1186,6 +1345,14 @@ function eventize(target, secret)
   }
 };
 
+/**
+ * Creates a Neuro object given a set of options. A Neuro object is also the 
+ * constructor for creating instances of the Neuro object defined.
+ * 
+ * @namespace 
+ * @param {Object} options
+ *        The options of 
+ */
 function Neuro(options)
 {
   if ( options.name in Neuro.cache )
@@ -2043,11 +2210,11 @@ Neuro.store = function(database)
      * 
      * @param  {String|Number} key
      *         The key to remove from the store.
-     * @param  {[type]} success
+     * @param  {function} success
      *         A function to invoke when the record doesn't exist in the store.
      *         The arguments of the function are the removedValue (if any) and
      *         the key passed to this function.
-     * @param  {[type]} failure
+     * @param  {function} failure
      *         A function to invoke when there was an issue removing the key
      *         from the store. The arguments of the function are the key given
      *         to this function and an error that occurred if available.
@@ -3300,6 +3467,15 @@ NeuroDatabase.prototype =
 eventize( NeuroDatabase.prototype );
 addEventFunction( NeuroDatabase.prototype, 'change', NeuroDatabase.Events.Changes );
 
+/**
+ * An instance
+ * 
+ * @constructor
+ * @memberOf Neuro
+ * @alias Model
+ * @param {Neuro.Database} db
+ *        The database instance used in model instances.
+ */
 function NeuroModel(db)
 {
   this.$db = db;
@@ -3784,6 +3960,8 @@ addEventFunction( NeuroModel.prototype, '$change', NeuroModel.Events.Changes, tr
  * performs a swap which breaks insertion order).
  *
  * @constructor
+ * @memberOf Neuro
+ * @alias Map
  */
 function NeuroMap()
 {
@@ -3812,7 +3990,7 @@ NeuroMap.prototype =
   /**
    * Resets the map by initializing the values, keys, and indexes.
    * 
-   * @return {NeuroMap} -
+   * @return {Neuro.Map} -
    *         The reference to this map.
    */
   reset: function()
@@ -3829,7 +4007,7 @@ NeuroMap.prototype =
    *
    * @param {String} key
    * @param {V} value
-   * @return {NeuroMap} -
+   * @return {Neuro.Map} -
    *         The reference to this map.
    */
   put: function(key, value)
@@ -3863,7 +4041,7 @@ NeuroMap.prototype =
    * Removes the value by a given key
    *
    * @param {String} key
-   * @return {NeuroMap} -
+   * @return {Neuro.Map} -
    *         The reference to this map.
    */
   remove: function(key)
@@ -3882,7 +4060,7 @@ NeuroMap.prototype =
    * Removes the value & key at the given index.
    *
    * @param {Number} index
-   * @return {NeuroMap} -
+   * @return {Neuro.Map} -
    *         The reference to this map.
    */
   removeAt: function(index)
@@ -3950,8 +4128,8 @@ NeuroMap.prototype =
    * truthy value then the key and value are placed in the destination map.
    * 
    * @param  {Function} callback [description]
-   * @param  {NeuroMap} [dest]     [description]
-   * @return {[type]}            [description]
+   * @param  {Neuro.Map} [dest]     [description]
+   * @return {Neuro.Map}            [description]
    */
   filter: function(callback, dest)
   {
@@ -3977,7 +4155,7 @@ NeuroMap.prototype =
   /**
    * Reverses the order of the underlying values & keys.
    * 
-   * @return {NeuroMap} -
+   * @return {Neuro.Map} -
    *         The referense to this map.
    */
   reverse: function()
@@ -3998,7 +4176,7 @@ NeuroMap.prototype =
 
   /**
    * 
-   * @param  {[type]}  comparator [description]
+   * @param  {function}  comparator [description]
    * @return {Boolean}            [description]
    */
   isSorted: function(comparator)
@@ -4077,7 +4255,7 @@ NeuroMap.prototype =
   /**
    * Rebuilds the index based on the keys.
    * 
-   * @return {NeuroMap} -
+   * @return {Neuro.Map} -
    *         The reference to this map.
    */
   rebuildIndex: function()
@@ -6723,10 +6901,9 @@ NeuroRelation.prototype =
   /**
    * Initializes this relation with the given database, field, and options.
    * 
-   * @param  {[type]} database [description]
-   * @param  {[type]} field    [description]
-   * @param  {[type]} options  [description]
-   * @return {[type]}          [description]
+   * @param  {Neuro.Database} database [description]
+   * @param  {String} field    [description]
+   * @param  {Object} options  [description]
    */
   init: function(database, field, options)
   {
@@ -6762,8 +6939,7 @@ NeuroRelation.prototype =
   },
 
   /**
-   * 
-   * @param {[type]} neuro [description]
+   *
    */
   setModelReference: function(database, field, options)
   {
@@ -6777,10 +6953,6 @@ NeuroRelation.prototype =
 
   /**
    * 
-   * @param  {[type]} database [description]
-   * @param  {[type]} fields   [description]
-   * @param  {[type]} options  [description]
-   * @return {[type]}          [description]
    */
   onInitialized: function(database, fields, options)
   {
@@ -6809,8 +6981,7 @@ NeuroRelation.prototype =
    * to load models/keys. If it contains values that don't exist or aren't 
    * actually related
    * 
-   * @param  {[type]} model [description]
-   * @return {[type]}       [description]
+   * @param  {Neuro.Model} model [description]
    */
   load: function(model, remoteData)
   {
@@ -9292,6 +9463,7 @@ var NeuroPolymorphic =
   global.Neuro.grab = grab;
   global.Neuro.pull = pull;
   global.Neuro.copy = copy;
+  global.Neuro.noop = noop;
   global.Neuro.bind = bind;
   global.Neuro.diff = diff;
   global.Neuro.sizeof = sizeof;

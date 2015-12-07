@@ -44,6 +44,7 @@
   global.Neuro.grab = grab;
   global.Neuro.pull = pull;
   global.Neuro.copy = copy;
+  global.Neuro.noop = noop;
   global.Neuro.bind = bind;
   global.Neuro.diff = diff;
   global.Neuro.sizeof = sizeof;

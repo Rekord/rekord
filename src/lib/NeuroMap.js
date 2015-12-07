@@ -6,6 +6,8 @@
  * performs a swap which breaks insertion order).
  *
  * @constructor
+ * @memberOf Neuro
+ * @alias Map
  */
 function NeuroMap()
 {
@@ -34,7 +36,7 @@ NeuroMap.prototype =
   /**
    * Resets the map by initializing the values, keys, and indexes.
    * 
-   * @return {NeuroMap} -
+   * @return {Neuro.Map} -
    *         The reference to this map.
    */
   reset: function()
@@ -51,7 +53,7 @@ NeuroMap.prototype =
    *
    * @param {String} key
    * @param {V} value
-   * @return {NeuroMap} -
+   * @return {Neuro.Map} -
    *         The reference to this map.
    */
   put: function(key, value)
@@ -85,7 +87,7 @@ NeuroMap.prototype =
    * Removes the value by a given key
    *
    * @param {String} key
-   * @return {NeuroMap} -
+   * @return {Neuro.Map} -
    *         The reference to this map.
    */
   remove: function(key)
@@ -104,7 +106,7 @@ NeuroMap.prototype =
    * Removes the value & key at the given index.
    *
    * @param {Number} index
-   * @return {NeuroMap} -
+   * @return {Neuro.Map} -
    *         The reference to this map.
    */
   removeAt: function(index)
@@ -172,8 +174,8 @@ NeuroMap.prototype =
    * truthy value then the key and value are placed in the destination map.
    * 
    * @param  {Function} callback [description]
-   * @param  {NeuroMap} [dest]     [description]
-   * @return {[type]}            [description]
+   * @param  {Neuro.Map} [dest]     [description]
+   * @return {Neuro.Map}            [description]
    */
   filter: function(callback, dest)
   {
@@ -199,7 +201,7 @@ NeuroMap.prototype =
   /**
    * Reverses the order of the underlying values & keys.
    * 
-   * @return {NeuroMap} -
+   * @return {Neuro.Map} -
    *         The referense to this map.
    */
   reverse: function()
@@ -220,7 +222,7 @@ NeuroMap.prototype =
 
   /**
    * 
-   * @param  {[type]}  comparator [description]
+   * @param  {function}  comparator [description]
    * @return {Boolean}            [description]
    */
   isSorted: function(comparator)
@@ -299,7 +301,7 @@ NeuroMap.prototype =
   /**
    * Rebuilds the index based on the keys.
    * 
-   * @return {NeuroMap} -
+   * @return {Neuro.Map} -
    *         The reference to this map.
    */
   rebuildIndex: function()
