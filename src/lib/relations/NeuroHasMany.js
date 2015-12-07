@@ -32,6 +32,8 @@ extend( NeuroRelationMultiple, NeuroHasMany,
   debugAutoSave:        Neuro.Debugs.HASMANY_AUTO_SAVE,
   debugInitialGrabbed:  Neuro.Debugs.HASMANY_INITIAL_GRABBED,
   debugSort:            Neuro.Debugs.HASMANY_SORT,
+  debugQuery:           Neuro.Debugs.HASMANY_QUERY,
+  debugQueryResults:    Neuro.Debugs.HASMANY_QUERY_RESULTS,
 
   getDefaults: function(database, field, options)
   {

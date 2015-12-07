@@ -21,7 +21,7 @@ The easiest way to install neurosync is through bower via `bower install neurosy
 - Stores data locally through `Neuro.store` interface (ex: [neurosync-storkjs](https://github.com/ClickerMonkey/neurosync-storkjs))
 - Stores data remotely through `Neuro.rest` interface (ex: [neurosync-angular](https://github.com/ClickerMonkey/neurosync-angular) or [neurosync-jquery](https://github.com/ClickerMonkey/neurosync-jquery))
 - Publishes changes through `Neuro.live` interface (ex: [neurosync-pubsub](https://github.com/ClickerMonkey/neurosync-pubsub))
-- Relationships `hasOne`, `belongsTo`, `hasMany`, & `hasManyThrough`
+- Relationships `hasOne`, `belongsTo`, `hasMany`, `hasManyThrough`, & `hasRemote`
 - Polymorphic relationships for `hasOne`, `belongsTo` & `hasMany`
 - Extend an existing model
 - Look at a subset of models with `model.where( properties to match or custom function )`
@@ -348,6 +348,13 @@ var ModelClass = Neuro({
   hasManyThrough: {
     fieldName: {
       // hasManyThrough options below
+    }
+  },
+
+  // (N) This model is related to zero or more models through some query.
+  hasRemote: {
+    fieldName: {
+      // hasRemote options below
     }
   }
 

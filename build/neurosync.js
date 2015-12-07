@@ -2130,6 +2130,8 @@ Neuro.Debugs = {
   HASONE_CLEAR_KEY: 58,       // NeuroModel, local
   HASONE_UPDATE_KEY: 59,      // NeuroModel, local, NeuroModel, foreign
   HASONE_LOADED: 60,          // NeuroModel, relation, [NeuroModel]
+  HASONE_QUERY: 111,          // NeuroModel, NeuroRemoteQuery, queryOption, query
+  HASONE_QUERY_RESULTS: 112,  // NeuroModel, NeuroRemoteQuery
 
   BELONGSTO_INIT: 61,          // NeuroHasOne
   BELONGSTO_NINJA_REMOVE: 62,  // NeuroModel, relation
@@ -2142,6 +2144,8 @@ Neuro.Debugs = {
   BELONGSTO_CLEAR_KEY: 70,     // NeuroModel, local
   BELONGSTO_UPDATE_KEY: 71,    // NeuroModel, local, NeuroModel, foreign
   BELONGSTO_LOADED: 72,        // NeuroModel, relation, [NeuroModel]
+  BELONGSTO_QUERY: 113,        // NeuroModel, NeuroRemoteQuery, queryOption, query
+  BELONGSTO_QUERY_RESULTS: 114,// NeuroModel, NeuroRemoteQuery
 
   HASMANY_INIT: 74,             // NeuroHasMany
   HASMANY_NINJA_REMOVE: 75,     // NeuroModel, NeuroModel, relation
@@ -2157,6 +2161,8 @@ Neuro.Debugs = {
   HASMANY_AUTO_SAVE: 85,        // relation
   HASMANY_PREREMOVE: 86,        // NeuroModel, relation
   HASMANY_POSTSAVE: 87,         // NeuroModel, relation
+  HASMANY_QUERY: 115,           // NeuroModel, NeuroRemoteQuery, queryOption, query
+  HASMANY_QUERY_RESULTS: 116,   // NeuroModel, NeuroRemoteQuery
 
   HASMANYTHRU_INIT: 88,             // NeuroHasMany
   HASMANYTHRU_NINJA_REMOVE: 89,     // NeuroModel, NeuroModel, relation
@@ -2174,9 +2180,16 @@ Neuro.Debugs = {
   HASMANYTHRU_PREREMOVE: 101,       // NeuroModel, relation
   HASMANYTHRU_POSTSAVE: 102,        // NeuroModel, relation  
   HASMANYTHRU_THRU_ADD: 103,        // relation, NeuroModel
-  HASMANYTHRU_THRU_REMOVE: 68       // relation, NeuroModel, NeuroModel
+  HASMANYTHRU_THRU_REMOVE: 68,      // relation, NeuroModel, NeuroModel
+  HASMANYTHRU_QUERY: 117,           // NeuroModel, NeuroRemoteQuery, queryOption, query
+  HASMANYTHRU_QUERY_RESULTS: 118,   // NeuroModel, NeuroRemoteQuery
 
-  // 50
+  HASREMOTE_INIT: 50,               // NeuroHasRemote
+  HASREMOTE_SORT: 108,              // relation
+  HASREMOVE_NINJA_REMOVE: 109,      // NeuroModel, NeuroModel, relation
+  HASREMOVE_NINJA_SAVE: 110,        // NeuroModel, NeuroModel, relation
+  HASREMOVE_QUERY: 119,             // NeuroModel, NeuroRemoteQuery, queryOption, query
+  HASREMOVE_QUERY_RESULTS: 120      // NeuroModel, NeuroRemoteQuery
 };
 
 // Neuro.rest = function(options, success(data), failure(data, status))
@@ -6942,6 +6955,9 @@ NeuroRelation.Defaults =
 NeuroRelation.prototype =
 {
 
+  debugQuery: null,
+  debugQueryResults: null,
+
   getDefaults: function(database, field, options)
   {
     return NeuroRelation.Defaults;
@@ -7111,16 +7127,20 @@ NeuroRelation.prototype =
     var query = isString( queryOption ) ? format( queryOption, model ) : queryOption;
     var remoteQuery = this.model.query( query );
 
+    Neuro.debug( this.debugQuery, this, model, remoteQuery, queryOption, query );
+
     remoteQuery.ready( this.handleExecuteQuery( model ), this );
   },
 
   handleExecuteQuery: function(model)
   {
-    return function onExecuteQuery(query)
+    return function onExecuteQuery(remoteQuery)
     {
-      for (var i = 0; i < query.length; i++)
+      Neuro.debug( this.debugQueryResults, this, model, remoteQuery );
+
+      for (var i = 0; i < remoteQuery.length; i++)
       {
-        this.relate( model, query[ i ], true );
+        this.relate( model, remoteQuery[ i ], true );
       }
     };
   },
@@ -7608,6 +7628,27 @@ extend( NeuroRelation, NeuroRelationMultiple,
   debugInitialGrabbed: null,
   debugSort: null,
 
+  handleExecuteQuery: function(model)
+  {
+    return function onExecuteQuery(remoteQuery)
+    {
+      var relation = model.$relations[ this.name ];
+
+      Neuro.debug( this.debugQueryResults, this, model, remoteQuery );
+
+      this.bulk( relation, function()
+      {
+        for (var i = 0; i < remoteQuery.length; i++)
+        {
+          this.addModel( relation, remoteQuery[ i ], true );
+        }
+      });
+
+      this.sort( relation );
+      this.checkSave( relation, true );
+    };
+  },
+
   bulk: function(relation, callback, remoteData)
   {
     relation.delaySorting = true;
@@ -7850,12 +7891,14 @@ extend( NeuroRelationSingle, NeuroBelongsTo,
 
   type: 'belongsTo',
 
-  debugInit:        Neuro.Debugs.BELONGSTO_INIT,
-  debugClearModel:  Neuro.Debugs.BELONGSTO_CLEAR_MODEL,
-  debugSetModel:    Neuro.Debugs.BELONGSTO_SET_MODEL,
-  debugLoaded:      Neuro.Debugs.BELONGSTO_LOADED,
-  debugClearKey:    Neuro.Debugs.BELONGSTO_CLEAR_KEY,
-  debugUpdateKey:   Neuro.Debugs.BELONGSTO_UPDATE_KEY,
+  debugInit:          Neuro.Debugs.BELONGSTO_INIT,
+  debugClearModel:    Neuro.Debugs.BELONGSTO_CLEAR_MODEL,
+  debugSetModel:      Neuro.Debugs.BELONGSTO_SET_MODEL,
+  debugLoaded:        Neuro.Debugs.BELONGSTO_LOADED,
+  debugClearKey:      Neuro.Debugs.BELONGSTO_CLEAR_KEY,
+  debugUpdateKey:     Neuro.Debugs.BELONGSTO_UPDATE_KEY,
+  debugQuery:         Neuro.Debugs.BELONGSTO_QUERY,
+  debugQueryResults:  Neuro.Debugs.BELONGSTO_QUERY_RESULTS,
 
   getDefaults: function(database, field, options)
   {
@@ -7974,12 +8017,14 @@ extend( NeuroRelationSingle, NeuroHasOne,
 
   type: 'hasOne',
 
-  debugInit:        Neuro.Debugs.HASONE_INIT,
-  debugClearModel:  Neuro.Debugs.HASONE_CLEAR_MODEL,
-  debugSetModel:    Neuro.Debugs.HASONE_SET_MODEL,
-  debugLoaded:      Neuro.Debugs.HASONE_LOADED,
-  debugClearKey:    Neuro.Debugs.HASONE_CLEAR_KEY,
-  debugUpdateKey:   Neuro.Debugs.HASONE_UPDATE_KEY,
+  debugInit:          Neuro.Debugs.HASONE_INIT,
+  debugClearModel:    Neuro.Debugs.HASONE_CLEAR_MODEL,
+  debugSetModel:      Neuro.Debugs.HASONE_SET_MODEL,
+  debugLoaded:        Neuro.Debugs.HASONE_LOADED,
+  debugClearKey:      Neuro.Debugs.HASONE_CLEAR_KEY,
+  debugUpdateKey:     Neuro.Debugs.HASONE_UPDATE_KEY,
+  debugQuery:         Neuro.Debugs.HASONE_QUERY,
+  debugQueryResults:  Neuro.Debugs.HASONE_QUERY_RESULTS,
 
   getDefaults: function(database, field, options)
   {
@@ -8126,6 +8171,8 @@ extend( NeuroRelationMultiple, NeuroHasMany,
   debugAutoSave:        Neuro.Debugs.HASMANY_AUTO_SAVE,
   debugInitialGrabbed:  Neuro.Debugs.HASMANY_INITIAL_GRABBED,
   debugSort:            Neuro.Debugs.HASMANY_SORT,
+  debugQuery:           Neuro.Debugs.HASMANY_QUERY,
+  debugQueryResults:    Neuro.Debugs.HASMANY_QUERY_RESULTS,
 
   getDefaults: function(database, field, options)
   {
@@ -8475,6 +8522,8 @@ extend( NeuroRelationMultiple, NeuroHasManyThrough,
   debugAutoSave:        Neuro.Debugs.HASMANYTHRU_AUTO_SAVE,
   debugInitialGrabbed:  Neuro.Debugs.HASMANYTHRU_INITIAL_GRABBED,
   debugSort:            Neuro.Debugs.HASMANYTHRU_SORT,
+  debugQuery:           Neuro.Debugs.HASMANYTHRU_QUERY,
+  debugQueryResults:    Neuro.Debugs.HASMANYTHRU_QUERY_RESULTS,
 
   getDefaults: function(database, field, options)
   {
@@ -8943,6 +8992,159 @@ extend( NeuroRelationMultiple, NeuroHasManyThrough,
 
 });
 
+function NeuroHasRemote()
+{
+}
+
+Neuro.Relations.hasRemote = NeuroHasRemote;
+
+NeuroHasRemote.Defaults = 
+{
+  model:                undefined,
+  lazy:                 false,
+  query:                false,
+  store:                Neuro.Store.None,
+  save:                 Neuro.Save.None,
+  auto:                 false,
+  property:             true,
+  dynamic:              false,
+  comparator:           null,
+  comparatorNullsFirst: false,
+  autoRefresh:          false // NeuroModel.Events.RemoteGets
+};
+
+extend( NeuroRelationMultiple, NeuroHasRemote, 
+{
+
+  type: 'hasRemote',
+
+  debugSort:            Neuro.Debugs.HASREMOTE_SORT,
+  debugQuery:           Neuro.Debugs.HASREMOTE_QUERY,
+  debugQueryResults:    Neuro.Debugs.HASREMOTE_QUERY_RESULTS,
+
+  getDefaults: function(database, field, options)
+  {
+    return NeuroHasRemote.Defaults;
+  },
+
+  onInitialized: function(database, field, options)
+  {
+    this.comparator = createComparator( this.comparator, this.comparatorNullsFirst );
+   
+    Neuro.debug( Neuro.Debugs.HASREMOTE_INIT, this );
+
+    this.finishInitialization();
+  },
+
+  handleLoad: function(model, remoteData)
+  {
+    var relator = this;
+    var initial = model[ this.name ];
+    var relation = model.$relations[ this.name ] =
+    {
+      parent: model,
+      pending: {},
+      related: this.createRelationCollection( model ),
+      delaySorting: false,
+      delaySaving: false,
+
+      onRemoved: function() // this = model removed
+      {
+        Neuro.debug( Neuro.Debugs.HASREMOVE_NINJA_REMOVE, relator, model, this, relation );
+
+        relator.removeModel( relation, this, true );
+      },
+
+      onSaved: function() // this = model saved
+      {
+        Neuro.debug( Neuro.Debugs.HASREMOVE_NINJA_SAVE, relator, model, this, relation );
+
+        relator.sort( relation );
+        relator.checkSave( relation );
+      }
+
+    };
+
+    // Populate the model's key if it's missing
+    model.$key();
+
+    // If auto refersh was specified, execute the query on refresh
+    if ( this.autoRefresh )
+    {
+      model.$on( this.autoRefresh, this.onRefresh( model ), this );
+    }
+
+    // Execute query!
+    this.executeQuery( model );
+
+    // We only need to set the property once since the underlying array won't change.
+    this.setProperty( relation );
+  },
+
+  onRefresh: function(model)
+  {
+    return function handleRefresh()
+    {
+      this.executeQuery( model );
+    };
+  },
+
+  addModel: function(relation, related, remoteData)
+  {
+    if ( related.$isDeleted() )
+    {
+      return;
+    }
+
+    var model = relation.parent;
+    var target = relation.related;
+    var key = related.$key();
+    var adding = !target.has( key );
+
+    if ( adding )
+    { 
+      Neuro.debug( Neuro.Debugs.HASMANY_ADD, this, relation, related );
+
+      target.put( key, related );
+
+      related.$on( NeuroModel.Events.Removed, relation.onRemoved );
+      related.$on( NeuroModel.Events.SavedRemoteUpdate, relation.onSaved );
+
+      this.sort( relation );
+
+      if ( !remoteData )
+      {
+        this.checkSave( relation );
+      }
+    }
+
+    return adding;
+  },
+
+  removeModel: function(relation, related)
+  {
+    var model = relation.parent;
+    var target = relation.related;
+    var pending = relation.pending;
+    var key = related.$key();
+
+    if ( target.has( key ) )
+    {
+      Neuro.debug( Neuro.Debugs.HASMANY_REMOVE, this, relation, related );
+
+      target.remove( key );
+
+      related.$off( NeuroModel.Events.Removed, relation.onRemoved );
+      related.$off( NeuroModel.Events.SavedRemoteUpdate, relation.onSaved );
+
+      this.sort( relation );
+      this.checkSave( relation );
+    }
+
+    delete pending[ key ];
+  }
+
+});
 
 var NeuroPolymorphic = 
 {

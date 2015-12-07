@@ -26,12 +26,14 @@ extend( NeuroRelationSingle, NeuroHasOne,
 
   type: 'hasOne',
 
-  debugInit:        Neuro.Debugs.HASONE_INIT,
-  debugClearModel:  Neuro.Debugs.HASONE_CLEAR_MODEL,
-  debugSetModel:    Neuro.Debugs.HASONE_SET_MODEL,
-  debugLoaded:      Neuro.Debugs.HASONE_LOADED,
-  debugClearKey:    Neuro.Debugs.HASONE_CLEAR_KEY,
-  debugUpdateKey:   Neuro.Debugs.HASONE_UPDATE_KEY,
+  debugInit:          Neuro.Debugs.HASONE_INIT,
+  debugClearModel:    Neuro.Debugs.HASONE_CLEAR_MODEL,
+  debugSetModel:      Neuro.Debugs.HASONE_SET_MODEL,
+  debugLoaded:        Neuro.Debugs.HASONE_LOADED,
+  debugClearKey:      Neuro.Debugs.HASONE_CLEAR_KEY,
+  debugUpdateKey:     Neuro.Debugs.HASONE_UPDATE_KEY,
+  debugQuery:         Neuro.Debugs.HASONE_QUERY,
+  debugQueryResults:  Neuro.Debugs.HASONE_QUERY_RESULTS,
 
   getDefaults: function(database, field, options)
   {

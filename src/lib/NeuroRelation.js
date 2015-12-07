@@ -39,6 +39,9 @@ NeuroRelation.Defaults =
 NeuroRelation.prototype =
 {
 
+  debugQuery: null,
+  debugQueryResults: null,
+
   getDefaults: function(database, field, options)
   {
     return NeuroRelation.Defaults;
@@ -208,16 +211,20 @@ NeuroRelation.prototype =
     var query = isString( queryOption ) ? format( queryOption, model ) : queryOption;
     var remoteQuery = this.model.query( query );
 
+    Neuro.debug( this.debugQuery, this, model, remoteQuery, queryOption, query );
+
     remoteQuery.ready( this.handleExecuteQuery( model ), this );
   },
 
   handleExecuteQuery: function(model)
   {
-    return function onExecuteQuery(query)
+    return function onExecuteQuery(remoteQuery)
     {
-      for (var i = 0; i < query.length; i++)
+      Neuro.debug( this.debugQueryResults, this, model, remoteQuery );
+
+      for (var i = 0; i < remoteQuery.length; i++)
       {
-        this.relate( model, query[ i ], true );
+        this.relate( model, remoteQuery[ i ], true );
       }
     };
   },

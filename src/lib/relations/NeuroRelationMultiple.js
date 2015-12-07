@@ -10,6 +10,27 @@ extend( NeuroRelation, NeuroRelationMultiple,
   debugInitialGrabbed: null,
   debugSort: null,
 
+  handleExecuteQuery: function(model)
+  {
+    return function onExecuteQuery(remoteQuery)
+    {
+      var relation = model.$relations[ this.name ];
+
+      Neuro.debug( this.debugQueryResults, this, model, remoteQuery );
+
+      this.bulk( relation, function()
+      {
+        for (var i = 0; i < remoteQuery.length; i++)
+        {
+          this.addModel( relation, remoteQuery[ i ], true );
+        }
+      });
+
+      this.sort( relation );
+      this.checkSave( relation, true );
+    };
+  },
+
   bulk: function(relation, callback, remoteData)
   {
     relation.delaySorting = true;

@@ -26,12 +26,14 @@ extend( NeuroRelationSingle, NeuroBelongsTo,
 
   type: 'belongsTo',
 
-  debugInit:        Neuro.Debugs.BELONGSTO_INIT,
-  debugClearModel:  Neuro.Debugs.BELONGSTO_CLEAR_MODEL,
-  debugSetModel:    Neuro.Debugs.BELONGSTO_SET_MODEL,
-  debugLoaded:      Neuro.Debugs.BELONGSTO_LOADED,
-  debugClearKey:    Neuro.Debugs.BELONGSTO_CLEAR_KEY,
-  debugUpdateKey:   Neuro.Debugs.BELONGSTO_UPDATE_KEY,
+  debugInit:          Neuro.Debugs.BELONGSTO_INIT,
+  debugClearModel:    Neuro.Debugs.BELONGSTO_CLEAR_MODEL,
+  debugSetModel:      Neuro.Debugs.BELONGSTO_SET_MODEL,
+  debugLoaded:        Neuro.Debugs.BELONGSTO_LOADED,
+  debugClearKey:      Neuro.Debugs.BELONGSTO_CLEAR_KEY,
+  debugUpdateKey:     Neuro.Debugs.BELONGSTO_UPDATE_KEY,
+  debugQuery:         Neuro.Debugs.BELONGSTO_QUERY,
+  debugQueryResults:  Neuro.Debugs.BELONGSTO_QUERY_RESULTS,
 
   getDefaults: function(database, field, options)
   {

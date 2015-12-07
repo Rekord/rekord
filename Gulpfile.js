@@ -42,6 +42,7 @@ var build = {
     './src/lib/relations/NeuroHasOne.js',
     './src/lib/relations/NeuroHasMany.js',
     './src/lib/relations/NeuroHasManyThrough.js',
+    './src/lib/relations/NeuroHasRemote.js',
     './src/lib/relations/NeuroPolymorphic.js',
     './src/footer.js'
   ]

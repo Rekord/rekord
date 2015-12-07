@@ -87,6 +87,8 @@ Neuro.Debugs = {
   HASONE_CLEAR_KEY: 58,       // NeuroModel, local
   HASONE_UPDATE_KEY: 59,      // NeuroModel, local, NeuroModel, foreign
   HASONE_LOADED: 60,          // NeuroModel, relation, [NeuroModel]
+  HASONE_QUERY: 111,          // NeuroModel, NeuroRemoteQuery, queryOption, query
+  HASONE_QUERY_RESULTS: 112,  // NeuroModel, NeuroRemoteQuery
 
   BELONGSTO_INIT: 61,          // NeuroHasOne
   BELONGSTO_NINJA_REMOVE: 62,  // NeuroModel, relation
@@ -99,6 +101,8 @@ Neuro.Debugs = {
   BELONGSTO_CLEAR_KEY: 70,     // NeuroModel, local
   BELONGSTO_UPDATE_KEY: 71,    // NeuroModel, local, NeuroModel, foreign
   BELONGSTO_LOADED: 72,        // NeuroModel, relation, [NeuroModel]
+  BELONGSTO_QUERY: 113,        // NeuroModel, NeuroRemoteQuery, queryOption, query
+  BELONGSTO_QUERY_RESULTS: 114,// NeuroModel, NeuroRemoteQuery
 
   HASMANY_INIT: 74,             // NeuroHasMany
   HASMANY_NINJA_REMOVE: 75,     // NeuroModel, NeuroModel, relation
@@ -114,6 +118,8 @@ Neuro.Debugs = {
   HASMANY_AUTO_SAVE: 85,        // relation
   HASMANY_PREREMOVE: 86,        // NeuroModel, relation
   HASMANY_POSTSAVE: 87,         // NeuroModel, relation
+  HASMANY_QUERY: 115,           // NeuroModel, NeuroRemoteQuery, queryOption, query
+  HASMANY_QUERY_RESULTS: 116,   // NeuroModel, NeuroRemoteQuery
 
   HASMANYTHRU_INIT: 88,             // NeuroHasMany
   HASMANYTHRU_NINJA_REMOVE: 89,     // NeuroModel, NeuroModel, relation
@@ -131,7 +137,14 @@ Neuro.Debugs = {
   HASMANYTHRU_PREREMOVE: 101,       // NeuroModel, relation
   HASMANYTHRU_POSTSAVE: 102,        // NeuroModel, relation  
   HASMANYTHRU_THRU_ADD: 103,        // relation, NeuroModel
-  HASMANYTHRU_THRU_REMOVE: 68       // relation, NeuroModel, NeuroModel
+  HASMANYTHRU_THRU_REMOVE: 68,      // relation, NeuroModel, NeuroModel
+  HASMANYTHRU_QUERY: 117,           // NeuroModel, NeuroRemoteQuery, queryOption, query
+  HASMANYTHRU_QUERY_RESULTS: 118,   // NeuroModel, NeuroRemoteQuery
 
-  // 50
+  HASREMOTE_INIT: 50,               // NeuroHasRemote
+  HASREMOTE_SORT: 108,              // relation
+  HASREMOVE_NINJA_REMOVE: 109,      // NeuroModel, NeuroModel, relation
+  HASREMOVE_NINJA_SAVE: 110,        // NeuroModel, NeuroModel, relation
+  HASREMOVE_QUERY: 119,             // NeuroModel, NeuroRemoteQuery, queryOption, query
+  HASREMOVE_QUERY_RESULTS: 120      // NeuroModel, NeuroRemoteQuery
 };
