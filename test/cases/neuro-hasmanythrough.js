@@ -334,6 +334,80 @@ test( 'test ninja through remove', function(assert)
   deepEqual( u0.groups.toArray(), [g1] );
 });
 
+test( 'boot', function(assert)
+{
+  var prefix = 'hasManyThrough_boot_';
+
+  var test = createUserGroups1( prefix );
+  var User = test.User;
+  var Group = test.Group;
+  var UserGroup = test.UserGroup;
+
+  var u0 = User.boot({
+    id: 1, name: 'u0',
+    groups: [
+      {id: 2, name: 'g2'},
+      {id: 3, name: 'g3'}
+    ]
+  });
+
+  var g2 = Group.get( 2 );
+  var g3 = Group.get( 3 );
+  var ug2 = UserGroup.get( [1, 2] );
+  var ug3 = UserGroup.get( [1, 3] );
+
+  ok( g2 );
+  ok( g3 );
+  ok( ug2 );
+  ok( ug3 );
+  ok( u0.$isSaved() );
+  notOk( u0.$hasChanges() );
+  ok( g2.$isSaved() );
+  notOk( g2.$hasChanges() );
+  ok( g3.$isSaved() );
+  notOk( g3.$hasChanges() );
+  ok( ug2.$isSaved() );
+  notOk( ug2.$hasChanges() );
+  ok( ug3.$isSaved() );
+  notOk( ug3.$hasChanges() );
+
+  deepEqual( u0.groups.toArray(), [g2, g3], 'has both groups' );
+
+  deepEqual( g2.users.toArray(), [u0] );
+  deepEqual( g3.users.toArray(), [u0] );
+  deepEqual( u0.userGroups.toArray(), [ug2, ug3] );
+  deepEqual( g2.userGroups.toArray(), [ug2] );
+  deepEqual( g3.userGroups.toArray(), [ug3] );
+  strictEqual( ug2.group, g2 );
+  strictEqual( ug2.user, u0 );
+  strictEqual( ug3.group, g3 );
+  strictEqual( ug3.user, u0 );
+  strictEqual( ug2.group_id, 2 );
+  strictEqual( ug2.user_id, 1 );
+  strictEqual( ug3.group_id, 3 );
+  strictEqual( ug3.user_id, 1 );
+
+  u0.groups.unrelate( g2 );
+
+  deepEqual( u0.groups.toArray(), [g3], 'unrelate successful' );
+
+  ok( ug2.$isDeleted() );
+  
+  deepEqual( g2.users.toArray(), [] );
+  deepEqual( g3.users.toArray(), [u0] );
+  deepEqual( u0.userGroups.toArray(), [ug3] );
+  deepEqual( g2.userGroups.toArray(), [] );
+  deepEqual( g3.userGroups.toArray(), [ug3] );
+  strictEqual( ug2.group, null );
+  strictEqual( ug2.user, null );
+  strictEqual( ug3.group, g3 );
+  strictEqual( ug3.user, u0 );
+  strictEqual( ug2.group_id, 2 );
+  strictEqual( ug2.user_id, 1 );
+  strictEqual( ug3.group_id, 3 );
+  strictEqual( ug3.user_id, 1 );
+});
+
 test( 'wait until dependents are saved', function(assert) 
 {
   var timescale = 30;

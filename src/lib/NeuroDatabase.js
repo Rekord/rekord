@@ -196,7 +196,7 @@ NeuroDatabase.prototype =
     if ( db.initialized )
     {
       callback.call( callbackContext, db );
-      
+
       invoked = true;
     }
     else
@@ -649,7 +649,7 @@ NeuroDatabase.prototype =
     }
     else
     {
-      model = db.instantiate( decoded, true );
+      model = db.createModel( decoded, true );
       
       model.$status = NeuroModel.Status.Synced;
 
@@ -665,12 +665,41 @@ NeuroDatabase.prototype =
       {
         model.$saved = model.$toJSON( true );
       }
+    }
 
-      if ( !db.models.has( key ) )
+    return model;
+  },
+
+  createModel: function(decoded, remoteData)
+  {
+    var db = this;
+    var values = grab( decoded, db.fields );
+    var model = db.instantiate( values, remoteData );
+    var key = model.$key();
+    var missingModel = !db.models.has( key );
+
+    if ( missingModel )
+    {
+      db.models.put( key, model );
+    }
+
+    var relations = {};
+
+    for (var i = 0; i < db.relationNames.length; i++)
+    {
+      var relationName = db.relationNames[ i ];
+
+      if ( relationName in decoded )
       {
-        db.models.put( key, model );
-        db.trigger( NeuroDatabase.Events.ModelAdded, [model, true] );
+        relations[ relationName ] = decoded[ relationName ];
       }
+    }
+
+    model.$set( relations, undefined, remoteData );
+
+    if ( missingModel )
+    {
+      db.trigger( NeuroDatabase.Events.ModelAdded, [model, remoteData] );
     }
 
     return model;

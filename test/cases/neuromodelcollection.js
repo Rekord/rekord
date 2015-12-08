@@ -24,6 +24,4 @@ test( 'duplicate value', function(assert)
   strictEqual( all.length, 1 );
   strictEqual( filtered.length, 1 );
   strictEqual( page.length, 1 );
-
-  console.log( all, filtered, page );
 });

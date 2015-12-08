@@ -168,7 +168,8 @@ test( 'boot complex', function(assert)
     hasMany: {
       tasks: {
         model: TaskName,
-        foreign: 'list_id'
+        foreign: 'list_id',
+        comparator: 'id'
       }
     }
   });
@@ -190,7 +191,7 @@ test( 'boot complex', function(assert)
         done: false,
         assignee_id: 2
       }, 
-      // list will be automaticall populated
+      // list will be automatically populated
       {
         id: 4,
         list_id: 1,

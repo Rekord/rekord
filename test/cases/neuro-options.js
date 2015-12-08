@@ -860,7 +860,7 @@ test( 'events', function(assert)
   var context0 = {name: 'c0'};
   var context1 = {name: 'c1'};
 
-  expect( 10 );
+  expect( 12 );
 
   var Task = Neuro({
     name: 'events',
