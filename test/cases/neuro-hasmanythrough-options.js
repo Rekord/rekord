@@ -588,13 +588,13 @@ test( 'cascadeRemove none', function(assert)
   g0.$remove();
 
   deepEqual( u0.groups.toArray(), [g2, g1] );
-  notOk( ug0.$isDeleted() );
+  ok( ug0.$isDeleted() );
   notOk( ug1.$isDeleted() );
   notOk( ug2.$isDeleted() );
 
-  strictEqual( rest.lastModel, null, 'no rest' );
-  strictEqual( live.lastMessage, null, 'no live' );
-  strictEqual( local.lastKey, null, 'no local' );
+  strictEqual( rest.lastModel, ug0, 'rest' );
+  deepEqual( live.lastMessage, {op: 'REMOVE', key: ug0.$key()}, 'live' );
+  strictEqual( local.lastKey, ug0.$key(), 'local' );
 
   // onThroughRemoved
 
@@ -605,7 +605,7 @@ test( 'cascadeRemove none', function(assert)
   ug2.$remove();
 
   deepEqual( u0.groups.toArray(), [g1] );
-  notOk( ug0.$isDeleted() );
+  ok( ug0.$isDeleted() );
   notOk( ug1.$isDeleted() );
   ok( ug2.$isDeleted() );
 
@@ -622,14 +622,14 @@ test( 'cascadeRemove none', function(assert)
   u0.$remove();
 
   ok( u0.$isDeleted() );
-  deepEqual( u0.groups.toArray(), [g1] );
-  notOk( ug0.$isDeleted() );
-  notOk( ug1.$isDeleted() );
+  deepEqual( u0.groups.toArray(), [] );
+  ok( ug0.$isDeleted() );
+  ok( ug1.$isDeleted() );
   ok( ug2.$isDeleted() );
 
-  strictEqual( rest.lastModel, null, 'no rest' );
-  strictEqual( live.lastMessage, null, 'no live' );
-  strictEqual( local.lastKey, null, 'no local' );
+  strictEqual( rest.lastModel, ug1, 'no rest' );
+  deepEqual( live.lastMessage, {op: 'REMOVE', key: ug1.$key()}, 'live' );
+  strictEqual( local.lastKey, ug1.$key(), 'local' );
 });
 
 test( 'cascadeRemove local', function(assert)

@@ -8964,9 +8964,9 @@ extend( NeuroRelationMultiple, NeuroHasManyThrough,
 
       delete through.$dependents[ model.$uid() ];
 
-      if ( callRemove && this.cascadeRemove )
+      if ( callRemove )
       {
-        through.$remove( this.cascadeRemove );
+        through.$remove();
       }
 
       throughs.remove( throughKey );
