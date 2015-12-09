@@ -2961,6 +2961,11 @@ NeuroDatabase.prototype =
   // a publish, refresh, or values being returned on a save.
   putRemoteData: function(encoded, key, model, overwrite)
   {
+    if ( !isObject( encoded ) )
+    {
+      return model;
+    }
+
     var db = this;
     var key = key || db.getKey( encoded );
     var model = model || db.models.get( key );
