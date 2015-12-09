@@ -1724,4 +1724,6 @@ test( 'query', function(assert)
   strictEqual( l0.tasks[0].task_list_id, l0.id );
   strictEqual( l0.tasks[1].name, 't1' );
   strictEqual( l0.tasks[1].task_list_id, l0.id );
+
+  isInstance( l0.$relations.tasks.query, Neuro.RemoteQuery, 'query exists' );
 });

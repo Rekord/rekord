@@ -661,4 +661,6 @@ test( 'autoRefresh', function(assert)
   l0.$refresh();
 
   deepEqual( l0.tasks.toArray(), [t0, t1, t2] );
+
+  isInstance( l0.$relations.tasks.query, Neuro.RemoteQuery, 'query exists' );
 });

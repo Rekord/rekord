@@ -110,6 +110,8 @@ var NeuroPolymorphic =
 
     remoteQuery.sync();
     remoteQuery.ready( this.handleExecuteQuery( model ), this );
+
+    return remoteQuery;
   },
 
   parseModel: function(input, remoteData)

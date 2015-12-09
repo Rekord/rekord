@@ -1068,4 +1068,6 @@ test( 'query', function(assert)
   notStrictEqual( t0.creator, void 0 );
   strictEqual( t0.creator.id, 6 );
   strictEqual( t0.creator.name, 'u0' );
+
+  isInstance( t0.$relations.creator.query, Neuro.RemoteQuery, 'query exists' );
 });

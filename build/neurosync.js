@@ -5887,16 +5887,16 @@ extendArray( NeuroQuery, NeuroRemoteQuery,
     this.status = NeuroRemoteQuery.Status.Success;
     this.reset( models, true );
     this.off( NeuroRemoteQuery.Events.Failure, this.onFailure );
-    this.trigger( NeuroRemoteQuery.Events.Success, [this] );
     this.trigger( NeuroRemoteQuery.Events.Ready, [this] );
+    this.trigger( NeuroRemoteQuery.Events.Success, [this] );
   },
 
   handleFailure: function(models, error)
   {
     this.status = NeuroRemoteQuery.Status.Failure;
     this.off( NeuroRemoteQuery.Events.Success, this.onSuccess );
-    this.trigger( NeuroRemoteQuery.Events.Failure, [this] );
     this.trigger( NeuroRemoteQuery.Events.Ready, [this] );
+    this.trigger( NeuroRemoteQuery.Events.Failure, [this] );
   }
 
 });
@@ -7179,6 +7179,8 @@ NeuroRelation.prototype =
     Neuro.debug( this.debugQuery, this, model, remoteQuery, queryOption, query );
 
     remoteQuery.ready( this.handleExecuteQuery( model ), this );
+
+    return remoteQuery;
   },
 
   handleExecuteQuery: function(model)
@@ -7630,7 +7632,7 @@ extend( NeuroRelation, NeuroRelationSingle,
         {
           if ( this.query )
           {
-            this.executeQuery( model );
+            relation.query = this.executeQuery( model );
           }
           else
           {
@@ -8020,7 +8022,7 @@ extend( NeuroRelationSingle, NeuroBelongsTo,
     }
     else if ( this.query )
     {
-      this.executeQuery( model );
+      relation.query = this.executeQuery( model );
     }
   },
 
@@ -8136,7 +8138,7 @@ extend( NeuroRelationSingle, NeuroHasOne,
     }
     else if ( this.query )
     {
-      this.executeQuery( model );
+      relation.query = this.executeQuery( model );
     }
   },
 
@@ -8314,7 +8316,7 @@ extend( NeuroRelationMultiple, NeuroHasMany,
     }
     else if ( this.query )
     {
-      this.executeQuery( model );
+      relation.query = this.executeQuery( model );
     }
     else
     {
@@ -8410,7 +8412,7 @@ extend( NeuroRelationMultiple, NeuroHasMany,
       }
       else if ( this.query )
       {
-        this.executeQuery( relation.parent );
+        relation.query = this.executeQuery( relation.parent );
       }
     };
   },
@@ -8693,7 +8695,7 @@ extend( NeuroRelationMultiple, NeuroHasManyThrough,
     }
     else if ( this.query )
     {
-      this.executeQuery( model );
+      relation.query = this.executeQuery( model );
     }
     else
     {
@@ -8805,7 +8807,7 @@ extend( NeuroRelationMultiple, NeuroHasManyThrough,
       }
       else if ( this.query )
       {
-        this.executeQuery( relation.parent );
+        relation.query = this.executeQuery( relation.parent );
       }
     };
   },
@@ -9150,21 +9152,21 @@ extend( NeuroRelationMultiple, NeuroHasRemote,
     // If auto refersh was specified, execute the query on refresh
     if ( this.autoRefresh )
     {
-      model.$on( this.autoRefresh, this.onRefresh( model ), this );
+      model.$on( this.autoRefresh, this.onRefresh( relation ), this );
     }
 
     // Execute query!
-    this.executeQuery( model );
+    relation.query = this.executeQuery( model );
 
     // We only need to set the property once since the underlying array won't change.
     this.setProperty( relation );
   },
 
-  onRefresh: function(model)
+  onRefresh: function(relation)
   {
     return function handleRefresh()
     {
-      this.executeQuery( model );
+      relation.query = this.executeQuery( relation.parent );
     };
   },
 
@@ -9341,6 +9343,8 @@ var NeuroPolymorphic =
 
     remoteQuery.sync();
     remoteQuery.ready( this.handleExecuteQuery( model ), this );
+
+    return remoteQuery;
   },
 
   parseModel: function(input, remoteData)

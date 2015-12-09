@@ -159,7 +159,7 @@ extend( NeuroRelation, NeuroRelationSingle,
         {
           if ( this.query )
           {
-            this.executeQuery( model );
+            relation.query = this.executeQuery( model );
           }
           else
           {

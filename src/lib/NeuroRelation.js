@@ -214,6 +214,8 @@ NeuroRelation.prototype =
     Neuro.debug( this.debugQuery, this, model, remoteQuery, queryOption, query );
 
     remoteQuery.ready( this.handleExecuteQuery( model ), this );
+
+    return remoteQuery;
   },
 
   handleExecuteQuery: function(model)

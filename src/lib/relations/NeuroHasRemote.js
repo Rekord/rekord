@@ -77,21 +77,21 @@ extend( NeuroRelationMultiple, NeuroHasRemote,
     // If auto refersh was specified, execute the query on refresh
     if ( this.autoRefresh )
     {
-      model.$on( this.autoRefresh, this.onRefresh( model ), this );
+      model.$on( this.autoRefresh, this.onRefresh( relation ), this );
     }
 
     // Execute query!
-    this.executeQuery( model );
+    relation.query = this.executeQuery( model );
 
     // We only need to set the property once since the underlying array won't change.
     this.setProperty( relation );
   },
 
-  onRefresh: function(model)
+  onRefresh: function(relation)
   {
     return function handleRefresh()
     {
-      this.executeQuery( model );
+      relation.query = this.executeQuery( relation.parent );
     };
   },
 

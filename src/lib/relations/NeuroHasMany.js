@@ -111,7 +111,7 @@ extend( NeuroRelationMultiple, NeuroHasMany,
     }
     else if ( this.query )
     {
-      this.executeQuery( model );
+      relation.query = this.executeQuery( model );
     }
     else
     {
@@ -207,7 +207,7 @@ extend( NeuroRelationMultiple, NeuroHasMany,
       }
       else if ( this.query )
       {
-        this.executeQuery( relation.parent );
+        relation.query = this.executeQuery( relation.parent );
       }
     };
   },

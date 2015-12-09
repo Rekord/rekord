@@ -1946,4 +1946,6 @@ test( 'query', function(assert)
   strictEqual( u0.groups[1].name, 'g1' );
   notStrictEqual( ug0, void 0 );
   notStrictEqual( ug1, void 0 );
+
+  isInstance( u0.$relations.groups.query, Neuro.RemoteQuery, 'query exists' );
 });

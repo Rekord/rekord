@@ -91,7 +91,7 @@ extend( NeuroRelationSingle, NeuroBelongsTo,
     }
     else if ( this.query )
     {
-      this.executeQuery( model );
+      relation.query = this.executeQuery( model );
     }
   },
 

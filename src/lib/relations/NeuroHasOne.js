@@ -81,7 +81,7 @@ extend( NeuroRelationSingle, NeuroHasOne,
     }
     else if ( this.query )
     {
-      this.executeQuery( model );
+      relation.query = this.executeQuery( model );
     }
   },
 
