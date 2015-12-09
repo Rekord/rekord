@@ -92,3 +92,26 @@ test( 'browser refresh', function(assert)
 
   noline();
 });
+
+test( 'remote key change', function(assert)
+{ 
+  var prefix = 'Neuro_remote_key_change_';
+
+  var Task = Neuro({
+    name: prefix + 'task',
+    fields: ['name', 'done']
+  });
+
+  var rest = Task.Database.rest;
+
+  var t0 = Task.create({id: 4, name: 't0', done: true});
+
+  rest.returnValue = {id: 5};
+
+  assert.throws(function()
+  {
+    t0.$save('name', 't0a');
+
+  }, 'Model keys cannot be changed.');
+
+});

@@ -346,7 +346,6 @@ function factory(constructor)
 
 function extendArray(parent, child, override)
 {
-
   // If direct extension of array is supported...
   if ( extendArraySupported() )
   {
@@ -2444,6 +2443,7 @@ function NeuroDatabase(options)
   }
 
   // Properties
+  this.keys = toArray( this.key );
   this.models = new NeuroModelCollection( this );
   this.className = this.className || toCamelCase( this.name );
   this.initialized = false;
@@ -2971,6 +2971,7 @@ NeuroDatabase.prototype =
     var model = model || db.models.get( key );
     var decoded = db.decode( copy( encoded ) );
 
+    // Reject the data if it's a lower revision
     if ( model )
     {
       var revisionRejected = this.revisionFunction( model, encoded );
@@ -2983,8 +2984,23 @@ NeuroDatabase.prototype =
       }
     }
 
+    // If the model already exists, update it.
     if ( model )
     {
+      var keyFields = db.keys;
+
+      for (var i = 0; i < keyFields.length; i++)
+      {
+        var k = keyFields[ i ];
+        var mk = model[ k ];
+        var dk = decoded[ k ];
+
+        if ( isValue( mk ) && isValue( dk ) && mk !== dk )
+        {
+          throw 'Model keys cannot be changed.';
+        }
+      }
+
       var missingModel = !db.models.has( key );
 
       if ( missingModel )
@@ -3058,6 +3074,7 @@ NeuroDatabase.prototype =
         db.trigger( NeuroDatabase.Events.ModelAdded, [model, true] );
       }
     }
+    // The model doesn't exist, create it.
     else
     {
       model = db.createModel( decoded, true );

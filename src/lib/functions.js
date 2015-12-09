@@ -343,7 +343,6 @@ function factory(constructor)
 
 function extendArray(parent, child, override)
 {
-
   // If direct extension of array is supported...
   if ( extendArraySupported() )
   {
