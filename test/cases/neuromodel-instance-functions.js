@@ -550,6 +550,32 @@ test( '$refresh', function(assert)
   strictEqual( t0.name, 'name1' );
 });
 
+test( '$cancel', function(assert)
+{
+  var prefix = 'Model_cancel_';
+
+  var Task = Neuro({
+    name: prefix + 'task',
+    fields: ['name', 'done']
+  });
+
+  var t0 = Task.create({name: 't0', done: true});
+
+  strictEqual( t0.name, 't0' );
+  strictEqual( t0.done, true );
+
+  t0.name = 't0a';
+  t0.done = false;
+
+  strictEqual( t0.name, 't0a' );
+  strictEqual( t0.done, false );
+
+  t0.$cancel();
+
+  strictEqual( t0.name, 't0' );
+  strictEqual( t0.done, true );
+});
+
 test( '$push $pop $discard', function(assert)
 {
   var prefix = 'Model_push_';

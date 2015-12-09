@@ -3938,6 +3938,18 @@ NeuroModel.prototype =
     this.$db.refreshModel( this, cascade );
   },
 
+  $cancel: function(reset)
+  {
+    if ( this.$saved )
+    {
+      this.$save( this.$saved );
+    }
+    else if ( reset )
+    {
+      this.$reset();
+    }
+  },
+
   $push: function(fields)
   {
     this.$savedState = this.$db.encode( grab( this, fields || this.$db.fields, true ) );
