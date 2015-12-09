@@ -779,14 +779,31 @@ function createComparator(comparator, nullsFirst)
 
     if ( comparator.charAt(0) === '-' )
     {
-      comparator = comparator.substring( 1 );
+      var parsed = createComparator( comparator.substring( 1 ), !nullsFirst );
 
-      return function compareObjects(a, b)
+      return function compareObjectsReversed(a, b)
       {
-        var av = isValue( a ) ? a[ comparator ] : a;
-        var bv = isValue( b ) ? b[ comparator ] : b; 
+        return -parsed( a, b );
+      };
+    }
+    else if ( comparator.indexOf('{') !== -1 )
+    {
+      return function compareFormatted(a, b)
+      {
+        var af = format( comparator, a );
+        var bf = format( comparator, b );
 
-        return compare( bv, av, !nullsFirst );
+        return af.localeCompare( bf );
+      };
+    }
+    else if ( comparator.indexOf('.') !== -1 )
+    {
+      return function compareExpression(a, b)
+      {
+        var ap = parse( comparator, a );
+        var bp = parse( comparator, b );
+
+        return compare( ap, bp, nullsFirst );
       };
     }
     else

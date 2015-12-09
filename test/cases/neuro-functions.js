@@ -366,29 +366,37 @@ test( 'Neuro.createComparator', function(assert)
   var c2 = Neuro.createComparator( '-name' );
   var c3 = Neuro.createComparator( 'name', true );
   var c4 = Neuro.createComparator( ['age', 'name'] );
+  var c5 = Neuro.createComparator( 'friend.sex' );
+  var c6 = Neuro.createComparator( '{age}-{friend.sex}' );
 
-  var m0 = {name: 'Adam', age: 22};
-  var m1 = {name: 'Barnabas', age: 22};
-  var m2 = {name: 'Connor', age: 19};
-  var m3 = {name: 'Dylan', age: 20};
+  var m0 = {name: 'Adam', age: 22, friend:{sex:1}};
+  var m1 = {name: 'Barnabas', age: 22, friend:{sex:3}};
+  var m2 = {name: 'Connor', age: 19, friend:{sex:4}};
+  var m3 = {name: 'Dylan', age: 20, friend:{sex:2}};
 
   var arr0 = [4, 3, 1, 2, 5, 0];
   var arr1 = [m3, m2, m0, m1, null];
   var arr2 = [m0, m1, null, m2, m3, null];
   var arr3 = [null, m0, m1, m2, null];
   var arr4 = [m1, m3, m2, m0];
+  var arr5 = [null, m0, m1, m2, m3];
+  var arr6 = [m3, m1, m0, m2];
 
   var exp0 = [0, 1, 2, 3, 4, 5];
   var exp1 = [m0, m1, m2, m3, null];
   var exp2 = [m3, m2, m1, m0, null, null];
   var exp3 = [null, null, m0, m1, m2 ];
   var exp4 = [m2, m3, m0, m1];
+  var exp5 = [m0, m3, m1, m2, null];
+  var exp6 = [m2, m3, m0, m1];
 
   deepEqual( arr0.sort( c0 ), exp0 );
   deepEqual( arr1.sort( c1 ), exp1 );
   deepEqual( arr2.sort( c2 ), exp2 );
   deepEqual( arr3.sort( c3 ), exp3 );
   deepEqual( arr4.sort( c4 ), exp4 );
+  deepEqual( arr5.sort( c5 ), exp5 );
+  deepEqual( arr6.sort( c6 ), exp6 );
 });
 
 test( 'Neuro.saveComparator', function(assert)

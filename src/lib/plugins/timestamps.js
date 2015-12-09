@@ -60,6 +60,8 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
   function addCreatedAt(field)
   {
     addTimestamp( field );
+
+    db.ignoredFields[ field ] = true;
   }
 
   function addUpdatedAt(field)
