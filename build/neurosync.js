@@ -4096,6 +4096,7 @@ NeuroModel.prototype =
       return true;
     }
 
+    var ignore = this.$db.ignoredFields;
     var encoded = this.$toJSON( true );
     var saved = this.$saved;
 
@@ -4103,6 +4104,11 @@ NeuroModel.prototype =
     {
       var currentValue = encoded[ prop ];
       var savedValue = saved[ prop ];
+
+      if ( ignore[ prop ] )
+      {
+        continue;
+      }
 
       if ( !equals( currentValue, savedValue ) ) 
       {

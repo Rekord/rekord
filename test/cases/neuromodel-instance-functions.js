@@ -530,6 +530,37 @@ test( '$hasChanges', function(assert)
   notOk( t0.$hasChanges() );
 });
 
+test( '$hasChanges ignored fields', function(assert)
+{
+  var prefix = 'Model_hasChanges_ignored_';
+
+  var Todo = Neuro({
+    name: 'Model_hasChanges_ignored_',
+    fields: ['name', 'done'],
+    ignoredFields: {
+      done: true
+    }
+  });
+
+  var t0 = Todo.create({name: 't0'});
+
+  notOk( t0.$hasChanges() );
+
+  t0.done = false;
+
+  var prev = t0.$saved.done;
+
+  t0.$save();
+
+  strictEqual( t0.$saved.done, prev );
+
+  notOk( t0.$hasChanges() );
+
+  t0.name = 't0a';
+
+  ok( t0.$hasChanges() );
+});
+
 test( '$refresh', function(assert)
 {
   var Todo = Neuro({
