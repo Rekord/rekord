@@ -75,6 +75,22 @@ test( 'refresh', function(assert)
   strictEqual( Task.all().length, 1 );
 });
 
+test( 'find', function(assert)
+{
+  var Task = Neuro({
+    name: 'Neuro_find',
+    fields: ['name', 'done']
+  });
+
+  var t0 = Task.create({name: 't0'});
+  var t1 = Task.create({name: 't1'});
+  var t2 = Task.create({name: 't0'});
+
+  strictEqual( Task.find('name', 't0'), t0 );
+  strictEqual( Task.find('name', 't1'), t1 );
+  strictEqual( Task.find('name', 't2'), null );
+});
+
 test( 'fetch existing', function(assert)
 {
   var Task = Neuro({
