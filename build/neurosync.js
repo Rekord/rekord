@@ -3685,19 +3685,22 @@ NeuroModel.Events =
   LocalSaves:           'local-save local-save-failure',
   RemoteSave:           'remote-save',
   RemoteSaveFailure:    'remote-save-failure',
-  RemoteSaves:          'remote-save remote-save-failure',
+  RemoteSaveOffline:    'remote-save-offline',
+  RemoteSaves:          'remote-save remote-save-failure remote-save-offline',
   LocalRemove:          'local-remove',
   LocalRemoveFailure:   'local-remove-failure',
   LocalRemoves:         'local-remove local-remove-failure',
   RemoteRemove:         'remote-remove',
   RemoteRemoveFailure:  'remote-remove-failure',
-  RemoteRemoves:        'remote-remove remote-remove-failure',
+  RemoteRemoveOffline:  'remote-remove-offline',
+  RemoteRemoves:        'remote-remove remote-remove-failure remote-remove-offline',
   LocalGet:             'local-get',
   LocalGetFailure:      'local-get-failure',
   LocalGets:            'local-get local-get-failure',
   RemoteGet:            'remote-get',
   RemoteGetFailure:     'remote-get-failure',
-  RemoteGets:           'remote-get remote-get-failure',
+  RemoteGetOffline:     'remote-get-offline',
+  RemoteGets:           'remote-get remote-get-failure remote-get-offline',
   RemoteAndRemove:      'remote-remove removed',
   SavedRemoteUpdate:    'saved remote-update',
   Changes:              'saved remote-update key-update relation-update removed change'
@@ -6356,7 +6359,14 @@ extend( NeuroOperation, NeuroGetRemote,
 
     Neuro.debug( Neuro.Debugs.GET_REMOTE_ERROR, model, data, status );
 
-    model.$trigger( NeuroModel.Events.RemoteGetFailure, [model] );
+    if ( status === 0 )
+    {
+      model.$trigger( NeuroModel.Events.RemoteGetOffline, [model] );
+    }
+    else
+    {  
+      model.$trigger( NeuroModel.Events.RemoteGetFailure, [model] );
+    }
   }
 
 });
@@ -6577,6 +6587,8 @@ extend( NeuroOperation, NeuroRemoveRemote,
       if (!Neuro.online) 
       {
         Neuro.once( 'online', this.handleOnline, this );
+        
+        model.$trigger( NeuroModel.Events.RemoteRemoveOffline, [model] );
       }
       else
       {
@@ -6892,6 +6904,8 @@ extend( NeuroOperation, NeuroSaveRemote,
       if (!Neuro.online) 
       {
         Neuro.once( 'online', this.handleOnline, this );
+
+        model.$trigger( NeuroModel.Events.RemoteSaveOffline, [model] );
       }
       else
       {

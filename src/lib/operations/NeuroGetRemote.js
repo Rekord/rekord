@@ -53,7 +53,14 @@ extend( NeuroOperation, NeuroGetRemote,
 
     Neuro.debug( Neuro.Debugs.GET_REMOTE_ERROR, model, data, status );
 
-    model.$trigger( NeuroModel.Events.RemoteGetFailure, [model] );
+    if ( status === 0 )
+    {
+      model.$trigger( NeuroModel.Events.RemoteGetOffline, [model] );
+    }
+    else
+    {  
+      model.$trigger( NeuroModel.Events.RemoteGetFailure, [model] );
+    }
   }
 
 });

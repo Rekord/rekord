@@ -61,6 +61,8 @@ extend( NeuroOperation, NeuroRemoveRemote,
       if (!Neuro.online) 
       {
         Neuro.once( 'online', this.handleOnline, this );
+        
+        model.$trigger( NeuroModel.Events.RemoteRemoveOffline, [model] );
       }
       else
       {
