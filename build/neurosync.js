@@ -1921,6 +1921,13 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 });
 Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 {
+  model.refresh = function(onFinish)
+  {
+    return db.refresh( onFinish );
+  };
+});
+Neuro.on( Neuro.Events.Plugins, function(model, db, options)
+{
   var time = options.timestamps;
   var timeAsDate = options.timestampsAsDate;
   var currentTimestamp = timeAsDate ? currentDate : currentTime;

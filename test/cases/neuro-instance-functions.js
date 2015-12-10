@@ -57,6 +57,24 @@ test( 'fetch new', function(assert)
   strictEqual( t0.done, true );
 });
 
+test( 'refresh', function(assert)
+{
+  var Task = Neuro({
+    name: 'Neuro_refresh',
+    fields: ['name', 'done']
+  });
+
+  var remote = Task.Database.rest;
+
+  strictEqual( Task.all().length, 0 );
+
+  remote.map.put( 4, {id: 4, name: 'This', done: true} );
+
+  Task.refresh();
+
+  strictEqual( Task.all().length, 1 );
+});
+
 test( 'fetch existing', function(assert)
 {
   var Task = Neuro({
