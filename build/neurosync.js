@@ -1878,9 +1878,9 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 });
 Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 {
-  model.fetchAll = function(onFinish)
+  model.fetchAll = function(callback, context)
   {
-    db.refresh( onFinish );
+    db.refresh( callback, context );
 
     return db.models;
   };
@@ -2000,9 +2000,9 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 });
 Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 {
-  model.refresh = function(onFinish)
+  model.refresh = function( callback, context )
   {
-    return db.refresh( onFinish );
+    return db.refresh( callback, context );
   };
 });
 Neuro.on( Neuro.Events.Plugins, function(model, db, options)
@@ -3448,9 +3448,10 @@ NeuroDatabase.prototype =
   },
 
   // Loads all data remotely
-  refresh: function(onFinish)
+  refresh: function(callback, context)
   {
     var db = this;
+    var callbackContext = context || db;
 
     db.rest.all( onModels, onLoadError );
     
@@ -3498,9 +3499,9 @@ NeuroDatabase.prototype =
 
       Neuro.debug( Neuro.Debugs.REMOTE_LOAD, db, models );
 
-      if ( onFinish )
+      if ( callback )
       {
-        onFinish( db.models );
+        callback.call( callbackContext, db.models );
       }
     }
 
@@ -3527,9 +3528,9 @@ NeuroDatabase.prototype =
         db.trigger( NeuroDatabase.Events.NoLoad, [db] );
       }
 
-      if ( onFinish )
+      if ( callback )
       {
-        onFinish( db.models );
+        callback.call( callbackContext, db.models );
       }
     }
   

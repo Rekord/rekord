@@ -1,7 +1,7 @@
 Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 {
-  model.refresh = function(onFinish)
+  model.refresh = function( callback, context )
   {
-    return db.refresh( onFinish );
+    return db.refresh( callback, context );
   };
 });

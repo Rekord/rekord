@@ -1,8 +1,8 @@
 Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 {
-  model.fetchAll = function(onFinish)
+  model.fetchAll = function(callback, context)
   {
-    db.refresh( onFinish );
+    db.refresh( callback, context );
 
     return db.models;
   };

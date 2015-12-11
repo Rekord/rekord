@@ -307,6 +307,42 @@ test( 'refresh', function(assert)
   strictEqual( refresh.all().length, 3 );  
 });
 
+test( 'refresh callback', function(assert)
+{
+  var done = assert.async();
+
+  var rest = Neuro.rest.refresh_callback = new TestRest();
+  rest.map.put( 2, {id: 2, name: 'name2'} );
+  rest.map.put( 3, {id: 3, name: 'name3'} );
+
+  var refresh = Neuro({
+    name: 'refresh_callback',
+    fields: ['id', 'name']
+  });
+
+  var db = refresh.Database;
+
+  strictEqual( refresh.all().length, 2 );
+
+  rest.delay = 10;
+  rest.map.put( 4, {id: 4, name: 'name4'} );
+  rest.map.put( 2, {id: 2, name: 'name2b'} );
+
+  strictEqual( refresh.all().length, 2 );
+
+  var context = {d: 34};
+
+  var onRefresh = function(all)
+  {
+    strictEqual( context, this );
+    strictEqual( all.length, 3 );  
+
+    done();
+  };
+
+  db.refresh( onRefresh, context );
+});
+
 test( 'refresh relationships', function(assert)
 {
   var prefix = 'NeuroDatabase_refresh_relationships_';
