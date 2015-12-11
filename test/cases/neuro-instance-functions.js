@@ -57,6 +57,80 @@ test( 'fetch new', function(assert)
   strictEqual( t0.done, true );
 });
 
+test( 'fetch callback', function(assert)
+{
+  var done = assert.async();
+
+  var Task = Neuro({
+    name: 'Neuro_fetch_callback',
+    fields: ['name', 'done']
+  });
+
+  var remote = Task.Database.rest;
+
+  remote.delay = 10;
+  remote.map.put( 4, {id: 4, name: 'This'} );
+
+  var t0 = Task.fetch( 4, function(t1)
+  {
+    strictEqual( t0, t1 );
+    strictEqual( t0.name, 'This' );
+
+    done();
+  });
+
+  strictEqual( t0.name, void 0 );
+});
+
+test( 'grab', function(assert)
+{
+  var done = assert.async();
+
+  var Task = Neuro({
+    name: 'Neuro_grab',
+    fields: ['name', 'done']
+  });
+
+  var remote = Task.Database.rest;
+
+  remote.delay = 10;
+  remote.map.put( 4, {id: 4, name: 'That'} );
+
+  var t0 = Task.grab( 4, function(fetched)
+  {
+    strictEqual( fetched.name, 'That' );
+
+    done();
+  });
+
+  strictEqual( t0, void 0 );
+});
+
+test( 'grabAll', function(assert)
+{
+  var done = assert.async();
+
+  var Task = Neuro({
+    name: 'Neuro_grabAll',
+    fields: ['name', 'done']
+  });
+
+  var remote = Task.Database.rest;
+
+  remote.delay = 10;
+  remote.map.put( 4, {id: 4, name: 'That'} );
+  remote.map.put( 5, {id: 5, name: 'This'} );
+
+  var models = Task.grabAll( function(all)
+  {
+    strictEqual( all.length, 2 );
+
+    done();
+  });
+
+  strictEqual( models.length, 0 );
+});
+
 test( 'refresh', function(assert)
 {
   var Task = Neuro({

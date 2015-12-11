@@ -1846,7 +1846,7 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 });
 Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 {
-  model.fetch = function( input )
+  model.fetch = function( input, callback, context )
   {
     var key = db.buildKeyFromInput( input );
     var instance = db.get( key );
@@ -1859,6 +1859,16 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
       {
         instance.$set( input );
       }
+    }
+
+    if ( isFunction( callback ) )
+    {
+      var callbackContext = context || this;
+
+      instance.$once( NeuroModel.Events.RemoteGets, function()
+      {
+        callback.call( callbackContext, instance );
+      });
     }
 
     instance.$refresh();
@@ -1896,6 +1906,68 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 
       return db.get( key );
     }
+  };
+});
+Neuro.on( Neuro.Events.Plugins, function(model, db, options)
+{
+  model.grab = function( input, callback, context )
+  {
+    var callbackContext = context || this;
+    var key = db.buildKeyFromInput( input );
+    var instance = db.get( key );
+
+    if ( instance )
+    {
+      callback.call( callbackContext, instance );
+    }
+    else
+    {
+      db.grabModel( input, function(instance)
+      {
+        if ( instance )
+        {
+          callback.call( callbackContext, instance )
+        }
+        else
+        {
+          model.fetch( input, callback, context );
+        }
+      });
+    }
+
+    return instance;
+  };
+});
+Neuro.on( Neuro.Events.Plugins, function(model, db, options)
+{
+  model.grabAll = function( callback, context )
+  {
+    var callbackContext = context || this;
+    var models = db.models;
+
+    if ( models.length )
+    {
+      callback.call( callbackContext, models );
+    }
+    else
+    {
+      db.ready(function()
+      {
+        if ( models.length )
+        {
+          callback.call( callbackContext, models );
+        }
+        else
+        {
+          db.refresh(function()
+          {
+            callback.call( callbackContext, models );
+          });
+        }
+      });
+    }
+
+    return models;
   };
 });
 Neuro.on( Neuro.Events.Plugins, function(model, db, options)

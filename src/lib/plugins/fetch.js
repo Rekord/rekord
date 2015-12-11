@@ -1,6 +1,6 @@
 Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 {
-  model.fetch = function( input )
+  model.fetch = function( input, callback, context )
   {
     var key = db.buildKeyFromInput( input );
     var instance = db.get( key );
@@ -13,6 +13,16 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
       {
         instance.$set( input );
       }
+    }
+
+    if ( isFunction( callback ) )
+    {
+      var callbackContext = context || this;
+
+      instance.$once( NeuroModel.Events.RemoteGets, function()
+      {
+        callback.call( callbackContext, instance );
+      });
     }
 
     instance.$refresh();
