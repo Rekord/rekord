@@ -392,7 +392,7 @@ test( 'boot', function(assert)
   deepEqual( u0.groups.toArray(), [g3], 'unrelate successful' );
 
   ok( ug2.$isDeleted() );
-  
+
   deepEqual( g2.users.toArray(), [] );
   deepEqual( g3.users.toArray(), [u0] );
   deepEqual( u0.userGroups.toArray(), [ug3] );
@@ -410,7 +410,7 @@ test( 'boot', function(assert)
 
 test( 'wait until dependents are saved', function(assert) 
 {
-  var timescale = 30;
+  var timescale = 50;
   var done = assert.async();
   var prefix = 'hasManyThrough_wait_dependents_';
 
@@ -500,4 +500,52 @@ test( 'wait until dependents are saved', function(assert)
 
     done();
   });
+});
+
+test( 'clone', function(assert)
+{
+  var prefix = 'hasManyThrough_clone_';
+
+  var test = createUserGroups1( prefix );
+  var User = test.User;
+  var Group = test.Group;
+  var UserGroup = test.UserGroup;
+
+  var u0 = new User({
+    name: 'u0',
+    groups: [
+      {name: 'g0'},
+      {name: 'g1'}
+    ]
+  });
+  var g0 = u0.groups[0];
+  var g1 = u0.groups[1];
+  var ug0 = u0.userGroups[0];
+  var ug1 = u0.userGroups[1];
+
+  strictEqual( u0.groups.length, 2 );
+  isInstance( g0, Group );
+  isInstance( g1, Group );
+  strictEqual( u0.userGroups.length, 2 );
+  isInstance( ug0, UserGroup );
+  isInstance( ug1, UserGroup );
+  strictEqual( ug0.user, u0 );
+  strictEqual( ug1.user, u0 );
+  strictEqual( ug0.group, g0 );
+  strictEqual( ug1.group, g1 );
+
+  var u1 = u0.$clone( {groups:{}} );
+  var u1g0 = u1.userGroups[0];
+  var u1g1 = u1.userGroups[1];
+
+  strictEqual( u1.groups.length, 2 );
+  strictEqual( u1.groups[0], g0 );
+  strictEqual( u1.groups[1], g1 );
+  strictEqual( u1.userGroups.length, 2 );
+  isInstance( u1g0, UserGroup );
+  isInstance( u1g1, UserGroup );
+  strictEqual( u1g0.user, u1 );
+  strictEqual( u1g1.user, u1 );
+  strictEqual( u1g0.group, g0 );
+  strictEqual( u1g1.group, g1 );
 });

@@ -40,9 +40,8 @@ extend( NeuroRelationSingle, NeuroHasOne,
     return NeuroHasOne.Defaults;
   },
 
-  handleLoad: function(model, remoteData)
+  handleLoad: function(model, initialValue, remoteData)
   {
-    var initial = model[ this.name ];
     var relation = model.$relations[ this.name ] = 
     {
       parent: model,
@@ -63,25 +62,39 @@ extend( NeuroRelationSingle, NeuroHasOne,
     model.$on( NeuroModel.Events.PreSave, this.preSave, this );
     model.$on( NeuroModel.Events.PostRemove, this.postRemove, this );
 
-    if ( isEmpty( initial ) )
+    if ( isEmpty( initialValue ) )
     {
-      initial = this.grabInitial( model, this.local );
+      initialValue = this.grabInitial( model, this.local );
       
-      if ( initial )
+      if ( initialValue )
       {
-        Neuro.debug( Neuro.Debugs.HASONE_INITIAL_PULLED, this, model, initial );        
+        Neuro.debug( Neuro.Debugs.HASONE_INITIAL_PULLED, this, model, initialValue );        
       }
     }
 
-    if ( !isEmpty( initial ) )
+    if ( !isEmpty( initialValue ) )
     {
-      Neuro.debug( Neuro.Debugs.HASONE_INITIAL, this, model, initial );
+      Neuro.debug( Neuro.Debugs.HASONE_INITIAL, this, model, initialValue );
 
-      this.grabModel( initial, this.handleModel( relation ), remoteData );      
+      this.grabModel( initialValue, this.handleModel( relation ), remoteData );      
     }
     else if ( this.query )
     {
       relation.query = this.executeQuery( model );
+    }
+  },
+
+  clone: function(model, clone, properties)
+  {
+    var related = this.get( model );
+
+    if ( related )
+    {
+      var relatedClone = related.$clone( properties );
+
+      this.updateFieldsReturnChanges( clone, this.local, relatedClone, relatedClone.$db.key );
+
+      clone[ this.name ] = relatedClone;
     }
   },
 

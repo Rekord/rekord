@@ -614,7 +614,7 @@ test( 'auto save parent', function(assert)
 
 test( 'wait until dependents are saved', function(assert) 
 {
-  var timescale = 30;
+  var timescale = 50;
   var done = assert.async();
   var prefix = 'hasMany_wait_dependents_';
 
@@ -688,4 +688,70 @@ test( 'wait until dependents are saved', function(assert)
 
     done();
   });
+});
+
+test( 'clone', function(assert)
+{
+  var prefix = 'hasMany_clone_';
+
+  var User = Neuro({
+    name: prefix + 'user',
+    fields: ['name'],
+    hasMany: {
+      tasks: {
+        model: prefix + 'task',
+        foreign: 'created_by'
+      }
+    }
+  });
+
+  var Task = Neuro({
+    name: prefix + 'task',
+    fields: ['name', 'done', 'created_by'],
+    belongsTo: {
+      creator: {
+        model: prefix + 'user',
+        local: 'created_by'
+      }
+    }
+  });
+
+  var u0 = new User({
+    name: 'u0',
+    tasks: [
+      {name: 't0', done: true},
+      {name: 't1', done: false},
+      {name: 't2', done: true}
+    ]
+  });
+
+  ok( u0.id );
+  strictEqual( u0.tasks.length, 3 );
+  isInstance( u0.tasks[0], Task );
+  isInstance( u0.tasks[1], Task );
+  isInstance( u0.tasks[1], Task );
+  strictEqual( u0.tasks[0].created_by, u0.id );
+  strictEqual( u0.tasks[1].created_by, u0.id );
+  strictEqual( u0.tasks[2].created_by, u0.id );
+  strictEqual( u0.tasks[0].creator, u0 );
+  strictEqual( u0.tasks[1].creator, u0 );
+  strictEqual( u0.tasks[2].creator, u0 );
+
+  var u1 = u0.$clone( {tasks:{}} );
+
+  ok( u1.id );
+  notStrictEqual( u0.id, u1.id );
+  strictEqual( u1.tasks.length, 3 );
+  isInstance( u1.tasks[0], Task );
+  isInstance( u1.tasks[1], Task );
+  isInstance( u1.tasks[1], Task );
+  strictEqual( u1.tasks[0].created_by, u1.id );
+  strictEqual( u1.tasks[1].created_by, u1.id );
+  strictEqual( u1.tasks[2].created_by, u1.id );
+  strictEqual( u1.tasks[0].creator, u1 );
+  strictEqual( u1.tasks[1].creator, u1 );
+  strictEqual( u1.tasks[2].creator, u1 );
+  notStrictEqual( u0.tasks[0], u1.tasks[0] );
+  notStrictEqual( u0.tasks[1], u1.tasks[1] );
+  notStrictEqual( u0.tasks[2], u1.tasks[2] );
 });

@@ -63,6 +63,7 @@ NeuroRelation.prototype =
     this.options = options;
     this.pendingLoads = [];
     this.pendingRemoteDatas = [];
+    this.pendingInitials = [];
     this.initialized = false;
     this.property = this.property || (indexOf( database.fields, this.name ) !== false);
     this.discriminated = !isEmpty( this.discriminators );
@@ -113,14 +114,16 @@ NeuroRelation.prototype =
     this.initialized = true;
 
     var pending = this.pendingLoads;
+    var initials = this.pendingInitials;
     var remotes = this.pendingRemoteDatas;
 
     for (var i = 0; i < pending.length; i++)
     {
-      this.handleLoad( pending[ i ], remotes[ i ] );
+      this.handleLoad( pending[ i ], initials[ i ], remotes[ i ] );
     }
 
     pending.length = 0;
+    initials.length = 0;
     remotes.length = 0;
   },
 
@@ -132,20 +135,21 @@ NeuroRelation.prototype =
    * 
    * @param  {Neuro.Model} model [description]
    */
-  load: function(model, remoteData)
+  load: function(model, initialValue, remoteData)
   {
     if ( !this.initialized )
     {
       this.pendingLoads.push( model );
+      this.pendingInitials.push( initialValue );
       this.pendingRemoteDatas.push( remoteData );
     }
     else
     {
-      this.handleLoad( model, remoteData );
+      this.handleLoad( model, initialValue, remoteData );
     }
   },
 
-  handleLoad: function(model, remoteData)
+  handleLoad: function(model, initialValue, remoteData)
   {
 
   },
@@ -166,6 +170,11 @@ NeuroRelation.prototype =
   },
 
   isRelated: function(model, input)
+  {
+
+  },
+
+  clone: function(model, clone, properties)
   {
 
   },
@@ -259,7 +268,7 @@ NeuroRelation.prototype =
     this.model.Database.grabModel( input, callback, this, remoteData );
   },
 
-  grabModels: function(initial, callback, remoteData)
+  grabModels: function(relation, initial, callback, remoteData)
   {
     var db = this.model.Database;
 
@@ -409,8 +418,6 @@ NeuroRelation.prototype =
   updateFieldsReturnChanges: function(target, targetFields, source, sourceFields)
   {
     var changes = false;
-
-    source.$key();
 
     if ( isString( targetFields ) ) // && isString( sourceFields )
     {

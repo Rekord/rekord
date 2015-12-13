@@ -40,9 +40,8 @@ extend( NeuroRelationSingle, NeuroBelongsTo,
     return NeuroBelongsTo.Defaults;
   },
 
-  handleLoad: function(model, remoteData)
+  handleLoad: function(model, initialValue, remoteData)
   {
-    var initial = model[ this.name ];
     var relation = model.$relations[ this.name ] = 
     {
       parent: model,
@@ -73,21 +72,21 @@ extend( NeuroRelationSingle, NeuroBelongsTo,
     model.$on( NeuroModel.Events.PostRemove, this.postRemove, this );
     model.$on( NeuroModel.Events.KeyUpdate, this.onKeyUpdate, this );
 
-    if ( isEmpty( initial ) )
+    if ( isEmpty( initialValue ) )
     {
-      initial = this.grabInitial( model, this.local );
+      initialValue = this.grabInitial( model, this.local );
       
-      if ( initial )
+      if ( initialValue )
       {
-        Neuro.debug( Neuro.Debugs.BELONGSTO_INITIAL_PULLED, this, model, initial );        
+        Neuro.debug( Neuro.Debugs.BELONGSTO_INITIAL_PULLED, this, model, initialValue );        
       }
     }
 
-    if ( !isEmpty( initial ) )
+    if ( !isEmpty( initialValue ) )
     {
-      Neuro.debug( Neuro.Debugs.BELONGSTO_INITIAL, this, model, initial );
+      Neuro.debug( Neuro.Debugs.BELONGSTO_INITIAL, this, model, initialValue );
 
-      this.grabModel( initial, this.handleModel( relation, remoteData ), remoteData );
+      this.grabModel( initialValue, this.handleModel( relation, remoteData ), remoteData );
     }
     else if ( this.query )
     {

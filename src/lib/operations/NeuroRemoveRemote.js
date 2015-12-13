@@ -92,6 +92,9 @@ extend( NeuroOperation, NeuroRemoveRemote,
 
     // Remove it live!
     this.liveRemove();
+
+    // Remove the model reference for good!
+    delete db.all[ key ];
   },
 
   liveRemove: function()

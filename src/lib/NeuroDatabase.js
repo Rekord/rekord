@@ -40,6 +40,7 @@ function NeuroDatabase(options)
   // Properties
   this.keys = toArray( this.key );
   this.models = new NeuroModelCollection( this );
+  this.all = {};
   this.className = this.className || toCamelCase( this.name );
   this.initialized = false;
   this.pendingRefresh = false;
@@ -302,13 +303,11 @@ NeuroDatabase.prototype =
 
     if ( input instanceof db.Model )
     {
-      db.saveToModels( input );
-
       return input;
     }
-    else if ( db.models.has( key ) )
+    else if ( key in db.all )
     {
-      var model = db.models.get( key );
+      var model = db.all[ key ];
       
       if ( isObject( input ) )
       {
@@ -427,9 +426,21 @@ NeuroDatabase.prototype =
   },
 
   // Gets the key from the given model
-  getKey: function(model)
+  getKey: function(model, quietly)
   {
-    return this.buildKey( model, this.key );
+    var key = this.key;
+    var modelKey = this.buildKey( model, key );
+
+    if ( hasFields( model, key, isValue ) )
+    {
+      return modelKey;
+    }
+    else if ( !quietly )
+    {
+      throw 'Composite key not supplied.';
+    }
+
+    return false;
   },
 
   // Gets the key from the given model
@@ -552,6 +563,20 @@ NeuroDatabase.prototype =
     return this.models.isSorted();
   },
 
+  clean: function()
+  {
+    var db = this;
+    var keys = db.models.keys;
+    var models = db.models;
+
+    db.all = {};
+    
+    for (var i = 0; i < keys.length; i++)
+    {
+      db.all[ keys[ i ] ] = models[ i ];
+    }
+  },
+
   // Handles when we receive data from the server - either from
   // a publish, refresh, or values being returned on a save.
   putRemoteData: function(encoded, key, model, overwrite)
@@ -563,7 +588,7 @@ NeuroDatabase.prototype =
 
     var db = this;
     var key = key || db.getKey( encoded );
-    var model = model || db.models.get( key );
+    var model = model || db.all[ key ];
     var decoded = db.decode( copy( encoded ) );
 
     // Reject the data if it's a lower revision
@@ -596,12 +621,7 @@ NeuroDatabase.prototype =
         }
       }
 
-      var missingModel = !db.models.has( key );
-
-      if ( missingModel )
-      {
-        db.models.put( key, model );
-      }
+      db.all[ key ] = model;
 
       if ( !model.$saved )
       {
@@ -664,8 +684,9 @@ NeuroDatabase.prototype =
 
       model.$addOperation( NeuroSaveNow ); 
 
-      if ( missingModel )
+      if ( !db.models.has( key ) )
       {
+        db.models.put( key, model );
         db.trigger( NeuroDatabase.Events.ModelAdded, [model, true] );
       }
     }
@@ -696,32 +717,12 @@ NeuroDatabase.prototype =
   createModel: function(decoded, remoteData)
   {
     var db = this;
-    var values = grab( decoded, db.fields );
-    var model = db.instantiate( values, remoteData );
+    var model = db.instantiate( decoded, remoteData );
     var key = model.$key();
-    var missingModel = !db.models.has( key );
-
-    if ( missingModel )
+    
+    if ( !db.models.has( key ) )
     {
       db.models.put( key, model );
-    }
-
-    var relations = {};
-
-    for (var i = 0; i < db.relationNames.length; i++)
-    {
-      var relationName = db.relationNames[ i ];
-
-      if ( relationName in decoded )
-      {
-        relations[ relationName ] = decoded[ relationName ];
-      }
-    }
-
-    model.$set( relations, undefined, remoteData );
-
-    if ( missingModel )
-    {
       db.trigger( NeuroDatabase.Events.ModelAdded, [model, remoteData] );
     }
 
@@ -744,6 +745,8 @@ NeuroDatabase.prototype =
 
         return false;
       }
+
+      delete db.all[ key ];
 
       db.models.remove( key );
       db.trigger( NeuroDatabase.Events.ModelRemoved, [model] );
@@ -783,6 +786,8 @@ NeuroDatabase.prototype =
 
       model.$addOperation( NeuroRemoveNow );
 
+      delete db.all[ key ];
+
       db.models.remove( key );
       db.trigger( NeuroDatabase.Events.ModelRemoved, [model] );
 
@@ -811,7 +816,7 @@ NeuroDatabase.prototype =
   destroyLocalModel: function(key)
   {
     var db = this;
-    var model = db.models.get( key );
+    var model = db.all[ key ];
 
     if ( db.cache === Neuro.Cache.All )
     {
@@ -874,6 +879,7 @@ NeuroDatabase.prototype =
         {
           Neuro.debug( Neuro.Debugs.LOCAL_RESUME_DELETE, db, model );
 
+          db.all[ key ] = model;
           model.$addOperation( NeuroRemoveRemote );
         }
         else if ( model.$status === NeuroModel.Status.Removed )
@@ -886,12 +892,14 @@ NeuroDatabase.prototype =
 
           db.models.put( key, model, true );
 
+          db.all[ key ] = model;
           model.$addOperation( NeuroSaveRemote );
         }
         else
         {
           Neuro.debug( Neuro.Debugs.LOCAL_LOAD_SAVED, db, model );
 
+          db.all[ key ] = model;
           db.models.put( key, model, true );
         }
       }
@@ -1062,7 +1070,7 @@ NeuroDatabase.prototype =
   // Returns a model
   get: function(key)
   {
-    return this.models.get( this.buildKeyFromInput( key ) );
+    return this.all[ this.buildKeyFromInput( key ) ];
   },
 
   // Crates a function for handling real-time changes
@@ -1102,34 +1110,25 @@ NeuroDatabase.prototype =
     return new this.Model( data, remoteData );
   },
 
-  preSave: function(model)
+  addReference: function(model)
   {
-    var db = this;
-
-    // If the model is deleted, return immediately!
-    if ( model.$isDeleted() )
-    {
-      Neuro.debug( Neuro.Debugs.SAVE_DELETED, db, model );
-
-      return;
-    }
-
-    // Place the model and trigger a database update.
-    return this.saveToModels( model );
+    this.all[ model.$key() ] = model;
   },
 
   // Save the model
-  save: function(model, cascade, existing)
+  save: function(model, cascade)
   {
     var db = this;
 
-    // If the model is deleted, return immediately!
     if ( model.$isDeleted() )
     {
       Neuro.debug( Neuro.Debugs.SAVE_DELETED, db, model );
 
       return;
     }
+
+    var key = model.$key();
+    var existing = db.models.has( key );
 
     if ( existing )
     {
@@ -1139,27 +1138,14 @@ NeuroDatabase.prototype =
     }
     else
     {
+      db.models.put( key, model ); 
       db.trigger( NeuroDatabase.Events.ModelAdded, [model] );
+      db.updated();
 
       model.$trigger( NeuroModel.Events.CreateAndSave );
     }
 
     model.$addOperation( NeuroSaveLocal, cascade );
-  },
-
-  saveToModels: function(model)
-  {
-    var db = this;
-    var key = model.$key();
-    var existing = db.models.has( key );
-
-    if ( !existing )
-    {
-      db.models.put( key, model ); 
-      db.updated();
-    }
-
-    return existing;
   },
 
   // Remove the model 

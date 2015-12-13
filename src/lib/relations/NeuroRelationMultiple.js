@@ -206,7 +206,7 @@ extend( NeuroRelation, NeuroRelationMultiple,
 
   checkSave: function(relation, remoteData)
   {
-    if ( !relation.delaySaving && !remoteData )
+    if ( !relation.delaySaving && !remoteData && relation.parent.$exists() )
     {
       if ( this.store === Neuro.Store.Model || this.save === Neuro.Save.Model )
       {
@@ -217,7 +217,7 @@ extend( NeuroRelation, NeuroRelationMultiple,
     }
   },
 
-  handleModel: function(relation)
+  handleModel: function(relation, remoteData)
   {
     return function (related)
     {
@@ -228,7 +228,7 @@ extend( NeuroRelation, NeuroRelationMultiple,
       {
         Neuro.debug( this.debugInitialGrabbed, this, relation, related );
 
-        this.addModel( relation, related, true );
+        this.addModel( relation, related, remoteData );
 
         delete pending[ key ];
       }

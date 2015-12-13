@@ -418,7 +418,7 @@ test( 'more than one hasOne relationship', function(assert)
 
 test( 'wait until dependents are saved', function(assert) 
 {
-  var timescale = 30;
+  var timescale = 50;
   var done = assert.async();
   var prefix = 'hasOne_wait_dependents_';
 
@@ -474,3 +474,44 @@ test( 'wait until dependents are saved', function(assert)
     done();
   });
 });
+
+test( 'clone', function(assert)
+{
+  var prefix = 'hasOne_clone_';
+
+  var Address = Neuro({
+    name: prefix + 'address',
+    fields: ['location']
+  });
+
+  var User = Neuro({
+    name: prefix + 'user',
+    fields: ['address_id', 'name'],
+    hasOne: {
+      address: {
+        model: Address,
+        local: 'address_id'
+      }
+    }
+  });
+
+  var u0 = new User({
+    name: 'u0',
+    address: {
+      location: 'everywhere'
+    }
+  });
+
+  var a0 = u0.address;
+
+  var u1 = u0.$clone( {address:{}} );
+  var a1 = u1.address;
+
+  notStrictEqual( a1, a0 );
+  ok( a1.id );
+  ok( u1.address_id );
+  strictEqual( a1.location, 'everywhere' );
+  strictEqual( a1.id, u1.address_id );  
+  notStrictEqual( a1.id, a0.id );
+});
+

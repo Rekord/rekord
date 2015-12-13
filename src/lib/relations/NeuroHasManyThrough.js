@@ -74,11 +74,10 @@ extend( NeuroRelationMultiple, NeuroHasManyThrough,
     this.finishInitialization();
   },
 
-  handleLoad: function(model, remoteData)
+  handleLoad: function(model, initialValue, remoteData)
   {
     var that = this;
     var throughDatabase = this.through.Database;
-    var initial = model[ this.name ];
  
     var relation = model.$relations[ this.name ] =
     {
@@ -121,7 +120,6 @@ extend( NeuroRelationMultiple, NeuroHasManyThrough,
     };
 
     // Populate the model's key if it's missing
-    model.$key();
     model.$on( NeuroModel.Events.PostSave, this.postSave, this );
     model.$on( NeuroModel.Events.PreRemove, this.preRemove, this );
 
@@ -129,11 +127,11 @@ extend( NeuroRelationMultiple, NeuroHasManyThrough,
     throughDatabase.on( NeuroDatabase.Events.ModelAdded, this.handleModelAdded( relation ), this );
 
     // If the model's initial value is an array, populate the relation from it!
-    if ( isArray( initial ) )
+    if ( isArray( initialValue ) )
     {
-      Neuro.debug( Neuro.Debugs.HASMANYTHRU_INITIAL, this, model, relation, initial );
+      Neuro.debug( Neuro.Debugs.HASMANYTHRU_INITIAL, this, model, relation, initialValue );
 
-      this.grabModels( initial, this.handleModel( relation ), remoteData );
+      this.grabModels( relation, initialValue, this.handleModel( relation, remoteData ), remoteData );
     }
     else if ( this.query )
     {
@@ -148,6 +146,16 @@ extend( NeuroRelationMultiple, NeuroHasManyThrough,
 
     // We only need to set the property once since the underlying array won't change.
     this.setProperty( relation );
+  },
+
+  clone: function(model, clone, properties)
+  {
+    var related = this.get( model );
+
+    if ( related )
+    {
+      clone[ this.name ] = related.slice();
+    }
   },
 
   postSave: function(model)

@@ -2531,6 +2531,7 @@ function NeuroDatabase(options)
   // Properties
   this.keys = toArray( this.key );
   this.models = new NeuroModelCollection( this );
+  this.all = {};
   this.className = this.className || toCamelCase( this.name );
   this.initialized = false;
   this.pendingRefresh = false;
@@ -2793,13 +2794,11 @@ NeuroDatabase.prototype =
 
     if ( input instanceof db.Model )
     {
-      db.saveToModels( input );
-
       return input;
     }
-    else if ( db.models.has( key ) )
+    else if ( key in db.all )
     {
-      var model = db.models.get( key );
+      var model = db.all[ key ];
       
       if ( isObject( input ) )
       {
@@ -2918,9 +2917,21 @@ NeuroDatabase.prototype =
   },
 
   // Gets the key from the given model
-  getKey: function(model)
+  getKey: function(model, quietly)
   {
-    return this.buildKey( model, this.key );
+    var key = this.key;
+    var modelKey = this.buildKey( model, key );
+
+    if ( hasFields( model, key, isValue ) )
+    {
+      return modelKey;
+    }
+    else if ( !quietly )
+    {
+      throw 'Composite key not supplied.';
+    }
+
+    return false;
   },
 
   // Gets the key from the given model
@@ -3043,6 +3054,20 @@ NeuroDatabase.prototype =
     return this.models.isSorted();
   },
 
+  clean: function()
+  {
+    var db = this;
+    var keys = db.models.keys;
+    var models = db.models;
+
+    db.all = {};
+    
+    for (var i = 0; i < keys.length; i++)
+    {
+      db.all[ keys[ i ] ] = models[ i ];
+    }
+  },
+
   // Handles when we receive data from the server - either from
   // a publish, refresh, or values being returned on a save.
   putRemoteData: function(encoded, key, model, overwrite)
@@ -3054,7 +3079,7 @@ NeuroDatabase.prototype =
 
     var db = this;
     var key = key || db.getKey( encoded );
-    var model = model || db.models.get( key );
+    var model = model || db.all[ key ];
     var decoded = db.decode( copy( encoded ) );
 
     // Reject the data if it's a lower revision
@@ -3087,12 +3112,7 @@ NeuroDatabase.prototype =
         }
       }
 
-      var missingModel = !db.models.has( key );
-
-      if ( missingModel )
-      {
-        db.models.put( key, model );
-      }
+      db.all[ key ] = model;
 
       if ( !model.$saved )
       {
@@ -3155,8 +3175,9 @@ NeuroDatabase.prototype =
 
       model.$addOperation( NeuroSaveNow ); 
 
-      if ( missingModel )
+      if ( !db.models.has( key ) )
       {
+        db.models.put( key, model );
         db.trigger( NeuroDatabase.Events.ModelAdded, [model, true] );
       }
     }
@@ -3187,32 +3208,12 @@ NeuroDatabase.prototype =
   createModel: function(decoded, remoteData)
   {
     var db = this;
-    var values = grab( decoded, db.fields );
-    var model = db.instantiate( values, remoteData );
+    var model = db.instantiate( decoded, remoteData );
     var key = model.$key();
-    var missingModel = !db.models.has( key );
-
-    if ( missingModel )
+    
+    if ( !db.models.has( key ) )
     {
       db.models.put( key, model );
-    }
-
-    var relations = {};
-
-    for (var i = 0; i < db.relationNames.length; i++)
-    {
-      var relationName = db.relationNames[ i ];
-
-      if ( relationName in decoded )
-      {
-        relations[ relationName ] = decoded[ relationName ];
-      }
-    }
-
-    model.$set( relations, undefined, remoteData );
-
-    if ( missingModel )
-    {
       db.trigger( NeuroDatabase.Events.ModelAdded, [model, remoteData] );
     }
 
@@ -3235,6 +3236,8 @@ NeuroDatabase.prototype =
 
         return false;
       }
+
+      delete db.all[ key ];
 
       db.models.remove( key );
       db.trigger( NeuroDatabase.Events.ModelRemoved, [model] );
@@ -3274,6 +3277,8 @@ NeuroDatabase.prototype =
 
       model.$addOperation( NeuroRemoveNow );
 
+      delete db.all[ key ];
+
       db.models.remove( key );
       db.trigger( NeuroDatabase.Events.ModelRemoved, [model] );
 
@@ -3302,7 +3307,7 @@ NeuroDatabase.prototype =
   destroyLocalModel: function(key)
   {
     var db = this;
-    var model = db.models.get( key );
+    var model = db.all[ key ];
 
     if ( db.cache === Neuro.Cache.All )
     {
@@ -3365,6 +3370,7 @@ NeuroDatabase.prototype =
         {
           Neuro.debug( Neuro.Debugs.LOCAL_RESUME_DELETE, db, model );
 
+          db.all[ key ] = model;
           model.$addOperation( NeuroRemoveRemote );
         }
         else if ( model.$status === NeuroModel.Status.Removed )
@@ -3377,12 +3383,14 @@ NeuroDatabase.prototype =
 
           db.models.put( key, model, true );
 
+          db.all[ key ] = model;
           model.$addOperation( NeuroSaveRemote );
         }
         else
         {
           Neuro.debug( Neuro.Debugs.LOCAL_LOAD_SAVED, db, model );
 
+          db.all[ key ] = model;
           db.models.put( key, model, true );
         }
       }
@@ -3553,7 +3561,7 @@ NeuroDatabase.prototype =
   // Returns a model
   get: function(key)
   {
-    return this.models.get( this.buildKeyFromInput( key ) );
+    return this.all[ this.buildKeyFromInput( key ) ];
   },
 
   // Crates a function for handling real-time changes
@@ -3593,34 +3601,25 @@ NeuroDatabase.prototype =
     return new this.Model( data, remoteData );
   },
 
-  preSave: function(model)
+  addReference: function(model)
   {
-    var db = this;
-
-    // If the model is deleted, return immediately!
-    if ( model.$isDeleted() )
-    {
-      Neuro.debug( Neuro.Debugs.SAVE_DELETED, db, model );
-
-      return;
-    }
-
-    // Place the model and trigger a database update.
-    return this.saveToModels( model );
+    this.all[ model.$key() ] = model;
   },
 
   // Save the model
-  save: function(model, cascade, existing)
+  save: function(model, cascade)
   {
     var db = this;
 
-    // If the model is deleted, return immediately!
     if ( model.$isDeleted() )
     {
       Neuro.debug( Neuro.Debugs.SAVE_DELETED, db, model );
 
       return;
     }
+
+    var key = model.$key();
+    var existing = db.models.has( key );
 
     if ( existing )
     {
@@ -3630,27 +3629,14 @@ NeuroDatabase.prototype =
     }
     else
     {
+      db.models.put( key, model ); 
       db.trigger( NeuroDatabase.Events.ModelAdded, [model] );
+      db.updated();
 
       model.$trigger( NeuroModel.Events.CreateAndSave );
     }
 
     model.$addOperation( NeuroSaveLocal, cascade );
-  },
-
-  saveToModels: function(model)
-  {
-    var db = this;
-    var key = model.$key();
-    var existing = db.models.has( key );
-
-    if ( !existing )
-    {
-      db.models.put( key, model ); 
-      db.updated();
-    }
-
-    return existing;
   },
 
   // Remove the model 
@@ -3804,6 +3790,9 @@ NeuroModel.prototype =
 
     if ( remoteData )
     {
+      var key = this.$db.getKey( props );
+
+      this.$db.all[ key ] = this;
       this.$set( props, void 0, remoteData );
     }
     else
@@ -3821,7 +3810,7 @@ NeuroModel.prototype =
 
         if ( !relation.lazy )
         {
-          this.$getRelation( name, remoteData ); 
+          this.$getRelation( name, void 0, remoteData ); 
         }
       }
     }
@@ -3832,6 +3821,7 @@ NeuroModel.prototype =
     var def = this.$db.defaults;
     var fields = this.$db.fields;
     var relations = this.$db.relations;
+    var keyFields = this.$db.key;
 
     if ( isObject( def ) )
     {
@@ -3866,6 +3856,46 @@ NeuroModel.prototype =
       }
     }
 
+    var key = false;
+
+    // First try pulling key from properties
+    if ( props )
+    {
+      key = this.$db.getKey( props, true );
+    }
+
+    // If the key wasn't specified, try generating it on this model
+    if ( key === false )
+    {
+      key = this.$db.getKey( this, true );
+    }
+    // The key was specified in the properties, apply it to this model
+    else
+    {
+      if ( isString( keyFields ) )
+      {
+        this[ keyFields ] = key;
+      }
+      else // if ( isArray( keyFields ) )
+      {
+        for (var i = 0; i < keyFields.length; i++)
+        {
+          var k = keyFields[ i ];
+
+          this[ k ] = props[ k ];
+        }
+      }
+    }
+
+    // The key exists on this model - place the reference of this model
+    // in the all map and set the cached key.
+    if ( key !== false )
+    {
+      this.$db.all[ key ] = this;
+      this.$$key = key;
+    }
+
+    // Set the remaing properties
     this.$set( props );
   },
 
@@ -3885,7 +3915,7 @@ NeuroModel.prototype =
         return;
       }
 
-      var relation = this.$getRelation( props, remoteData );
+      var relation = this.$getRelation( props, value, remoteData );
       
       if ( relation )
       {
@@ -3992,7 +4022,7 @@ NeuroModel.prototype =
     return relation && relation.isRelated( this, related );
   },
 
-  $getRelation: function(prop, remoteData)
+  $getRelation: function(prop, initialValue, remoteData)
   {
     var databaseRelations = this.$db.relations;
     var relation = databaseRelations[ prop ];
@@ -4001,7 +4031,7 @@ NeuroModel.prototype =
     {
       if ( !(prop in this.$relations) )
       {
-        relation.load( this, remoteData );
+        relation.load( this, initialValue, remoteData );
       }
 
       return relation;
@@ -4012,18 +4042,25 @@ NeuroModel.prototype =
 
   $save: function(setProperties, setValue, cascade)
   {
+    if ( this.$isDeleted() )
+    {
+      Neuro.debug( Neuro.Debugs.SAVE_DELETED, this.$db, this );
+
+      return false;
+    }
+
     var cascade = 
       (arguments.length === 3 ? cascade : 
         (arguments.length === 2 && isObject( setProperties ) && isNumber( setValue ) ? setValue : 
           (arguments.length === 1 && isNumber( setProperties ) ?  setProperties : Neuro.Cascade.All ) ) );
 
-    var existing = this.$db.preSave( this );
+    this.$db.addReference( this );
 
     this.$set( setProperties, setValue );
 
     this.$trigger( NeuroModel.Events.PreSave, [this] );
 
-    this.$db.save( this, cascade, existing );
+    this.$db.save( this, cascade );
 
     this.$trigger( NeuroModel.Events.PostSave, [this] );
   },
@@ -4055,6 +4092,55 @@ NeuroModel.prototype =
     {
       this.$reset();
     }
+  },
+
+  $clone: function(properties)
+  {
+    // If field is given, evaluate the value and use it instead of value on this object
+    // If relation is given, call clone on relation
+    
+    var db = this.$db;
+    var key = db.key;
+    var fields = db.fields;
+    var relations = db.relations;
+    var values = {};
+
+    for (var i = 0; i < fields.length; i++)
+    {
+      var f = fields[ i ];
+
+      if ( properties && f in properties )
+      {
+        values[ f ] = evaluate( properties[ f ] );
+      }
+      else if ( f in this )
+      {
+        values[ f ] = copy( this[ f ] );
+      }
+    }
+
+    if ( isString( key ) )
+    {
+      delete values[ key ];
+    }
+
+    var cloneKey = db.getKey( values );
+    var modelKey = this.$key();
+
+    if ( cloneKey === modelKey )
+    {
+      throw 'A clone cannot have the same key as the original model.';
+    }
+
+    for (var relationName in relations)
+    {
+      if ( properties && relationName in properties )
+      {
+        relations[ relationName ].clone( this, values, properties[ relationName ] );
+      }
+    }
+
+    return db.instantiate( values );
   },
 
   $push: function(fields)
@@ -4120,9 +4206,14 @@ NeuroModel.prototype =
     this.$trigger( NeuroModel.Events.Change );
   },
 
-  $key: function()
+  $key: function(quietly)
   {
-    return this.$db.getKey( this );
+    if ( !this.$$key )
+    {
+      this.$$key = this.$db.getKey( this, quietly );
+    }
+
+    return this.$$key;
   },
 
   $keys: function()
@@ -4132,7 +4223,7 @@ NeuroModel.prototype =
 
   $uid: function()
   {
-    return this.$db.name + '$' + this.$db.getKey( this );
+    return this.$db.name + '$' + this.$key();
   },
 
   $hasKey: function()
@@ -6691,6 +6782,9 @@ extend( NeuroOperation, NeuroRemoveRemote,
 
     // Remove it live!
     this.liveRemove();
+
+    // Remove the model reference for good!
+    delete db.all[ key ];
   },
 
   liveRemove: function()
@@ -7169,6 +7263,7 @@ NeuroRelation.prototype =
     this.options = options;
     this.pendingLoads = [];
     this.pendingRemoteDatas = [];
+    this.pendingInitials = [];
     this.initialized = false;
     this.property = this.property || (indexOf( database.fields, this.name ) !== false);
     this.discriminated = !isEmpty( this.discriminators );
@@ -7219,14 +7314,16 @@ NeuroRelation.prototype =
     this.initialized = true;
 
     var pending = this.pendingLoads;
+    var initials = this.pendingInitials;
     var remotes = this.pendingRemoteDatas;
 
     for (var i = 0; i < pending.length; i++)
     {
-      this.handleLoad( pending[ i ], remotes[ i ] );
+      this.handleLoad( pending[ i ], initials[ i ], remotes[ i ] );
     }
 
     pending.length = 0;
+    initials.length = 0;
     remotes.length = 0;
   },
 
@@ -7238,20 +7335,21 @@ NeuroRelation.prototype =
    * 
    * @param  {Neuro.Model} model [description]
    */
-  load: function(model, remoteData)
+  load: function(model, initialValue, remoteData)
   {
     if ( !this.initialized )
     {
       this.pendingLoads.push( model );
+      this.pendingInitials.push( initialValue );
       this.pendingRemoteDatas.push( remoteData );
     }
     else
     {
-      this.handleLoad( model, remoteData );
+      this.handleLoad( model, initialValue, remoteData );
     }
   },
 
-  handleLoad: function(model, remoteData)
+  handleLoad: function(model, initialValue, remoteData)
   {
 
   },
@@ -7272,6 +7370,11 @@ NeuroRelation.prototype =
   },
 
   isRelated: function(model, input)
+  {
+
+  },
+
+  clone: function(model, clone, properties)
   {
 
   },
@@ -7365,7 +7468,7 @@ NeuroRelation.prototype =
     this.model.Database.grabModel( input, callback, this, remoteData );
   },
 
-  grabModels: function(initial, callback, remoteData)
+  grabModels: function(relation, initial, callback, remoteData)
   {
     var db = this.model.Database;
 
@@ -7515,8 +7618,6 @@ NeuroRelation.prototype =
   updateFieldsReturnChanges: function(target, targetFields, source, sourceFields)
   {
     var changes = false;
-
-    source.$key();
 
     if ( isString( targetFields ) ) // && isString( sourceFields )
     {
@@ -8026,7 +8127,7 @@ extend( NeuroRelation, NeuroRelationMultiple,
 
   checkSave: function(relation, remoteData)
   {
-    if ( !relation.delaySaving && !remoteData )
+    if ( !relation.delaySaving && !remoteData && relation.parent.$exists() )
     {
       if ( this.store === Neuro.Store.Model || this.save === Neuro.Save.Model )
       {
@@ -8037,7 +8138,7 @@ extend( NeuroRelation, NeuroRelationMultiple,
     }
   },
 
-  handleModel: function(relation)
+  handleModel: function(relation, remoteData)
   {
     return function (related)
     {
@@ -8048,7 +8149,7 @@ extend( NeuroRelation, NeuroRelationMultiple,
       {
         Neuro.debug( this.debugInitialGrabbed, this, relation, related );
 
-        this.addModel( relation, related, true );
+        this.addModel( relation, related, remoteData );
 
         delete pending[ key ];
       }
@@ -8112,9 +8213,8 @@ extend( NeuroRelationSingle, NeuroBelongsTo,
     return NeuroBelongsTo.Defaults;
   },
 
-  handleLoad: function(model, remoteData)
+  handleLoad: function(model, initialValue, remoteData)
   {
-    var initial = model[ this.name ];
     var relation = model.$relations[ this.name ] = 
     {
       parent: model,
@@ -8145,21 +8245,21 @@ extend( NeuroRelationSingle, NeuroBelongsTo,
     model.$on( NeuroModel.Events.PostRemove, this.postRemove, this );
     model.$on( NeuroModel.Events.KeyUpdate, this.onKeyUpdate, this );
 
-    if ( isEmpty( initial ) )
+    if ( isEmpty( initialValue ) )
     {
-      initial = this.grabInitial( model, this.local );
+      initialValue = this.grabInitial( model, this.local );
       
-      if ( initial )
+      if ( initialValue )
       {
-        Neuro.debug( Neuro.Debugs.BELONGSTO_INITIAL_PULLED, this, model, initial );        
+        Neuro.debug( Neuro.Debugs.BELONGSTO_INITIAL_PULLED, this, model, initialValue );        
       }
     }
 
-    if ( !isEmpty( initial ) )
+    if ( !isEmpty( initialValue ) )
     {
-      Neuro.debug( Neuro.Debugs.BELONGSTO_INITIAL, this, model, initial );
+      Neuro.debug( Neuro.Debugs.BELONGSTO_INITIAL, this, model, initialValue );
 
-      this.grabModel( initial, this.handleModel( relation, remoteData ), remoteData );
+      this.grabModel( initialValue, this.handleModel( relation, remoteData ), remoteData );
     }
     else if ( this.query )
     {
@@ -8238,9 +8338,8 @@ extend( NeuroRelationSingle, NeuroHasOne,
     return NeuroHasOne.Defaults;
   },
 
-  handleLoad: function(model, remoteData)
+  handleLoad: function(model, initialValue, remoteData)
   {
-    var initial = model[ this.name ];
     var relation = model.$relations[ this.name ] = 
     {
       parent: model,
@@ -8261,25 +8360,39 @@ extend( NeuroRelationSingle, NeuroHasOne,
     model.$on( NeuroModel.Events.PreSave, this.preSave, this );
     model.$on( NeuroModel.Events.PostRemove, this.postRemove, this );
 
-    if ( isEmpty( initial ) )
+    if ( isEmpty( initialValue ) )
     {
-      initial = this.grabInitial( model, this.local );
+      initialValue = this.grabInitial( model, this.local );
       
-      if ( initial )
+      if ( initialValue )
       {
-        Neuro.debug( Neuro.Debugs.HASONE_INITIAL_PULLED, this, model, initial );        
+        Neuro.debug( Neuro.Debugs.HASONE_INITIAL_PULLED, this, model, initialValue );        
       }
     }
 
-    if ( !isEmpty( initial ) )
+    if ( !isEmpty( initialValue ) )
     {
-      Neuro.debug( Neuro.Debugs.HASONE_INITIAL, this, model, initial );
+      Neuro.debug( Neuro.Debugs.HASONE_INITIAL, this, model, initialValue );
 
-      this.grabModel( initial, this.handleModel( relation ), remoteData );      
+      this.grabModel( initialValue, this.handleModel( relation ), remoteData );      
     }
     else if ( this.query )
     {
       relation.query = this.executeQuery( model );
+    }
+  },
+
+  clone: function(model, clone, properties)
+  {
+    var related = this.get( model );
+
+    if ( related )
+    {
+      var relatedClone = related.$clone( properties );
+
+      this.updateFieldsReturnChanges( clone, this.local, relatedClone, relatedClone.$db.key );
+
+      clone[ this.name ] = relatedClone;
     }
   },
 
@@ -8397,10 +8510,9 @@ extend( NeuroRelationMultiple, NeuroHasMany,
     this.finishInitialization();
   },
 
-  handleLoad: function(model, remoteData)
+  handleLoad: function(model, initialValue, remoteData)
   {
     var relator = this;
-    var initial = model[ this.name ];
     var relation = model.$relations[ this.name ] =
     {
       parent: model,
@@ -8440,8 +8552,6 @@ extend( NeuroRelationMultiple, NeuroHasMany,
 
     };
 
-    // Populate the model's key if it's missing
-    model.$key();
     model.$on( NeuroModel.Events.PostSave, this.postSave, this );
     model.$on( NeuroModel.Events.PreRemove, this.preRemove, this );
 
@@ -8449,11 +8559,11 @@ extend( NeuroRelationMultiple, NeuroHasMany,
     this.listenToModelAdded( this.handleModelAdded( relation ) );
 
     // If the model's initial value is an array, populate the relation from it!
-    if ( isArray( initial ) )
+    if ( isArray( initialValue ) )
     {
-      Neuro.debug( Neuro.Debugs.HASMANY_INITIAL, this, model, relation, initial );
+      Neuro.debug( Neuro.Debugs.HASMANY_INITIAL, this, model, relation, initialValue );
 
-      this.grabModels( initial, this.handleModel( relation ), remoteData );
+      this.grabModels( relation, initialValue, this.handleModel( relation, remoteData ), remoteData );
     }
     else if ( this.query )
     {
@@ -8468,6 +8578,27 @@ extend( NeuroRelationMultiple, NeuroHasMany,
 
     // We only need to set the property once since the underlying array won't change.
     this.setProperty( relation );
+  },
+
+  clone: function(model, clone, properties)
+  {
+    var related = this.get( model );
+
+    if ( related )
+    {
+      var relateds = [];
+
+      this.updateFieldsReturnChanges( properties, this.foreign, clone, model.$db.key );
+
+      properties[ this.foreign ] = clone[ model.$db.key ];
+
+      for (var i = 0; i < related.length; i++)
+      {
+        relateds.push( related[ i ].$clone( properties ) );
+      }
+
+      clone[ this.name ] = relateds;
+    }
   },
 
   postSave: function(model)
@@ -8773,11 +8904,10 @@ extend( NeuroRelationMultiple, NeuroHasManyThrough,
     this.finishInitialization();
   },
 
-  handleLoad: function(model, remoteData)
+  handleLoad: function(model, initialValue, remoteData)
   {
     var that = this;
     var throughDatabase = this.through.Database;
-    var initial = model[ this.name ];
  
     var relation = model.$relations[ this.name ] =
     {
@@ -8820,7 +8950,6 @@ extend( NeuroRelationMultiple, NeuroHasManyThrough,
     };
 
     // Populate the model's key if it's missing
-    model.$key();
     model.$on( NeuroModel.Events.PostSave, this.postSave, this );
     model.$on( NeuroModel.Events.PreRemove, this.preRemove, this );
 
@@ -8828,11 +8957,11 @@ extend( NeuroRelationMultiple, NeuroHasManyThrough,
     throughDatabase.on( NeuroDatabase.Events.ModelAdded, this.handleModelAdded( relation ), this );
 
     // If the model's initial value is an array, populate the relation from it!
-    if ( isArray( initial ) )
+    if ( isArray( initialValue ) )
     {
-      Neuro.debug( Neuro.Debugs.HASMANYTHRU_INITIAL, this, model, relation, initial );
+      Neuro.debug( Neuro.Debugs.HASMANYTHRU_INITIAL, this, model, relation, initialValue );
 
-      this.grabModels( initial, this.handleModel( relation ), remoteData );
+      this.grabModels( relation, initialValue, this.handleModel( relation, remoteData ), remoteData );
     }
     else if ( this.query )
     {
@@ -8847,6 +8976,16 @@ extend( NeuroRelationMultiple, NeuroHasManyThrough,
 
     // We only need to set the property once since the underlying array won't change.
     this.setProperty( relation );
+  },
+
+  clone: function(model, clone, properties)
+  {
+    var related = this.get( model );
+
+    if ( related )
+    {
+      clone[ this.name ] = related.slice();
+    }
   },
 
   postSave: function(model)

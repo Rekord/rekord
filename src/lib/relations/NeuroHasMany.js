@@ -51,10 +51,9 @@ extend( NeuroRelationMultiple, NeuroHasMany,
     this.finishInitialization();
   },
 
-  handleLoad: function(model, remoteData)
+  handleLoad: function(model, initialValue, remoteData)
   {
     var relator = this;
-    var initial = model[ this.name ];
     var relation = model.$relations[ this.name ] =
     {
       parent: model,
@@ -94,8 +93,6 @@ extend( NeuroRelationMultiple, NeuroHasMany,
 
     };
 
-    // Populate the model's key if it's missing
-    model.$key();
     model.$on( NeuroModel.Events.PostSave, this.postSave, this );
     model.$on( NeuroModel.Events.PreRemove, this.preRemove, this );
 
@@ -103,11 +100,11 @@ extend( NeuroRelationMultiple, NeuroHasMany,
     this.listenToModelAdded( this.handleModelAdded( relation ) );
 
     // If the model's initial value is an array, populate the relation from it!
-    if ( isArray( initial ) )
+    if ( isArray( initialValue ) )
     {
-      Neuro.debug( Neuro.Debugs.HASMANY_INITIAL, this, model, relation, initial );
+      Neuro.debug( Neuro.Debugs.HASMANY_INITIAL, this, model, relation, initialValue );
 
-      this.grabModels( initial, this.handleModel( relation ), remoteData );
+      this.grabModels( relation, initialValue, this.handleModel( relation, remoteData ), remoteData );
     }
     else if ( this.query )
     {
@@ -122,6 +119,27 @@ extend( NeuroRelationMultiple, NeuroHasMany,
 
     // We only need to set the property once since the underlying array won't change.
     this.setProperty( relation );
+  },
+
+  clone: function(model, clone, properties)
+  {
+    var related = this.get( model );
+
+    if ( related )
+    {
+      var relateds = [];
+
+      this.updateFieldsReturnChanges( properties, this.foreign, clone, model.$db.key );
+
+      properties[ this.foreign ] = clone[ model.$db.key ];
+
+      for (var i = 0; i < related.length; i++)
+      {
+        relateds.push( related[ i ].$clone( properties ) );
+      }
+
+      clone[ this.name ] = relateds;
+    }
   },
 
   postSave: function(model)

@@ -13,7 +13,7 @@ function isType(value, type, message)
 
 function hasModel(neuro, key, model, message)
 {
-  strictEqual( neuro.Database.get( key ), model, message );
+  strictEqual( neuro.get( key ), model, message );
 }
 
 // Utility Methods

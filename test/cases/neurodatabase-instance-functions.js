@@ -35,7 +35,7 @@ test( 'parseModel', function(assert)
 
   db.parseModel( p3 );
 
-  strictEqual( parseModel.all().length, 3 );
+  strictEqual( parseModel.all().length, 2 );
 
   var p4 = db.parseModel( parseModel );
 

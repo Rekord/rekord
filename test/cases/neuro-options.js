@@ -26,20 +26,20 @@ test( 'custom key', function(assert)
     fields: ['key', 'name']
   });
 
-  strictEqual( custom_key.Database.key, 'key' );
+  strictEqual( custom_key.Database.key, 'key', 'key field set' );
 
   var ck0 = custom_key.create({
     name: 'name0'
   });
 
-  ok( !!ck0.key );
+  ok( ck0.key, 'model has custom key' );
 
   var ck1 = custom_key.create({
     key: 'key1',
     name: 'name1'
   });
 
-  strictEqual( ck1.key, 'key1' );
+  strictEqual( ck1.key, 'key1', 'custom key set on create' );
   hasModel( custom_key, 'key1', ck1 );
 });
 
@@ -117,7 +117,7 @@ test( 'fields', function(assert)
   });
 
   strictEqual( f.name, 'name0' );
-  strictEqual( f.notspecified, void 0 );
+  strictEqual( f.notspecified, true );
 
   var fjs = f.$toJSON();
 
@@ -191,10 +191,11 @@ test( 'custom className', function(assert)
   strictEqual( CustomClassName.Database.className, 'CustomClassNameTest' );
 
   var ccn0 = new CustomClassName({
+    id: 6,
     name: 'name0'
   });
 
-  strictEqual( ccn0.toString(), 'CustomClassNameTest {"name":"name0"}');
+  strictEqual( ccn0.toString(), 'CustomClassNameTest {"id":6,"name":"name0"}');
 });
 
 test( 'comparator prop', function(assert)
@@ -860,7 +861,7 @@ test( 'events', function(assert)
   var context0 = {name: 'c0'};
   var context1 = {name: 'c1'};
 
-  expect( 12 );
+  expect( 11 );
 
   var Task = Neuro({
     name: 'events',

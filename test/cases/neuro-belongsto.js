@@ -480,3 +480,36 @@ test( 'wait until dependents are saved', function(assert)
 
   strictEqual( t0.creator, u0 );
 });
+
+test( 'clone', function(assert)
+{
+  var prefix = 'belongsTo_clone_';
+
+  var User = Neuro({
+    name: prefix + 'user',
+    fields: ['name']
+  });
+
+  var Address = Neuro({
+    name: prefix + 'address',
+    fields: ['location', 'created_by'],
+    belongsTo: {
+      creator: {
+        model: User,
+        local: 'created_by'
+      }
+    }
+  });
+
+  var a0 = new Address({
+    location: 'everywhere',
+    creator: {
+      name: 'u0'
+    }
+  });
+
+  var a1 = a0.$clone( {creator:{}} );
+
+  notStrictEqual( a1, a0 );
+  strictEqual( a1.creator, a0.creator );
+});

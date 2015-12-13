@@ -8,11 +8,11 @@ test( 'constructor', function(assert)
   });
 
   var n0 = new Named();
-  strictEqual( n0.id, void 0 );
+  isType( n0.id, 'string' );
   strictEqual( n0.name, void 0 );
 
   var n1 = new Named({name: 'name1'});
-  strictEqual( n1.id, void 0 );
+  isType( n1.id, 'string' );
   strictEqual( n1.name, 'name1' );
 
   var n2 = new Named({id: 5, name: 'name2'});
@@ -414,7 +414,7 @@ test( '$key', function(assert)
 
   var i0 = new Issue({title: 'Wipe'});
 
-  strictEqual( i0.id, void 0 );
+  isType( i0.id, 'string' );
   notStrictEqual( i0.$key(), void 0 );
   notStrictEqual( i0.id, void 0 );
   strictEqual( i0.$keys(), i0.id );
@@ -491,7 +491,7 @@ test( '$getChanges', function(assert)
 
   var t0 = new Todo({name: 'this'});
 
-  deepEqual( t0.$getChanges(), {id: void 0, name: 'this'} );
+  deepEqual( t0.$getChanges(), {id: t0.id, name: 'this'} );
 
   t0.$save();
 
@@ -675,7 +675,7 @@ test( '$change', function(assert)
 
   var Task = Neuro({
     name: prefix + 'task',
-    fields: ['list_id', 'name', 'done']
+    fields: ['name', 'done']
   });
 
   var t0 = new Task({name: 't0'});
@@ -688,6 +688,58 @@ test( '$change', function(assert)
   });
 
   t0.$save();
-
 });
 
+test( '$clone simple', function(assert)
+{
+  var prefix = 'Model_clone_simple_';
+
+  var Task = Neuro({
+    name: prefix + 'task',
+    fields: ['name', 'done', 'finished_at']
+  });
+
+  var t0 = new Task({name: 't0', done: true, finished_at: Date.now()});
+
+  ok( t0.$key() );
+  strictEqual( t0.name, 't0' );
+  strictEqual( t0.done, true );
+  isType( t0.finished_at, 'number' );
+
+  var t1 = t0.$clone();
+
+  ok( t1.$key() );
+  notStrictEqual( t1.id, t0.id );
+  strictEqual( t1.name, 't0' );
+  strictEqual( t1.done, true );
+  isType( t1.finished_at, 'number' );
+
+  notStrictEqual( t0, t1 );
+});
+
+test( '$clone overwrite', function(assert)
+{
+  var prefix = 'Model_clone_overwrite_';
+
+  var Task = Neuro({
+    name: prefix + 'task',
+    fields: ['name', 'done', 'finished_at']
+  });
+
+  var t0 = new Task({name: 't0', done: true, finished_at: Date.now()});
+
+  ok( t0.$key() );
+  strictEqual( t0.name, 't0' );
+  strictEqual( t0.done, true );
+  isType( t0.finished_at, 'number' );
+
+  var t1 = t0.$clone({name: 't0a', done: false, finished_at: Date.now});
+
+  ok( t1.$key() );
+  notStrictEqual( t1.id, t0.id );
+  strictEqual( t1.name, 't0a' );
+  strictEqual( t1.done, false );
+  isType( t1.finished_at, 'number' );
+
+  notStrictEqual( t0, t1 );
+});

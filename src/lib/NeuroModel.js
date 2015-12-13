@@ -106,6 +106,9 @@ NeuroModel.prototype =
 
     if ( remoteData )
     {
+      var key = this.$db.getKey( props );
+
+      this.$db.all[ key ] = this;
       this.$set( props, void 0, remoteData );
     }
     else
@@ -123,7 +126,7 @@ NeuroModel.prototype =
 
         if ( !relation.lazy )
         {
-          this.$getRelation( name, remoteData ); 
+          this.$getRelation( name, void 0, remoteData ); 
         }
       }
     }
@@ -134,6 +137,7 @@ NeuroModel.prototype =
     var def = this.$db.defaults;
     var fields = this.$db.fields;
     var relations = this.$db.relations;
+    var keyFields = this.$db.key;
 
     if ( isObject( def ) )
     {
@@ -168,6 +172,46 @@ NeuroModel.prototype =
       }
     }
 
+    var key = false;
+
+    // First try pulling key from properties
+    if ( props )
+    {
+      key = this.$db.getKey( props, true );
+    }
+
+    // If the key wasn't specified, try generating it on this model
+    if ( key === false )
+    {
+      key = this.$db.getKey( this, true );
+    }
+    // The key was specified in the properties, apply it to this model
+    else
+    {
+      if ( isString( keyFields ) )
+      {
+        this[ keyFields ] = key;
+      }
+      else // if ( isArray( keyFields ) )
+      {
+        for (var i = 0; i < keyFields.length; i++)
+        {
+          var k = keyFields[ i ];
+
+          this[ k ] = props[ k ];
+        }
+      }
+    }
+
+    // The key exists on this model - place the reference of this model
+    // in the all map and set the cached key.
+    if ( key !== false )
+    {
+      this.$db.all[ key ] = this;
+      this.$$key = key;
+    }
+
+    // Set the remaing properties
     this.$set( props );
   },
 
@@ -187,7 +231,7 @@ NeuroModel.prototype =
         return;
       }
 
-      var relation = this.$getRelation( props, remoteData );
+      var relation = this.$getRelation( props, value, remoteData );
       
       if ( relation )
       {
@@ -294,7 +338,7 @@ NeuroModel.prototype =
     return relation && relation.isRelated( this, related );
   },
 
-  $getRelation: function(prop, remoteData)
+  $getRelation: function(prop, initialValue, remoteData)
   {
     var databaseRelations = this.$db.relations;
     var relation = databaseRelations[ prop ];
@@ -303,7 +347,7 @@ NeuroModel.prototype =
     {
       if ( !(prop in this.$relations) )
       {
-        relation.load( this, remoteData );
+        relation.load( this, initialValue, remoteData );
       }
 
       return relation;
@@ -314,18 +358,25 @@ NeuroModel.prototype =
 
   $save: function(setProperties, setValue, cascade)
   {
+    if ( this.$isDeleted() )
+    {
+      Neuro.debug( Neuro.Debugs.SAVE_DELETED, this.$db, this );
+
+      return false;
+    }
+
     var cascade = 
       (arguments.length === 3 ? cascade : 
         (arguments.length === 2 && isObject( setProperties ) && isNumber( setValue ) ? setValue : 
           (arguments.length === 1 && isNumber( setProperties ) ?  setProperties : Neuro.Cascade.All ) ) );
 
-    var existing = this.$db.preSave( this );
+    this.$db.addReference( this );
 
     this.$set( setProperties, setValue );
 
     this.$trigger( NeuroModel.Events.PreSave, [this] );
 
-    this.$db.save( this, cascade, existing );
+    this.$db.save( this, cascade );
 
     this.$trigger( NeuroModel.Events.PostSave, [this] );
   },
@@ -357,6 +408,55 @@ NeuroModel.prototype =
     {
       this.$reset();
     }
+  },
+
+  $clone: function(properties)
+  {
+    // If field is given, evaluate the value and use it instead of value on this object
+    // If relation is given, call clone on relation
+    
+    var db = this.$db;
+    var key = db.key;
+    var fields = db.fields;
+    var relations = db.relations;
+    var values = {};
+
+    for (var i = 0; i < fields.length; i++)
+    {
+      var f = fields[ i ];
+
+      if ( properties && f in properties )
+      {
+        values[ f ] = evaluate( properties[ f ] );
+      }
+      else if ( f in this )
+      {
+        values[ f ] = copy( this[ f ] );
+      }
+    }
+
+    if ( isString( key ) )
+    {
+      delete values[ key ];
+    }
+
+    var cloneKey = db.getKey( values );
+    var modelKey = this.$key();
+
+    if ( cloneKey === modelKey )
+    {
+      throw 'A clone cannot have the same key as the original model.';
+    }
+
+    for (var relationName in relations)
+    {
+      if ( properties && relationName in properties )
+      {
+        relations[ relationName ].clone( this, values, properties[ relationName ] );
+      }
+    }
+
+    return db.instantiate( values );
   },
 
   $push: function(fields)
@@ -422,9 +522,14 @@ NeuroModel.prototype =
     this.$trigger( NeuroModel.Events.Change );
   },
 
-  $key: function()
+  $key: function(quietly)
   {
-    return this.$db.getKey( this );
+    if ( !this.$$key )
+    {
+      this.$$key = this.$db.getKey( this, quietly );
+    }
+
+    return this.$$key;
   },
 
   $keys: function()
@@ -434,7 +539,7 @@ NeuroModel.prototype =
 
   $uid: function()
   {
-    return this.$db.name + '$' + this.$db.getKey( this );
+    return this.$db.name + '$' + this.$key();
   },
 
   $hasKey: function()
