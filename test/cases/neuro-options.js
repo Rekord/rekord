@@ -954,6 +954,9 @@ test( 'timestamps default', function(assert)
     timestampsAsDate: true
   });
 
+  Todo.Database.defaults.updated_at = currentDate();
+  Todo.Database.defaults.created_at = currentDate();
+
   deepEqual( Todo.Database.fields, ['id', 'name', 'done', 'created_at', 'updated_at'] );
 
   var t0 = Todo.create({name: 't0'});
@@ -1041,6 +1044,9 @@ test( 'timestamps renamed', function(assert)
     timestamps: {created_at: 'created_tms', updated_at: 'updated_tms'},
     timestampsAsDate: true
   });
+
+  Todo.Database.defaults.updated_tms = currentDate();
+  Todo.Database.defaults.created_tms = currentDate();
 
   deepEqual( Todo.Database.fields, ['id', 'name', 'done', 'created_tms', 'updated_tms'] );
 

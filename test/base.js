@@ -24,9 +24,21 @@ function currentTime()
 {
   var counter = 1;
 
-  return function()
+  return function newDefaultTime()
   {
     return counter++;
+  };
+}
+
+function currentDate()
+{
+  var start = new Date();
+
+  return function newDefaultDate()
+  {
+    start.setDate( start.getDate() + 1 );
+
+    return new Date( start.getTime() );
   };
 }
 
