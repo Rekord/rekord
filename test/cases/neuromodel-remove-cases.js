@@ -2,6 +2,7 @@ module( 'Neuro.Model remove cases' );
 
 test( 'delete while in the middle of save', function(assert)
 {
+  var timer = assert.timer();
   var done = assert.async();
 
   var Todo = Neuro({
@@ -15,7 +16,7 @@ test( 'delete while in the middle of save', function(assert)
 
   ok( t0.$isSaved() );
 
-  rest.delay = 10;
+  rest.delay = 1;
 
   t0.name = 'todo1';
   t0.$save();
@@ -27,7 +28,7 @@ test( 'delete while in the middle of save', function(assert)
 
   t0.$remove();
 
-  wait(15, function()
+  wait(2, function()
   {
     strictEqual( rest.map.values.length, 0 );
     strictEqual( t0.$saved, void 0 )
@@ -36,6 +37,7 @@ test( 'delete while in the middle of save', function(assert)
     done();
   });
 
+  timer.run();
 });
 
 test( 'delete with cache:none should go right to remote', function(assert)

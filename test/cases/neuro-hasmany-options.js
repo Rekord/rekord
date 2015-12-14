@@ -735,7 +735,7 @@ test( 'comparator', function(assert)
   var Task = Neuro({
     name: prefix + 'task',
     fields: ['id', 'task_list_id', 'name', 'done', 'created_at'],
-    defaults: { done: false, created_at: Date.now },
+    defaults: { done: false, created_at: currentTime() },
     belongsTo: {
       list: {
         model: prefix + 'list',
@@ -773,7 +773,7 @@ test( 'comparatorNullsFirst', function(assert)
   var Task = Neuro({
     name: prefix + 'task',
     fields: ['id', 'task_list_id', 'name', 'done', 'created_at'],
-    defaults: { done: false, created_at: Date.now },
+    defaults: { done: false, created_at: currentTime() },
     belongsTo: {
       list: {
         model: prefix + 'list',
@@ -813,7 +813,7 @@ test( 'cascadeRemove none', function(assert)
   var Task = Neuro({
     name: prefix + 'task',
     fields: ['id', 'task_list_id', 'name', 'done', 'created_at'],
-    defaults: { done: false, created_at: Date.now }
+    defaults: { done: false, created_at: currentTime() }
   });
 
   var TaskList = Neuro({
@@ -868,7 +868,7 @@ test( 'cascadeRemove local', function(assert)
   var Task = Neuro({
     name: prefix + 'task',
     fields: ['id', 'task_list_id', 'name', 'done', 'created_at'],
-    defaults: { done: false, created_at: Date.now }
+    defaults: { done: false, created_at: currentTime() }
   });
 
   var TaskList = Neuro({
@@ -923,7 +923,7 @@ test( 'cascadeRemove rest', function(assert)
   var Task = Neuro({
     name: prefix + 'task',
     fields: ['id', 'task_list_id', 'name', 'done', 'created_at'],
-    defaults: { done: false, created_at: Date.now }
+    defaults: { done: false, created_at: currentTime() }
   });
 
   var TaskList = Neuro({
@@ -978,7 +978,7 @@ test( 'cascadeRemove nolive', function(assert)
   var Task = Neuro({
     name: prefix + 'task',
     fields: ['id', 'task_list_id', 'name', 'done', 'created_at'],
-    defaults: { done: false, created_at: Date.now }
+    defaults: { done: false, created_at: currentTime() }
   });
 
   var TaskList = Neuro({
@@ -1033,7 +1033,7 @@ test( 'cascadeRemove live', function(assert)
   var Task = Neuro({
     name: prefix + 'task',
     fields: ['id', 'task_list_id', 'name', 'done', 'created_at'],
-    defaults: { done: false, created_at: Date.now }
+    defaults: { done: false, created_at: currentTime() }
   });
 
   var TaskList = Neuro({
@@ -1088,7 +1088,7 @@ test( 'cascadeRemove norest', function(assert)
   var Task = Neuro({
     name: prefix + 'task',
     fields: ['id', 'task_list_id', 'name', 'done', 'created_at'],
-    defaults: { done: false, created_at: Date.now }
+    defaults: { done: false, created_at: currentTime() }
   });
 
   var TaskList = Neuro({
@@ -1143,7 +1143,7 @@ test( 'cascadeRemove remote', function(assert)
   var Task = Neuro({
     name: prefix + 'task',
     fields: ['id', 'task_list_id', 'name', 'done', 'created_at'],
-    defaults: { done: false, created_at: Date.now }
+    defaults: { done: false, created_at: currentTime() }
   });
 
   var TaskList = Neuro({
@@ -1198,7 +1198,7 @@ test( 'cascadeRemove all', function(assert)
   var Task = Neuro({
     name: prefix + 'task',
     fields: ['id', 'task_list_id', 'name', 'done', 'created_at'],
-    defaults: { done: false, created_at: Date.now }
+    defaults: { done: false, created_at: currentTime() }
   });
 
   var TaskList = Neuro({
@@ -1253,7 +1253,7 @@ test( 'cascadeSave none', function(assert)
   var Task = Neuro({
     name: prefix + 'task',
     fields: ['id', 'task_list_id', 'name'],
-    defaults: { done: false, created_at: Date.now }
+    defaults: { done: false, created_at: currentTime() }
   });
 
   var TaskList = Neuro({
@@ -1300,7 +1300,7 @@ test( 'cascadeSave local', function(assert)
   var Task = Neuro({
     name: prefix + 'task',
     fields: ['id', 'task_list_id', 'name'],
-    defaults: { done: false, created_at: Date.now }
+    defaults: { done: false, created_at: currentTime() }
   });
 
   var TaskList = Neuro({
@@ -1347,7 +1347,7 @@ test( 'cascadeSave rest', function(assert)
   var Task = Neuro({
     name: prefix + 'task',
     fields: ['id', 'task_list_id', 'name'],
-    defaults: { done: false, created_at: Date.now }
+    defaults: { done: false, created_at: currentTime() }
   });
 
   var TaskList = Neuro({
@@ -1394,7 +1394,7 @@ test( 'cascadeSave nolive', function(assert)
   var Task = Neuro({
     name: prefix + 'task',
     fields: ['id', 'task_list_id', 'name'],
-    defaults: { done: false, created_at: Date.now }
+    defaults: { done: false, created_at: currentTime() }
   });
 
   var TaskList = Neuro({
@@ -1441,7 +1441,7 @@ test( 'cascadeSave live', function(assert)
   var Task = Neuro({
     name: prefix + 'task',
     fields: ['id', 'task_list_id', 'name'],
-    defaults: { done: false, created_at: Date.now }
+    defaults: { done: false, created_at: currentTime() }
   });
 
   var TaskList = Neuro({
@@ -1488,7 +1488,7 @@ test( 'cascadeSave norest', function(assert)
   var Task = Neuro({
     name: prefix + 'task',
     fields: ['id', 'task_list_id', 'name'],
-    defaults: { done: false, created_at: Date.now }
+    defaults: { done: false, created_at: currentTime() }
   });
 
   var TaskList = Neuro({
@@ -1535,7 +1535,7 @@ test( 'cascadeSave remote', function(assert)
   var Task = Neuro({
     name: prefix + 'task',
     fields: ['id', 'task_list_id', 'name'],
-    defaults: { done: false, created_at: Date.now }
+    defaults: { done: false, created_at: currentTime() }
   });
 
   var TaskList = Neuro({
@@ -1582,7 +1582,7 @@ test( 'cascadeSave all', function(assert)
   var Task = Neuro({
     name: prefix + 'task',
     fields: ['id', 'task_list_id', 'name'],
-    defaults: { done: false, created_at: Date.now }
+    defaults: { done: false, created_at: currentTime() }
   });
 
   var TaskList = Neuro({
@@ -1629,7 +1629,7 @@ test( 'lazy true', function(assert)
   var Task = Neuro({
     name: prefix + 'task',
     fields: ['id', 'task_list_id', 'name'],
-    defaults: { done: false, created_at: Date.now }
+    defaults: { done: false, created_at: currentTime() }
   });
 
   var TaskList = Neuro({
@@ -1663,7 +1663,7 @@ test( 'lazy false', function(assert)
   var Task = Neuro({
     name: prefix + 'task',
     fields: ['id', 'task_list_id', 'name'],
-    defaults: { done: false, created_at: Date.now }
+    defaults: { done: false, created_at: currentTime() }
   });
 
   var TaskList = Neuro({
@@ -1694,7 +1694,7 @@ test( 'query', function(assert)
   var Task = Neuro({
     name: prefix + 'task',
     fields: ['id', 'task_list_id', 'name'],
-    defaults: { done: false, created_at: Date.now }
+    defaults: { done: false, created_at: currentTime() }
   });
 
   var TaskList = Neuro({

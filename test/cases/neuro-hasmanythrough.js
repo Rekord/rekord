@@ -410,8 +410,7 @@ test( 'boot', function(assert)
 
 test( 'wait until dependents are saved', function(assert) 
 {
-  var timescale = 50;
-  var done = assert.async();
+  var timer = assert.timer();
   var prefix = 'hasManyThrough_wait_dependents_';
 
   var UserGroup = Neuro({
@@ -457,8 +456,8 @@ test( 'wait until dependents are saved', function(assert)
   notOk( ug2.$isSaved() );
   notOk( u0.$isSaved() );
   
-  urest.delay = 2 * timescale;
-  ugrest.delay = 2 * timescale;
+  urest.delay = 2;
+  ugrest.delay = 2;
 
   User.Database.rest.returnValue = {id: u0.id, groups: []};
 
@@ -473,7 +472,7 @@ test( 'wait until dependents are saved', function(assert)
   notOk( ug2.$isSaved(), 'group 1 not saved since user not saved' );
   notOk( u0.$isSaved(), 'user not saved' );
 
-  wait( 1 * timescale, function()
+  wait( 1, function()
   {
     notOk( ug0.$isSaved(), 'group 0 not saved since user not saved (2)' );
     notOk( ug1.$isSaved(), 'group 1 not saved since user not saved (2)' );
@@ -481,7 +480,7 @@ test( 'wait until dependents are saved', function(assert)
     notOk( u0.$isSaved(), 'user not saved (2)' );
   });
 
-  wait( 3 * timescale, function()
+  wait( 3, function()
   {
     notOk( ug0.$isSaved(), 'group 0 not saved since user not saved (3)' );
     notOk( ug1.$isSaved(), 'group 1 not saved since user not saved (3)' );
@@ -489,7 +488,7 @@ test( 'wait until dependents are saved', function(assert)
     ok( u0.$isSaved(), 'user saved' );
   });
 
-  wait( 5 * timescale, function()
+  wait( 5, function()
   {
     ok( ug0.$isSaved(), 'group 0 saved' );
     ok( ug1.$isSaved(), 'group 1 saved' );
@@ -497,9 +496,9 @@ test( 'wait until dependents are saved', function(assert)
     ok( u0.$isSaved(), 'user saved' );
 
     deepEqual( u0.groups.toArray(), [g0, g1, g2] );
-
-    done();
   });
+
+  timer.run();
 });
 
 test( 'clone', function(assert)

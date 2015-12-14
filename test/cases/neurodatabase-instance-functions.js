@@ -309,7 +309,7 @@ test( 'refresh', function(assert)
 
 test( 'refresh callback', function(assert)
 {
-  var done = assert.async();
+  var timer = assert.timer();
 
   var rest = Neuro.rest.refresh_callback = new TestRest();
   rest.map.put( 2, {id: 2, name: 'name2'} );
@@ -322,9 +322,11 @@ test( 'refresh callback', function(assert)
 
   var db = refresh.Database;
 
+  expect( 4 );
+
   strictEqual( refresh.all().length, 2 );
 
-  rest.delay = 10;
+  rest.delay = 1;
   rest.map.put( 4, {id: 4, name: 'name4'} );
   rest.map.put( 2, {id: 2, name: 'name2b'} );
 
@@ -336,11 +338,11 @@ test( 'refresh callback', function(assert)
   {
     strictEqual( context, this );
     strictEqual( all.length, 3 );  
-
-    done();
   };
 
   db.refresh( onRefresh, context );
+
+  timer.run();
 });
 
 test( 'refresh relationships', function(assert)

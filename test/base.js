@@ -16,6 +16,71 @@ function hasModel(neuro, key, model, message)
   strictEqual( neuro.get( key ), model, message );
 }
 
+function currentTime()
+{
+  var counter = 0;
+
+  return function()
+  {
+    return counter++;
+  };
+}
+
+// Extending Assert
+
+QUnit.assert.timer = function()
+{
+  return QUnit.assert.currentTimer = new TestTimer();
+};
+
+function TestTimer()
+{
+  this.callbacks = [];
+  this.time = 0;
+}
+
+TestTimer.prototype = 
+{
+  wait: function(millis, func)
+  {
+    var callbacks = this.callbacks;
+    var at = millis + this.time;
+
+    if ( callbacks[ at ] )
+    {
+      callbacks[ at ].push( func );
+    }
+    else
+    {
+      callbacks[ at ] = [ func ];
+    }
+  },
+  run: function()
+  {
+    var callbacks = this.callbacks;
+
+    for (var i = 0; i < callbacks.length; i++)
+    {
+      var calls = callbacks[ i ];
+
+      this.time = i;
+
+      if ( calls )
+      {
+        for (var k = 0; k < calls.length; k++)
+        {
+          calls[ k ]();
+        }
+      }
+    }
+  }
+};
+
+function wait(millis, func)
+{
+  QUnit.assert.currentTimer.wait( millis, func );
+}
+
 // Utility Methods
 
 function offline()
@@ -41,11 +106,6 @@ function restart()
   Neuro.cache = {};
   noline();
   online();
-}
-
-function wait(millis, func)
-{
-  setTimeout( func, millis );
 }
 
 // Neuro.store."database name".(put|remove|all)

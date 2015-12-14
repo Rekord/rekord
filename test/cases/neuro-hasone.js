@@ -418,7 +418,7 @@ test( 'more than one hasOne relationship', function(assert)
 
 test( 'wait until dependents are saved', function(assert) 
 {
-  var timescale = 50;
+  var timer = assert.timer();
   var done = assert.async();
   var prefix = 'hasOne_wait_dependents_';
 
@@ -444,27 +444,27 @@ test( 'wait until dependents are saved', function(assert)
   var u0 = new User({name: 'u0'});
   var t0 = new Task({name: 't0', creator: u0});
 
-  urest.delay = 2 * timescale;
-  trest.delay = 2 * timescale;
+  urest.delay = 2;
+  trest.delay = 2;
 
   t0.$save();
 
   notOk( t0.$isSaved(), 'task not saved since user not saved' );
   notOk( u0.$isSaved(), 'user not saved' );
 
-  wait( 1 * timescale, function() 
+  wait( 1, function() 
   {
     notOk( t0.$isSaved(), 'task not saved since user not saved (2)' );
     notOk( u0.$isSaved(), 'user not saved (2)' );
   }); 
 
-  wait( 3 * timescale, function() 
+  wait( 3, function() 
   {
     notOk( t0.$isSaved(), 'task not saved since user not saved (3)' );
     ok( u0.$isSaved(), 'user saved' );
   });
 
-  wait( 5 * timescale, function() 
+  wait( 5, function() 
   {
     ok( t0.$isSaved(), 'task saved since user has saved' );
     ok( u0.$isSaved(), 'user saved (2)' );
@@ -473,6 +473,8 @@ test( 'wait until dependents are saved', function(assert)
 
     done();
   });
+
+  timer.run();
 });
 
 test( 'clone', function(assert)

@@ -348,6 +348,7 @@ test( 'revision', function(assert)
 
 test( 'loadRemote true', function(assert)
 {
+  var timer = assert.timer();
   var done = assert.async();
 
   var rest = Neuro.rest.loadRemote_true = new TestRest();
@@ -355,7 +356,7 @@ test( 'loadRemote true', function(assert)
   rest.map.put( 2, {id: 2, name: 'name2' } );
   rest.map.put( 3, {id: 3, name: 'name3' } );
   rest.map.put( 4, {id: 4, name: 'name4' } );
-  rest.delay = 10;
+  rest.delay = 1;
 
   var loadRemote_true = Neuro({
     name: 'loadRemote_true',
@@ -365,16 +366,18 @@ test( 'loadRemote true', function(assert)
 
   strictEqual( loadRemote_true.all().length, 0 );
 
-  wait(15, function()
+  wait(2, function()
   {
     strictEqual( loadRemote_true.all().length, 4 );
     done();
   });
-  
+
+  timer.run();
 });
 
 test( 'loadRemote false', function(assert)
 {
+  var timer = assert.timer();
   var done = assert.async();
 
   var rest = Neuro.rest.loadRemote_false = new TestRest();
@@ -382,7 +385,7 @@ test( 'loadRemote false', function(assert)
   rest.map.put( 2, {id: 2, name: 'name2' } );
   rest.map.put( 3, {id: 3, name: 'name3' } );
   rest.map.put( 4, {id: 4, name: 'name4' } );
-  rest.delay = 10;
+  rest.delay = 1;
 
   var loadRemote_false = Neuro({
     name: 'loadRemote_false',
@@ -392,12 +395,13 @@ test( 'loadRemote false', function(assert)
 
   strictEqual( loadRemote_false.all().length, 0 );
 
-  wait(15, function() 
+  wait(2, function() 
   {
     strictEqual( loadRemote_false.all().length, 0 );
     done();
   });
   
+  timer.run();
 });
 
 test( 'autoRefresh true', function(assert)
@@ -937,6 +941,7 @@ test( 'encodings decodings', function(assert)
 
 test( 'timestamps default', function(assert)
 {
+  var timer = assert.timer();
   var done = assert.async();
 
   var prefix = 'timestamps_default_';
@@ -976,6 +981,8 @@ test( 'timestamps default', function(assert)
 
     done();
   });
+
+  timer.run();
 });
 
 test( 'timestamps custom', function(assert)
@@ -1022,6 +1029,7 @@ test( 'timestamps updated_at saving skipped', function(assert)
 
 test( 'timestamps renamed', function(assert)
 {
+  var timer = assert.timer();
   var done = assert.async();
 
   var prefix = 'timestamps_renamed_';
@@ -1061,6 +1069,8 @@ test( 'timestamps renamed', function(assert)
 
     done();
   });
+
+  timer.run();
 });
 
 test( 'extend', function(assert)

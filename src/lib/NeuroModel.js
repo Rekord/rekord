@@ -296,13 +296,13 @@ NeuroModel.prototype =
 
       if ( !dependent.$isSaved() )
       {
-        var off = dependent.$once( NeuroModel.Events.RemoteSaves, onDependentSave );
-
         function onDependentSave()
         {
           callbackOnSaved.apply( contextOnSaved || this, arguments );
           off();
         }
+
+        var off = dependent.$once( NeuroModel.Events.RemoteSaves, onDependentSave );
 
         return false;
       }

@@ -452,6 +452,7 @@ test( '$isSaved', function(assert)
 
 test( '$isSavedLocally', function(assert)
 {
+  var timer = assert.timer();
   var done = assert.async();
 
   var Issue = Neuro({
@@ -466,20 +467,21 @@ test( '$isSavedLocally', function(assert)
   notOk( i0.$isSavedLocally() );
   notOk( i0.$isSaved() );
 
-  rest.delay = 10;
+  rest.delay = 1;
 
   i0.$save();
 
   ok( i0.$isSavedLocally() );
   notOk( i0.$isSaved() );
 
-  wait(15, function()
+  wait(2, function()
   {
     ok( i0.$isSavedLocally() );
     ok( i0.$isSaved() );
     done();
   });
 
+  timer.run();
 });
 
 test( '$getChanges', function(assert)
@@ -699,7 +701,7 @@ test( '$clone simple', function(assert)
     fields: ['name', 'done', 'finished_at']
   });
 
-  var t0 = new Task({name: 't0', done: true, finished_at: Date.now()});
+  var t0 = new Task({name: 't0', done: true, finished_at: currentTime()()});
 
   ok( t0.$key() );
   strictEqual( t0.name, 't0' );
@@ -726,14 +728,14 @@ test( '$clone overwrite', function(assert)
     fields: ['name', 'done', 'finished_at']
   });
 
-  var t0 = new Task({name: 't0', done: true, finished_at: Date.now()});
+  var t0 = new Task({name: 't0', done: true, finished_at: currentTime()()});
 
   ok( t0.$key() );
   strictEqual( t0.name, 't0' );
   strictEqual( t0.done, true );
   isType( t0.finished_at, 'number' );
 
-  var t1 = t0.$clone({name: 't0a', done: false, finished_at: Date.now});
+  var t1 = t0.$clone({name: 't0a', done: false, finished_at: currentTime()});
 
   ok( t1.$key() );
   notStrictEqual( t1.id, t0.id );

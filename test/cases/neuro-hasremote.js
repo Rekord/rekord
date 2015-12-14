@@ -106,7 +106,7 @@ test( 'ninja save sort', function(assert)
   var Task = Neuro({
     name: prefix + 'task',
     fields: ['id', 'name', 'done', 'created_at'],
-    defaults: { done: false, created_at: Date.now }
+    defaults: { done: false, created_at: currentTime() }
   });
 
   var TaskList = Neuro({

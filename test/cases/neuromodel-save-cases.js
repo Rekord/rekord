@@ -192,6 +192,7 @@ test( 'save remote first time, check $saved', function(assert)
 
 test( 'save remote and cache pending should remove locally', function(assert)
 {
+  var timer = assert.timer();
   var done = assert.async();
 
   var Todo = Neuro({
@@ -218,7 +219,9 @@ test( 'save remote and cache pending should remove locally', function(assert)
     ok( t0.$isSaved() );
     notOk( local.map.has( t0.id ) );
     ok( remote.map.has( t0.id ) );
-    done();
 
+    done();
   });
+
+  timer.run();
 });

@@ -2,20 +2,17 @@ module( 'Neuro functions' );
 
 test( 'Neuro.get', function(assert)
 {
-  var done = assert.async();
+  expect( 1 );
 
   Neuro.get( 'neuro_get', function(neuro)
   {
     ok( true, 'neuro returned' );
-
-    done();
   });
 
   Neuro({
     name: 'neuro_get',
     fields: ['id', 'name']
   });
-
 });
 
 test( 'Neuro.indexOf', function(assert)
@@ -187,7 +184,7 @@ test( 'Neuro.copy', function(assert)
 {
   var s1 = void 0;
   var s2 = [1,2,3];
-  var s3 = Date.now;
+  var s3 = currentTime();
   var s4 = null;
   var s5 = new Date();
   var s6 = /^.*\.php$/i;
@@ -279,7 +276,7 @@ test( 'Neuro.isEmpty', function(assert)
 
 test( 'Neuro.compare', function(assert)
 {
-  var d2 = Date.now();
+  var d2 = currentTime()();
   var d0 = new Date( d2 );
   var d1 = new Date( d2 );
   

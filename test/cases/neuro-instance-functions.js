@@ -28,7 +28,7 @@ test( 'create', function(assert)
     name: 'create',
     fields: ['id', 'name', 'created_at'],
     defaults: {
-      created_at: Date.now
+      created_at: currentTime()
     }
   });
 
@@ -59,6 +59,7 @@ test( 'fetch new', function(assert)
 
 test( 'fetch callback', function(assert)
 {
+  var timer = assert.timer();
   var done = assert.async();
 
   var Task = Neuro({
@@ -68,7 +69,7 @@ test( 'fetch callback', function(assert)
 
   var remote = Task.Database.rest;
 
-  remote.delay = 10;
+  remote.delay = 1;
   remote.map.put( 4, {id: 4, name: 'This'} );
 
   var t0 = Task.fetch( 4, function(t1)
@@ -80,10 +81,13 @@ test( 'fetch callback', function(assert)
   });
 
   strictEqual( t0.name, void 0 );
+
+  timer.run();
 });
 
 test( 'grab', function(assert)
 {
+  var timer = assert.timer();
   var done = assert.async();
 
   var Task = Neuro({
@@ -93,7 +97,7 @@ test( 'grab', function(assert)
 
   var remote = Task.Database.rest;
 
-  remote.delay = 10;
+  remote.delay = 1;
   remote.map.put( 4, {id: 4, name: 'That'} );
 
   var t0 = Task.grab( 4, function(fetched)
@@ -104,11 +108,13 @@ test( 'grab', function(assert)
   });
 
   strictEqual( t0, void 0 );
+
+  timer.run();
 });
 
 test( 'grabAll', function(assert)
 {
-  var done = assert.async();
+  var timer = assert.timer();
 
   var Task = Neuro({
     name: 'Neuro_grabAll',
@@ -117,18 +123,20 @@ test( 'grabAll', function(assert)
 
   var remote = Task.Database.rest;
 
-  remote.delay = 10;
+  remote.delay = 1;
   remote.map.put( 4, {id: 4, name: 'That'} );
   remote.map.put( 5, {id: 5, name: 'This'} );
+
+  expect( 2 );
 
   var models = Task.grabAll( function(all)
   {
     strictEqual( all.length, 2 );
-
-    done();
   });
 
   strictEqual( models.length, 0 );
+
+  timer.run();
 });
 
 test( 'refresh', function(assert)
@@ -397,7 +405,7 @@ test( 'where', function(assert)
 
 test( 'query success', function(assert)
 {
-  var done = assert.async();
+  var timer = assert.timer();
   var prefix = 'Neuro_query_success_';
 
   expect( 4 );
@@ -416,9 +424,11 @@ test( 'query success', function(assert)
     {id: 3, name: 't3', done: true}
   ]);
 
-  remote.delay = 10;
+  remote.delay = 1;
 
   var q = Todo.query( 'http://neurosync.io' );
+
+  expect( 4 );
 
   strictEqual( q.length, 0 );
 
@@ -437,18 +447,17 @@ test( 'query success', function(assert)
     ok();
   });
 
-  wait( 15, function()
+  wait( 2, function()
   {
     strictEqual( q.length, 3, 'times up, data loaded' );
-    done();
-
   });
 
+  timer.run();
 });
 
 test( 'query failure', function(assert)
 {
-  var done = assert.async();
+  var timer = assert.timer();
   var prefix = 'Neuro_query_failure_';
 
   expect( 4 );
@@ -467,10 +476,12 @@ test( 'query failure', function(assert)
     {id: 3, name: 't3', done: true}
   ]);
 
-  remote.delay = 10;
+  remote.delay = 1;
   remote.status = 300;
 
   var q = Todo.query( 'http://neurosync.io' );
+
+  expect( 4 );
 
   strictEqual( q.length, 0, 'initial length zero' );
 
@@ -489,17 +500,17 @@ test( 'query failure', function(assert)
     strictEqual( q.length, 0, 'failure notified' );
   });
 
-  wait( 15, function()
+  wait( 2, function()
   {
     strictEqual( q.length, 0, 'times up, no data' );
-    done();
-
   });
 
+  timer.run();
 });
 
 test( 'query single', function(assert)
 {
+  var timer = assert.timer();
   var done = assert.async();
   var prefix = 'Neuro_query_single_';
 
@@ -515,7 +526,7 @@ test( 'query single', function(assert)
 
   remote.queries.put( 'http://neurosync.io', {id: 1, name: 't1', done: true} );
 
-  remote.delay = 10;
+  remote.delay = 1;
 
   var q = Todo.query( 'http://neurosync.io' );
 
@@ -536,18 +547,18 @@ test( 'query single', function(assert)
     ok();
   });
 
-  wait( 15, function()
+  wait( 2, function()
   {
     strictEqual( q.length, 1, 'times up, data loaded' );
-    done();
 
+    done();
   });
 
+  timer.run();
 });
 
 test( 'ready', function(assert)
 {
-  var done = assert.async();
   var prefix = 'Neuro_ready_';
 
   var Todo = Neuro({
@@ -560,15 +571,12 @@ test( 'ready', function(assert)
   Todo.ready(function(db) 
   {
     strictEqual( db, Todo.Database );
-
-    done();
   });
-
 });
 
 test( 'fetchAll', function(assert)
 {
-  var done = assert.async();
+  var timer = assert.timer();
   var prefix = 'Neuro_fetchAll_';
 
   var Todo = Neuro({
@@ -582,16 +590,17 @@ test( 'fetchAll', function(assert)
   remote.map.put( 2, {id: 2, name: 't2' } );
   remote.map.put( 3, {id: 3, name: 't3' } );
 
-  remote.delay = 10;
+  remote.delay = 1;
+
+  expect( 2 );
 
   var todos = Todo.fetchAll(function(loadedTodos)
   {
     strictEqual( todos, loadedTodos );
     strictEqual( todos.length, 3 );
-    
-    done();
   });
 
+  timer.run();
 });
 
 

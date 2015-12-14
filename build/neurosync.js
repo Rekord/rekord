@@ -1493,8 +1493,6 @@ Neuro.get = function(name, callback, context)
     }
     else
     {
-      var off = Neuro.on( Neuro.Events.Initialized, checkNeuro );
-
       function checkNeuro()
       {
         var cached = Neuro.cache[ name ];
@@ -1505,6 +1503,8 @@ Neuro.get = function(name, callback, context)
           off();
         }
       }
+
+      var off = Neuro.on( Neuro.Events.Initialized, checkNeuro );
     }
   }
 
@@ -2694,8 +2694,6 @@ NeuroDatabase.prototype =
     }
     else
     {
-      var off = db.on( NeuroDatabase.Events.Loads, onReady );
-
       function onReady()
       {
         if ( !persistent )
@@ -2712,6 +2710,8 @@ NeuroDatabase.prototype =
           invoked = true;
         }
       }
+
+      var off = db.on( NeuroDatabase.Events.Loads, onReady );
     }
 
     return invoked;
@@ -3343,9 +3343,7 @@ NeuroDatabase.prototype =
       }
 
       return;
-    }
-
-    db.store.all( onLocalLoad, onLocalError );    
+    } 
 
     function onLocalLoad(records, keys)
     {
@@ -3428,6 +3426,8 @@ NeuroDatabase.prototype =
         db.trigger( NeuroDatabase.Events.NoLoad, [db] );
       }
     }
+
+    db.store.all( onLocalLoad, onLocalError );
   },
 
   onOnline: function()
@@ -3460,8 +3460,6 @@ NeuroDatabase.prototype =
   {
     var db = this;
     var callbackContext = context || db;
-
-    db.rest.all( onModels, onLoadError );
     
     function onModels(models) 
     {
@@ -3542,6 +3540,7 @@ NeuroDatabase.prototype =
       }
     }
   
+    db.rest.all( onModels, onLoadError );
   },
 
   onRefreshOnline: function()
@@ -3980,13 +3979,13 @@ NeuroModel.prototype =
 
       if ( !dependent.$isSaved() )
       {
-        var off = dependent.$once( NeuroModel.Events.RemoteSaves, onDependentSave );
-
         function onDependentSave()
         {
           callbackOnSaved.apply( contextOnSaved || this, arguments );
           off();
         }
+
+        var off = dependent.$once( NeuroModel.Events.RemoteSaves, onDependentSave );
 
         return false;
       }

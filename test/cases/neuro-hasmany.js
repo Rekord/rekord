@@ -614,8 +614,7 @@ test( 'auto save parent', function(assert)
 
 test( 'wait until dependents are saved', function(assert) 
 {
-  var timescale = 50;
-  var done = assert.async();
+  var timer = assert.timer();
   var prefix = 'hasMany_wait_dependents_';
 
   var Task = Neuro({
@@ -650,8 +649,8 @@ test( 'wait until dependents are saved', function(assert)
   strictEqual( t0.created_by, u0.id );
   strictEqual( t1.created_by, u0.id );
 
-  urest.delay = 2 * timescale;
-  trest.delay = 2 * timescale;
+  urest.delay = 2;
+  trest.delay = 2;
 
   User.Database.rest.returnValue = {id: u0.id, tasks: []};
 
@@ -664,30 +663,30 @@ test( 'wait until dependents are saved', function(assert)
   notOk( t1.$isSaved(), 'task 1 not saved since user not saved' );
   notOk( u0.$isSaved(), 'user not saved' );
 
-  wait(1 * timescale, function()
+  wait(1, function()
   {
     notOk( t0.$isSaved(), 'task 0 not saved since user not saved (2)' );
     notOk( t1.$isSaved(), 'task 1 not saved since user not saved (2)' );
     notOk( u0.$isSaved(), 'user not saved (2)' );
   });
 
-  wait(3* timescale, function()
+  wait(3, function()
   {
     notOk( t0.$isSaved(), 'task 0 not saved since user not saved (3)' );
     notOk( t1.$isSaved(), 'task 1 not saved since user not saved (3)' );
     ok( u0.$isSaved(), 'user saved' );
   });
 
-  wait(5 * timescale, function()
+  wait(5, function()
   {
     ok( t0.$isSaved(), 'task 0 saved' );
     ok( t1.$isSaved(), 'task 1 saved' );
     ok( u0.$isSaved(), 'user saved' );
 
     deepEqual( u0.tasks.toArray(), [t0, t1] );
-
-    done();
   });
+
+  timer.run();
 });
 
 test( 'clone', function(assert)
