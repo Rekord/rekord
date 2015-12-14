@@ -2446,7 +2446,7 @@ Neuro.store = function(database)
      */
     remove: function(key, success, failure) 
     {
-      success( key, record );
+      success( key );
     },
 
     /**
