@@ -1,6 +1,6 @@
 {
   "name": "neurosync",
-  "version": "1.1.9",
+  "version": "1.1.10",
   "description": "neurosync - build real-time & offline capable applications",
   "author": "Philip Diffenderfer",
   "license": "MIT",
