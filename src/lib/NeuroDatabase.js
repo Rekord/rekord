@@ -41,6 +41,7 @@ function NeuroDatabase(options)
   this.keys = toArray( this.key );
   this.models = new NeuroModelCollection( this );
   this.all = {};
+  this.loaded = {};
   this.className = this.className || toCamelCase( this.name );
   this.initialized = false;
   this.pendingRefresh = false;
@@ -832,9 +833,9 @@ NeuroDatabase.prototype =
   {
     var db = this;
 
-    for (var key in db.all)
+    for (var key in db.loaded)
     {
-      var model = db.all[ key ];
+      var model = db.loaded[ key ];
 
       if ( model.$status === NeuroModel.Status.RemovePending )
       {
@@ -859,6 +860,7 @@ NeuroDatabase.prototype =
       }
     }
 
+    db.loaded = {};
     db.updated();
 
     if ( db.loadRemote )
@@ -894,6 +896,7 @@ NeuroDatabase.prototype =
 
         if ( model.$status !== NeuroModel.Status.Removed )
         {
+          db.loaded[ key ] = model;
           db.all[ key ] = model;
         }
       }
@@ -1076,6 +1079,24 @@ NeuroDatabase.prototype =
   get: function(key)
   {
     return this.all[ this.buildKeyFromInput( key ) ];
+  },
+
+  filter: function(isValid)
+  {
+    var all = this.all;
+    var filtered = [];
+
+    for (var key in all)
+    {
+      var model = all[ key ];
+
+      if ( isValid( model ) )
+      {
+        filtered.push( model );
+      }
+    }
+
+    return filtered;
   },
 
   // Crates a function for handling real-time changes

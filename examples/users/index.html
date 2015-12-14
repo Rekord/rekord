@@ -125,9 +125,9 @@
           Neuro.debugTrace = true;
         })
 
-        .value('RESTBASE', 'http://localhost:8080/api/')
+        .constant('RESTBASE', 'http://localhost:8080/api/')
 
-        .factory('User', function(Neuro, RESTBASE)
+        .run(function(RESTBASE)
         {
           var User = Neuro({
             name: 'user',
@@ -151,13 +151,6 @@
             }
           });
 
-          window.User = User;
-
-          return User;
-        })
-
-        .factory('UserGroup', function(Neuro, RESTBASE)
-        {
           var UserGroup = Neuro({
             name: 'user_group',
             api: RESTBASE + 'user_group/',
@@ -177,13 +170,6 @@
             }
           });
 
-          window.UserGroup = UserGroup;
-
-          return UserGroup;
-        })
-
-        .factory('Group', function(Neuro, RESTBASE)
-        {
           var Group = Neuro({
             name: 'group',
             api: RESTBASE + 'group/',
@@ -207,12 +193,14 @@
             }
           });
 
+          window.User = User;
+          window.UserGroup = UserGroup;
           window.Group = Group;
 
-          return Group;
+          Neuro.load();
         })
 
-        .directive('named', function(NeuroBind)
+        .directive('named', function()
         {
           return {
             restrict: 'E',
@@ -242,7 +230,7 @@
           }
         })
 
-        .controller('UserController', function($scope, Neuro, NeuroBind, User, UserGroup)
+        .controller('UserController', function($scope)
         {
           NeuroBind( $scope, User );
 
@@ -267,7 +255,7 @@
           window.UserController = this;
         })
 
-        .controller('GroupController', function($scope, Neuro, NeuroBind, Group, UserGroup)
+        .controller('GroupController', function($scope)
         {
           NeuroBind( $scope, Group );
 
@@ -292,7 +280,7 @@
           window.GroupController = this;
         })
 
-        .controller('UserGroupController', function($scope, Neuro, NeuroBind, User, Group, UserGroup)
+        .controller('UserGroupController', function($scope)
         {
           NeuroBind( $scope, User );
           NeuroBind( $scope, Group );

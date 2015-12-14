@@ -79,11 +79,11 @@
           Neuro.debugTrace = true;
         })
 
-        .value('PUBSUB', 'http://localhost:3000')
+        .constant('PUBSUB', 'http://localhost:3000')
 
-        .value('RESTBASE', 'http://localhost:8080/api/')
+        .constant('RESTBASE', 'http://localhost:8080/api/')
 
-        .factory('Task', function(Neuro, PUBSUB, RESTBASE)
+        .run(function(PUBSUB, RESTBASE)
         {
           var Task = Neuro({
             name: 'task',
@@ -111,13 +111,6 @@
             }
           });
 
-          window.Task = Task;
-
-          return Task;
-        })
-
-        .factory('TaskList', function(Neuro, PUBSUB, RESTBASE)
-        {
           var TaskList = Neuro({
             name: 'task_list',
             api: RESTBASE + 'task_list/',
@@ -130,8 +123,6 @@
             hasMany: {
               tasks: {
                 model: 'Task',
-                property: true,
-                cascadeRemove: true,
                 comparator: ['-finished_at', '-created_at'],
                 comparatorNullsFirst: true
               }
@@ -141,12 +132,13 @@
             }
           });
 
+          window.Task = Task;
           window.TaskList = TaskList;
 
-          return TaskList;
+          Neuro.load();
         })
 
-        .directive('taskList', function(Task, NeuroBind)
+        .directive('taskList', function()
         {
           return {
             restrict: 'E',
@@ -193,7 +185,7 @@
           }
         })
 
-        .directive('task', function(NeuroBind)
+        .directive('task', function()
         {
           return {
             restrict: 'E',
@@ -231,7 +223,7 @@
           }
         })
 
-        .controller('TaskController', function($scope, Neuro, NeuroBind, TaskList)
+        .controller('TaskController', function($scope)
         {
           NeuroBind( $scope, TaskList );
 

@@ -240,8 +240,7 @@ extend( NeuroRelationMultiple, NeuroHasManyThrough,
   {
     return function (throughDatabase)
     {
-      var throughsAll = throughDatabase.models;
-      var throughs = throughsAll.filter( relation.isRelated );
+      var throughs = throughDatabase.filter( relation.isRelated );
 
       Neuro.debug( Neuro.Debugs.HASMANYTHRU_LAZY_LOAD, this, relation, throughs );
 

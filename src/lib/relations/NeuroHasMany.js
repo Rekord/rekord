@@ -209,7 +209,7 @@ extend( NeuroRelationMultiple, NeuroHasMany,
   {
     return function (relatedDatabase)
     {
-      var related = relatedDatabase.models.filter( relation.isRelated );
+      var related = relatedDatabase.filter( relation.isRelated );
 
       Neuro.debug( Neuro.Debugs.HASMANY_LAZY_LOAD, this, relation, related );
 

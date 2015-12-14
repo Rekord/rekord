@@ -1487,8 +1487,9 @@ Neuro.autoload = false;
 
 Neuro.unloaded = [];
 
-Neuro.load = function()
+Neuro.load = function(callback, context)
 {
+  var callbackContext = context || this;
   var loading = Neuro.unloaded.slice();
   var loaded = [];
   var loadedSuccess = [];
@@ -1511,6 +1512,11 @@ Neuro.load = function()
         {
           db.loadFinish();
         }
+      }
+
+      if ( callback )
+      {
+        callback.call( callbackContext );
       }
     }
   }
@@ -2583,6 +2589,7 @@ function NeuroDatabase(options)
   this.keys = toArray( this.key );
   this.models = new NeuroModelCollection( this );
   this.all = {};
+  this.loaded = {};
   this.className = this.className || toCamelCase( this.name );
   this.initialized = false;
   this.pendingRefresh = false;
@@ -3374,9 +3381,9 @@ NeuroDatabase.prototype =
   {
     var db = this;
 
-    for (var key in db.all)
+    for (var key in db.loaded)
     {
-      var model = db.all[ key ];
+      var model = db.loaded[ key ];
 
       if ( model.$status === NeuroModel.Status.RemovePending )
       {
@@ -3401,6 +3408,7 @@ NeuroDatabase.prototype =
       }
     }
 
+    db.loaded = {};
     db.updated();
 
     if ( db.loadRemote )
@@ -3436,6 +3444,7 @@ NeuroDatabase.prototype =
 
         if ( model.$status !== NeuroModel.Status.Removed )
         {
+          db.loaded[ key ] = model;
           db.all[ key ] = model;
         }
       }
@@ -3618,6 +3627,24 @@ NeuroDatabase.prototype =
   get: function(key)
   {
     return this.all[ this.buildKeyFromInput( key ) ];
+  },
+
+  filter: function(isValid)
+  {
+    var all = this.all;
+    var filtered = [];
+
+    for (var key in all)
+    {
+      var model = all[ key ];
+
+      if ( isValid( model ) )
+      {
+        filtered.push( model );
+      }
+    }
+
+    return filtered;
   },
 
   // Crates a function for handling real-time changes
@@ -8724,7 +8751,7 @@ extend( NeuroRelationMultiple, NeuroHasMany,
   {
     return function (relatedDatabase)
     {
-      var related = relatedDatabase.models.filter( relation.isRelated );
+      var related = relatedDatabase.filter( relation.isRelated );
 
       Neuro.debug( Neuro.Debugs.HASMANY_LAZY_LOAD, this, relation, related );
 
@@ -9126,8 +9153,7 @@ extend( NeuroRelationMultiple, NeuroHasManyThrough,
   {
     return function (throughDatabase)
     {
-      var throughsAll = throughDatabase.models;
-      var throughs = throughsAll.filter( relation.isRelated );
+      var throughs = throughDatabase.filter( relation.isRelated );
 
       Neuro.debug( Neuro.Debugs.HASMANYTHRU_LAZY_LOAD, this, relation, throughs );
 

@@ -45,11 +45,11 @@
           $logProvider.debugEnabled( true );
         })
 
-        .value('PUBSUB', 'http://localhost:3000')
+        .constant('PUBSUB', 'http://localhost:3000')
 
-        .value('RESTBASE', 'http://localhost:8080/api/')
+        .constant('RESTBASE', 'http://localhost:8080/api/')
 
-        .factory('Todo', function(Neuro, PUBSUB, RESTBASE)
+        .run(function(PUBSUB, RESTBASE)
         {
           var Todo = Neuro({
             name: 'todos',
@@ -70,7 +70,7 @@
 
           window.Todo = Todo;
 
-          return Todo;
+          Neuro.load();
         })
 
         .directive('todo', function()
@@ -110,7 +110,7 @@
           }
         })
 
-        .controller('TodoController', function($scope, Neuro, Todo, NeuroBind)
+        .controller('TodoController', function($scope)
         {
           NeuroBind( $scope, Todo );
 
