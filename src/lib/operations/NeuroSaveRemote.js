@@ -189,12 +189,7 @@ extend( NeuroOperation, NeuroSaveRemote,
       // Publish saved data to everyone else
       Neuro.debug( Neuro.Debugs.SAVE_PUBLISH, model, model.$publish );
 
-      db.live(
-      {
-        op:     NeuroDatabase.Live.Save,
-        model:  model.$publish,
-        key:    model.$key()
-      });
+      db.live.save( model, model.$publish );
     }
   },
 

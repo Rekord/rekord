@@ -488,7 +488,7 @@ test( 'comparator', function(assert)
   var Task = Neuro({
     name: prefix + 'task',
     fields: ['id', 'name', 'done', 'created_at'],
-    defaults: { done: false, created_at: Date.now }
+    defaults: { done: false, created_at: currentTime() }
   });
 
   var TaskList = Neuro({
@@ -523,7 +523,7 @@ test( 'comparatorNullsFirst', function(assert)
   var Task = Neuro({
     name: prefix + 'task',
     fields: ['id', 'name', 'done', 'created_at'],
-    defaults: { done: false, created_at: Date.now }
+    defaults: { done: false, created_at: currentTime() }
   });
 
   var TaskList = Neuro({
@@ -560,7 +560,7 @@ test( 'lazy true', function(assert)
   var Task = Neuro({
     name: prefix + 'task',
     fields: ['id', 'name'],
-    defaults: { done: false, created_at: Date.now }
+    defaults: { done: false, created_at: currentTime() }
   });
 
   var TaskList = Neuro({
@@ -597,7 +597,7 @@ test( 'lazy false', function(assert)
   var Task = Neuro({
     name: prefix + 'task',
     fields: ['id', 'name'],
-    defaults: { done: false, created_at: Date.now }
+    defaults: { done: false, created_at: currentTime() }
   });
 
   var TaskList = Neuro({
@@ -631,7 +631,7 @@ test( 'autoRefresh', function(assert)
   var Task = Neuro({
     name: prefix + 'task',
     fields: ['id', 'name'],
-    defaults: { done: false, created_at: Date.now }
+    defaults: { done: false, created_at: currentTime() }
   });
 
   var TaskList = Neuro({

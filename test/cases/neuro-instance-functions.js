@@ -206,13 +206,13 @@ test( 'fetch existing', function(assert)
 test( 'boot', function(assert)
 {
   var Task = Neuro({
-    name: 'boot',
+    name: 'Neuro_boot_task',
     fields: ['name', 'done']
   });
 
   var local = Task.Database.store;
   var remote = Task.Database.rest;
-  var live = Task.Database.live.live;
+  var live = Task.Database.live;
 
   var t0 = Task.boot({
     id: 4,

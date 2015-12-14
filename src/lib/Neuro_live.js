@@ -8,15 +8,22 @@
  * 
  * @param  {NeuroDatabase} database
  *         The database this live function is for.
- * @param  {function} onPublish
- *         The function which receives live operations.
  * @return {function} -
  *         The function which sends operations.
  */
-Neuro.live = function(database, onPublish)
+Neuro.live = function(database)
 {
-  return function publish(message)
-  {
-    // ignore the message.
+  return {
+
+    save: function(model, data)
+    {
+      // ignore save
+    },
+
+    remove: function(model)
+    {
+      // ignore remove
+    }
+
   };
 };

@@ -835,7 +835,7 @@ test( 'cascadeRemove none', function(assert)
 
   var db = Task.Database;
   var rest = db.rest;
-  var live = db.live.live;
+  var live = db.live;
   var local = db.store;
 
   ok( t0.$exists() );
@@ -890,7 +890,7 @@ test( 'cascadeRemove local', function(assert)
 
   var db = Task.Database;
   var rest = db.rest;
-  var live = db.live.live;
+  var live = db.live;
   var local = db.store;
 
   ok( t0.$exists() );
@@ -945,7 +945,7 @@ test( 'cascadeRemove rest', function(assert)
 
   var db = Task.Database;
   var rest = db.rest;
-  var live = db.live.live;
+  var live = db.live;
   var local = db.store;
 
   ok( t0.$exists() );
@@ -1000,7 +1000,7 @@ test( 'cascadeRemove nolive', function(assert)
 
   var db = Task.Database;
   var rest = db.rest;
-  var live = db.live.live;
+  var live = db.live;
   var local = db.store;
 
   ok( t0.$exists() );
@@ -1055,7 +1055,7 @@ test( 'cascadeRemove live', function(assert)
 
   var db = Task.Database;
   var rest = db.rest;
-  var live = db.live.live;
+  var live = db.live;
   var local = db.store;
 
   ok( t0.$exists() );
@@ -1110,7 +1110,7 @@ test( 'cascadeRemove norest', function(assert)
 
   var db = Task.Database;
   var rest = db.rest;
-  var live = db.live.live;
+  var live = db.live;
   var local = db.store;
 
   ok( t0.$exists() );
@@ -1165,7 +1165,7 @@ test( 'cascadeRemove remote', function(assert)
 
   var db = Task.Database;
   var rest = db.rest;
-  var live = db.live.live;
+  var live = db.live;
   var local = db.store;
 
   ok( t0.$exists() );
@@ -1220,7 +1220,7 @@ test( 'cascadeRemove all', function(assert)
 
   var db = Task.Database;
   var rest = db.rest;
-  var live = db.live.live;
+  var live = db.live;
   var local = db.store;
 
   ok( t0.$exists() );
@@ -1270,7 +1270,7 @@ test( 'cascadeSave none', function(assert)
 
   var db = Task.Database;
   var rest = db.rest;
-  var live = db.live.live;
+  var live = db.live;
   var local = db.store;
 
   var t0 = Task.create({name: 't0'});
@@ -1317,7 +1317,7 @@ test( 'cascadeSave local', function(assert)
 
   var db = Task.Database;
   var rest = db.rest;
-  var live = db.live.live;
+  var live = db.live;
   var local = db.store;
 
   var t0 = Task.create({name: 't0'});
@@ -1364,7 +1364,7 @@ test( 'cascadeSave rest', function(assert)
 
   var db = Task.Database;
   var rest = db.rest;
-  var live = db.live.live;
+  var live = db.live;
   var local = db.store;
 
   var t0 = Task.create({name: 't0'});
@@ -1411,7 +1411,7 @@ test( 'cascadeSave nolive', function(assert)
 
   var db = Task.Database;
   var rest = db.rest;
-  var live = db.live.live;
+  var live = db.live;
   var local = db.store;
 
   var t0 = Task.create({name: 't0'});
@@ -1458,7 +1458,7 @@ test( 'cascadeSave live', function(assert)
 
   var db = Task.Database;
   var rest = db.rest;
-  var live = db.live.live;
+  var live = db.live;
   var local = db.store;
 
   var t0 = Task.create({name: 't0'});
@@ -1505,7 +1505,7 @@ test( 'cascadeSave norest', function(assert)
 
   var db = Task.Database;
   var rest = db.rest;
-  var live = db.live.live;
+  var live = db.live;
   var local = db.store;
 
   var t0 = Task.create({name: 't0'});
@@ -1552,7 +1552,7 @@ test( 'cascadeSave remote', function(assert)
 
   var db = Task.Database;
   var rest = db.rest;
-  var live = db.live.live;
+  var live = db.live;
   var local = db.store;
 
   var t0 = Task.create({name: 't0'});
@@ -1599,7 +1599,7 @@ test( 'cascadeSave all', function(assert)
 
   var db = Task.Database;
   var rest = db.rest;
-  var live = db.live.live;
+  var live = db.live;
   var local = db.store;
 
   var t0 = Task.create({name: 't0'});

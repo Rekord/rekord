@@ -169,7 +169,7 @@ test( 'ninja save sort', function(assert)
   var Task = Neuro({
     name: prefix + 'task',
     fields: ['id', 'task_list_id', 'name', 'done', 'created_at'],
-    defaults: { done: false, created_at: Date.now },
+    defaults: { done: false, created_at: currentTime() },
     belongsTo: {
       list: {
         model: prefix + 'list',
@@ -217,7 +217,7 @@ test( 'ninja save add', function(assert)
   var Task = Neuro({
     name: prefix + 'task',
     fields: ['id', 'task_list_id', 'name', 'done', 'created_at'],
-    defaults: { done: false, created_at: Date.now },
+    defaults: { done: false, created_at: currentTime() },
     belongsTo: {
       list: {
         model: prefix + 'list',

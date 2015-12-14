@@ -22,7 +22,7 @@ function hasModel(neuro, key, model, message)
 
 function currentTime()
 {
-  var counter = 0;
+  var counter = 1;
 
   return function()
   {
@@ -222,66 +222,63 @@ TestStore.prototype =
 
 // Neuro.live."database name".(save|remove)
 
-Neuro.live = function(database, onPublish)
+Neuro.live = function(database)
 {
   var live = Neuro.live[ database.name ];
 
   if ( !live )
   {
-    live = Neuro.live[ database.name ] = new TestLive( database, onPublish );
+    live = Neuro.live[ database.name ] = new TestLive( database );
   }
 
-  live.onPublish = onPublish;
-
-  return live.handleMessage();
+  return live;
 };
 
-function TestLive(database, onPublish)
+function TestLive(database)
 {
   this.database = database;
-  this.onPublish = onPublish;
   this.onHandleMessage = null;
   this.lastMessage = null;
 }
 
 TestLive.prototype = 
 {
-  save: function(data)
+  save: function(model, data)
+  {
+    this.lastMessage = {
+      op: 'SAVE',
+      key: model.$key(),
+      model: data
+    };
+
+    if ( this.onHandleMessage )
+    {
+      this.onHandleMessage( this.lastMessage );
+    }
+  },
+  remove: function(model)
+  {
+    this.lastMessage = {
+      op: 'REMOVE',
+      key: model.$key()
+    };
+
+    if ( this.onHandleMessage )
+    {
+      this.onHandleMessage( this.lastMessage );
+    }
+  },
+  liveSave: function(data)
   {
     var key = this.database.buildKeyFromInput( data );
 
-    this.onPublish({
-      op: Neuro.Database.Live.Save,
-      model: data,
-      key: key
-    });
+    this.database.liveSave( key, data );
   },
-  remove: function(input)
+  liveRemove: function(input)
   {
     var key = this.database.buildKeyFromInput( input );
 
-    this.onPublish({
-      op: Neuro.Database.Live.Remove,
-      key: key
-    });
-  },
-  handleMessage: function()
-  {
-    var live = this;
-
-    var onMessage = function(message)
-    {
-      live.lastMessage = message;
-      
-      if ( live.onHandleMessage )
-      {
-        live.onHandleMessage( message );
-      }
-    };
-
-    onMessage.live = live;
-
-    return onMessage;
+    this.database.liveRemove( key );
   }
 };
 

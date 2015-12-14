@@ -562,7 +562,7 @@ test( 'cascadeRemove none', function(assert)
   var db = UserGroup.Database;
   var rest = db.rest;
   var local = db.store;
-  var live = db.live.live;
+  var live = db.live;
 
   seedUserGroups2( test );
 
@@ -648,7 +648,7 @@ test( 'cascadeRemove local', function(assert)
   var db = UserGroup.Database;
   var rest = db.rest;
   var local = db.store;
-  var live = db.live.live;
+  var live = db.live;
 
   seedUserGroups2( test );
 
@@ -734,7 +734,7 @@ test( 'cascadeRemove rest', function(assert)
   var db = UserGroup.Database;
   var rest = db.rest;
   var local = db.store;
-  var live = db.live.live;
+  var live = db.live;
 
   seedUserGroups2( test );
 
@@ -820,7 +820,7 @@ test( 'cascadeRemove nolive', function(assert)
   var db = UserGroup.Database;
   var rest = db.rest;
   var local = db.store;
-  var live = db.live.live;
+  var live = db.live;
 
   seedUserGroups2( test );
 
@@ -906,7 +906,7 @@ test( 'cascadeRemove live', function(assert)
   var db = UserGroup.Database;
   var rest = db.rest;
   var local = db.store;
-  var live = db.live.live;
+  var live = db.live;
 
   seedUserGroups2( test );
 
@@ -992,7 +992,7 @@ test( 'cascadeRemove norest', function(assert)
   var db = UserGroup.Database;
   var rest = db.rest;
   var local = db.store;
-  var live = db.live.live;
+  var live = db.live;
 
   seedUserGroups2( test );
 
@@ -1078,7 +1078,7 @@ test( 'cascadeRemove remote', function(assert)
   var db = UserGroup.Database;
   var rest = db.rest;
   var local = db.store;
-  var live = db.live.live;
+  var live = db.live;
 
   seedUserGroups2( test );
 
@@ -1164,7 +1164,7 @@ test( 'cascadeRemove all', function(assert)
   var db = UserGroup.Database;
   var rest = db.rest;
   var local = db.store;
-  var live = db.live.live;
+  var live = db.live;
 
   seedUserGroups2( test );
 
@@ -1249,7 +1249,7 @@ test( 'cascadeSave local', function(assert)
 
   var db = UserGroup.Database;
   var rest = db.rest;
-  var live = db.live.live;
+  var live = db.live;
   var local = db.store;
 
   seedUserGroups2( test );
@@ -1291,7 +1291,7 @@ test( 'cascadeSave rest', function(assert)
 
   var db = UserGroup.Database;
   var rest = db.rest;
-  var live = db.live.live;
+  var live = db.live;
   var local = db.store;
 
   seedUserGroups2( test );
@@ -1333,7 +1333,7 @@ test( 'cascadeSave nolive', function(assert)
 
   var db = UserGroup.Database;
   var rest = db.rest;
-  var live = db.live.live;
+  var live = db.live;
   var local = db.store;
 
   seedUserGroups2( test );
@@ -1375,7 +1375,7 @@ test( 'cascadeSave live', function(assert)
 
   var db = UserGroup.Database;
   var rest = db.rest;
-  var live = db.live.live;
+  var live = db.live;
   var local = db.store;
 
   seedUserGroups2( test );
@@ -1417,7 +1417,7 @@ test( 'cascadeSave norest', function(assert)
 
   var db = UserGroup.Database;
   var rest = db.rest;
-  var live = db.live.live;
+  var live = db.live;
   var local = db.store;
 
   seedUserGroups2( test );
@@ -1459,7 +1459,7 @@ test( 'cascadeSave remote', function(assert)
 
   var db = UserGroup.Database;
   var rest = db.rest;
-  var live = db.live.live;
+  var live = db.live;
   var local = db.store;
 
   seedUserGroups2( test );
@@ -1501,7 +1501,7 @@ test( 'cascadeSave all', function(assert)
 
   var db = UserGroup.Database;
   var rest = db.rest;
-  var live = db.live.live;
+  var live = db.live;
   var local = db.store;
 
   seedUserGroups2( test );
@@ -1543,7 +1543,7 @@ test( 'cascadeSaveRelated none', function(assert)
 
   var db = Group.Database;
   var rest = db.rest;
-  var live = db.live.live;
+  var live = db.live;
   var local = db.store;
 
   seedUserGroups2( test );
@@ -1588,7 +1588,7 @@ test( 'cascadeSaveRelated local', function(assert)
 
   var db = Group.Database;
   var rest = db.rest;
-  var live = db.live.live;
+  var live = db.live;
   var local = db.store;
 
   seedUserGroups2( test );
@@ -1633,7 +1633,7 @@ test( 'cascadeSaveRelated rest', function(assert)
 
   var db = Group.Database;
   var rest = db.rest;
-  var live = db.live.live;
+  var live = db.live;
   var local = db.store;
 
   seedUserGroups2( test );
@@ -1674,7 +1674,7 @@ test( 'cascadeSaveRelated nolive', function(assert)
 
   var db = Group.Database;
   var rest = db.rest;
-  var live = db.live.live;
+  var live = db.live;
   var local = db.store;
 
   seedUserGroups2( test );
@@ -1715,7 +1715,7 @@ test( 'cascadeSaveRelated live', function(assert)
 
   var db = Group.Database;
   var rest = db.rest;
-  var live = db.live.live;
+  var live = db.live;
   var local = db.store;
 
   seedUserGroups2( test );
@@ -1756,7 +1756,7 @@ test( 'cascadeSaveRelated norest', function(assert)
 
   var db = Group.Database;
   var rest = db.rest;
-  var live = db.live.live;
+  var live = db.live;
   var local = db.store;
 
   seedUserGroups2( test );
@@ -1797,7 +1797,7 @@ test( 'cascadeSaveRelated remote', function(assert)
 
   var db = Group.Database;
   var rest = db.rest;
-  var live = db.live.live;
+  var live = db.live;
   var local = db.store;
 
   seedUserGroups2( test );
@@ -1838,7 +1838,7 @@ test( 'cascadeSaveRelated all', function(assert)
 
   var db = Group.Database;
   var rest = db.rest;
-  var live = db.live.live;
+  var live = db.live;
   var local = db.store;
 
   seedUserGroups2( test );

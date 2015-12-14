@@ -104,6 +104,6 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 
   db.rest   = Neuro.rest( db );
   db.store  = Neuro.store( db );
-  db.live   = Neuro.live( db, db.handlePublish( db ) );
+  db.live   = Neuro.live( db );
 
 });

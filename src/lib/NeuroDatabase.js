@@ -55,7 +55,7 @@ function NeuroDatabase(options)
   // Services
   this.rest   = Neuro.rest( this );
   this.store  = Neuro.store( this );
-  this.live   = Neuro.live( this, this.handlePublish( this ) );
+  this.live   = Neuro.live( this );
 
   // Functions
   this.setComparator( this.comparator, this.comparatorNullsFirst );
@@ -146,12 +146,6 @@ NeuroDatabase.Events =
   ModelRemoved: 'model-removed',
   Loads:        'no-load remote-load local-load',
   Changes:      'updated'
-};
-
-NeuroDatabase.Live = 
-{
-  Save:         'SAVE',
-  Remove:       'REMOVE'
 };
 
 Neuro.Cache = 
@@ -1099,35 +1093,22 @@ NeuroDatabase.prototype =
     return filtered;
   },
 
-  // Crates a function for handling real-time changes
-  handlePublish: function(db)
+  liveSave: function(key, encoded)
   {
-    return function(message)
+    this.putRemoteData( encoded, key );
+    this.updated();
+
+    Neuro.debug( Neuro.Debugs.REALTIME_SAVE, this, encoded, key );
+  },
+
+  liveRemove: function(key)
+  {
+    if ( this.destroyLocalModel( key ) )
     {
-      var key = message.key;
-      var encoded = message.model;
+      this.updated(); 
+    }
 
-      switch (message.op) 
-      {
-      case NeuroDatabase.Live.Save:
-
-        db.putRemoteData( encoded, key );
-        db.updated();
-
-        Neuro.debug( Neuro.Debugs.REALTIME_SAVE, db, message.model, key );
-        break;
-
-      case NeuroDatabase.Live.Remove:
-
-        if ( db.destroyLocalModel( key ) )
-        {
-          db.updated(); 
-        }
-
-        Neuro.debug( Neuro.Debugs.REALTIME_REMOVE, db, key );
-        break;
-      }
-    };
+    Neuro.debug( Neuro.Debugs.REALTIME_REMOVE, this, key );
   },
 
   // Return an instance of the model with the data as initial values

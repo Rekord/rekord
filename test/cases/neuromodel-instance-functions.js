@@ -225,7 +225,7 @@ test( '$save cascade remote', function(assert)
 
   var local = Issue.Database.store;
   var remote = Issue.Database.rest;
-  var live = Issue.Database.live.live;
+  var live = Issue.Database.live;
 
   var i0 = new Issue();
 
@@ -249,7 +249,7 @@ test( '$save cascade rest', function(assert)
 
   var local = Issue.Database.store;
   var remote = Issue.Database.rest;
-  var live = Issue.Database.live.live;
+  var live = Issue.Database.live;
 
   var i0 = new Issue();
 
@@ -273,7 +273,7 @@ test( '$save cascade local', function(assert)
 
   var local = Issue.Database.store;
   var remote = Issue.Database.rest;
-  var live = Issue.Database.live.live;
+  var live = Issue.Database.live;
 
   var i0 = new Issue();
 
@@ -297,7 +297,7 @@ test( '$save cascade none', function(assert)
 
   var local = Issue.Database.store;
   var remote = Issue.Database.rest;
-  var live = Issue.Database.live.live;
+  var live = Issue.Database.live;
 
   var i0 = new Issue();
 
@@ -321,7 +321,7 @@ test( '$remove cascade none', function(assert)
 
   var local = Issue.Database.store;
   var remote = Issue.Database.rest;
-  var live = Issue.Database.live.live;
+  var live = Issue.Database.live;
 
   var i0 = Issue.create({title: 'Title0', number: 1});
 
@@ -345,7 +345,7 @@ test( '$remove cascade rest', function(assert)
 
   var local = Issue.Database.store;
   var remote = Issue.Database.rest;
-  var live = Issue.Database.live.live;
+  var live = Issue.Database.live;
 
   var i0 = Issue.create({title: 'Title0', number: 1});
 
@@ -369,7 +369,7 @@ test( '$remove cascade remote', function(assert)
 
   var local = Issue.Database.store;
   var remote = Issue.Database.rest;
-  var live = Issue.Database.live.live;
+  var live = Issue.Database.live;
 
   var i0 = Issue.create({title: 'Title0', number: 1});
 

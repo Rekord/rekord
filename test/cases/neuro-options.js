@@ -66,7 +66,7 @@ test( 'key array', function(assert)
   var ka0 = key_array.create({
     user_id: 2,
     group_id: 3,
-    created_at: Date.now()
+    created_at: currentTime()()
   });
 
   strictEqual( ka0.$key(), '2/3' );
@@ -88,7 +88,7 @@ test( 'key separator', function(assert)
   var ks0 = key_separator.create({
     user_id: 2,
     group_id: 3,
-    created_at: Date.now()
+    created_at: currentTime()()
   });
 
   strictEqual( ks0.$key(), '2/group/3' );
@@ -132,7 +132,7 @@ test( 'defaults', function(assert)
     fields: ['id', 'created_at'],
     defaults: {
       id: Neuro.uuid,
-      created_at: Date.now
+      created_at: currentTime()
     }
   });
 
@@ -305,7 +305,7 @@ test( 'comparatorNullsFirst', function(assert)
 
 test( 'revision', function(assert)
 {
-  var now = Date.now();
+  var now = currentTime()();
 
   var Todo = Neuro({
     name: 'revision_todo',
@@ -319,7 +319,7 @@ test( 'revision', function(assert)
     revision: 'updated_at'
   });
 
-  var live = Todo.Database.live.live;
+  var live = Todo.Database.live;
 
   isType( Todo.Database.revisionFunction, 'function' );
 
@@ -329,7 +329,7 @@ test( 'revision', function(assert)
 
   strictEqual( t0.done, false );
 
-  live.save({
+  live.liveSave({
     id: t0.id,
     done: true,
     updated_at: now + 100
@@ -337,7 +337,7 @@ test( 'revision', function(assert)
 
   strictEqual( t0.done, true );
 
-  live.save({
+  live.liveSave({
     id: t0.id,
     done: false,
     updated_at: now - 100
@@ -718,21 +718,21 @@ test( 'methods', function(assert)
       name: '',
       done: false,
       finished_at: null,
-      updated_at: Date.now,
-      created_at: Date.now
+      updated_at: currentTime(),
+      created_at: currentTime()
     },
     methods: {
       setDone: function(done) {
         this.$save({
           done: done,
-          finished_at: done ? Date.now() : null,
-          updated_at: Date.now()
+          finished_at: done ? currentTime()() : null,
+          updated_at: currentTime()()
         });
       },
       setName: function(name) {
         this.$save({
           name: name,
-          updated_at: Date.now()
+          updated_at: currentTime()()
         });
       }
     }
@@ -820,7 +820,7 @@ test( 'dynamic get/set', function(assert)
     fields: ['name', 'finished_at', 'updated_at'],
     defaults: {
       finished_at: null,
-      updated_at: Date.now
+      updated_at: currentTime()
     },
     dynamic: {
       done: {
@@ -828,8 +828,8 @@ test( 'dynamic get/set', function(assert)
           return !!this.finished_at;
         },
         set: function(x) {
-          this.finished_at = x ? Date.now() : null;
-          this.updated_at = Date.now();
+          this.finished_at = x ? currentTime()() : null;
+          this.updated_at = currentTime()();
         }
       }
     }
@@ -853,7 +853,7 @@ test( 'dynamic get/set', function(assert)
   strictEqual( t.finished_at, null );
   isType( t.updated_at, 'number' );
 
-  t.finished_at = Date.now();
+  t.finished_at = currentTime()();
 
   strictEqual( t.done, true );
   isType( t.finished_at, 'number' );

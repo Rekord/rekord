@@ -594,7 +594,7 @@ test( 'cascade none', function(assert)
 
   var db = Task.Database;
   var rest = db.rest;
-  var live = db.live.live;
+  var live = db.live;
   var local = db.store;
 
   ok( u0.$isSaved() );
@@ -645,7 +645,7 @@ test( 'cascade local', function(assert)
 
   var db = Task.Database;
   var rest = db.rest;
-  var live = db.live.live;
+  var live = db.live;
   var local = db.store;
 
   ok( u0.$isSaved() );
@@ -696,7 +696,7 @@ test( 'cascade rest', function(assert)
 
   var db = Task.Database;
   var rest = db.rest;
-  var live = db.live.live;
+  var live = db.live;
   var local = db.store;
 
   ok( u0.$isSaved() );
@@ -747,7 +747,7 @@ test( 'cascade nolive', function(assert)
 
   var db = Task.Database;
   var rest = db.rest;
-  var live = db.live.live;
+  var live = db.live;
   var local = db.store;
 
   ok( u0.$isSaved() );
@@ -798,7 +798,7 @@ test( 'cascade live', function(assert)
 
   var db = Task.Database;
   var rest = db.rest;
-  var live = db.live.live;
+  var live = db.live;
   var local = db.store;
 
   ok( u0.$isSaved() );
@@ -849,7 +849,7 @@ test( 'cascade norest', function(assert)
 
   var db = Task.Database;
   var rest = db.rest;
-  var live = db.live.live;
+  var live = db.live;
   var local = db.store;
 
   ok( u0.$isSaved() );
@@ -900,7 +900,7 @@ test( 'cascade remote', function(assert)
 
   var db = Task.Database;
   var rest = db.rest;
-  var live = db.live.live;
+  var live = db.live;
   var local = db.store;
 
   ok( u0.$isSaved() );
@@ -951,7 +951,7 @@ test( 'cascade all', function(assert)
 
   var db = Task.Database;
   var rest = db.rest;
-  var live = db.live.live;
+  var live = db.live;
   var local = db.store;
 
   ok( u0.$isSaved() );

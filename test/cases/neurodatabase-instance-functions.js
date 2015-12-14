@@ -184,8 +184,8 @@ test( 'setRevision', function(assert)
     defaults: {
       name: null,
       done: false,
-      updated_at: Date.now,
-      created_at: Date.now
+      updated_at: currentTime(),
+      created_at: currentTime()
     }
   });
 
@@ -199,28 +199,28 @@ test( 'setRevision', function(assert)
 
   strictEqual( t0.done, false );
 
-  Neuro.live.setRevision_todo.save({
+  Neuro.live.setRevision_todo.liveSave({
     id: t0.id,
     done: true,
-    updated_at: Date.now() + 100
+    updated_at: currentTime()() + 100
   });
 
   strictEqual( t0.done, true );
 
-  Neuro.live.setRevision_todo.save({
+  Neuro.live.setRevision_todo.liveSave({
     id: t0.id,
     done: false,
-    updated_at: Date.now() - 100
+    updated_at: currentTime()() - 100
   });
 
   strictEqual( t0.done, false );
 
   db.setRevision( 'updated_at' );
 
-   Neuro.live.setRevision_todo.save({
+   Neuro.live.setRevision_todo.liveSave({
     id: t0.id,
     done: true,
-    updated_at: Date.now() - 200
+    updated_at: currentTime()() - 200
   });
 
   strictEqual( t0.done, false );
