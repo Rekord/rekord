@@ -27,7 +27,20 @@ function Neuro(options)
   Neuro.cache[ database.name ] = model;
   Neuro.cache[ database.className ] = model;
 
-  database.init();
+  if ( Neuro.autoload )
+  {
+    database.loadBegin(function onLoadFinish(success)
+    {
+      if ( success )
+      {
+        database.loadFinish();
+      }
+    });  
+  }
+  else
+  {
+    Neuro.unloaded.push( database );    
+  }
 
   Neuro.trigger( Neuro.Events.Initialized, [model] );
 
@@ -35,6 +48,50 @@ function Neuro(options)
 
   return model;
 }
+
+Neuro.autoload = false;
+
+Neuro.unloaded = [];
+
+Neuro.load = function(callback, context)
+{
+  var callbackContext = context || this;
+  var loading = Neuro.unloaded.slice();
+  var loaded = [];
+  var loadedSuccess = [];
+
+  Neuro.unloaded.length = 0;
+
+  function onLoadFinish(success, db)
+  {
+    loadedSuccess.push( success );
+    loaded.push( db );
+
+    if ( loaded.length === loading.length )
+    {
+      for (var k = 0; k < loaded.length; k++)
+      {
+        var db = loaded[ k ];
+        var success = loadedSuccess[ k ];
+
+        if ( success )
+        {
+          db.loadFinish();
+        }
+      }
+
+      if ( callback )
+      {
+        callback.call( callbackContext );
+      }
+    }
+  }
+
+  for (var i = 0; i < loading.length; i++)
+  {
+    loading[ i ].loadBegin( onLoadFinish );
+  }
+};
 
 Neuro.Events = 
 {

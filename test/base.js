@@ -1,4 +1,8 @@
 
+// Configuration
+
+Neuro.autoload = true;
+
 // Extra Assertions
 
 function isInstance(model, Class, message)

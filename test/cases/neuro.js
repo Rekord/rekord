@@ -115,3 +115,85 @@ test( 'remote key change', function(assert)
   }, 'Model keys cannot be changed.');
 
 });
+
+test( 'ensure relationships are loaded before saves/removes are resumed', function(assert)
+{
+  // Task is loaded first, and if autoload were true it would try to save tasks
+  // before the unsaved creator would be saved. With autoload = false & using
+  // Neuro.load the relationships are loaded for local-storage models before 
+  // their pending operations are resumed.
+
+  Neuro.autoload = false;
+
+  var timer = assert.timer();
+  var prefix = 'Neuro_dependents_on_load_';
+
+  var TaskName = prefix + 'task';
+  var UserName = prefix + 'user';
+  var TaskStore = Neuro.store[ TaskName ] = new TestStore();
+  var UserStore = Neuro.store[ UserName ] = new TestStore();
+  var TaskRest = Neuro.rest[ TaskName ] = new TestRest();
+  var UserRest = Neuro.rest[ UserName ] = new TestRest();
+
+  UserRest.delay = 2;
+  UserStore.map.put( 1, {
+    id: 1, name: 'u1',
+    $status: Neuro.Model.Status.SavePending,
+    $saving: {id: 1, name: 'u1'},
+    $publish: {}
+  });
+
+  TaskRest.delay = 2;
+  TaskStore.map.put( 2, {
+    id: 2, name: 't2', created_by: 1,
+    $status: Neuro.Model.Status.SavePending,
+    $saving: {id: 2, name: 't2', created_by: 1},
+    $publish: {}
+  });
+
+  var Task = Neuro({
+    name: TaskName,
+    fields: ['name', 'done', 'created_by'],
+    belongsTo: {
+      creator: {
+        model: UserName,
+        local: 'created_by'
+      }
+    }
+  });
+
+  var User = Neuro({
+    name: UserName,
+    fields: ['name']
+  });
+
+  Neuro.load();
+
+  var u1 = User.get( 1 );
+  var t2 = Task.get( 2 );
+
+  notOk( u1.$isSaved() );
+  notOk( t2.$isSaved() );
+  
+  wait( 1, function()
+  {
+    notOk( u1.$isSaved() );
+    notOk( t2.$isSaved() );
+  });
+
+  wait( 3, function()
+  {
+    ok( u1.$isSaved() );
+    notOk( t2.$isSaved() );
+  });
+  
+  wait( 5, function() 
+  {
+    ok( u1.$isSaved() );
+    ok( t2.$isSaved() );
+  });
+
+  timer.run();
+
+  Neuro.autoload = true;
+});

@@ -828,40 +828,59 @@ NeuroDatabase.prototype =
     }
   },
 
-  // Initialize the database by loading local values and on success load
-  // remove values.
-  init: function()
+  loadFinish: function()
   {
     var db = this;
 
-    if ( db.loadRemote && db.autoRefresh )
+    for (var key in db.all)
     {
-      Neuro.after( 'online', db.onOnline, db );
+      var model = db.all[ key ];
+
+      if ( model.$status === NeuroModel.Status.RemovePending )
+      {
+        Neuro.debug( Neuro.Debugs.LOCAL_RESUME_DELETE, db, model );
+
+        model.$addOperation( NeuroRemoveRemote );
+      }
+      else
+      {
+        if ( model.$status === NeuroModel.Status.SavePending )
+        {
+          Neuro.debug( Neuro.Debugs.LOCAL_RESUME_SAVE, db, model );
+
+          model.$addOperation( NeuroSaveRemote );
+        }
+        else
+        {
+          Neuro.debug( Neuro.Debugs.LOCAL_LOAD_SAVED, db, model );
+        }
+
+        db.models.put( key, model, true );
+      }
     }
 
-    if ( db.cache === Neuro.Cache.None )
+    db.updated();
+
+    if ( db.loadRemote )
     {
-      if ( db.loadRemote )
+      if ( db.pendingOperations === 0 )
       {
         db.refresh();
       }
       else
       {
-        db.initialized = true;
-        db.trigger( NeuroDatabase.Events.NoLoad, [db] );
+        db.firstRefresh = true;
       }
+    }
+  },
 
-      return;
-    } 
+  loadBegin: function(onLoaded)
+  {
+    var db = this;
 
     function onLocalLoad(records, keys)
     {
       Neuro.debug( Neuro.Debugs.LOCAL_LOAD, db, records );
-
-      db.models.clear();
-
-      records = Array.prototype.slice.call( records );
-      keys = Array.prototype.slice.call( keys );
 
       for (var i = 0; i < records.length; i++) 
       {
@@ -873,70 +892,57 @@ NeuroDatabase.prototype =
         model.$local = encoded;
         model.$saved = encoded.$saved;
 
-        if ( model.$status === NeuroModel.Status.RemovePending )
+        if ( model.$status !== NeuroModel.Status.Removed )
         {
-          Neuro.debug( Neuro.Debugs.LOCAL_RESUME_DELETE, db, model );
-
           db.all[ key ] = model;
-          model.$addOperation( NeuroRemoveRemote );
-        }
-        else if ( model.$status === NeuroModel.Status.Removed )
-        {
-          // nothing
-        }
-        else if ( model.$status === NeuroModel.Status.SavePending )
-        {
-          Neuro.debug( Neuro.Debugs.LOCAL_RESUME_SAVE, db, model );
-
-          db.models.put( key, model, true );
-
-          db.all[ key ] = model;
-          model.$addOperation( NeuroSaveRemote );
-        }
-        else
-        {
-          Neuro.debug( Neuro.Debugs.LOCAL_LOAD_SAVED, db, model );
-
-          db.all[ key ] = model;
-          db.models.put( key, model, true );
         }
       }
-      
+
       db.initialized = true;
       db.localLoaded = true;
 
       db.trigger( NeuroDatabase.Events.LocalLoad, [db] );
-
-      db.updated();
-
-      if ( db.loadRemote )
-      {
-        if ( db.pendingOperations === 0 )
-        {
-          db.refresh();
-        }
-        else
-        {
-          db.firstRefresh = true;
-        }
-      }
+      
+      onLoaded( true, db );
     }
 
     function onLocalError()
     {
-      db.initialized = true;
+      db.loadNone();
 
-      if ( db.loadRemote )
-      {
-        db.refresh();
-      }
-      else
-      {
-        db.trigger( NeuroDatabase.Events.NoLoad, [db] );
-      }
+      onLoaded( false, db );
     }
 
-    db.store.all( onLocalLoad, onLocalError );
+    if ( db.loadRemote && db.autoRefresh )
+    {
+      Neuro.after( Neuro.Events.Online, db.onOnline, db );
+    }
+
+    if ( db.cache === Neuro.Cache.None )
+    {
+      db.loadNone();
+
+      onLoaded( false, db );
+    }
+    else
+    {
+      db.store.all( onLocalLoad, onLocalError );      
+    }
+  },
+
+  loadNone: function()
+  {
+    var db = this;
+
+    if ( db.loadRemote )
+    {
+      db.refresh();
+    }
+    else
+    {
+      db.initialized = true;
+      db.trigger( NeuroDatabase.Events.NoLoad, [db] );
+    }
   },
 
   onOnline: function()
