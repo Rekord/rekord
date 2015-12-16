@@ -54,6 +54,7 @@ Bindings are used to implement core pieces of functionality in neurosync - these
 - [jQuery](https://github.com/ClickerMonkey/neurosync-jquery) - implements `Neuro.rest`
 - [StorkJS](https://github.com/ClickerMonkey/neurosync-storkjs) - implements `Neuro.store`
 - [PubSub](https://github.com/ClickerMonkey/neurosync-pubsub) - implements `Neuro.live`
+- [PouchDB](https://github.com/ClickerMonkey/neurosync-pouchdb) - implements `Neuro.store`, `Neuro.rest`, & `Neuro.live`
 - [Debugging](https://github.com/ClickerMonkey/neurosync-debug) - implements `Neuro.debug`
 
 **Simple Todo Example**

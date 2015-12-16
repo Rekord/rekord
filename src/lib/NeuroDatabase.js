@@ -690,8 +690,6 @@ NeuroDatabase.prototype =
     {
       model = db.createModel( decoded, true );
       
-      model.$status = NeuroModel.Status.Synced;
-
       if ( db.cache === Neuro.Cache.All )
       {
         model.$local = model.$toJSON( false );

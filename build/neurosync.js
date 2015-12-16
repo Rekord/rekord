@@ -2331,7 +2331,7 @@ Neuro.Debugs = {
   HASMANYTHRU_QUERY_RESULTS: 118,   // NeuroModel, NeuroRemoteQuery
 
   HASREMOTE_INIT: 50,               // NeuroHasRemote
-  HASREMOTE_SORT: 108,              // relation
+  HASREMOTE_SORT: 121,              // relation
   HASREMOVE_NINJA_REMOVE: 109,      // NeuroModel, NeuroModel, relation
   HASREMOVE_NINJA_SAVE: 110,        // NeuroModel, NeuroModel, relation
   HASREMOVE_QUERY: 119,             // NeuroModel, NeuroRemoteQuery, queryOption, query
@@ -3245,8 +3245,6 @@ NeuroDatabase.prototype =
     {
       model = db.createModel( decoded, true );
       
-      model.$status = NeuroModel.Status.Synced;
-
       if ( db.cache === Neuro.Cache.All )
       {
         model.$local = model.$toJSON( false );
