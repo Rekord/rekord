@@ -51,10 +51,11 @@ The easiest way to install neurosync is through bower via `bower install neurosy
 Bindings are used to implement core pieces of functionality in neurosync - these interfaces allows any library to work with neurosync.
 
 - [Angular](https://github.com/ClickerMonkey/neurosync-angular) - implements `Neuro.rest`
-- [jQuery](https://github.com/ClickerMonkey/neurosync-jquery) - implements `Neuro.rest`
 - [StorkJS](https://github.com/ClickerMonkey/neurosync-storkjs) - implements `Neuro.store`
 - [PubSub](https://github.com/ClickerMonkey/neurosync-pubsub) - implements `Neuro.live`
+- [Firebase](https://github.com/ClickerMonkey/neurosync-firebase) - implements `Neuro.store`, `Neuro.rest`, & `Neuro.live`
 - [PouchDB](https://github.com/ClickerMonkey/neurosync-pouchdb) - implements `Neuro.store`, `Neuro.rest`, & `Neuro.live`
+- [jQuery](https://github.com/ClickerMonkey/neurosync-jquery) - implements `Neuro.rest`
 - [Debugging](https://github.com/ClickerMonkey/neurosync-debug) - implements `Neuro.debug`
 
 **Simple Todo Example**
