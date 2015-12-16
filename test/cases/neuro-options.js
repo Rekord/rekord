@@ -941,7 +941,6 @@ test( 'encodings decodings', function(assert)
 
 test( 'timestamps default', function(assert)
 {
-  var timer = assert.timer();
   var done = assert.async();
 
   var prefix = 'timestamps_default_';
@@ -974,18 +973,17 @@ test( 'timestamps default', function(assert)
   isInstance( t1.created_at, Date, t1.created_at );
   isInstance( t1.updated_at, Date, t1.updated_at );
 
-  var time0 = t0.updated_at;
+  var time0 = t0.updated_at.getTime();
 
-  wait( 2, function()
+  setTimeout(function()
   {
     t0.$save('done', true);
 
-    notDeepEqual( t0.updated_at, time0, t0.updated_at );  
+    notDeepEqual( t0.updated_at.getTime(), time0, t0.updated_at );  
 
     done();
-  });
 
-  timer.run();
+  }, 2 );
 });
 
 test( 'timestamps custom', function(assert)
