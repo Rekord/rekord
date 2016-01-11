@@ -915,3 +915,27 @@ test( '$load array', function(assert)
   strictEqual( l0.tasks[1].name, 't4' );
   strictEqual( l0.creator.name, 'u4' );
 });
+
+test( '$decode', function(assert)
+{
+  var prefix = 'Model_decode_';
+
+  var Task = Neuro({
+    name: prefix + 'task',
+    fields: ['name', 'done'],
+    decodings: {
+      done: function(x) {
+        return !!x;
+      }
+    }
+  });
+
+  var t0 = Task.boot({name: 't0', done: 1});
+
+  strictEqual( t0.done, true );
+
+  t0.done = 0;
+  t0.$decode();
+
+  strictEqual( t0.done, false );
+});

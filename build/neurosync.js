@@ -4098,6 +4098,11 @@ NeuroModel.prototype =
     }
   },
 
+  $decode: function()
+  {
+    this.$db.decode( this );
+  },
+
   $isDependentsSaved: function(callbackOnSaved, contextOnSaved)
   {
     var dependents = this.$dependents;
