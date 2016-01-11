@@ -1,7 +1,7 @@
 
 /**
  * An instance
- * 
+ *
  * @constructor
  * @memberOf Neuro
  * @alias Model
@@ -23,20 +23,20 @@ function NeuroModel(db)
    *           If this object does not exist - the model hasn't been created
    *           yet.
    */
-  
+
   /**
    * @property {Object} [$local]
    *           The object of encoded data that is stored locally. It's $saved
    *           property is the same object as this $saved property.
    */
-  
+
   /**
    * @property {Boolean} $status
    *           Whether there is a pending save for this model.
    */
 }
 
-NeuroModel.Events = 
+NeuroModel.Events =
 {
   Created:              'created',
   Saved:                'saved',
@@ -89,7 +89,7 @@ NeuroModel.Status =
   Removed:        3
 };
 
-NeuroModel.Blocked = 
+NeuroModel.Blocked =
 {
   toString: true
 };
@@ -126,8 +126,32 @@ NeuroModel.prototype =
 
         if ( !relation.lazy )
         {
-          this.$getRelation( name, void 0, remoteData ); 
+          this.$getRelation( name, void 0, remoteData );
         }
+      }
+    }
+  },
+
+  $load: function(relations)
+  {
+    if ( isArray( relations ) )
+    {
+      for (var i = 0; i < relations.length; i++)
+      {
+        this.$getRelation( relations[ i ] );
+      }
+    }
+    else if ( isString( relations ) )
+    {
+      this.$getRelation( relations );
+    }
+    else
+    {
+      var databaseRelations = this.$db.relations;
+
+      for (var name in databaseRelations)
+      {
+        this.$getRelation( name );
       }
     }
   },
@@ -232,7 +256,7 @@ NeuroModel.prototype =
       }
 
       var relation = this.$getRelation( props, value, remoteData );
-      
+
       if ( relation )
       {
         relation.set( this, value, remoteData );
@@ -245,7 +269,7 @@ NeuroModel.prototype =
 
     if ( isValue( props ) )
     {
-      this.$trigger( NeuroModel.Events.Change, [props, value] );      
+      this.$trigger( NeuroModel.Events.Change, [props, value] );
     }
   },
 
@@ -365,9 +389,9 @@ NeuroModel.prototype =
       return false;
     }
 
-    var cascade = 
-      (arguments.length === 3 ? cascade : 
-        (arguments.length === 2 && isObject( setProperties ) && isNumber( setValue ) ? setValue : 
+    var cascade =
+      (arguments.length === 3 ? cascade :
+        (arguments.length === 2 && isObject( setProperties ) && isNumber( setValue ) ? setValue :
           (arguments.length === 1 && isNumber( setProperties ) ?  setProperties : Neuro.Cascade.All ) ) );
 
     this.$db.addReference( this );
@@ -414,7 +438,7 @@ NeuroModel.prototype =
   {
     // If field is given, evaluate the value and use it instead of value on this object
     // If relation is given, call clone on relation
-    
+
     var db = this.$db;
     var key = db.key;
     var fields = db.fields;
@@ -473,7 +497,7 @@ NeuroModel.prototype =
       if ( !dontDiscard )
       {
         this.$discard();
-      }  
+      }
     }
   },
 
@@ -487,16 +511,16 @@ NeuroModel.prototype =
     return !this.$isDeleted() && this.$db.models.has( this.$key() );
   },
 
-  $addOperation: function(OperationType, cascade) 
+  $addOperation: function(OperationType, cascade)
   {
     var operation = new OperationType( this, cascade );
 
-    if ( !this.$operation ) 
+    if ( !this.$operation )
     {
       this.$operation = operation;
       this.$operation.execute();
-    } 
-    else 
+    }
+    else
     {
       this.$operation.queue( operation );
     }
@@ -588,7 +612,7 @@ NeuroModel.prototype =
 
   $hasChanges: function()
   {
-    if (!this.$saved) 
+    if (!this.$saved)
     {
       return true;
     }
@@ -597,7 +621,7 @@ NeuroModel.prototype =
     var encoded = this.$toJSON( true );
     var saved = this.$saved;
 
-    for (var prop in encoded) 
+    for (var prop in encoded)
     {
       var currentValue = encoded[ prop ];
       var savedValue = saved[ prop ];
@@ -607,7 +631,7 @@ NeuroModel.prototype =
         continue;
       }
 
-      if ( !equals( currentValue, savedValue ) ) 
+      if ( !equals( currentValue, savedValue ) )
       {
         return true;
       }

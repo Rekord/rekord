@@ -1,11 +1,11 @@
 
 /**
- * Creates a Neuro object given a set of options. A Neuro object is also the 
+ * Creates a Neuro object given a set of options. A Neuro object is also the
  * constructor for creating instances of the Neuro object defined.
- * 
- * @namespace 
+ *
+ * @namespace
  * @param {Object} options
- *        The options of 
+ *        The options of
  */
 function Neuro(options)
 {
@@ -35,11 +35,11 @@ function Neuro(options)
       {
         database.loadFinish();
       }
-    });  
+    });
   }
   else
   {
-    Neuro.unloaded.push( database );    
+    Neuro.unloaded.push( database );
   }
 
   Neuro.trigger( Neuro.Events.Initialized, [model] );
@@ -93,14 +93,6 @@ Neuro.load = function(callback, context)
   }
 };
 
-Neuro.Events = 
-{
-  Initialized:  'initialized',
-  Plugins:      'plugins',
-  Online:       'online',
-  Offline:      'offline'
-};
-
 Neuro.cache = {};
 
 Neuro.get = function(name, callback, context)
@@ -135,3 +127,46 @@ Neuro.get = function(name, callback, context)
 };
 
 eventize( Neuro );
+
+Neuro.Events =
+{
+  Initialized:  'initialized',
+  Plugins:      'plugins',
+  Online:       'online',
+  Offline:      'offline'
+};
+
+Neuro.Cascade =
+{
+  None:       0,
+  Local:      1,
+  Rest:       2,
+  NoLive:     3,
+  Live:       4,
+  NoRest:     5,
+  Remote:     6,
+  All:        7
+};
+
+Neuro.Cache =
+{
+  None:       'none',
+  Pending:    'pending',
+  All:        'all'
+};
+
+Neuro.Store =
+{
+  None:   0,
+  Model:  1,
+  Key:    2,
+  Keys:   3
+};
+
+Neuro.Save =
+{
+  None:   0,
+  Model:  4,
+  Key:    5,
+  Keys:   6
+};

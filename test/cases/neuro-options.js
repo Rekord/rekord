@@ -395,12 +395,12 @@ test( 'loadRemote false', function(assert)
 
   strictEqual( loadRemote_false.all().length, 0 );
 
-  wait(2, function() 
+  wait(2, function()
   {
     strictEqual( loadRemote_false.all().length, 0 );
     done();
   });
-  
+
   timer.run();
 });
 
@@ -424,7 +424,7 @@ test( 'autoRefresh true', function(assert)
 
   rest.map.put( 3, {id: 3, name: 'name3' } );
   rest.map.put( 4, {id: 4, name: 'name4' } );
-  
+
   strictEqual( autoRefresh_true.all().length, 2 );
 
   online();
@@ -454,7 +454,7 @@ test( 'autoRefresh false', function(assert)
 
   rest.map.put( 3, {id: 3, name: 'name3' } );
   rest.map.put( 4, {id: 4, name: 'name4' } );
-  
+
   strictEqual( autoRefresh_false.all().length, 2 );
 
   online();
@@ -526,7 +526,7 @@ test( 'cache pending', function(assert)
 
   offline();
 
-  var ct1 = cache_pending.create({name: 'name1'});  
+  var ct1 = cache_pending.create({name: 'name1'});
 
   strictEqual( local.length, 1 );
   strictEqual( remote.length, 1 );
@@ -846,7 +846,7 @@ test( 'dynamic get/set', function(assert)
   strictEqual( t.done, true );
   isType( t.finished_at, 'number' );
   isType( t.updated_at, 'number' );
-  
+
   t.done = false;
 
   strictEqual( t.done, false );
@@ -979,7 +979,7 @@ test( 'timestamps default', function(assert)
   {
     t0.$save('done', true);
 
-    notDeepEqual( t0.updated_at.getTime(), time0, t0.updated_at );  
+    notDeepEqual( t0.updated_at.getTime(), time0, t0.updated_at );
 
     done();
 
@@ -1018,7 +1018,7 @@ test( 'timestamps updated_at saving skipped', function(assert)
   });
 
   var remote = Todo.Database.rest;
-  
+
   var t0 = Todo.create({name: 't0'});
 
   remote.lastModel = null;
@@ -1031,7 +1031,6 @@ test( 'timestamps updated_at saving skipped', function(assert)
 test( 'timestamps renamed', function(assert)
 {
   var timer = assert.timer();
-  var done = assert.async();
 
   var prefix = 'timestamps_renamed_';
 
@@ -1063,15 +1062,13 @@ test( 'timestamps renamed', function(assert)
   isInstance( t1.created_tms, Date, t1.created_tms );
   isInstance( t1.updated_tms, Date, t1.updated_tms );
 
-  var time0 = t0.updated_tms;
+  var time0 = t0.updated_tms.getTime();
 
   wait( 2, function()
   {
     t0.$save('done', true);
 
-    notDeepEqual( t0.updated_tms, time0, t0.updated_tms );  
-
-    done();
+    notDeepEqual( t0.updated_tms.getTime(), time0, t0.updated_tms );
   });
 
   timer.run();

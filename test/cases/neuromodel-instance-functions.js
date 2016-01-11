@@ -215,7 +215,7 @@ test( '$save', function(assert)
   strictEqual( i0.number, 4 );
 });
 
-/* 
+/*
 test( '$save cascade remote', function(assert)
 {
   var Issue = Neuro({
@@ -328,7 +328,7 @@ test( '$remove cascade none', function(assert)
   ok( local.map.has( i0.id ) );
   ok( remote.map.has( i0.id ) );
   strictEqual( live.lastMessage.op, 'SAVE' );
-  
+
   i0.$remove( Neuro.Cascade.None );
 
   ok( local.map.has( i0.id ) );
@@ -684,7 +684,7 @@ test( '$change', function(assert)
 
   expect(1);
 
-  t0.$change(function() 
+  t0.$change(function()
   {
     notOk();
   });
@@ -744,4 +744,174 @@ test( '$clone overwrite', function(assert)
   isType( t1.finished_at, 'number' );
 
   notStrictEqual( t0, t1 );
+});
+
+test( '$load all', function(assert)
+{
+  var prefix = 'Model_load_all_';
+
+  var Task = Neuro({
+    name: prefix + 'task',
+    fields: ['list_id', 'name', 'done']
+  });
+
+  var User = Neuro({
+    name: prefix + 'user',
+    fields: ['name']
+  });
+
+  var TaskList = Neuro({
+    name: prefix + 'list',
+    fields: ['name', 'created_by'],
+    hasMany: {
+      tasks: {
+        model: Task,
+        foreign: 'list_id',
+        lazy: true,
+        query: '/tasks/{id}'
+      }
+    },
+    belongsTo: {
+      creator: {
+        model: User,
+        local: 'created_by',
+        lazy: true
+      }
+    }
+  });
+
+  Task.Database.rest.queries.put( '/tasks/1', [
+    {id: 3, name: 't3', done: true},
+    {id: 4, name: 't4', done: false}
+  ]);
+
+  User.boot( {id: 4, name: 'u4'} );
+
+  var l0 = TaskList.boot( {id: 1, name: 'l1', created_by: 4} );
+
+  strictEqual( l0.tasks, void 0 );
+  strictEqual( l0.creator, void 0 );
+
+  l0.$load();
+
+  notStrictEqual( l0.tasks, void 0 );
+  notStrictEqual( l0.creator, void 0 );
+
+  strictEqual( l0.tasks.length, 2 );
+  strictEqual( l0.tasks[0].name, 't3' );
+  strictEqual( l0.tasks[1].name, 't4' );
+  strictEqual( l0.creator.name, 'u4' );
+});
+
+test( '$load single', function(assert)
+{
+  var prefix = 'Model_load_single_';
+
+  var Task = Neuro({
+    name: prefix + 'task',
+    fields: ['list_id', 'name', 'done']
+  });
+
+  var User = Neuro({
+    name: prefix + 'user',
+    fields: ['name']
+  });
+
+  var TaskList = Neuro({
+    name: prefix + 'list',
+    fields: ['name', 'created_by'],
+    hasMany: {
+      tasks: {
+        model: Task,
+        foreign: 'list_id',
+        lazy: true,
+        query: '/tasks/{id}'
+      }
+    },
+    belongsTo: {
+      creator: {
+        model: User,
+        local: 'created_by',
+        lazy: true
+      }
+    }
+  });
+
+  Task.Database.rest.queries.put( '/tasks/1', [
+    {id: 3, name: 't3', done: true},
+    {id: 4, name: 't4', done: false}
+  ]);
+
+  User.boot( {id: 4, name: 'u4'} );
+
+  var l0 = TaskList.boot( {id: 1, name: 'l1', created_by: 4} );
+
+  strictEqual( l0.tasks, void 0 );
+  strictEqual( l0.creator, void 0 );
+
+  l0.$load('tasks');
+
+  notStrictEqual( l0.tasks, void 0 );
+  strictEqual( l0.creator, void 0 );
+
+  strictEqual( l0.tasks.length, 2 );
+  strictEqual( l0.tasks[0].name, 't3' );
+  strictEqual( l0.tasks[1].name, 't4' );
+});
+
+test( '$load array', function(assert)
+{
+  var prefix = 'Model_load_array_';
+
+  var Task = Neuro({
+    name: prefix + 'task',
+    fields: ['list_id', 'name', 'done']
+  });
+
+  var User = Neuro({
+    name: prefix + 'user',
+    fields: ['name']
+  });
+
+  var TaskList = Neuro({
+    name: prefix + 'list',
+    fields: ['name', 'created_by'],
+    hasMany: {
+      tasks: {
+        model: Task,
+        foreign: 'list_id',
+        lazy: true,
+        query: '/tasks/{id}'
+      }
+    },
+    belongsTo: {
+      creator: {
+        model: User,
+        local: 'created_by',
+        lazy: true
+      }
+    }
+  });
+
+  Task.Database.rest.queries.put( '/tasks/1', [
+    {id: 3, name: 't3', done: true},
+    {id: 4, name: 't4', done: false}
+  ]);
+
+  User.boot( {id: 4, name: 'u4'} );
+
+  var l0 = TaskList.boot( {id: 1, name: 'l1', created_by: 4} );
+
+  strictEqual( l0.tasks, void 0 );
+  strictEqual( l0.creator, void 0 );
+
+  l0.$load(['tasks', 'creator']);
+
+  notStrictEqual( l0.tasks, void 0 );
+  notStrictEqual( l0.creator, void 0 );
+
+  strictEqual( l0.tasks.length, 2 );
+  strictEqual( l0.tasks[0].name, 't3' );
+  strictEqual( l0.tasks[1].name, 't4' );
+  strictEqual( l0.creator.name, 'u4' );
 });

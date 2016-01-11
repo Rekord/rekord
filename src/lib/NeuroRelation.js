@@ -6,22 +6,6 @@ function NeuroRelation()
 
 Neuro.Relations = {};
 
-Neuro.Store = 
-{
-  None:   0,
-  Model:  1,
-  Key:    2,
-  Keys:   3
-};
-
-Neuro.Save = 
-{
-  None:   0,
-  Model:  4,
-  Key:    5,
-  Keys:   6
-};
-
 NeuroRelation.Defaults = 
 {
   model:                null,
@@ -49,7 +33,7 @@ NeuroRelation.prototype =
 
   /**
    * Initializes this relation with the given database, field, and options.
-   * 
+   *
    * @param  {Neuro.Database} database [description]
    * @param  {String} field    [description]
    * @param  {Object} options  [description]
@@ -67,7 +51,7 @@ NeuroRelation.prototype =
     this.initialized = false;
     this.property = this.property || (indexOf( database.fields, this.name ) !== false);
     this.discriminated = !isEmpty( this.discriminators );
-    
+
     if ( this.discriminated )
     {
       transfer( NeuroPolymorphic, this );
@@ -102,7 +86,7 @@ NeuroRelation.prototype =
   },
 
   /**
-   * 
+   *
    */
   onInitialized: function(database, fields, options)
   {
@@ -128,11 +112,11 @@ NeuroRelation.prototype =
   },
 
   /**
-   * Loads the model.$relation variable with what is necessary to get, set, 
+   * Loads the model.$relation variable with what is necessary to get, set,
    * relate, and unrelate models. If property is true, look at model[ name ]
-   * to load models/keys. If it contains values that don't exist or aren't 
+   * to load models/keys. If it contains values that don't exist or aren't
    * actually related
-   * 
+   *
    * @param  {Neuro.Model} model [description]
    */
   load: function(model, initialValue, remoteData)
@@ -195,7 +179,7 @@ NeuroRelation.prototype =
 
       if ( isArray( related ) )
       {
-        out[ this.name ] = this.getStoredArray( related, mode );        
+        out[ this.name ] = this.getStoredArray( related, mode );
       }
       else // if ( isObject( related ) )
       {
@@ -365,7 +349,7 @@ NeuroRelation.prototype =
     {
       target.$save( cascade );
     }
-    
+
     return changes;
   },
 
@@ -409,7 +393,7 @@ NeuroRelation.prototype =
         target.$save();
       }
 
-      target.$trigger( NeuroModel.Events.KeyUpdate, [target, source, targetFields, sourceFields] );      
+      target.$trigger( NeuroModel.Events.KeyUpdate, [target, source, targetFields, sourceFields] );
     }
 
     return changes;
@@ -476,21 +460,21 @@ NeuroRelation.prototype =
   {
     if ( related )
     {
-      switch (mode) 
+      switch (mode)
       {
       case Neuro.Save.Model:
         return related.$toJSON( true );
 
       case Neuro.Store.Model:
-        if ( related.$local ) 
+        if ( related.$local )
         {
           return related.$local;
         }
-        else 
+        else
         {
           var local = related.$toJSON( false );
 
-          if ( related.$saved ) 
+          if ( related.$saved )
           {
             local.$saved = related.$saved;
           }

@@ -16,6 +16,13 @@
   global.Neuro.RemoteQuery = NeuroRemoteQuery;
   global.Neuro.Page = NeuroPage;
 
+  /* Relationships */
+  global.Neuro.HasOne = NeuroHasOne;
+  global.Neuro.BelongsTo = NeuroBelongsTo;
+  global.Neuro.HasMany = NeuroHasMany;
+  global.Neuro.HasManyThrough = NeuroHasManyThrough;
+  global.Neuro.HasRemote = NeuroHasRemote;
+
   /* Utility Functions */
   global.Neuro.isNeuro = isNeuro;
   global.Neuro.isDefined = isDefined;
@@ -35,10 +42,10 @@
   global.Neuro.hasFields = hasFields;
 
   global.Neuro.eventize = eventize;
-  
+
   global.Neuro.extend = extend;
   global.Neuro.extendArray = extendArray;
-  
+
   global.Neuro.transfer = transfer;
   global.Neuro.swap = swap;
   global.Neuro.grab = grab;

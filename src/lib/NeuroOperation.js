@@ -1,21 +1,9 @@
 
-Neuro.Cascade =
-{
-  None:       0,
-  Local:      1,
-  Rest:       2,
-  NoLive:     3,
-  Live:       4,
-  NoRest:     5,
-  Remote:     6,
-  All:        7
-};
-
 function NeuroOperation()
 {
 }
 
-NeuroOperation.prototype = 
+NeuroOperation.prototype =
 {
   reset: function(model, cascade)
   {
@@ -128,7 +116,7 @@ NeuroOperation.prototype =
     return bind( this, this.handleFailure );
   },
 
-  handleFailure: function() 
+  handleFailure: function()
   {
     this.onFailure.apply( this, arguments );
     this.finish();

@@ -1434,12 +1434,12 @@ function eventize(target, secret)
 };
 
 /**
- * Creates a Neuro object given a set of options. A Neuro object is also the 
+ * Creates a Neuro object given a set of options. A Neuro object is also the
  * constructor for creating instances of the Neuro object defined.
- * 
- * @namespace 
+ *
+ * @namespace
  * @param {Object} options
- *        The options of 
+ *        The options of
  */
 function Neuro(options)
 {
@@ -1469,11 +1469,11 @@ function Neuro(options)
       {
         database.loadFinish();
       }
-    });  
+    });
   }
   else
   {
-    Neuro.unloaded.push( database );    
+    Neuro.unloaded.push( database );
   }
 
   Neuro.trigger( Neuro.Events.Initialized, [model] );
@@ -1527,14 +1527,6 @@ Neuro.load = function(callback, context)
   }
 };
 
-Neuro.Events = 
-{
-  Initialized:  'initialized',
-  Plugins:      'plugins',
-  Online:       'online',
-  Offline:      'offline'
-};
-
 Neuro.cache = {};
 
 Neuro.get = function(name, callback, context)
@@ -1569,6 +1561,49 @@ Neuro.get = function(name, callback, context)
 };
 
 eventize( Neuro );
+
+Neuro.Events =
+{
+  Initialized:  'initialized',
+  Plugins:      'plugins',
+  Online:       'online',
+  Offline:      'offline'
+};
+
+Neuro.Cascade =
+{
+  None:       0,
+  Local:      1,
+  Rest:       2,
+  NoLive:     3,
+  Live:       4,
+  NoRest:     5,
+  Remote:     6,
+  All:        7
+};
+
+Neuro.Cache =
+{
+  None:       'none',
+  Pending:    'pending',
+  All:        'all'
+};
+
+Neuro.Store =
+{
+  None:   0,
+  Model:  1,
+  Key:    2,
+  Keys:   3
+};
+
+Neuro.Save =
+{
+  None:   0,
+  Model:  4,
+  Key:    5,
+  Keys:   6
+};
 
 Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 {
@@ -3754,7 +3789,7 @@ addEventFunction( NeuroDatabase.prototype, 'change', NeuroDatabase.Events.Change
 
 /**
  * An instance
- * 
+ *
  * @constructor
  * @memberOf Neuro
  * @alias Model
@@ -3776,20 +3811,20 @@ function NeuroModel(db)
    *           If this object does not exist - the model hasn't been created
    *           yet.
    */
-  
+
   /**
    * @property {Object} [$local]
    *           The object of encoded data that is stored locally. It's $saved
    *           property is the same object as this $saved property.
    */
-  
+
   /**
    * @property {Boolean} $status
    *           Whether there is a pending save for this model.
    */
 }
 
-NeuroModel.Events = 
+NeuroModel.Events =
 {
   Created:              'created',
   Saved:                'saved',
@@ -3842,7 +3877,7 @@ NeuroModel.Status =
   Removed:        3
 };
 
-NeuroModel.Blocked = 
+NeuroModel.Blocked =
 {
   toString: true
 };
@@ -3879,8 +3914,32 @@ NeuroModel.prototype =
 
         if ( !relation.lazy )
         {
-          this.$getRelation( name, void 0, remoteData ); 
+          this.$getRelation( name, void 0, remoteData );
         }
+      }
+    }
+  },
+
+  $load: function(relations)
+  {
+    if ( isArray( relations ) )
+    {
+      for (var i = 0; i < relations.length; i++)
+      {
+        this.$getRelation( relations[ i ] );
+      }
+    }
+    else if ( isString( relations ) )
+    {
+      this.$getRelation( relations );
+    }
+    else
+    {
+      var databaseRelations = this.$db.relations;
+
+      for (var name in databaseRelations)
+      {
+        this.$getRelation( name );
       }
     }
   },
@@ -3985,7 +4044,7 @@ NeuroModel.prototype =
       }
 
       var relation = this.$getRelation( props, value, remoteData );
-      
+
       if ( relation )
       {
         relation.set( this, value, remoteData );
@@ -3998,7 +4057,7 @@ NeuroModel.prototype =
 
     if ( isValue( props ) )
     {
-      this.$trigger( NeuroModel.Events.Change, [props, value] );      
+      this.$trigger( NeuroModel.Events.Change, [props, value] );
     }
   },
 
@@ -4118,9 +4177,9 @@ NeuroModel.prototype =
       return false;
     }
 
-    var cascade = 
-      (arguments.length === 3 ? cascade : 
-        (arguments.length === 2 && isObject( setProperties ) && isNumber( setValue ) ? setValue : 
+    var cascade =
+      (arguments.length === 3 ? cascade :
+        (arguments.length === 2 && isObject( setProperties ) && isNumber( setValue ) ? setValue :
           (arguments.length === 1 && isNumber( setProperties ) ?  setProperties : Neuro.Cascade.All ) ) );
 
     this.$db.addReference( this );
@@ -4167,7 +4226,7 @@ NeuroModel.prototype =
   {
     // If field is given, evaluate the value and use it instead of value on this object
     // If relation is given, call clone on relation
-    
+
     var db = this.$db;
     var key = db.key;
     var fields = db.fields;
@@ -4226,7 +4285,7 @@ NeuroModel.prototype =
       if ( !dontDiscard )
       {
         this.$discard();
-      }  
+      }
     }
   },
 
@@ -4240,16 +4299,16 @@ NeuroModel.prototype =
     return !this.$isDeleted() && this.$db.models.has( this.$key() );
   },
 
-  $addOperation: function(OperationType, cascade) 
+  $addOperation: function(OperationType, cascade)
   {
     var operation = new OperationType( this, cascade );
 
-    if ( !this.$operation ) 
+    if ( !this.$operation )
     {
       this.$operation = operation;
       this.$operation.execute();
-    } 
-    else 
+    }
+    else
     {
       this.$operation.queue( operation );
     }
@@ -4341,7 +4400,7 @@ NeuroModel.prototype =
 
   $hasChanges: function()
   {
-    if (!this.$saved) 
+    if (!this.$saved)
     {
       return true;
     }
@@ -4350,7 +4409,7 @@ NeuroModel.prototype =
     var encoded = this.$toJSON( true );
     var saved = this.$saved;
 
-    for (var prop in encoded) 
+    for (var prop in encoded)
     {
       var currentValue = encoded[ prop ];
       var savedValue = saved[ prop ];
@@ -4360,7 +4419,7 @@ NeuroModel.prototype =
         continue;
       }
 
-      if ( !equals( currentValue, savedValue ) ) 
+      if ( !equals( currentValue, savedValue ) )
       {
         return true;
       }
@@ -4378,6 +4437,7 @@ NeuroModel.prototype =
 
 eventize( NeuroModel.prototype, true );
 addEventFunction( NeuroModel.prototype, '$change', NeuroModel.Events.Changes, true );
+
 
 /**
  * A NeuroMap has the key-to-value benefits of a map and iteration benefits of an
@@ -6323,23 +6383,11 @@ extendArray( Array, NeuroPage,
 eventize( NeuroPage.prototype );
 addEventFunction( NeuroPage.prototype, 'change', NeuroPage.Events.Changes );
 
-Neuro.Cascade =
-{
-  None:       0,
-  Local:      1,
-  Rest:       2,
-  NoLive:     3,
-  Live:       4,
-  NoRest:     5,
-  Remote:     6,
-  All:        7
-};
-
 function NeuroOperation()
 {
 }
 
-NeuroOperation.prototype = 
+NeuroOperation.prototype =
 {
   reset: function(model, cascade)
   {
@@ -6452,7 +6500,7 @@ NeuroOperation.prototype =
     return bind( this, this.handleFailure );
   },
 
-  handleFailure: function() 
+  handleFailure: function()
   {
     this.onFailure.apply( this, arguments );
     this.finish();
@@ -7266,22 +7314,6 @@ function NeuroRelation()
 
 Neuro.Relations = {};
 
-Neuro.Store = 
-{
-  None:   0,
-  Model:  1,
-  Key:    2,
-  Keys:   3
-};
-
-Neuro.Save = 
-{
-  None:   0,
-  Model:  4,
-  Key:    5,
-  Keys:   6
-};
-
 NeuroRelation.Defaults = 
 {
   model:                null,
@@ -7309,7 +7341,7 @@ NeuroRelation.prototype =
 
   /**
    * Initializes this relation with the given database, field, and options.
-   * 
+   *
    * @param  {Neuro.Database} database [description]
    * @param  {String} field    [description]
    * @param  {Object} options  [description]
@@ -7327,7 +7359,7 @@ NeuroRelation.prototype =
     this.initialized = false;
     this.property = this.property || (indexOf( database.fields, this.name ) !== false);
     this.discriminated = !isEmpty( this.discriminators );
-    
+
     if ( this.discriminated )
     {
       transfer( NeuroPolymorphic, this );
@@ -7362,7 +7394,7 @@ NeuroRelation.prototype =
   },
 
   /**
-   * 
+   *
    */
   onInitialized: function(database, fields, options)
   {
@@ -7388,11 +7420,11 @@ NeuroRelation.prototype =
   },
 
   /**
-   * Loads the model.$relation variable with what is necessary to get, set, 
+   * Loads the model.$relation variable with what is necessary to get, set,
    * relate, and unrelate models. If property is true, look at model[ name ]
-   * to load models/keys. If it contains values that don't exist or aren't 
+   * to load models/keys. If it contains values that don't exist or aren't
    * actually related
-   * 
+   *
    * @param  {Neuro.Model} model [description]
    */
   load: function(model, initialValue, remoteData)
@@ -7455,7 +7487,7 @@ NeuroRelation.prototype =
 
       if ( isArray( related ) )
       {
-        out[ this.name ] = this.getStoredArray( related, mode );        
+        out[ this.name ] = this.getStoredArray( related, mode );
       }
       else // if ( isObject( related ) )
       {
@@ -7625,7 +7657,7 @@ NeuroRelation.prototype =
     {
       target.$save( cascade );
     }
-    
+
     return changes;
   },
 
@@ -7669,7 +7701,7 @@ NeuroRelation.prototype =
         target.$save();
       }
 
-      target.$trigger( NeuroModel.Events.KeyUpdate, [target, source, targetFields, sourceFields] );      
+      target.$trigger( NeuroModel.Events.KeyUpdate, [target, source, targetFields, sourceFields] );
     }
 
     return changes;
@@ -7736,21 +7768,21 @@ NeuroRelation.prototype =
   {
     if ( related )
     {
-      switch (mode) 
+      switch (mode)
       {
       case Neuro.Save.Model:
         return related.$toJSON( true );
 
       case Neuro.Store.Model:
-        if ( related.$local ) 
+        if ( related.$local )
         {
           return related.$local;
         }
-        else 
+        else
         {
           var local = related.$toJSON( false );
 
-          if ( related.$saved ) 
+          if ( related.$saved )
           {
             local.$saved = related.$saved;
           }
@@ -7773,6 +7805,7 @@ NeuroRelation.prototype =
   }
 
 };
+
 function NeuroRelationSingle()
 {
 }
@@ -9868,6 +9901,13 @@ var NeuroPolymorphic =
   global.Neuro.RemoteQuery = NeuroRemoteQuery;
   global.Neuro.Page = NeuroPage;
 
+  /* Relationships */
+  global.Neuro.HasOne = NeuroHasOne;
+  global.Neuro.BelongsTo = NeuroBelongsTo;
+  global.Neuro.HasMany = NeuroHasMany;
+  global.Neuro.HasManyThrough = NeuroHasManyThrough;
+  global.Neuro.HasRemote = NeuroHasRemote;
+
   /* Utility Functions */
   global.Neuro.isNeuro = isNeuro;
   global.Neuro.isDefined = isDefined;
@@ -9887,10 +9927,10 @@ var NeuroPolymorphic =
   global.Neuro.hasFields = hasFields;
 
   global.Neuro.eventize = eventize;
-  
+
   global.Neuro.extend = extend;
   global.Neuro.extendArray = extendArray;
-  
+
   global.Neuro.transfer = transfer;
   global.Neuro.swap = swap;
   global.Neuro.grab = grab;
