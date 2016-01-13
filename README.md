@@ -1,4 +1,4 @@
-# Neurosync
+# ![Logo](build/neurosync-64.png) Neurosync
 
 [![Build Status](https://travis-ci.org/ClickerMonkey/neurosync.svg?branch=master)](https://travis-ci.org/ClickerMonkey/neurosync)
 [![devDependency Status](https://david-dm.org/ClickerMonkey/neurosync/dev-status.svg)](https://david-dm.org/ClickerMonkey/neurosync#info=devDependencies)
