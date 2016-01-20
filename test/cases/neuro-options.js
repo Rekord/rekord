@@ -1121,3 +1121,34 @@ test( 'extend', function(assert)
   ok( 'updater' in db.relations );
   ok( 'creator' in db.relations );
 });
+
+test( 'prepare', function(assert)
+{
+  var prefix = 'prepare_';
+
+  var Todo = Neuro({
+    name: prefix + 'todo',
+    fields: ['name', 'done'],
+    prepare: function(db, options) {
+      db.api = '/api/1.0/' + db.name;
+    }
+  });
+
+  strictEqual( Todo.Database.api, '/api/1.0/prepare_todo' );
+});
+
+test( 'prepare global default', function(assert)
+{
+  var prefix = 'prepare_default_';
+
+  Neuro.Database.Defaults.prepare = function(db, options) {
+    db.api = '/api/1.0/' + db.name;
+  };
+
+  var Todo = Neuro({
+    name: prefix + 'todo',
+    fields: ['name', 'done']
+  });
+
+  strictEqual( Todo.Database.api, '/api/1.0/prepare_default_todo' );
+});

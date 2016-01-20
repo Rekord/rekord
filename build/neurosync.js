@@ -2591,7 +2591,7 @@ Neuro.checkNetworkStatus = function()
 
 
 function NeuroDatabase(options)
-{  
+{
   var defaults = NeuroDatabase.Defaults;
 
   // Apply the options to this database!
@@ -2641,6 +2641,9 @@ function NeuroDatabase(options)
   this.pendingOperations = 0;
   this.afterOnline = false;
   this.saveFields = copy( fields );
+
+  // Prepare
+  this.prepare( this, options );
 
   // Services
   this.rest   = Neuro.rest( this );
@@ -2725,7 +2728,7 @@ function defaultSummarize(model)
   return model.$key();
 }
 
-NeuroDatabase.Events = 
+NeuroDatabase.Events =
 {
   NoLoad:       'no-load',
   RemoteLoad:   'remote-load',
@@ -2738,14 +2741,7 @@ NeuroDatabase.Events =
   Changes:      'updated'
 };
 
-Neuro.Cache = 
-{
-  None:       'none',
-  Pending:    'pending',
-  All:        'all'
-};
-
-NeuroDatabase.Defaults = 
+NeuroDatabase.Defaults =
 {
   name:                 undefined,  // required
   className:            null,       // defaults to toCamelCase( name )
@@ -2765,6 +2761,7 @@ NeuroDatabase.Defaults =
   fullPublish:          false,
   encodings:            {},
   decodings:            {},
+  prepare:              noop,
   encode:               defaultEncode,
   decode:               defaultDecode,
   summarize:            defaultSummarize
@@ -2857,10 +2854,10 @@ NeuroDatabase.prototype =
   },
 
   // Parses the model from the given input
-  // 
+  //
   // Returns false if the input doesn't resolve to a model at the moment
   // Returns null if the input doesn't resolve to a model and all models have been remotely loaded
-  // 
+  //
   // parseModel( Neuro )
   // parseModel( Neuro.Model )
   // parseModel( 'uuid' )
@@ -2868,7 +2865,7 @@ NeuroDatabase.prototype =
   // parseModel( modelInstance )
   // parseModel( {name:'new model'} )
   // parseModel( {id:4, name:'new or existing model'} )
-  // 
+  //
   parseModel: function(input, remoteData)
   {
     var db = this;
@@ -2893,7 +2890,7 @@ NeuroDatabase.prototype =
     else if ( key in db.all )
     {
       var model = db.all[ key ];
-      
+
       if ( isObject( input ) )
       {
         if ( remoteData )
@@ -2911,8 +2908,8 @@ NeuroDatabase.prototype =
     else if ( isObject( input ) )
     {
       if ( remoteData )
-      { 
-        return db.putRemoteData( input ); 
+      {
+        return db.putRemoteData( input );
       }
       else
       {
@@ -2934,7 +2931,7 @@ NeuroDatabase.prototype =
 
     if ( isArray(k) )
     {
-      for (var i = 0; i < k.length; i++) 
+      for (var i = 0; i < k.length; i++)
       {
         delete model[ k[i] ];
       }
@@ -2954,7 +2951,7 @@ NeuroDatabase.prototype =
     {
       key = key.join( this.keySeparator );
     }
-    
+
     return key;
   },
 
@@ -2964,10 +2961,10 @@ NeuroDatabase.prototype =
     var key = null;
 
     if ( isArray( fields ) )
-    {      
+    {
       key = [];
-      
-      for (var i = 0; i < fields.length; i++) 
+
+      for (var i = 0; i < fields.length; i++)
       {
         key.push( model[ fields[i] ] );
       }
@@ -3120,7 +3117,7 @@ NeuroDatabase.prototype =
         this.summarize = function(model)
         {
           return isValue( model ) ? model[ summarize ] : model;
-        };  
+        };
       }
       else
       {
@@ -3155,7 +3152,7 @@ NeuroDatabase.prototype =
     var models = db.models;
 
     db.all = {};
-    
+
     for (var i = 0; i < keys.length; i++)
     {
       db.all[ keys[ i ] ] = models[ i ];
@@ -3267,7 +3264,7 @@ NeuroDatabase.prototype =
 
       model.$trigger( NeuroModel.Events.RemoteUpdate, [encoded] );
 
-      model.$addOperation( NeuroSaveNow ); 
+      model.$addOperation( NeuroSaveNow );
 
       if ( !db.models.has( key ) )
       {
@@ -3279,7 +3276,7 @@ NeuroDatabase.prototype =
     else
     {
       model = db.createModel( decoded, true );
-      
+
       if ( db.cache === Neuro.Cache.All )
       {
         model.$local = model.$toJSON( false );
@@ -3302,7 +3299,7 @@ NeuroDatabase.prototype =
     var db = this;
     var model = db.instantiate( decoded, remoteData );
     var key = model.$key();
-    
+
     if ( !db.models.has( key ) )
     {
       db.models.put( key, model );
@@ -3363,7 +3360,7 @@ NeuroDatabase.prototype =
         model.$trigger( NeuroModel.Events.Detach );
 
         model.$addOperation( NeuroSaveNow );
-     
+
         return false;
       }
 
@@ -3382,7 +3379,7 @@ NeuroDatabase.prototype =
     {
       db.store.remove( key, function(removedValue)
       {
-        if (removedValue) 
+        if (removedValue)
         {
           Neuro.debug( Neuro.Debugs.REMOTE_REMOVE, db, removedValue );
         }
@@ -3466,7 +3463,7 @@ NeuroDatabase.prototype =
     {
       Neuro.debug( Neuro.Debugs.LOCAL_LOAD, db, records );
 
-      for (var i = 0; i < records.length; i++) 
+      for (var i = 0; i < records.length; i++)
       {
         var encoded = records[ i ];
         var key = keys[ i ];
@@ -3487,7 +3484,7 @@ NeuroDatabase.prototype =
       db.localLoaded = true;
 
       db.trigger( NeuroDatabase.Events.LocalLoad, [db] );
-      
+
       onLoaded( true, db );
     }
 
@@ -3511,7 +3508,7 @@ NeuroDatabase.prototype =
     }
     else
     {
-      db.store.all( onLocalLoad, onLocalError );      
+      db.store.all( onLocalLoad, onLocalError );
     }
   },
 
@@ -3548,7 +3545,7 @@ NeuroDatabase.prototype =
     {
       db.afterOnline = false;
       db.firstRefresh = false;
-      
+
       Neuro.debug( Neuro.Debugs.AUTO_REFRESH, db );
 
       db.refresh();
@@ -3560,8 +3557,8 @@ NeuroDatabase.prototype =
   {
     var db = this;
     var callbackContext = context || db;
-    
-    function onModels(models) 
+
+    function onModels(models)
     {
       var mapped = {};
 
@@ -3573,7 +3570,7 @@ NeuroDatabase.prototype =
         {
           var key = model.$key();
 
-          mapped[ key ] = model; 
+          mapped[ key ] = model;
         }
       }
 
@@ -3611,7 +3608,7 @@ NeuroDatabase.prototype =
       }
     }
 
-    function onLoadError(models, status) 
+    function onLoadError(models, status)
     {
       if ( status === 0 )
       {
@@ -3639,7 +3636,7 @@ NeuroDatabase.prototype =
         callback.call( callbackContext, db.models );
       }
     }
-  
+
     db.rest.all( onModels, onLoadError );
   },
 
@@ -3653,7 +3650,7 @@ NeuroDatabase.prototype =
     {
       db.pendingRefresh = false;
 
-      db.refresh(); 
+      db.refresh();
     }
   },
 
@@ -3693,7 +3690,7 @@ NeuroDatabase.prototype =
   {
     if ( this.destroyLocalModel( key ) )
     {
-      this.updated(); 
+      this.updated();
     }
 
     Neuro.debug( Neuro.Debugs.REALTIME_REMOVE, this, key );
@@ -3733,7 +3730,7 @@ NeuroDatabase.prototype =
     }
     else
     {
-      db.models.put( key, model ); 
+      db.models.put( key, model );
       db.trigger( NeuroDatabase.Events.ModelAdded, [model] );
       db.updated();
 
@@ -3743,7 +3740,7 @@ NeuroDatabase.prototype =
     model.$addOperation( NeuroSaveLocal, cascade );
   },
 
-  // Remove the model 
+  // Remove the model
   remove: function(model, cascade)
   {
     var db = this;
@@ -3786,6 +3783,7 @@ NeuroDatabase.prototype =
 
 eventize( NeuroDatabase.prototype );
 addEventFunction( NeuroDatabase.prototype, 'change', NeuroDatabase.Events.Changes );
+
 
 /**
  * An instance
