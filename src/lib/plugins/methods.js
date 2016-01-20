@@ -1,7 +1,9 @@
 Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 {
-  if ( isObject( options.methods ) )
+  var methods = collapse( options.methods, NeuroDatabase.Defaults.methods );
+
+  if ( !isEmpty( methods ) )
   {
-    transfer( options.methods, model.prototype );
+    transfer( methods, model.prototype );
   }
 });

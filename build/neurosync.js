@@ -19,7 +19,7 @@ function isDefined(x)
 
 /**
  * Determines whether the given variable is a function.
- * 
+ *
  * @memberOf Neuro
  * @param  {Any} x
  *         The variable to test.
@@ -35,7 +35,7 @@ function isFunction(x)
  * Determines whether the given variable is a Neuro object. A Neuro object is a
  * constructor for a model and also has a Database variable. A Neuro object is
  * strictly created by the Neuro function.
- * 
+ *
  * @memberOf Neuro
  * @param  {Any} x
  *         The variable to test.
@@ -49,7 +49,7 @@ function isNeuro(x)
 
 /**
  * Determines whether the given variable is a string.
- * 
+ *
  * @memberOf Neuro
  * @param  {Any} x
  *         The variable to test.
@@ -64,7 +64,7 @@ function isString(x)
 /**
  * Determines whether the given variable is a valid number. NaN and Infinity are
  * not valid numbers.
- * 
+ *
  * @memberOf Neuro
  * @param  {Any} x
  *         The variable to test.
@@ -78,7 +78,7 @@ function isNumber(x)
 
 /**
  * Determines whether the given variable is a boolean value.
- * 
+ *
  * @memberOf Neuro
  * @param  {Any} x
  *         The variable to test.
@@ -92,7 +92,7 @@ function isBoolean(x)
 
 /**
  * Determines whether the given variable is an instance of Date.
- * 
+ *
  * @memberOf Neuro
  * @param  {Any} x
  *         The variable to test.
@@ -106,7 +106,7 @@ function isDate(x)
 
 /**
  * Determines whether the given variable is an instance of RegExp.
- * 
+ *
  * @memberOf Neuro
  * @param  {Any} x
  *         The variable to test.
@@ -120,7 +120,7 @@ function isRegExp(x)
 
 /**
  * Determines whether the given variable is an instance of Array.
- * 
+ *
  * @memberOf Neuro
  * @param  {Any} x
  *         The variable to test.
@@ -133,9 +133,9 @@ function isArray(x)
 }
 
 /**
- * Determines whether the given variable is a non-null object. As a note, 
+ * Determines whether the given variable is a non-null object. As a note,
  * Arrays are considered objects.
- * 
+ *
  * @memberOf Neuro
  * @param  {Any} x
  *         The variable to test.
@@ -148,11 +148,11 @@ function isObject(x)
 }
 
 /**
- * Converts the given variable to an array of strings. If the variable is a 
- * string it is split based on the delimiter given. If the variable is an 
- * array then it is returned. If the variable is any other type it may result 
+ * Converts the given variable to an array of strings. If the variable is a
+ * string it is split based on the delimiter given. If the variable is an
+ * array then it is returned. If the variable is any other type it may result
  * in an error.
- * 
+ *
  * @memberOf Neuro
  * @param  {String|String[]} x
  *         The variable to convert to an Array.
@@ -168,7 +168,7 @@ function toArray(x, delimiter)
 
 /**
  * Determines whether the given variable is not null and is not undefined.
- * 
+ *
  * @memberOf Neuro
  * @param  {Any}  x
  *         The variable to test.
@@ -181,10 +181,10 @@ function isValue(x)
 }
 
 /**
- * Finds the index of a variable in an array optionally using a custom 
+ * Finds the index of a variable in an array optionally using a custom
  * comparison function. If the variable is not found in the array then `false`
  * is returned.
- * 
+ *
  * @memberOf Neuro
  * @param  {Array} arr
  *         The array to search through.
@@ -215,7 +215,7 @@ function indexOf(arr, x, comparator)
 
 /**
  * A function that doesn't perform any operations.
- * 
+ *
  * @memberOf Neuro
  */
 function noop()
@@ -227,7 +227,7 @@ function noop()
  * Returns the given function with the given context (`this`). This also has the
  * benefits of returning a "copy" of the function which makes it ideal for use
  * in listening on/once events and off events.
- * 
+ *
  * @memberOf Neuro
  * @param  {Object} context
  *         The value of `this` for the given function.
@@ -246,17 +246,17 @@ function bind(context, func)
 
 /**
  * Generates a UUID using the random number method.
- * 
+ *
  * @memberOf Neuro
  * @return {String} -
  *         The generated UUID.
  */
-function uuid() 
+function uuid()
 {
   return (S4()+S4()+"-"+S4()+"-"+S4()+"-"+S4()+"-"+S4()+S4()+S4());
 }
 
-function S4() 
+function S4()
 {
   return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
 }
@@ -291,7 +291,7 @@ function hasFields(model, fields, exists)
 {
   if ( isArray( fields ) )
   {
-    for (var i = 0; i < fields.length; i++) 
+    for (var i = 0; i < fields.length; i++)
     {
       if ( !exists( model[ fields[ i ] ] ) )
       {
@@ -307,7 +307,7 @@ function hasFields(model, fields, exists)
   }
 }
 
-// Copies a constructor function returning a function that can be called to 
+// Copies a constructor function returning a function that can be called to
 // return an instance and doesn't invoke the original constructor.
 function copyConstructor(func)
 {
@@ -427,7 +427,7 @@ function applyOptions( target, options, defaults )
 
 function camelCaseReplacer(match)
 {
-  return match.length === 1 ? match.toUpperCase() : match.charAt(1).toUpperCase(); 
+  return match.length === 1 ? match.toUpperCase() : match.charAt(1).toUpperCase();
 }
 
 function toCamelCase(name)
@@ -467,11 +467,11 @@ function grab(obj, props, copyValues)
 {
   var grabbed = {};
 
-  for (var i = 0; i < props.length; i++) 
+  for (var i = 0; i < props.length; i++)
   {
     var p = props[ i ];
 
-    if ( p in obj ) 
+    if ( p in obj )
     {
       grabbed[ p ] = copyValues ? copy( obj[ p ] ) : obj[ p ];
     }
@@ -492,7 +492,7 @@ function pull(obj, props, copyValues)
   {
     var pulled = [];
 
-    for (var i = 0; i < props.length; i++) 
+    for (var i = 0; i < props.length; i++)
     {
       var p = props[ i ];
       var pulledValue = obj[ p ];
@@ -502,6 +502,29 @@ function pull(obj, props, copyValues)
 
     return pulled;
   }
+}
+
+function collapse()
+{
+  var target = {};
+
+  for (var i = 0; i < arguments.length; i++)
+  {
+    var a = arguments[ i ];
+
+    if ( isObject( a ) )
+    {
+      for (var prop in a)
+      {
+        if ( !(prop in target) )
+        {
+          target[ prop ] = a[ prop ];
+        }
+      }
+    }
+  }
+
+  return target;
 }
 
 function clean(x)
@@ -524,11 +547,11 @@ function copy(x, copyHidden)
     return x;
   }
 
-  if (isArray(x)) 
+  if (isArray(x))
   {
     var c = [];
 
-    for (var i = 0; i < x.length; i++) 
+    for (var i = 0; i < x.length; i++)
     {
       c.push( copy(x[i], copyHidden) );
     }
@@ -543,7 +566,7 @@ function copy(x, copyHidden)
 
   var c = {};
 
-  for (var prop in x) 
+  for (var prop in x)
   {
     if (copyHidden || prop.charAt(0) !== '$')
     {
@@ -588,27 +611,27 @@ function sizeof(x)
 
     return properties;
   }
-  
+
   return 0;
 }
 
 function isEmpty(x)
 {
-  if (x === null || x === void 0 || x === 0) 
+  if (x === null || x === void 0 || x === 0)
   {
     return true;
   }
-  if (isArray(x) || isString(x)) 
+  if (isArray(x) || isString(x))
   {
     return x.length === 0;
   }
-  if (isDate(x)) 
+  if (isDate(x))
   {
     return x.getTime() === 0 || isNaN( x.getTime() );
   }
-  if (isObject(x)) 
+  if (isObject(x))
   {
-    for (var prop in x) 
+    for (var prop in x)
     {
       return false;
     }
@@ -680,14 +703,14 @@ function equals(a, b)
   return false;
 }
 
-function compareNumbers(a, b) 
+function compareNumbers(a, b)
 {
   return (a === b ? 0 : (a < b ? -1 : 1));
 }
 
 function compare(a, b, nullsFirst)
 {
-  if (a == b) 
+  if (a == b)
   {
     return 0;
   }
@@ -700,19 +723,19 @@ function compare(a, b, nullsFirst)
     return (av && !nullsFirst) || (bv && nullsFirst) ? -1 : 1;
   }
 
-  if (isDate(a)) 
+  if (isDate(a))
   {
     a = a.getTime();
   }
-  if (isDate(b)) 
+  if (isDate(b))
   {
     b = b.getTime();
   }
-  if (isNumber(a) && isNumber(b)) 
+  if (isNumber(a) && isNumber(b))
   {
     return compareNumbers(a, b);
   }
-  if (isArray(a) && isArray(b)) 
+  if (isArray(a) && isArray(b))
   {
     return compareNumbers(a.length, b.length);
   }
@@ -720,7 +743,7 @@ function compare(a, b, nullsFirst)
   {
     return a ? -1 : 1;
   }
-  
+
   return (a + '').localeCompare(b + '');
 }
 
@@ -758,7 +781,7 @@ function addComparator(second, comparator, nullsFirst)
     return first;
   }
 
-  return function compareCascading(a, b) 
+  return function compareCascading(a, b)
   {
     var d = first( a, b );
 
@@ -813,7 +836,7 @@ function createComparator(comparator, nullsFirst)
       return function compareObjects(a, b)
       {
         var av = isValue( a ) ? a[ comparator ] : a;
-        var bv = isValue( b ) ? b[ comparator ] : b; 
+        var bv = isValue( b ) ? b[ comparator ] : b;
 
         return compare( av, bv, nullsFirst );
       };
@@ -932,7 +955,7 @@ function createPropertyResolver(properties, delim)
 
       return pulled.join( delim );
     };
-  } 
+  }
   else
   {
     return function resolveNone(model)
@@ -1004,7 +1027,7 @@ function createWhere(properties, value, equals)
     }
 
     if ( isValue( value ) )
-    { 
+    {
       return function whereEqualsValue(model)
       {
         return equality( model[ properties ], value );
@@ -1065,45 +1088,45 @@ function createHaving(having)
 function parse(expr, base)
 {
   var valid = true;
-  
-  expr.replace( parse.REGEX, function(prop) 
+
+  expr.replace( parse.REGEX, function(prop)
   {
-    if (!valid) 
+    if (!valid)
     {
       return;
     }
 
-    if ( isArray( base ) ) 
+    if ( isArray( base ) )
     {
       var i = parseInt(prop);
 
-      if (!isNaN(i)) 
+      if (!isNaN(i))
       {
         base = base[ i ];
       }
-      else 
+      else
       {
         valid = false;
       }
     }
-    else if ( isObject( base ) ) 
+    else if ( isObject( base ) )
     {
-      if (prop in base) 
+      if (prop in base)
       {
         var value = base[ prop ];
         base = isFunction(value) ? value() : value;
-      } 
-      else 
+      }
+      else
       {
         valid = false;
       }
-    } 
-    else 
+    }
+    else
     {
       valid = false;
     }
   });
-  
+
   return valid ? base : void 0;
 }
 
@@ -1126,6 +1149,7 @@ function createFormatter(template)
     return format( template, base );
   };
 }
+
 
 function addEventFunction(target, functionName, events, secret)
 {
@@ -1653,26 +1677,26 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 });
 Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 {
-  if ( isObject( options.dynamic ) )
-  {
-    for ( var property in options.dynamic )
-    {
-      var definition = options.dynamic[ property ];
+  var dynamics = collapse( options.dynamic, NeuroDatabase.Defaults.dynamic );
 
-      addDynamicProperty( model.prototype, property, definition );
+  if ( !isEmpty( dynamics ) )
+  {
+    for ( var property in dynamics )
+    {
+      addDynamicProperty( model.prototype, property, dynamics[ property ] );
     }
   }
 });
 
 function addDynamicProperty(modelPrototype, property, definition)
 {
-  var get = isFunction( definition ) ? definition : 
+  var get = isFunction( definition ) ? definition :
           ( isObject( definition ) && isFunction( definition.get ) ? definition.get : noop );
   var set = isObject( definition ) && isFunction( definition.set ) ? definition.set : noop;
 
   if ( Object.defineProperty )
   {
-    Object.defineProperty( modelPrototype, property, 
+    Object.defineProperty( modelPrototype, property,
     {
       configurable: false,
       enumerable: true,
@@ -1711,9 +1735,9 @@ function addDynamicProperty(modelPrototype, property, definition)
 
 Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 {
-  var events = options.events;
+  var events = collapse( options.events, NeuroDatabase.Defaults.events );
 
-  if ( isObject( events ) )
+  if ( !isEmpty( events ) )
   {
     var modelEvents = [];
     var databaseEvents = [];
@@ -1827,9 +1851,10 @@ function applyEventListeners(target, listeners)
     target[ l.when ]( l.events, l.invoke, l.context );
   }
 }
+
 Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 {
-  var extend = options.extend;
+  var extend = options.extend || NeuroDatabase.Defaults.extend;
 
   if ( !isNeuro( extend ) )
   {
@@ -1936,6 +1961,7 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
   db.live   = Neuro.live( db );
 
 });
+
 Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 {
   model.fetch = function( input, callback, context )
@@ -2064,11 +2090,14 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 });
 Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 {
-  if ( isObject( options.methods ) )
+  var methods = collapse( options.methods, NeuroDatabase.Defaults.methods );
+
+  if ( !isEmpty( methods ) )
   {
-    transfer( options.methods, model.prototype );
+    transfer( methods, model.prototype );
   }
 });
+
 Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 {
   model.query = function(query)
@@ -2099,8 +2128,8 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 });
 Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 {
-  var time = options.timestamps;
-  var timeAsDate = options.timestampsAsDate;
+  var time = options.timestamps || NeuroDatabase.Defaults.timestamps;
+  var timeAsDate = options.timestampsAsDate || NeuroDatabase.Defaults.timestampsAsDate;
   var currentTimestamp = timeAsDate ? currentDate : currentTime;
 
   if ( !time )
@@ -2143,7 +2172,7 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
       db.defaults[ field ] = currentTimestamp;
     }
 
-    if ( options.timestampsAsDate )
+    if ( timeAsDate )
     {
       if ( !(field in db.encodings) )
       {
@@ -2215,6 +2244,7 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
     addUpdatedAt( 'updated_at' );
   }
 });
+
 Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 {
   model.where = function(whereProperties, whereValue, whereEquals)
@@ -9935,6 +9965,7 @@ var NeuroPolymorphic =
   global.Neuro.extendArray = extendArray;
 
   global.Neuro.transfer = transfer;
+  global.Neuro.collapse = collapse;
   global.Neuro.swap = swap;
   global.Neuro.grab = grab;
   global.Neuro.pull = pull;

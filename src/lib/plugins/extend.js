@@ -1,6 +1,6 @@
 Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 {
-  var extend = options.extend;
+  var extend = options.extend || NeuroDatabase.Defaults.extend;
 
   if ( !isNeuro( extend ) )
   {

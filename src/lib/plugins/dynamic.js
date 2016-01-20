@@ -1,25 +1,25 @@
 Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 {
-  if ( isObject( options.dynamic ) )
-  {
-    for ( var property in options.dynamic )
-    {
-      var definition = options.dynamic[ property ];
+  var dynamics = collapse( options.dynamic, NeuroDatabase.Defaults.dynamic );
 
-      addDynamicProperty( model.prototype, property, definition );
+  if ( !isEmpty( dynamics ) )
+  {
+    for ( var property in dynamics )
+    {
+      addDynamicProperty( model.prototype, property, dynamics[ property ] );
     }
   }
 });
 
 function addDynamicProperty(modelPrototype, property, definition)
 {
-  var get = isFunction( definition ) ? definition : 
+  var get = isFunction( definition ) ? definition :
           ( isObject( definition ) && isFunction( definition.get ) ? definition.get : noop );
   var set = isObject( definition ) && isFunction( definition.set ) ? definition.set : noop;
 
   if ( Object.defineProperty )
   {
-    Object.defineProperty( modelPrototype, property, 
+    Object.defineProperty( modelPrototype, property,
     {
       configurable: false,
       enumerable: true,

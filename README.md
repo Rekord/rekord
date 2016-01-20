@@ -280,6 +280,10 @@ var ModelClass = Neuro({
   // used in debugging.
   summarize: function(model) { return model.name; },
 
+  // (function) A function which accepts the database instance and options passed to it. This function is called before
+  // The store, rest, and live services are created for the given database.
+  prepare: function(db, options) { ... },
+
   // (object) Adds dynamic properties to every model. Dynamic properties appear like normal fields but invoke functions
   // when they are set or get.
   dynamic: {

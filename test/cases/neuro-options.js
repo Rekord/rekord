@@ -754,6 +754,54 @@ test( 'methods', function(assert)
   strictEqual( t0.name, 't1' );
 });
 
+test( 'methods global default', function(assert)
+{
+  Neuro.Database.Defaults.methods = {
+    setDone: function(done) {
+      this.$save({
+        done: done,
+        finished_at: done ? currentTime()() : null,
+        updated_at: currentTime()()
+      });
+    },
+    setName: function(name) {
+      this.$save({
+        name: name,
+        updated_at: currentTime()()
+      });
+    }
+  };
+
+  var Todo = Neuro({
+    name: 'methods_default',
+    fields: ['name', 'done', 'finished_at', 'updated_at', 'created_at'],
+    defaults: {
+      name: '',
+      done: false,
+      finished_at: null,
+      updated_at: currentTime(),
+      created_at: currentTime()
+    }
+  });
+
+  var t0 = new Todo({name: 't0'});
+
+  strictEqual( t0.name, 't0' );
+  strictEqual( t0.done, false );
+  strictEqual( t0.finished_at, null );
+
+  t0.setDone( true );
+
+  strictEqual( t0.done, true );
+  notStrictEqual( t0.finished_at, null );
+
+  t0.setName( 't1' );
+
+  strictEqual( t0.name, 't1' );
+
+  delete Neuro.Database.Defaults.methods;
+});
+
 test( 'dynamic get', function(assert)
 {
   var now = function() {
@@ -778,6 +826,35 @@ test( 'dynamic get', function(assert)
   p.age = 23;
 
   strictEqual( p.age, 26 );
+});
+
+test( 'dynamic get global default', function(assert)
+{
+  var now = function() {
+    return 1448323200; // Tuesday 24th November 2015 12:00:00 AM
+  };
+
+  Neuro.Database.Defaults.dynamic = {
+    age: function() {
+      return Math.floor( (now() - this.dob) / 31536000 );
+    }
+  };
+
+  var Person = Neuro({
+    name: 'dynamic_get',
+    fields: ['name', 'dob']
+  });
+
+  var p = new Person();
+  p.dob = 599856120; // Tuesday 3rd January 1989 06:42:00 PM
+
+  strictEqual( p.age, 26 );
+
+  p.age = 23;
+
+  strictEqual( p.age, 26 );
+
+  delete Neuro.Database.Defaults.dynamic;
 });
 
 test( 'dynamic set', function(assert)
@@ -911,6 +988,36 @@ test( 'events', function(assert)
   });
 });
 
+test( 'events global default', function(assert)
+{
+  var context0 = {name: 'c0'};
+  var context1 = {name: 'c1'};
+
+  Neuro.Database.Defaults.events = {
+    // Database Event
+    modelAdded: function(model) {
+      notStrictEqual( model, void 0, 'on modelAdded: model given' );
+    },
+  };
+
+  expect( 2 );
+
+  var Task = Neuro({
+    name: 'events_global_default',
+    fields: ['name']
+  });
+
+  var t = Task.create({name: 'Phil'});
+
+  assert.push( 1, 1, 1, '*** pre-save ***' );
+
+  t.$save({
+    name: 'Joe'
+  });
+
+  delete Neuro.Database.Defaults.events;
+});
+
 test( 'encodings decodings', function(assert)
 {
   var prefix = 'encodings_decodings_';
@@ -984,6 +1091,57 @@ test( 'timestamps default', function(assert)
     done();
 
   }, 2 );
+});
+
+test( 'timestamps default global default', function(assert)
+{
+  var done = assert.async();
+
+  var prefix = 'timestamps_default_default_';
+
+  Neuro.Database.Defaults.timestamps = true;
+  Neuro.Database.Defaults.timestampsAsDate = true;
+
+  var Todo = Neuro({
+    name: prefix + 'todo',
+    fields: ['name', 'done'],
+    defaults: { done: false }
+  });
+
+  Todo.Database.defaults.updated_at = currentDate();
+  Todo.Database.defaults.created_at = currentDate();
+
+  deepEqual( Todo.Database.fields, ['id', 'name', 'done', 'created_at', 'updated_at'] );
+
+  var t0 = Todo.create({name: 't0'});
+
+  strictEqual( t0.name, 't0' );
+  strictEqual( t0.done, false );
+  isInstance( t0.created_at, Date, t0.created_at );
+  isInstance( t0.updated_at, Date, t0.updated_at );
+
+  isType( t0.$saved.updated_at, 'number' );
+  isType( t0.$saved.created_at, 'number' );
+
+  var t1 = Todo.boot({id: 5, name: 't0', created_at: 1448800534000, updated_at: 1448850534000});
+
+  isInstance( t1.created_at, Date, t1.created_at );
+  isInstance( t1.updated_at, Date, t1.updated_at );
+
+  var time0 = t0.updated_at.getTime();
+
+  setTimeout(function()
+  {
+    t0.$save('done', true);
+
+    notDeepEqual( t0.updated_at.getTime(), time0, t0.updated_at );
+
+    done();
+
+  }, 2 );
+
+  delete Neuro.Database.Defaults.timestamps;
+  delete Neuro.Database.Defaults.timestampsAsDate;
 });
 
 test( 'timestamps custom', function(assert)
@@ -1120,6 +1278,57 @@ test( 'extend', function(assert)
   ok( 'done' in db.defaults );
   ok( 'updater' in db.relations );
   ok( 'creator' in db.relations );
+});
+
+test( 'extend global default', function(assert)
+{
+  var prefix = 'extend_default_';
+
+  var User = Neuro({
+    name: prefix + 'user',
+    fields: ['name']
+  });
+
+  var Todo = Neuro({
+    name: prefix + 'todo',
+    fields: ['name', 'done', 'created_by'],
+    defaults: { done: false },
+    timestamps: true,
+    loadRemote: false,
+    comparator: 'name',
+    belongsTo: {
+      creator: {
+        model: User,
+        local: 'created_by'
+      }
+    }
+  });
+
+  Neuro.Database.Defaults.extend = Todo;
+
+  var TodoUpdatable = Neuro({
+    name: prefix + 'todo_extended',
+    fields: ['updated_by'],
+    loadRemote: true,
+    belongsTo: {
+      updater: {
+        model: User,
+        local: 'updated_by'
+      }
+    }
+  });
+
+  var db = TodoUpdatable.Database;
+
+  deepEqual( db.fields, ['id', 'name', 'done', 'created_by', 'created_at', 'updated_at', 'updated_by'] );
+  strictEqual( db.loadRemote, true );
+  ok( 'created_at' in db.defaults );
+  ok( 'updated_at' in db.defaults );
+  ok( 'done' in db.defaults );
+  ok( 'updater' in db.relations );
+  ok( 'creator' in db.relations );
+
+  delete Neuro.Database.Defaults.extend;
 });
 
 test( 'prepare', function(assert)

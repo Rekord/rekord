@@ -47,6 +47,7 @@
   global.Neuro.extendArray = extendArray;
 
   global.Neuro.transfer = transfer;
+  global.Neuro.collapse = collapse;
   global.Neuro.swap = swap;
   global.Neuro.grab = grab;
   global.Neuro.pull = pull;

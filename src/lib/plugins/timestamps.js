@@ -1,7 +1,7 @@
 Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 {
-  var time = options.timestamps;
-  var timeAsDate = options.timestampsAsDate;
+  var time = options.timestamps || NeuroDatabase.Defaults.timestamps;
+  var timeAsDate = options.timestampsAsDate || NeuroDatabase.Defaults.timestampsAsDate;
   var currentTimestamp = timeAsDate ? currentDate : currentTime;
 
   if ( !time )
@@ -44,7 +44,7 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
       db.defaults[ field ] = currentTimestamp;
     }
 
-    if ( options.timestampsAsDate )
+    if ( timeAsDate )
     {
       if ( !(field in db.encodings) )
       {

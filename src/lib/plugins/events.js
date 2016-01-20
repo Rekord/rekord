@@ -1,8 +1,8 @@
 Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 {
-  var events = options.events;
+  var events = collapse( options.events, NeuroDatabase.Defaults.events );
 
-  if ( isObject( events ) )
+  if ( !isEmpty( events ) )
   {
     var modelEvents = [];
     var databaseEvents = [];
