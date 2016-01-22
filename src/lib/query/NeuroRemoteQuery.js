@@ -15,14 +15,14 @@ NeuroRemoteQuery.Status =
   Failure:    'failure'
 };
 
-NeuroRemoteQuery.Events = 
+NeuroRemoteQuery.Events =
 {
   Ready:      'ready',
   Success:    'success',
   Failure:    'failure'
 };
 
-extendArray( NeuroQuery, NeuroRemoteQuery, 
+extendArray( NeuroQuery, NeuroRemoteQuery,
 {
 
   setQuery: function(query, skipSync, clearPending)
@@ -98,12 +98,19 @@ extendArray( NeuroQuery, NeuroRemoteQuery,
     {
       callback.call( context, this );
     }
-    
+
     return this;
   },
 
-  handleSuccess: function(models)
+  parse: function(models)
   {
+    return models;
+  },
+
+  handleSuccess: function()
+  {
+    var models = this.parse.apply( this, arguments );
+
     this.status = NeuroRemoteQuery.Status.Success;
     this.reset( models, true );
     this.off( NeuroRemoteQuery.Events.Failure, this.onFailure );
