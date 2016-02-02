@@ -94,7 +94,7 @@ test( 'browser refresh', function(assert)
 });
 
 test( 'remote key change', function(assert)
-{ 
+{
   var prefix = 'Neuro_remote_key_change_';
 
   var Task = Neuro({
@@ -120,7 +120,7 @@ test( 'ensure relationships are loaded before saves/removes are resumed', functi
 {
   // Task is loaded first, and if autoload were true it would try to save tasks
   // before the unsaved creator would be saved. With autoload = false & using
-  // Neuro.load the relationships are loaded for local-storage models before 
+  // Neuro.load the relationships are loaded for local-storage models before
   // their pending operations are resumed.
 
   Neuro.autoload = false;
@@ -174,7 +174,7 @@ test( 'ensure relationships are loaded before saves/removes are resumed', functi
 
   notOk( u1.$isSaved() );
   notOk( t2.$isSaved() );
-  
+
   wait( 1, function()
   {
     notOk( u1.$isSaved() );
@@ -186,8 +186,8 @@ test( 'ensure relationships are loaded before saves/removes are resumed', functi
     ok( u1.$isSaved() );
     notOk( t2.$isSaved() );
   });
-  
-  wait( 5, function() 
+
+  wait( 5, function()
   {
     ok( u1.$isSaved() );
     ok( t2.$isSaved() );
@@ -196,4 +196,70 @@ test( 'ensure relationships are loaded before saves/removes are resumed', functi
   timer.run();
 
   Neuro.autoload = true;
+});
+
+test( 'remove while iterating related', function(assert)
+{
+  var prefix = 'Neuro_remove_iterating_';
+
+  var Task = Neuro({
+    name: prefix + 'task',
+    fields: ['name', 'done', 'list_id']
+  });
+
+  var TaskList = Neuro({
+    name: prefix + 'list',
+    fields: ['name'],
+    hasMany: {
+      tasks: {
+        model: Task,
+        foreign: 'list_id',
+        comparator: 'id'
+      }
+    }
+  });
+
+  var l0 = TaskList.boot({
+    id: 23,
+    name: 'l0',
+    tasks: [
+      { id: 1, name: 't0', done: true },
+      { id: 2, name: 't1', done: false },
+      { id: 3, name: 't2', done: false },
+      { id: 4, name: 't3', done: true }
+    ]
+  });
+
+  strictEqual( l0.tasks[0].list_id, 23 );
+
+  var t0 = l0.tasks[0];
+  var t1 = l0.tasks[1];
+  var t2 = l0.tasks[2];
+  var t3 = l0.tasks[3];
+
+  ok( t0.$isSaved() );
+  ok( t1.$isSaved() );
+  ok( t2.$isSaved() );
+  ok( t3.$isSaved() );
+
+  var names = [];
+
+  l0.tasks.each(function(t)
+  {
+    if ( t.done )
+    {
+      t.$remove();
+    }
+
+    names.push( t.name );
+  });
+
+  notOk( t0.$isSaved() );
+  ok( t1.$isSaved() );
+  ok( t2.$isSaved() );
+  notOk( t3.$isSaved() );
+
+  strictEqual( l0.tasks.length, 2 );
+
+  deepEqual( names, ['t0', 't1', 't2', 't3'] );
 });

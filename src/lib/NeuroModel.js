@@ -91,7 +91,8 @@ NeuroModel.Status =
 
 NeuroModel.Blocked =
 {
-  toString: true
+  toString: true,
+  valueOf: true
 };
 
 NeuroModel.prototype =

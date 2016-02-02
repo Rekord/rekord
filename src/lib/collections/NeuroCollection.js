@@ -16,7 +16,7 @@ NeuroCollection.Events =
   Changes:        'add adds sort remove removes updates reset cleared'
 };
 
-extendArray( Array, NeuroCollection, 
+extendArray( Array, NeuroCollection,
 {
 
   setComparator: function(comparator, nullsFirst)
@@ -248,7 +248,7 @@ extendArray( Array, NeuroCollection,
     for (var i = this.length - 1; i >= 0; i--)
     {
       var value = this[ i ];
-      
+
       if ( where( value ) )
       {
         this.splice( i, 1 );
@@ -522,7 +522,7 @@ extendArray( Array, NeuroCollection,
     {
       var keysResolver = createPropertyResolver( keys, keysDelim );
       var result = {};
-      
+
       for (var i = 0; i < this.length; i++)
       {
         var model = this[ i ];
@@ -556,7 +556,14 @@ extendArray( Array, NeuroCollection,
 
     for (var i = 0; i < this.length; i++)
     {
-      callback.call( context, this[ i ], i );
+      var item = this[ i ];
+
+      callback.call( context, item, i );
+
+      if ( this[ i ] !== item )
+      {
+        i--;
+      }
     }
   },
 
@@ -722,7 +729,7 @@ extendArray( Array, NeuroCollection,
 
       if ( having( grouped ) )
       {
-        groupings.push( grouped );        
+        groupings.push( grouped );
       }
     }
 
