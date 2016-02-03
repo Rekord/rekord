@@ -939,3 +939,64 @@ test( '$decode', function(assert)
 
   strictEqual( t0.done, false );
 });
+
+test( 'cascade chain', function(assert)
+{
+  var prefix = 'Model_cascade_chain_';
+
+  var User = Neuro({
+    name: prefix + 'user',
+    fields: ['name']
+  });
+
+  var Task = Neuro({
+    name: prefix + 'task',
+    fields: ['list_id', 'name', 'done', 'created_by'],
+    hasOne: {
+      creator: {
+        model: User,
+        local: 'created_by',
+        cascade: Neuro.Cascade.All
+      }
+    }
+  });
+
+  var List = Neuro({
+    name: prefix + 'list',
+    fields: ['name'],
+    hasMany: {
+      tasks: {
+        model: Task,
+        foreign: 'list_id',
+        cascadeSave: Neuro.Cascade.All
+      }
+    }
+  });
+
+  var u0 = User.create({name: 'u0'});
+  var t0 = Task.create({name: 't0', done: 1, creator: u0});
+  var t1 = Task.create({name: 't1', done: 0, creator: u0});
+  var l0 = List.create({name: 'l0', tasks: [t0, t1]});
+
+  notOk( u0.$hasChanges() );
+  notOk( t0.$hasChanges() );
+  notOk( t1.$hasChanges() );
+  notOk( l0.$hasChanges() );
+
+  u0.name = 'u0a';
+  t0.name = 't0a';
+  t1.name = 't1a';
+  l0.name = 'l0a';
+
+  ok( u0.$hasChanges() );
+  ok( t0.$hasChanges() );
+  ok( t1.$hasChanges() );
+  ok( l0.$hasChanges() );
+
+  l0.$save();
+
+  notOk( u0.$hasChanges() );
+  notOk( t0.$hasChanges() );
+  notOk( t1.$hasChanges() );
+  notOk( l0.$hasChanges() );
+});
