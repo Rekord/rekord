@@ -76,19 +76,19 @@ extend( NeuroOperation, NeuroSaveRemote,
 
       model.$trigger( NeuroModel.Events.RemoteSaveFailure, [model] );
     }
-    else if ( status !== 0 ) 
-    {          
+    else if ( status !== 0 )
+    {
       Neuro.debug( Neuro.Debugs.SAVE_ERROR, model, status );
 
       this.markSynced( model, true, NeuroModel.Events.RemoteSaveFailure );
-    } 
-    else 
+    }
+    else
     {
       // Check the network status right now
       Neuro.checkNetworkStatus();
 
       // If not online for sure, try saving once online again
-      if (!Neuro.online) 
+      if (!Neuro.online)
       {
         Neuro.once( 'online', this.handleOnline, this );
 
@@ -111,7 +111,7 @@ extend( NeuroOperation, NeuroSaveRemote,
 
     if ( saveNow )
     {
-      this.insertNext( NeuroSaveNow ); 
+      this.insertNext( NeuroSaveNow );
     }
 
     if ( eventType )
@@ -150,32 +150,32 @@ extend( NeuroOperation, NeuroSaveRemote,
 
     Neuro.debug( Neuro.Debugs.SAVE_VALUES, model, saving );
 
-    // If the model hasn't been saved before - create the record where the 
+    // If the model hasn't been saved before - create the record where the
     // local and model point to the same object.
     if ( !model.$saved )
     {
-      model.$saved = model.$local ? (model.$local.$saved = {}) : {}; 
+      model.$saved = model.$local ? (model.$local.$saved = {}) : {};
     }
 
     // Tranfer all saved fields into the saved object
     transfer( saving, model.$saved );
-    
+
     // Update the model with the return data
     if ( !isEmpty( data ) )
     {
       db.putRemoteData( data, model.$key(), model );
-    }    
+    }
 
     this.liveSave();
     this.markSynced( model, false, NeuroModel.Events.RemoteSave );
-    
+
     if ( db.cache === Neuro.Cache.Pending )
     {
       this.insertNext( NeuroRemoveCache );
     }
     else
     {
-      this.insertNext( NeuroSaveNow ); 
+      this.insertNext( NeuroSaveNow );
     }
   },
 
@@ -198,7 +198,7 @@ extend( NeuroOperation, NeuroSaveRemote,
     var model = this.model;
 
     if ( model.$status === NeuroModel.Status.SavePending )
-    { 
+    {
       model.$addOperation( NeuroSaveRemote, this.cascade );
 
       Neuro.debug( Neuro.Debugs.SAVE_RESUME, model );

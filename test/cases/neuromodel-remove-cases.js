@@ -198,3 +198,179 @@ test( 'delete while offline, resume delete online', function(assert)
 
   noline();
 });
+
+test( 'remove remote transaction', function(assert)
+{
+  var timer = assert.timer();
+  var prefix = 'NeuroModel_remove_remote_transaction_';
+
+  var Task = Neuro({
+    name: prefix + 'task',
+    fields: ['name', 'done', 'list_id']
+  });
+
+  var List = Neuro({
+    name: prefix + 'list',
+    fields: ['name'],
+    hasMany: {
+      tasks: {
+        model: Task,
+        foreign: 'list_id',
+        cascadeRemove: Neuro.Cascade.All
+      }
+    }
+  });
+
+  var t0 = Task.create({name: 't0', done: 0});
+  var t1 = Task.create({name: 't1', done: 1});
+  var l0 = List.create({name: 'l0', tasks: [t0, t1]});
+
+  l0.name = 'l0a';
+  t0.name = 't0a';
+  t1.$save();
+
+  Task.Database.rest.delay = 2;
+  List.Database.rest.delay = 1;
+
+  var txn = l0.$remove();
+  var done = false;
+
+  txn.then(function(result)
+  {
+    ok( done, 'then called' );
+    strictEqual( result, 'remote-success' );
+  });
+
+  wait( 0, function()
+  {
+    notOk( txn.isFinished() );
+    strictEqual( txn.completed, 0 );
+    strictEqual( txn.operations, 3 );
+  });
+
+  wait( 1, function()
+  {
+    notOk( txn.isFinished() );
+    strictEqual( txn.completed, 1 );
+    done = true;
+  });
+
+  wait( 2, function()
+  {
+    ok( txn.isFinished() );
+    strictEqual( txn.completed, 3 );
+  });
+
+  timer.run();
+});
+
+test( 'remove local transaction', function(assert)
+{
+  var timer = assert.timer();
+  var prefix = 'NeuroModel_remove_local_transaction_';
+
+  var Task = Neuro({
+    name: prefix + 'task',
+    fields: ['name', 'done', 'list_id']
+  });
+
+  var List = Neuro({
+    name: prefix + 'list',
+    fields: ['name'],
+    hasMany: {
+      tasks: {
+        model: Task,
+        foreign: 'list_id',
+        cascadeRemove: Neuro.Cascade.Local
+      }
+    }
+  });
+
+  var t0 = Task.create({name: 't0', done: 0});
+  var t1 = Task.create({name: 't1', done: 1});
+  var l0 = List.create({name: 'l0', tasks: [t0, t1]});
+
+  l0.name = 'l0a';
+  t0.name = 't0a';
+  t1.$save();
+
+  Task.Database.store.delay = 2;
+  List.Database.store.delay = 1;
+
+  var txn = l0.$remove( Neuro.Cascade.Local );
+  var done = false;
+
+  txn.then(function(result)
+  {
+    ok( done, 'then called' );
+    strictEqual( result, 'local-success' );
+  });
+
+  wait( 0, function()
+  {
+    notOk( txn.isFinished() );
+    strictEqual( txn.completed, 0 );
+    strictEqual( txn.operations, 3 );
+  });
+
+  wait( 1, function()
+  {
+    notOk( txn.isFinished() );
+    strictEqual( txn.completed, 1 );
+    done = true;
+  });
+
+  wait( 2, function()
+  {
+    ok( txn.isFinished() );
+    strictEqual( txn.completed, 3 );
+  });
+
+  timer.run();
+});
+
+test( 'remove offline transaction', function(assert)
+{
+  var timer = assert.timer();
+  var prefix = 'NeuroModel_remove_offline_transaction_';
+
+  var Task = Neuro({
+    name: prefix + 'task',
+    fields: ['name', 'done', 'list_id']
+  });
+
+  var List = Neuro({
+    name: prefix + 'list',
+    fields: ['name'],
+    hasMany: {
+      tasks: {
+        model: Task,
+        foreign: 'list_id'
+      }
+    }
+  });
+
+  var t0 = Task.create({name: 't0', done: 0});
+  var t1 = Task.create({name: 't1', done: 1});
+  var l0 = List.create({name: 'l0', tasks: [t0, t1]});
+
+  l0.name = 'l0a';
+  t0.name = 't0a';
+  t1.$save();
+
+  Task.Database.rest.delay = 2;
+  List.Database.rest.delay = 1;
+
+  offline();
+
+  var txn = l0.$remove();
+
+  txn.then(function(result)
+  {
+    strictEqual( result, 'offline' );
+  });
+
+  timer.run();
+
+  noline();
+});

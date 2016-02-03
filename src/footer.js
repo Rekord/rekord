@@ -7,6 +7,7 @@
   global.Neuro.Database = NeuroDatabase;
   global.Neuro.Relation = NeuroRelation;
   global.Neuro.Operation = NeuroOperation;
+  global.Neuro.Transaction = NeuroTransaction;
 
   /* Collections */
   global.Neuro.Map = NeuroMap;

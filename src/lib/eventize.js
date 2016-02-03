@@ -9,7 +9,7 @@ function addEventFunction(target, functionName, events, secret)
     var subject = this;
     var unlistened = false;
 
-    function listener() 
+    function listener()
     {
       var result = callback.apply( context || subject, arguments );
 
@@ -35,8 +35,8 @@ function addEventFunction(target, functionName, events, secret)
 }
 
 /**
- * Adds functions to the given object (or prototype) so you can listen for any 
- * number of events on the given object, optionally once. Listeners can be 
+ * Adds functions to the given object (or prototype) so you can listen for any
+ * number of events on the given object, optionally once. Listeners can be
  * removed later.
  *
  * The following methods will be added to the given target:
@@ -46,16 +46,16 @@ function addEventFunction(target, functionName, events, secret)
  *     target.off( events, callback )
  *     target.trigger( events, [a, b, c...] )
  *
- * Where... 
+ * Where...
  * - `events` is a string of space delimited events.
  * - `callback` is a function to invoke when the event is triggered.
- * - `context` is an object that should be the `this` when the callback is 
- *   invoked. If no context is given the default value is the object which has 
+ * - `context` is an object that should be the `this` when the callback is
+ *   invoked. If no context is given the default value is the object which has
  *   the trigger function that was invoked.
  *
  * @method eventize
  * @for Core
- * @param {Object} target The object to add `on`, `once`, `off`, and `trigger` 
+ * @param {Object} target The object to add `on`, `once`, `off`, and `trigger`
  *    functions to.
  */
 function eventize(target, secret)
@@ -69,7 +69,7 @@ function eventize(target, secret)
 
   /**
    * **See:** {{#crossLink "Core/eventize:method"}}{{/crossLink}}
-   * 
+   *
    * @class eventize
    */
 
@@ -88,7 +88,7 @@ function eventize(target, secret)
     {
       listeners = $this[ property ] = {};
     }
-    
+
     for (var i = 0; i < events.length; i++)
     {
       var eventName = events[ i ];
@@ -98,7 +98,7 @@ function eventize(target, secret)
       {
         eventListeners = listeners[ eventName ] = [];
       }
-      
+
       eventListeners.push( [ callback, context || $this, 0 ] );
     }
 
@@ -110,11 +110,11 @@ function eventize(target, secret)
       }
     };
   };
-  
+
   /**
    * Listens for every occurrence of the given events and invokes the callback
    * each time any of them are triggered.
-   * 
+   *
    * @method on
    * @for eventize
    * @param {String|Array|Object} events
@@ -126,11 +126,11 @@ function eventize(target, secret)
   {
     return onListeners( this, '$$on', events, callback, context );
   }
-  
+
   /**
    * Listens for the next occurrence for each of the given events and invokes
    * the callback when any of the events are triggered.
-   * 
+   *
    * @method once
    * @for eventize
    * @param {String|Array|Object} events
@@ -147,21 +147,21 @@ function eventize(target, secret)
   {
     return onListeners( this, '$$after', events, callback, context );
   }
-  
+
   // Removes a listener from an array of listeners.
   function offListeners(listeners, event, callback)
   {
     if (listeners && event in listeners)
     {
       var eventListeners = listeners[ event ];
-      
+
       for (var k = eventListeners.length - 1; k >= 0; k--)
       {
         if (eventListeners[ k ][ CALLBACK_FUNCTION ] === callback)
         {
           eventListeners.splice( k, 1 );
         }
-      }  
+      }
     }
   }
 
@@ -173,7 +173,7 @@ function eventize(target, secret)
       delete obj[ prop ];
     }
   }
-  
+
   /**
    * Stops listening for a given callback for a given set of events.
    *
@@ -183,7 +183,7 @@ function eventize(target, secret)
    *     target.off('a b');      // remove all listeners on events a & b
    *     target.off(['a', 'b']); // remove all listeners on events a & b
    *     target.off('a', x);     // remove listener x from event a
-   * 
+   *
    * @method off
    * @for eventize
    * @param {String|Array|Object} [events]
@@ -235,7 +235,7 @@ function eventize(target, secret)
     {
       var eventListeners = listeners[ event ];
       var triggerGroup = ++triggerId;
-     
+
       for (var i = 0; i < eventListeners.length; i++)
       {
         var callback = eventListeners[ i ];
@@ -254,17 +254,17 @@ function eventize(target, secret)
           }
         }
       }
-      
+
       if ( clear )
       {
         delete listeners[ event ];
       }
     }
   }
-  
+
   /**
    * Triggers a single event optionally passing an argument to any listeners.
-   * 
+   *
    * @method trigger
    * @for eventize
    * @param {String} event

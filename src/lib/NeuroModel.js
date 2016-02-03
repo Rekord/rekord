@@ -388,39 +388,49 @@ NeuroModel.prototype =
 
   $save: function(setProperties, setValue, cascade)
   {
-    if ( this.$isDeleted() )
-    {
-      Neuro.debug( Neuro.Debugs.SAVE_DELETED, this.$db, this );
-
-      return false;
-    }
-
     var cascade =
       (arguments.length === 3 ? cascade :
         (arguments.length === 2 && isObject( setProperties ) && isNumber( setValue ) ? setValue :
           (arguments.length === 1 && isNumber( setProperties ) ?  setProperties : Neuro.Cascade.All ) ) );
 
-    this.$db.addReference( this );
+    if ( this.$isDeleted() )
+    {
+      Neuro.debug( Neuro.Debugs.SAVE_DELETED, this.$db, this );
 
-    this.$set( setProperties, setValue );
+      return Neuro.transactNone( cascade, this, 'save' );
+    }
 
-    this.$trigger( NeuroModel.Events.PreSave, [this] );
+    return Neuro.transact( cascade, this, 'save', function(txn)
+    {
+      this.$db.addReference( this );
 
-    this.$db.save( this, cascade );
+      this.$set( setProperties, setValue );
 
-    this.$trigger( NeuroModel.Events.PostSave, [this] );
+      this.$trigger( NeuroModel.Events.PreSave, [this] );
+
+      this.$db.save( this, cascade );
+
+      this.$trigger( NeuroModel.Events.PostSave, [this] );
+    });
   },
 
   $remove: function(cascade)
   {
-    if ( this.$exists() )
+    var cascade = isNumber( cascade ) ? cascade : Neuro.Cascade.All;
+
+    if ( !this.$exists() )
+    {
+      return Neuro.transactNone( cascade, this, 'remove' );
+    }
+
+    return Neuro.transact( cascade, this, 'remove', function(txn)
     {
       this.$trigger( NeuroModel.Events.PreRemove, [this] );
 
       this.$db.remove( this, cascade );
 
       this.$trigger( NeuroModel.Events.PostRemove, [this] );
-    }
+    });
   },
 
   $refresh: function(cascade)

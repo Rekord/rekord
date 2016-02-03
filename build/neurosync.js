@@ -1161,7 +1161,7 @@ function addEventFunction(target, functionName, events, secret)
     var subject = this;
     var unlistened = false;
 
-    function listener() 
+    function listener()
     {
       var result = callback.apply( context || subject, arguments );
 
@@ -1187,8 +1187,8 @@ function addEventFunction(target, functionName, events, secret)
 }
 
 /**
- * Adds functions to the given object (or prototype) so you can listen for any 
- * number of events on the given object, optionally once. Listeners can be 
+ * Adds functions to the given object (or prototype) so you can listen for any
+ * number of events on the given object, optionally once. Listeners can be
  * removed later.
  *
  * The following methods will be added to the given target:
@@ -1198,16 +1198,16 @@ function addEventFunction(target, functionName, events, secret)
  *     target.off( events, callback )
  *     target.trigger( events, [a, b, c...] )
  *
- * Where... 
+ * Where...
  * - `events` is a string of space delimited events.
  * - `callback` is a function to invoke when the event is triggered.
- * - `context` is an object that should be the `this` when the callback is 
- *   invoked. If no context is given the default value is the object which has 
+ * - `context` is an object that should be the `this` when the callback is
+ *   invoked. If no context is given the default value is the object which has
  *   the trigger function that was invoked.
  *
  * @method eventize
  * @for Core
- * @param {Object} target The object to add `on`, `once`, `off`, and `trigger` 
+ * @param {Object} target The object to add `on`, `once`, `off`, and `trigger`
  *    functions to.
  */
 function eventize(target, secret)
@@ -1221,7 +1221,7 @@ function eventize(target, secret)
 
   /**
    * **See:** {{#crossLink "Core/eventize:method"}}{{/crossLink}}
-   * 
+   *
    * @class eventize
    */
 
@@ -1240,7 +1240,7 @@ function eventize(target, secret)
     {
       listeners = $this[ property ] = {};
     }
-    
+
     for (var i = 0; i < events.length; i++)
     {
       var eventName = events[ i ];
@@ -1250,7 +1250,7 @@ function eventize(target, secret)
       {
         eventListeners = listeners[ eventName ] = [];
       }
-      
+
       eventListeners.push( [ callback, context || $this, 0 ] );
     }
 
@@ -1262,11 +1262,11 @@ function eventize(target, secret)
       }
     };
   };
-  
+
   /**
    * Listens for every occurrence of the given events and invokes the callback
    * each time any of them are triggered.
-   * 
+   *
    * @method on
    * @for eventize
    * @param {String|Array|Object} events
@@ -1278,11 +1278,11 @@ function eventize(target, secret)
   {
     return onListeners( this, '$$on', events, callback, context );
   }
-  
+
   /**
    * Listens for the next occurrence for each of the given events and invokes
    * the callback when any of the events are triggered.
-   * 
+   *
    * @method once
    * @for eventize
    * @param {String|Array|Object} events
@@ -1299,21 +1299,21 @@ function eventize(target, secret)
   {
     return onListeners( this, '$$after', events, callback, context );
   }
-  
+
   // Removes a listener from an array of listeners.
   function offListeners(listeners, event, callback)
   {
     if (listeners && event in listeners)
     {
       var eventListeners = listeners[ event ];
-      
+
       for (var k = eventListeners.length - 1; k >= 0; k--)
       {
         if (eventListeners[ k ][ CALLBACK_FUNCTION ] === callback)
         {
           eventListeners.splice( k, 1 );
         }
-      }  
+      }
     }
   }
 
@@ -1325,7 +1325,7 @@ function eventize(target, secret)
       delete obj[ prop ];
     }
   }
-  
+
   /**
    * Stops listening for a given callback for a given set of events.
    *
@@ -1335,7 +1335,7 @@ function eventize(target, secret)
    *     target.off('a b');      // remove all listeners on events a & b
    *     target.off(['a', 'b']); // remove all listeners on events a & b
    *     target.off('a', x);     // remove listener x from event a
-   * 
+   *
    * @method off
    * @for eventize
    * @param {String|Array|Object} [events]
@@ -1387,7 +1387,7 @@ function eventize(target, secret)
     {
       var eventListeners = listeners[ event ];
       var triggerGroup = ++triggerId;
-     
+
       for (var i = 0; i < eventListeners.length; i++)
       {
         var callback = eventListeners[ i ];
@@ -1406,17 +1406,17 @@ function eventize(target, secret)
           }
         }
       }
-      
+
       if ( clear )
       {
         delete listeners[ event ];
       }
     }
   }
-  
+
   /**
    * Triggers a single event optionally passing an argument to any listeners.
-   * 
+   *
    * @method trigger
    * @for eventize
    * @param {String} event
@@ -1456,6 +1456,7 @@ function eventize(target, secret)
     target.trigger = trigger;
   }
 };
+
 
 /**
  * Creates a Neuro object given a set of options. A Neuro object is also the
@@ -2618,6 +2619,190 @@ Neuro.checkNetworkStatus = function()
     Neuro.setOffline();
   }
 };
+
+Neuro.transaction = null;
+
+Neuro.transact = function(cascade, model, operation, func)
+{
+  var transaction = Neuro.transaction;
+
+  if ( transaction )
+  {
+    transaction.add( cascade, model, operation );
+
+    func.call( model, transaction )
+
+    return transaction;
+  }
+  else
+  {
+    transaction = Neuro.transaction = new NeuroTransaction( cascade, model, operation );
+
+    transaction.add( cascade, model, operation );
+
+    func.call( model, transaction );
+
+    Neuro.transaction = null;
+
+    return transaction;
+  }
+};
+
+Neuro.transactNone = function(cascade, model, operation)
+{
+  return new NeuroTransaction( cascade, model, operation );
+};
+
+function NeuroTransaction(cascade, model, operation)
+{
+  this.cascade = cascade;
+  this.model = model;
+  this.operation = operation;
+  this.status = null;
+  this.completed = 0;
+  this.operations = 0;
+}
+
+NeuroTransaction.Events =
+{
+  RemoteSuccess:  'remote-success',
+  LocalSuccess:   'local-success',
+  Offline:        'offline',
+  Blocked:        'blocked',
+  Error:          'error',
+  Any:            'remote-success local-success offline blocked error'
+};
+
+NeuroTransaction.prototype =
+{
+  add: function(cascade, model, operation)
+  {
+    var handled = {
+      already: false,
+      offs: []
+    };
+
+    switch (operation)
+    {
+    case 'save':
+      if ( cascade & Neuro.Cascade.Rest )
+      {
+        handled.offs.push(
+          model.$once( NeuroModel.Events.RemoteSave, this.createHandler( false, false, handled ), this ),
+          model.$once( NeuroModel.Events.RemoteSaveFailure, this.createHandler( true, false, handled ), this ),
+          model.$once( NeuroModel.Events.RemoteSaveOffline, this.createHandler( false, true, handled ), this )
+        );
+      }
+      else if ( cascade & Neuro.Cascade.Local )
+      {
+        handled.offs.push(
+          model.$once( NeuroModel.Events.LocalSave, this.createHandler( false, false, handled ), this ),
+          model.$once( NeuroModel.Events.LocalSaveFailure, this.createHandler( true, false, handled ), this )
+        );
+      }
+      break;
+
+    case 'remove':
+      if ( cascade & Neuro.Cascade.Rest )
+      {
+        handled.offs.push(
+          model.$once( NeuroModel.Events.RemoteRemove, this.createHandler( false, false, handled ), this ),
+          model.$once( NeuroModel.Events.RemoteRemoveFailure, this.createHandler( true, false, handled ), this ),
+          model.$once( NeuroModel.Events.RemoteRemoveOffline, this.createHandler( false, true, handled ), this )
+        );
+      }
+      else if ( cascade & Neuro.Cascade.Local )
+      {
+        handled.offs.push(
+          model.$once( NeuroModel.Events.LocalRemove, this.createHandler( false, false, handled ), this ),
+          model.$once( NeuroModel.Events.LocalRemoveFailure, this.createHandler( true, false, handled ), this )
+        );
+      }
+      break;
+    }
+
+    if ( handled.offs.length )
+    {
+      this.operations++;
+    }
+  },
+
+  createHandler: function(failure, offline, handled)
+  {
+    return function onEvent()
+    {
+      if ( !handled.already )
+      {
+        handled.already = true;
+
+        for (var i = 0; i < handled.offs.length; i++)
+        {
+          handled.offs[ i ]();
+        }
+
+        if ( offline )
+        {
+          this.status = NeuroTransaction.Events.Offline;
+        }
+        else if ( !this.status && failure )
+        {
+          this.status = NeuroTransaction.Events.Error;
+        }
+
+        this.completed++;
+
+        if ( this.isFinished() )
+        {
+          this.finish();
+        }
+      }
+    };
+  },
+
+  finish: function()
+  {
+    this.completed = this.operations;
+
+    if ( !this.status )
+    {
+      if ( this.cascade & Neuro.Cascade.Rest )
+      {
+        this.status = NeuroTransaction.Events.RemoteSuccess;
+      }
+      else if ( this.cascade & Neuro.Cascade.Local )
+      {
+        this.status = NeuroTransaction.Events.LocalSuccess;
+      }
+      else
+      {
+        this.status = NeuroTransaction.Events.Error;
+      }
+    }
+
+    this.trigger( this.status, [this.status, this.model, this.cascade] );
+  },
+
+  isFinished: function()
+  {
+    return this.completed === this.operations;
+  },
+
+  then: function(callback, context)
+  {
+    var ignore = this.once( NeuroTransaction.Events.Any, callback, context );
+
+    if ( this.isFinished() )
+    {
+      this.finish();
+    }
+
+    return ignore;
+  }
+
+};
+
+eventize( NeuroTransaction.prototype );
+
 
 
 function NeuroDatabase(options)
@@ -4204,39 +4389,49 @@ NeuroModel.prototype =
 
   $save: function(setProperties, setValue, cascade)
   {
-    if ( this.$isDeleted() )
-    {
-      Neuro.debug( Neuro.Debugs.SAVE_DELETED, this.$db, this );
-
-      return false;
-    }
-
     var cascade =
       (arguments.length === 3 ? cascade :
         (arguments.length === 2 && isObject( setProperties ) && isNumber( setValue ) ? setValue :
           (arguments.length === 1 && isNumber( setProperties ) ?  setProperties : Neuro.Cascade.All ) ) );
 
-    this.$db.addReference( this );
+    if ( this.$isDeleted() )
+    {
+      Neuro.debug( Neuro.Debugs.SAVE_DELETED, this.$db, this );
 
-    this.$set( setProperties, setValue );
+      return Neuro.transactNone( cascade, this, 'save' );
+    }
 
-    this.$trigger( NeuroModel.Events.PreSave, [this] );
+    return Neuro.transact( cascade, this, 'save', function(txn)
+    {
+      this.$db.addReference( this );
 
-    this.$db.save( this, cascade );
+      this.$set( setProperties, setValue );
 
-    this.$trigger( NeuroModel.Events.PostSave, [this] );
+      this.$trigger( NeuroModel.Events.PreSave, [this] );
+
+      this.$db.save( this, cascade );
+
+      this.$trigger( NeuroModel.Events.PostSave, [this] );
+    });
   },
 
   $remove: function(cascade)
   {
-    if ( this.$exists() )
+    var cascade = isNumber( cascade ) ? cascade : Neuro.Cascade.All;
+
+    if ( !this.$exists() )
+    {
+      return Neuro.transactNone( cascade, this, 'remove' );
+    }
+
+    return Neuro.transact( cascade, this, 'remove', function(txn)
     {
       this.$trigger( NeuroModel.Events.PreRemove, [this] );
 
       this.$db.remove( this, cascade );
 
       this.$trigger( NeuroModel.Events.PostRemove, [this] );
-    }
+    });
   },
 
   $refresh: function(cascade)
@@ -7219,19 +7414,19 @@ extend( NeuroOperation, NeuroSaveRemote,
 
       model.$trigger( NeuroModel.Events.RemoteSaveFailure, [model] );
     }
-    else if ( status !== 0 ) 
-    {          
+    else if ( status !== 0 )
+    {
       Neuro.debug( Neuro.Debugs.SAVE_ERROR, model, status );
 
       this.markSynced( model, true, NeuroModel.Events.RemoteSaveFailure );
-    } 
-    else 
+    }
+    else
     {
       // Check the network status right now
       Neuro.checkNetworkStatus();
 
       // If not online for sure, try saving once online again
-      if (!Neuro.online) 
+      if (!Neuro.online)
       {
         Neuro.once( 'online', this.handleOnline, this );
 
@@ -7254,7 +7449,7 @@ extend( NeuroOperation, NeuroSaveRemote,
 
     if ( saveNow )
     {
-      this.insertNext( NeuroSaveNow ); 
+      this.insertNext( NeuroSaveNow );
     }
 
     if ( eventType )
@@ -7293,32 +7488,32 @@ extend( NeuroOperation, NeuroSaveRemote,
 
     Neuro.debug( Neuro.Debugs.SAVE_VALUES, model, saving );
 
-    // If the model hasn't been saved before - create the record where the 
+    // If the model hasn't been saved before - create the record where the
     // local and model point to the same object.
     if ( !model.$saved )
     {
-      model.$saved = model.$local ? (model.$local.$saved = {}) : {}; 
+      model.$saved = model.$local ? (model.$local.$saved = {}) : {};
     }
 
     // Tranfer all saved fields into the saved object
     transfer( saving, model.$saved );
-    
+
     // Update the model with the return data
     if ( !isEmpty( data ) )
     {
       db.putRemoteData( data, model.$key(), model );
-    }    
+    }
 
     this.liveSave();
     this.markSynced( model, false, NeuroModel.Events.RemoteSave );
-    
+
     if ( db.cache === Neuro.Cache.Pending )
     {
       this.insertNext( NeuroRemoveCache );
     }
     else
     {
-      this.insertNext( NeuroSaveNow ); 
+      this.insertNext( NeuroSaveNow );
     }
   },
 
@@ -7341,7 +7536,7 @@ extend( NeuroOperation, NeuroSaveRemote,
     var model = this.model;
 
     if ( model.$status === NeuroModel.Status.SavePending )
-    { 
+    {
       model.$addOperation( NeuroSaveRemote, this.cascade );
 
       Neuro.debug( Neuro.Debugs.SAVE_RESUME, model );
@@ -7356,6 +7551,7 @@ extend( NeuroOperation, NeuroSaveRemote,
   }
 
 });
+
 
 function NeuroRelation()
 {
@@ -9942,6 +10138,7 @@ var NeuroPolymorphic =
   global.Neuro.Database = NeuroDatabase;
   global.Neuro.Relation = NeuroRelation;
   global.Neuro.Operation = NeuroOperation;
+  global.Neuro.Transaction = NeuroTransaction;
 
   /* Collections */
   global.Neuro.Map = NeuroMap;
