@@ -4,7 +4,7 @@ function NeuroBelongsTo()
 
 Neuro.Relations.belongsTo = NeuroBelongsTo;
 
-NeuroBelongsTo.Defaults = 
+NeuroBelongsTo.Defaults =
 {
   model:                null,
   lazy:                 false,
@@ -13,6 +13,7 @@ NeuroBelongsTo.Defaults =
   save:                 Neuro.Save.None,
   auto:                 true,
   property:             true,
+  preserve:             true,
   dynamic:              false,
   local:                null,
   cascade:              Neuro.Cascade.Local,
@@ -21,7 +22,7 @@ NeuroBelongsTo.Defaults =
   discriminatorToModel: {}
 };
 
-extend( NeuroRelationSingle, NeuroBelongsTo, 
+extend( NeuroRelationSingle, NeuroBelongsTo,
 {
 
   type: 'belongsTo',
@@ -42,14 +43,14 @@ extend( NeuroRelationSingle, NeuroBelongsTo,
 
   handleLoad: function(model, initialValue, remoteData)
   {
-    var relation = model.$relations[ this.name ] = 
+    var relation = model.$relations[ this.name ] =
     {
       parent: model,
       isRelated: this.isRelatedFactory( model ),
       related: null,
       loaded: false,
 
-      onRemoved: function() 
+      onRemoved: function()
       {
         Neuro.debug( Neuro.Debugs.BELONGSTO_NINJA_REMOVE, this, model, relation );
 
@@ -75,10 +76,10 @@ extend( NeuroRelationSingle, NeuroBelongsTo,
     if ( isEmpty( initialValue ) )
     {
       initialValue = this.grabInitial( model, this.local );
-      
+
       if ( initialValue )
       {
-        Neuro.debug( Neuro.Debugs.BELONGSTO_INITIAL_PULLED, this, model, initialValue );        
+        Neuro.debug( Neuro.Debugs.BELONGSTO_INITIAL_PULLED, this, model, initialValue );
       }
     }
 
@@ -118,7 +119,7 @@ extend( NeuroRelationSingle, NeuroBelongsTo,
         this.clearModel( relation );
         this.setModel( relation, related );
         this.setProperty( relation );
-      }        
+      }
     }
   }
 

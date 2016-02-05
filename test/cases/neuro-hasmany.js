@@ -249,7 +249,7 @@ test( 'ninja save add', function(assert)
   strictEqual( l0.tasks[2], t2 );
 
   var t3 = Task.create({name: 't3', task_list_id: l0.id});
-  
+
   strictEqual( l0.tasks.length, 4 );
   strictEqual( l0.tasks[0], t0 );
   strictEqual( l0.tasks[1], t1 );
@@ -298,7 +298,7 @@ test( 'set', function(assert)
   notOk( t0.$isDeleted() );
   notOk( t1.$isDeleted() );
   notOk( t2.$isDeleted() );
-  
+
   l0.$set( 'tasks', [t2, t1] );
 
   ok( t0.$isDeleted() );
@@ -342,7 +342,7 @@ test( 'relate', function(assert)
   var l0 = TaskList.create({name: 'l0'});
 
   strictEqual( l0.tasks.length, 0 );
-  
+
   l0.tasks.relate( t0.id );
 
   strictEqual( l0.tasks.length, 1 );
@@ -400,7 +400,7 @@ test( 'unrelate', function(assert)
   var l0 = TaskList.create({name: 'l0', tasks: [t0, t1, t2]});
 
   strictEqual( l0.tasks.length, 3 );
-  
+
   l0.tasks.unrelate( t0.id );
 
   strictEqual( l0.tasks.length, 2 );
@@ -420,7 +420,7 @@ test( 'unrelate', function(assert)
 test( 'isRelated', function(assert)
 {
   var prefix = 'hasMany_isRelated_';
-  
+
   var Task = Neuro({
     name: prefix + 'task',
     fields: ['id', 'task_list_id', 'name'],
@@ -464,7 +464,7 @@ test( 'isRelated', function(assert)
 test( 'get', function(assert)
 {
   var prefix = 'hasMany_get_';
-  
+
   var Task = Neuro({
     name: prefix + 'task',
     fields: ['id', 'task_list_id', 'name'],
@@ -501,7 +501,7 @@ test( 'get', function(assert)
 test( 'encode', function(assert)
 {
   var prefix = 'hasMany_encode_';
-  
+
   var Task = Neuro({
     name: prefix + 'task',
     fields: ['id', 'task_list_id', 'name'],
@@ -533,14 +533,14 @@ test( 'encode', function(assert)
   var storing0 = l0.$toJSON( false );
 
   deepEqual( saving0, {
-    id: l0.id, name: l0.name, 
+    id: l0.id, name: l0.name,
     tasks: [
       {id: t0.id, name: t0.name, task_list_id: l0.id}
     ]
   });
 
   deepEqual( storing0, {
-    id: l0.id, name: l0.name, 
+    id: l0.id, name: l0.name,
     tasks: [
       {id: t0.id, name: t0.name, task_list_id: l0.id,
         $saved: {id: t0.id, name: t0.name, task_list_id: l0.id}, $status: 0
@@ -554,12 +554,12 @@ test( 'encode', function(assert)
   var storing1 = l0.$toJSON( false );
 
   deepEqual( saving1, {
-    id: l0.id, name: l0.name, 
+    id: l0.id, name: l0.name,
     tasks: []
   });
 
   deepEqual( storing1, {
-    id: l0.id, name: l0.name, 
+    id: l0.id, name: l0.name,
     tasks: []
   });
 });
@@ -567,7 +567,7 @@ test( 'encode', function(assert)
 test( 'auto save parent', function(assert)
 {
   var prefix = 'hasMany_auto_save_parent_';
-  
+
   var Task = Neuro({
     name: prefix + 'task',
     fields: ['id', 'task_list_id', 'name'],
@@ -612,7 +612,7 @@ test( 'auto save parent', function(assert)
   });
 });
 
-test( 'wait until dependents are saved', function(assert) 
+test( 'wait until dependents are saved', function(assert)
 {
   var timer = assert.timer();
   var prefix = 'hasMany_wait_dependents_';
@@ -738,6 +738,10 @@ test( 'clone', function(assert)
 
   var u1 = u0.$clone( {tasks:{}} );
 
+  notOk( u1.$isSaved() );
+  notOk( u1.tasks[0].$isSaved() );
+  notOk( u1.tasks[1].$isSaved() );
+  notOk( u1.tasks[2].$isSaved() );
   ok( u1.id );
   notStrictEqual( u0.id, u1.id );
   strictEqual( u1.tasks.length, 3 );

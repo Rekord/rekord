@@ -79,7 +79,7 @@ test( 'store none', function(assert)
   t0.$save();
 
   deepEqual( local.lastRecord, {
-    id: t0.id, name: t0.name, created_by: u0.id, 
+    id: t0.id, name: t0.name, created_by: u0.id,
     $saved: {id: t0.id, name: t0.name, created_by: u0.id}, $status: 0
   });
   deepEqual( remote.lastRecord, {
@@ -120,7 +120,7 @@ test( 'store model', function(assert)
   t0.$save();
 
   deepEqual( local.lastRecord, {
-    id: t0.id, name: t0.name, created_by: u0.id, 
+    id: t0.id, name: t0.name, created_by: u0.id,
     $saved: {id: t0.id, name: t0.name, created_by: u0.id}, $status: 0,
     creator: {id: u0.id, name: u0.name, $saved: {id: u0.id, name: u0.name}, $status: 0}
   });
@@ -162,7 +162,7 @@ test( 'store key', function(assert)
   t0.$save();
 
   deepEqual( local.lastRecord, {
-    id: t0.id, name: t0.name, created_by: u0.id, 
+    id: t0.id, name: t0.name, created_by: u0.id,
     $saved: {id: t0.id, name: t0.name, created_by: u0.id}, $status: 0,
     creator: u0.id
   });
@@ -247,7 +247,7 @@ test( 'save none', function(assert)
   t0.$save();
 
   deepEqual( local.lastRecord, {
-    id: t0.id, name: t0.name, created_by: u0.id, 
+    id: t0.id, name: t0.name, created_by: u0.id,
     $saved: {id: t0.id, name: t0.name, created_by: u0.id}, $status: 0,
   });
   deepEqual( remote.lastRecord, {
@@ -288,7 +288,7 @@ test( 'save model', function(assert)
   t0.$save();
 
   deepEqual( local.lastRecord, {
-    id: t0.id, name: t0.name, created_by: u0.id, 
+    id: t0.id, name: t0.name, created_by: u0.id,
     $saved: {id: t0.id, name: t0.name, created_by: u0.id,
       creator: {
         id: u0.id, name: u0.name
@@ -297,7 +297,7 @@ test( 'save model', function(assert)
   });
 
   deepEqual( remote.map.get( t0.id ), {
-    id: t0.id, name: t0.name, created_by: u0.id, 
+    id: t0.id, name: t0.name, created_by: u0.id,
     creator: {id: u0.id, name: u0.name}
   });
 });
@@ -335,14 +335,14 @@ test( 'save key', function(assert)
   t0.$save();
 
   deepEqual( local.lastRecord, {
-    id: t0.id, name: t0.name, created_by: u0.id, 
+    id: t0.id, name: t0.name, created_by: u0.id,
     $saved: {id: t0.id, name: t0.name, created_by: u0.id,
       creator: u0.id
     }, $status: 0
   });
 
   deepEqual( remote.map.get( t0.id ), {
-    id: t0.id, name: t0.name, created_by: u0.id, 
+    id: t0.id, name: t0.name, created_by: u0.id,
     creator: u0.id
   });
 });
@@ -570,7 +570,7 @@ test( 'local custom', function(assert)
 });
 
 test( 'cascade none', function(assert)
-{ 
+{
   var prefix = 'hasOne_cascade_none_';
 
   var User = Neuro({
@@ -621,7 +621,7 @@ test( 'cascade none', function(assert)
 });
 
 test( 'cascade local', function(assert)
-{ 
+{
   var prefix = 'hasOne_cascade_local_';
 
   var User = Neuro({
@@ -672,7 +672,7 @@ test( 'cascade local', function(assert)
 });
 
 test( 'cascade rest', function(assert)
-{ 
+{
   var prefix = 'hasOne_cascade_rest_';
 
   var User = Neuro({
@@ -723,7 +723,7 @@ test( 'cascade rest', function(assert)
 });
 
 test( 'cascade nolive', function(assert)
-{ 
+{
   var prefix = 'hasOne_cascade_nolive_';
 
   var User = Neuro({
@@ -774,7 +774,7 @@ test( 'cascade nolive', function(assert)
 });
 
 test( 'cascade live', function(assert)
-{ 
+{
   var prefix = 'hasOne_cascade_live_';
 
   var User = Neuro({
@@ -825,7 +825,7 @@ test( 'cascade live', function(assert)
 });
 
 test( 'cascade norest', function(assert)
-{ 
+{
   var prefix = 'hasOne_cascade_norest_';
 
   var User = Neuro({
@@ -876,7 +876,7 @@ test( 'cascade norest', function(assert)
 });
 
 test( 'cascade remote', function(assert)
-{ 
+{
   var prefix = 'hasOne_cascade_remote_';
 
   var User = Neuro({
@@ -927,7 +927,7 @@ test( 'cascade remote', function(assert)
 });
 
 test( 'cascade all', function(assert)
-{ 
+{
   var prefix = 'hasOne_cascade_all_';
 
   var User = Neuro({
@@ -1063,7 +1063,7 @@ test( 'query', function(assert)
   rest.queries.put( '/user/6', {
     id: 6, name: 'u0'
   });
-  
+
   var t0 = Task.create({name: 't0', created_by: 6});
 
   notStrictEqual( t0.creator, void 0 );
@@ -1071,4 +1071,56 @@ test( 'query', function(assert)
   strictEqual( t0.creator.name, 'u0' );
 
   isInstance( t0.$relations.creator.query, Neuro.RemoteQuery, 'query exists' );
+});
+
+test( 'preserve true', function(assert)
+{
+  var prefix = 'hasOne_preserve_true_';
+
+  var User = Neuro({
+    name: prefix + 'user',
+    fields: ['id', 'name']
+  });
+
+  var Task = Neuro({
+    name: prefix + 'task',
+    fields: ['id', 'name', 'created_by'],
+    hasOne: {
+      creator: {
+        model: User,
+        local: 'created_by',
+        preserve: true
+      }
+    }
+  });
+
+  var t0 = Task.create({name: 't0', created_by: 23});
+
+  strictEqual( t0.created_by, 23 );
+});
+
+test( 'preserve false', function(assert)
+{
+  var prefix = 'hasOne_preserve_false_';
+
+  var User = Neuro({
+    name: prefix + 'user',
+    fields: ['id', 'name']
+  });
+
+  var Task = Neuro({
+    name: prefix + 'task',
+    fields: ['id', 'name', 'created_by'],
+    hasOne: {
+      creator: {
+        model: User,
+        local: 'created_by',
+        preserve: false
+      }
+    }
+  });
+
+  var t0 = Task.create({name: 't0', created_by: 23});
+
+  strictEqual( t0.created_by, null );
 });

@@ -6,7 +6,7 @@ function NeuroRelation()
 
 Neuro.Relations = {};
 
-NeuroRelation.Defaults = 
+NeuroRelation.Defaults =
 {
   model:                null,
   lazy:                 false,
@@ -14,6 +14,7 @@ NeuroRelation.Defaults =
   save:                 Neuro.Save.None,
   auto:                 true,
   property:             true,
+  preserve:             true,
   dynamic:              false,
   discriminator:        'discriminator',
   discriminators:       {},
@@ -158,7 +159,12 @@ NeuroRelation.prototype =
 
   },
 
-  clone: function(model, clone, properties)
+  preClone: function(model, clone, properties)
+  {
+
+  },
+
+  postClone: function(model, clone, properties)
   {
 
   },

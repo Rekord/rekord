@@ -4,7 +4,7 @@ function NeuroHasManyThrough()
 
 Neuro.Relations.hasManyThrough = NeuroHasManyThrough;
 
-NeuroHasManyThrough.Defaults = 
+NeuroHasManyThrough.Defaults =
 {
   model:                null,
   lazy:                 false,
@@ -27,7 +27,7 @@ NeuroHasManyThrough.Defaults =
   discriminatorToModel: {}
 };
 
-extend( NeuroRelationMultiple, NeuroHasManyThrough, 
+extend( NeuroRelationMultiple, NeuroHasManyThrough,
 {
 
   type: 'hasManyThrough',
@@ -78,7 +78,7 @@ extend( NeuroRelationMultiple, NeuroHasManyThrough,
   {
     var that = this;
     var throughDatabase = this.through.Database;
- 
+
     var relation = model.$relations[ this.name ] =
     {
       parent: model,
@@ -148,7 +148,7 @@ extend( NeuroRelationMultiple, NeuroHasManyThrough,
     this.setProperty( relation );
   },
 
-  clone: function(model, clone, properties)
+  preClone: function(model, clone, properties)
   {
     var related = this.get( model );
 
@@ -274,7 +274,7 @@ extend( NeuroRelationMultiple, NeuroHasManyThrough,
     {
       this.addThrough( relation, related, remoteData );
     }
-    
+
     return adding;
   },
 
@@ -406,7 +406,7 @@ extend( NeuroRelationMultiple, NeuroHasManyThrough,
   {
     var relatedDatabase = this.model.Database;
     var relatedKey = relatedDatabase.buildKey( through, this.foreign );
-    
+
     if ( this.finishRemoveThrough( relation, through ) )
     {
       this.finishRemoveRelated( relation, relatedKey );

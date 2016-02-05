@@ -4493,11 +4493,24 @@ NeuroModel.prototype =
     {
       if ( properties && relationName in properties )
       {
-        relations[ relationName ].clone( this, values, properties[ relationName ] );
+        relations[ relationName ].preClone( this, values, properties[ relationName ] );
       }
     }
 
-    return db.instantiate( values );
+    var clone = db.instantiate( values );
+    var relationValues = {};
+
+    for (var relationName in relations)
+    {
+      if ( properties && relationName in properties )
+      {
+        relations[ relationName ].postClone( this, relationValues, properties[ relationName ] );
+      }
+    }
+
+    clone.$set( relationValues );
+
+    return clone;
   },
 
   $push: function(fields)
@@ -7560,7 +7573,7 @@ function NeuroRelation()
 
 Neuro.Relations = {};
 
-NeuroRelation.Defaults = 
+NeuroRelation.Defaults =
 {
   model:                null,
   lazy:                 false,
@@ -7568,6 +7581,7 @@ NeuroRelation.Defaults =
   save:                 Neuro.Save.None,
   auto:                 true,
   property:             true,
+  preserve:             true,
   dynamic:              false,
   discriminator:        'discriminator',
   discriminators:       {},
@@ -7712,7 +7726,12 @@ NeuroRelation.prototype =
 
   },
 
-  clone: function(model, clone, properties)
+  preClone: function(model, clone, properties)
+  {
+
+  },
+
+  postClone: function(model, clone, properties)
   {
 
   },
@@ -8057,7 +8076,7 @@ function NeuroRelationSingle()
 }
 
 
-extend( NeuroRelation, NeuroRelationSingle, 
+extend( NeuroRelation, NeuroRelationSingle,
 {
 
   debugInit: null,
@@ -8104,7 +8123,7 @@ extend( NeuroRelation, NeuroRelationSingle,
   {
     var relation = model.$relations[ this.name ];
     var related = this.parseModel( input, remoteData );
-    
+
     if ( related )
     {
       if ( relation.related !== related )
@@ -8188,7 +8207,7 @@ extend( NeuroRelation, NeuroRelationSingle,
     relation.related = related;
     relation.dirty = true;
     relation.loaded = true;
-    
+
     relation.parent.$dependents[ related.$uid() ] = related;
 
     Neuro.debug( this.debugSetModel, this, relation );
@@ -8196,15 +8215,15 @@ extend( NeuroRelation, NeuroRelationSingle,
 
   handleModel: function(relation, remoteData)
   {
-    return function(related) 
+    return function(related)
     {
       var model = relation.parent;
 
       Neuro.debug( this.debugLoaded, this, model, relation, related );
 
-      if ( relation.loaded === false ) 
+      if ( relation.loaded === false )
       {
-        if ( related && !related.$isDeleted() ) 
+        if ( related && !related.$isDeleted() )
         {
           this.setModel( relation, related, remoteData );
           this.updateForeignKey( model, related, remoteData );
@@ -8215,7 +8234,7 @@ extend( NeuroRelation, NeuroRelationSingle,
           {
             relation.query = this.executeQuery( model );
           }
-          else
+          else if ( !this.preserve )
           {
             this.clearForeignKey( model, remoteData );
           }
@@ -8258,6 +8277,7 @@ extend( NeuroRelation, NeuroRelationSingle,
   }
 
 });
+
 function NeuroRelationMultiple()
 {
 }
@@ -8516,7 +8536,7 @@ function NeuroBelongsTo()
 
 Neuro.Relations.belongsTo = NeuroBelongsTo;
 
-NeuroBelongsTo.Defaults = 
+NeuroBelongsTo.Defaults =
 {
   model:                null,
   lazy:                 false,
@@ -8525,6 +8545,7 @@ NeuroBelongsTo.Defaults =
   save:                 Neuro.Save.None,
   auto:                 true,
   property:             true,
+  preserve:             true,
   dynamic:              false,
   local:                null,
   cascade:              Neuro.Cascade.Local,
@@ -8533,7 +8554,7 @@ NeuroBelongsTo.Defaults =
   discriminatorToModel: {}
 };
 
-extend( NeuroRelationSingle, NeuroBelongsTo, 
+extend( NeuroRelationSingle, NeuroBelongsTo,
 {
 
   type: 'belongsTo',
@@ -8554,14 +8575,14 @@ extend( NeuroRelationSingle, NeuroBelongsTo,
 
   handleLoad: function(model, initialValue, remoteData)
   {
-    var relation = model.$relations[ this.name ] = 
+    var relation = model.$relations[ this.name ] =
     {
       parent: model,
       isRelated: this.isRelatedFactory( model ),
       related: null,
       loaded: false,
 
-      onRemoved: function() 
+      onRemoved: function()
       {
         Neuro.debug( Neuro.Debugs.BELONGSTO_NINJA_REMOVE, this, model, relation );
 
@@ -8587,10 +8608,10 @@ extend( NeuroRelationSingle, NeuroBelongsTo,
     if ( isEmpty( initialValue ) )
     {
       initialValue = this.grabInitial( model, this.local );
-      
+
       if ( initialValue )
       {
-        Neuro.debug( Neuro.Debugs.BELONGSTO_INITIAL_PULLED, this, model, initialValue );        
+        Neuro.debug( Neuro.Debugs.BELONGSTO_INITIAL_PULLED, this, model, initialValue );
       }
     }
 
@@ -8630,18 +8651,19 @@ extend( NeuroRelationSingle, NeuroBelongsTo,
         this.clearModel( relation );
         this.setModel( relation, related );
         this.setProperty( relation );
-      }        
+      }
     }
   }
 
 });
+
 function NeuroHasOne()
 {
 }
 
 Neuro.Relations.hasOne = NeuroHasOne;
 
-NeuroHasOne.Defaults = 
+NeuroHasOne.Defaults =
 {
   model:                null,
   lazy:                 false,
@@ -8650,6 +8672,7 @@ NeuroHasOne.Defaults =
   save:                 Neuro.Save.None,
   auto:                 true,
   property:             true,
+  preserve:             true,
   dynamic:              false,
   local:                null,
   cascade:              Neuro.Cascade.All,
@@ -8658,7 +8681,7 @@ NeuroHasOne.Defaults =
   discriminatorToModel: {}
 };
 
-extend( NeuroRelationSingle, NeuroHasOne, 
+extend( NeuroRelationSingle, NeuroHasOne,
 {
 
   type: 'hasOne',
@@ -8679,7 +8702,7 @@ extend( NeuroRelationSingle, NeuroHasOne,
 
   handleLoad: function(model, initialValue, remoteData)
   {
-    var relation = model.$relations[ this.name ] = 
+    var relation = model.$relations[ this.name ] =
     {
       parent: model,
       isRelated: this.isRelatedFactory( model ),
@@ -8688,7 +8711,7 @@ extend( NeuroRelationSingle, NeuroHasOne,
       dirty: false,
       saving: false,
 
-      onRemoved: function() 
+      onRemoved: function()
       {
         Neuro.debug( Neuro.Debugs.HASONE_NINJA_REMOVE, this, model, relation );
 
@@ -8702,10 +8725,10 @@ extend( NeuroRelationSingle, NeuroHasOne,
     if ( isEmpty( initialValue ) )
     {
       initialValue = this.grabInitial( model, this.local );
-      
+
       if ( initialValue )
       {
-        Neuro.debug( Neuro.Debugs.HASONE_INITIAL_PULLED, this, model, initialValue );        
+        Neuro.debug( Neuro.Debugs.HASONE_INITIAL_PULLED, this, model, initialValue );
       }
     }
 
@@ -8713,7 +8736,7 @@ extend( NeuroRelationSingle, NeuroHasOne,
     {
       Neuro.debug( Neuro.Debugs.HASONE_INITIAL, this, model, initialValue );
 
-      this.grabModel( initialValue, this.handleModel( relation ), remoteData );      
+      this.grabModel( initialValue, this.handleModel( relation ), remoteData );
     }
     else if ( this.query )
     {
@@ -8721,7 +8744,7 @@ extend( NeuroRelationSingle, NeuroHasOne,
     }
   },
 
-  clone: function(model, clone, properties)
+  preClone: function(model, clone, properties)
   {
     var related = this.get( model );
 
@@ -8741,7 +8764,7 @@ extend( NeuroRelationSingle, NeuroHasOne,
 
     if ( relation && relation.related )
     {
-      var related = relation.related;  
+      var related = relation.related;
 
       if ( relation.dirty || related.$hasChanges() )
       {
@@ -8796,13 +8819,14 @@ extend( NeuroRelationSingle, NeuroHasOne,
   }
 
 });
+
 function NeuroHasMany()
 {
 }
 
 Neuro.Relations.hasMany = NeuroHasMany;
 
-NeuroHasMany.Defaults = 
+NeuroHasMany.Defaults =
 {
   model:                null,
   lazy:                 false,
@@ -8822,7 +8846,7 @@ NeuroHasMany.Defaults =
   discriminatorToModel: {}
 };
 
-extend( NeuroRelationMultiple, NeuroHasMany, 
+extend( NeuroRelationMultiple, NeuroHasMany,
 {
 
   type: 'hasMany',
@@ -8842,7 +8866,6 @@ extend( NeuroRelationMultiple, NeuroHasMany,
   {
     this.foreign = this.foreign || ( database.name + '_' + database.key );
     this.comparator = createComparator( this.comparator, this.comparatorNullsFirst );
-    this.clearKey = this.ownsForeignKey();
 
     Neuro.debug( Neuro.Debugs.HASMANY_INIT, this );
 
@@ -8919,7 +8942,7 @@ extend( NeuroRelationMultiple, NeuroHasMany,
     this.setProperty( relation );
   },
 
-  clone: function(model, clone, properties)
+  postClone: function(model, clone, properties)
   {
     var related = this.get( model );
 
@@ -9041,7 +9064,7 @@ extend( NeuroRelationMultiple, NeuroHasMany,
     var adding = !target.has( key );
 
     if ( adding )
-    { 
+    {
       Neuro.debug( Neuro.Debugs.HASMANY_ADD, this, relation, related );
 
       target.put( key, related );
@@ -9091,50 +9114,12 @@ extend( NeuroRelationMultiple, NeuroHasMany,
       {
         related.$remove( this.cascadeRemove );
       }
-      
+
       this.sort( relation );
       this.checkSave( relation );
     }
 
     delete pending[ key ];
-  },
-
-  ownsForeignKey: function()
-  {
-    var foreign = this.foreign;
-    var relatedKey = this.model.Database.key;
-
-    if ( isString( foreign ) )
-    {
-      if ( isArray( relatedKey ) )
-      {
-        return indexOf( relatedKey, foreign ) === false;
-      }
-      else        
-      {
-        return relatedKey !== foreign;
-      }
-    }
-    else // if ( isArray( ))
-    {
-      if ( isArray( relatedKey ) )
-      {
-        for (var i = 0; i < foreign.length; i++)
-        {
-          if ( indexOf( relatedKey, foreign[ i ] ) !== false )
-          {
-            return false;
-          }
-        }
-        return true;
-      }
-      else
-      {
-        return indexOf( foreign, relatedKey ) === false;
-      }
-    }
-
-    return true;
   },
 
   updateForeignKey: function(model, related, remoteData)
@@ -9143,16 +9128,6 @@ extend( NeuroRelationMultiple, NeuroHasMany,
     var local = model.$db.key;
 
     this.updateFields( related, foreign, model, local, remoteData );
-  },
-
-  clearForeignKey: function(related, cascade)
-  {
-    if ( this.clearKey )
-    {
-      var foreign = this.foreign;
-
-      this.clearFields( related, foreign, false, cascade );
-    }
   },
 
   isRelatedFactory: function(model)
@@ -9167,13 +9142,14 @@ extend( NeuroRelationMultiple, NeuroHasMany,
   }
 
 });
+
 function NeuroHasManyThrough()
 {
 }
 
 Neuro.Relations.hasManyThrough = NeuroHasManyThrough;
 
-NeuroHasManyThrough.Defaults = 
+NeuroHasManyThrough.Defaults =
 {
   model:                null,
   lazy:                 false,
@@ -9196,7 +9172,7 @@ NeuroHasManyThrough.Defaults =
   discriminatorToModel: {}
 };
 
-extend( NeuroRelationMultiple, NeuroHasManyThrough, 
+extend( NeuroRelationMultiple, NeuroHasManyThrough,
 {
 
   type: 'hasManyThrough',
@@ -9247,7 +9223,7 @@ extend( NeuroRelationMultiple, NeuroHasManyThrough,
   {
     var that = this;
     var throughDatabase = this.through.Database;
- 
+
     var relation = model.$relations[ this.name ] =
     {
       parent: model,
@@ -9317,7 +9293,7 @@ extend( NeuroRelationMultiple, NeuroHasManyThrough,
     this.setProperty( relation );
   },
 
-  clone: function(model, clone, properties)
+  preClone: function(model, clone, properties)
   {
     var related = this.get( model );
 
@@ -9443,7 +9419,7 @@ extend( NeuroRelationMultiple, NeuroHasManyThrough,
     {
       this.addThrough( relation, related, remoteData );
     }
-    
+
     return adding;
   },
 
@@ -9575,7 +9551,7 @@ extend( NeuroRelationMultiple, NeuroHasManyThrough,
   {
     var relatedDatabase = this.model.Database;
     var relatedKey = relatedDatabase.buildKey( through, this.foreign );
-    
+
     if ( this.finishRemoveThrough( relation, through ) )
     {
       this.finishRemoveRelated( relation, relatedKey );

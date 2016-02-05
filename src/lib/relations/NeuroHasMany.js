@@ -4,7 +4,7 @@ function NeuroHasMany()
 
 Neuro.Relations.hasMany = NeuroHasMany;
 
-NeuroHasMany.Defaults = 
+NeuroHasMany.Defaults =
 {
   model:                null,
   lazy:                 false,
@@ -24,7 +24,7 @@ NeuroHasMany.Defaults =
   discriminatorToModel: {}
 };
 
-extend( NeuroRelationMultiple, NeuroHasMany, 
+extend( NeuroRelationMultiple, NeuroHasMany,
 {
 
   type: 'hasMany',
@@ -44,7 +44,6 @@ extend( NeuroRelationMultiple, NeuroHasMany,
   {
     this.foreign = this.foreign || ( database.name + '_' + database.key );
     this.comparator = createComparator( this.comparator, this.comparatorNullsFirst );
-    this.clearKey = this.ownsForeignKey();
 
     Neuro.debug( Neuro.Debugs.HASMANY_INIT, this );
 
@@ -121,7 +120,7 @@ extend( NeuroRelationMultiple, NeuroHasMany,
     this.setProperty( relation );
   },
 
-  clone: function(model, clone, properties)
+  postClone: function(model, clone, properties)
   {
     var related = this.get( model );
 
@@ -243,7 +242,7 @@ extend( NeuroRelationMultiple, NeuroHasMany,
     var adding = !target.has( key );
 
     if ( adding )
-    { 
+    {
       Neuro.debug( Neuro.Debugs.HASMANY_ADD, this, relation, related );
 
       target.put( key, related );
@@ -293,50 +292,12 @@ extend( NeuroRelationMultiple, NeuroHasMany,
       {
         related.$remove( this.cascadeRemove );
       }
-      
+
       this.sort( relation );
       this.checkSave( relation );
     }
 
     delete pending[ key ];
-  },
-
-  ownsForeignKey: function()
-  {
-    var foreign = this.foreign;
-    var relatedKey = this.model.Database.key;
-
-    if ( isString( foreign ) )
-    {
-      if ( isArray( relatedKey ) )
-      {
-        return indexOf( relatedKey, foreign ) === false;
-      }
-      else        
-      {
-        return relatedKey !== foreign;
-      }
-    }
-    else // if ( isArray( ))
-    {
-      if ( isArray( relatedKey ) )
-      {
-        for (var i = 0; i < foreign.length; i++)
-        {
-          if ( indexOf( relatedKey, foreign[ i ] ) !== false )
-          {
-            return false;
-          }
-        }
-        return true;
-      }
-      else
-      {
-        return indexOf( foreign, relatedKey ) === false;
-      }
-    }
-
-    return true;
   },
 
   updateForeignKey: function(model, related, remoteData)
@@ -345,16 +306,6 @@ extend( NeuroRelationMultiple, NeuroHasMany,
     var local = model.$db.key;
 
     this.updateFields( related, foreign, model, local, remoteData );
-  },
-
-  clearForeignKey: function(related, cascade)
-  {
-    if ( this.clearKey )
-    {
-      var foreign = this.foreign;
-
-      this.clearFields( related, foreign, false, cascade );
-    }
   },
 
   isRelatedFactory: function(model)

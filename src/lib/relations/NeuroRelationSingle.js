@@ -3,7 +3,7 @@ function NeuroRelationSingle()
 }
 
 
-extend( NeuroRelation, NeuroRelationSingle, 
+extend( NeuroRelation, NeuroRelationSingle,
 {
 
   debugInit: null,
@@ -50,7 +50,7 @@ extend( NeuroRelation, NeuroRelationSingle,
   {
     var relation = model.$relations[ this.name ];
     var related = this.parseModel( input, remoteData );
-    
+
     if ( related )
     {
       if ( relation.related !== related )
@@ -134,7 +134,7 @@ extend( NeuroRelation, NeuroRelationSingle,
     relation.related = related;
     relation.dirty = true;
     relation.loaded = true;
-    
+
     relation.parent.$dependents[ related.$uid() ] = related;
 
     Neuro.debug( this.debugSetModel, this, relation );
@@ -142,15 +142,15 @@ extend( NeuroRelation, NeuroRelationSingle,
 
   handleModel: function(relation, remoteData)
   {
-    return function(related) 
+    return function(related)
     {
       var model = relation.parent;
 
       Neuro.debug( this.debugLoaded, this, model, relation, related );
 
-      if ( relation.loaded === false ) 
+      if ( relation.loaded === false )
       {
-        if ( related && !related.$isDeleted() ) 
+        if ( related && !related.$isDeleted() )
         {
           this.setModel( relation, related, remoteData );
           this.updateForeignKey( model, related, remoteData );
@@ -161,7 +161,7 @@ extend( NeuroRelation, NeuroRelationSingle,
           {
             relation.query = this.executeQuery( model );
           }
-          else
+          else if ( !this.preserve )
           {
             this.clearForeignKey( model, remoteData );
           }

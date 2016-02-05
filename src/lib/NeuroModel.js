@@ -492,11 +492,24 @@ NeuroModel.prototype =
     {
       if ( properties && relationName in properties )
       {
-        relations[ relationName ].clone( this, values, properties[ relationName ] );
+        relations[ relationName ].preClone( this, values, properties[ relationName ] );
       }
     }
 
-    return db.instantiate( values );
+    var clone = db.instantiate( values );
+    var relationValues = {};
+
+    for (var relationName in relations)
+    {
+      if ( properties && relationName in properties )
+      {
+        relations[ relationName ].postClone( this, relationValues, properties[ relationName ] );
+      }
+    }
+
+    clone.$set( relationValues );
+
+    return clone;
   },
 
   $push: function(fields)

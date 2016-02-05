@@ -4,7 +4,7 @@ function NeuroHasOne()
 
 Neuro.Relations.hasOne = NeuroHasOne;
 
-NeuroHasOne.Defaults = 
+NeuroHasOne.Defaults =
 {
   model:                null,
   lazy:                 false,
@@ -13,6 +13,7 @@ NeuroHasOne.Defaults =
   save:                 Neuro.Save.None,
   auto:                 true,
   property:             true,
+  preserve:             true,
   dynamic:              false,
   local:                null,
   cascade:              Neuro.Cascade.All,
@@ -21,7 +22,7 @@ NeuroHasOne.Defaults =
   discriminatorToModel: {}
 };
 
-extend( NeuroRelationSingle, NeuroHasOne, 
+extend( NeuroRelationSingle, NeuroHasOne,
 {
 
   type: 'hasOne',
@@ -42,7 +43,7 @@ extend( NeuroRelationSingle, NeuroHasOne,
 
   handleLoad: function(model, initialValue, remoteData)
   {
-    var relation = model.$relations[ this.name ] = 
+    var relation = model.$relations[ this.name ] =
     {
       parent: model,
       isRelated: this.isRelatedFactory( model ),
@@ -51,7 +52,7 @@ extend( NeuroRelationSingle, NeuroHasOne,
       dirty: false,
       saving: false,
 
-      onRemoved: function() 
+      onRemoved: function()
       {
         Neuro.debug( Neuro.Debugs.HASONE_NINJA_REMOVE, this, model, relation );
 
@@ -65,10 +66,10 @@ extend( NeuroRelationSingle, NeuroHasOne,
     if ( isEmpty( initialValue ) )
     {
       initialValue = this.grabInitial( model, this.local );
-      
+
       if ( initialValue )
       {
-        Neuro.debug( Neuro.Debugs.HASONE_INITIAL_PULLED, this, model, initialValue );        
+        Neuro.debug( Neuro.Debugs.HASONE_INITIAL_PULLED, this, model, initialValue );
       }
     }
 
@@ -76,7 +77,7 @@ extend( NeuroRelationSingle, NeuroHasOne,
     {
       Neuro.debug( Neuro.Debugs.HASONE_INITIAL, this, model, initialValue );
 
-      this.grabModel( initialValue, this.handleModel( relation ), remoteData );      
+      this.grabModel( initialValue, this.handleModel( relation ), remoteData );
     }
     else if ( this.query )
     {
@@ -84,7 +85,7 @@ extend( NeuroRelationSingle, NeuroHasOne,
     }
   },
 
-  clone: function(model, clone, properties)
+  preClone: function(model, clone, properties)
   {
     var related = this.get( model );
 
@@ -104,7 +105,7 @@ extend( NeuroRelationSingle, NeuroHasOne,
 
     if ( relation && relation.related )
     {
-      var related = relation.related;  
+      var related = relation.related;
 
       if ( relation.dirty || related.$hasChanges() )
       {
