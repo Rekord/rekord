@@ -398,18 +398,21 @@ function swap(a, i, k)
   a[ k ] = t;
 }
 
-function applyOptions( target, options, defaults )
+function applyOptions( target, options, defaults, secret )
 {
+  options = options || {};
+
   for (var prop in defaults)
   {
     var defaultValue = defaults[ prop ];
     var option = options[ prop ];
+    var valued = isValue( option );
 
-    if ( !option && defaultValue === undefined )
+    if ( !valued && defaultValue === undefined )
     {
       throw ( prop + ' is a required option' );
     }
-    else if ( isValue( option ) )
+    else if ( valued )
     {
       target[ prop ] = option;
     }
@@ -419,7 +422,22 @@ function applyOptions( target, options, defaults )
     }
   }
 
-  target.options = options;
+  for (var prop in options)
+  {
+    if ( !(prop in defaults) )
+    {
+      target[ prop ] = options[ prop ];
+    }
+  }
+
+  if ( secret )
+  {
+    target.$options = options;
+  }
+  else
+  {
+    target.options = options;
+  }
 }
 
 function camelCaseReplacer(match)
@@ -529,6 +547,19 @@ function clean(x)
   for (var prop in x)
   {
     if ( prop.charAt(0) === '$' )
+    {
+      delete x[ prop ];
+    }
+  }
+
+  return x;
+}
+
+function cleanFunctions(x)
+{
+  for (var prop in x)
+  {
+    if ( isFunction( x[prop] ) )
     {
       delete x[ prop ];
     }

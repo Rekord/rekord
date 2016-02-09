@@ -401,18 +401,21 @@ function swap(a, i, k)
   a[ k ] = t;
 }
 
-function applyOptions( target, options, defaults )
+function applyOptions( target, options, defaults, secret )
 {
+  options = options || {};
+
   for (var prop in defaults)
   {
     var defaultValue = defaults[ prop ];
     var option = options[ prop ];
+    var valued = isValue( option );
 
-    if ( !option && defaultValue === undefined )
+    if ( !valued && defaultValue === undefined )
     {
       throw ( prop + ' is a required option' );
     }
-    else if ( isValue( option ) )
+    else if ( valued )
     {
       target[ prop ] = option;
     }
@@ -422,7 +425,22 @@ function applyOptions( target, options, defaults )
     }
   }
 
-  target.options = options;
+  for (var prop in options)
+  {
+    if ( !(prop in defaults) )
+    {
+      target[ prop ] = options[ prop ];
+    }
+  }
+
+  if ( secret )
+  {
+    target.$options = options;
+  }
+  else
+  {
+    target.options = options;
+  }
 }
 
 function camelCaseReplacer(match)
@@ -532,6 +550,19 @@ function clean(x)
   for (var prop in x)
   {
     if ( prop.charAt(0) === '$' )
+    {
+      delete x[ prop ];
+    }
+  }
+
+  return x;
+}
+
+function cleanFunctions(x)
+{
+  for (var prop in x)
+  {
+    if ( isFunction( x[prop] ) )
     {
       delete x[ prop ];
     }
@@ -2127,6 +2158,22 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
     return db.refresh( callback, context );
   };
 });
+Neuro.on( Neuro.Events.Plugins, function(model, db, options)
+{
+  model.search = function(options)
+  {
+    return new NeuroSearch( db, options );
+  };
+});
+
+Neuro.on( Neuro.Events.Plugins, function(model, db, options)
+{
+  model.searchPaged = function(options)
+  {
+    return new NeuroSearchPaged( db, options );
+  };
+});
+
 Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 {
   var time = options.timestamps || NeuroDatabase.Defaults.timestamps;
@@ -6508,6 +6555,289 @@ extendArray( NeuroQuery, NeuroRemoteQuery,
 
 });
 
+
+function NeuroSearch(database, options)
+{
+  this.$init( database, options );
+}
+
+NeuroSearch.Events =
+{
+  Ready:      'ready',
+  Success:    'success',
+  Failure:    'failure'
+};
+
+NeuroSearch.Status =
+{
+  Pending:    'pending',
+  Success:    'success',
+  Failure:    'failure'
+};
+
+NeuroSearch.Defaults =
+{
+  $method:     'create'
+};
+
+NeuroSearch.prototype =
+{
+
+  $init: function(database, options)
+  {
+    applyOptions( this, options, NeuroSearch.Defaults, true );
+
+    this.$db = database;
+    this.$results = new NeuroModelCollection( database );
+    this.$status = NeuroSearch.Status.Success;
+    this.$concurrent = 0;
+  },
+
+  $run: function()
+  {
+    var encoded = this.$encode();
+
+    this.$status = NeuroSearch.Status.Pending;
+    this.$concurrent++;
+
+    var success = bind( this, this.$handleSuccess( this.$concurrent ) );
+    var failure = bind( this, this.$handleFailure( this.$concurrent ) );
+
+    switch (this.$method) {
+      case 'create':
+        this.$db.rest.create( this, encoded, success, failure );
+        break;
+      case 'update':
+        this.$db.rest.update( this, encoded, success, failure );
+        break;
+      case 'query':
+        this.$db.rest.query( encoded, success, failure );
+        break;
+      default:
+        throw 'Invalid search method: ' + this.$method;
+    }
+  },
+
+  $ready: function(callback, context)
+  {
+    if ( this.$status === NeuroSearch.Status.Pending )
+    {
+      this.$once( NeuroSearch.Events.Ready, callback, context );
+    }
+    else
+    {
+      callback.call( context, this );
+    }
+
+    return this;
+  },
+
+  $success: function(callback, context)
+  {
+    if ( this.$status === NeuroSearch.Status.Pending )
+    {
+      this.$once( NeuroSearch.Events.Success, callback, context );
+    }
+    else if ( this.$status === NeuroSearch.Status.Success )
+    {
+      callback.call( context, this );
+    }
+
+    return this;
+  },
+
+  $failure: function(callback, context)
+  {
+    if ( this.$status === NeuroSearch.Status.Pending )
+    {
+      this.$once( NeuroSearch.Events.Failure, callback, context );
+    }
+    else if ( this.$status === NeuroSearch.Status.Failure )
+    {
+      callback.call( context, this );
+    }
+
+    return this;
+  },
+
+  $handleSuccess: function(concurrentCount)
+  {
+    return function onSuccess()
+    {
+      if (this.$concurrent === concurrentCount)
+      {
+        var models = this.$decode.apply( this, arguments );
+
+        this.$concurrent = 0;
+        this.$status = NeuroSearch.Status.Success;
+        this.$results.reset( models, true );
+        this.$trigger( NeuroSearch.Events.Ready, [this] );
+        this.$trigger( NeuroSearch.Events.Success, [this] );
+      }
+    };
+  },
+
+  $handleFailure: function(concurrentCount)
+  {
+    return function onFailure()
+    {
+      if (this.$concurrent === concurrentCount)
+      {
+        this.$concurrent = 0;
+        this.$status = NeuroSearch.Status.Failure;
+        this.$trigger( NeuroSearch.Events.Ready, [this] );
+        this.$trigger( NeuroSearch.Events.Failure, [this] );
+      }
+    };
+  },
+
+  $encode: function()
+  {
+    return cleanFunctions(copy(this));
+  },
+
+  $decode: function(models)
+  {
+    return models;
+  },
+
+  $key: function()
+  {
+    return '';
+  }
+
+};
+
+eventize( NeuroSearch.prototype, true );
+
+
+function NeuroSearchPaged(database, options)
+{
+  this.$init( database, options );
+}
+
+extend( NeuroSearch, NeuroSearchPaged,
+{
+
+  $goto: function(index, dontRun)
+  {
+    var pageIndex = this.$getPageIndex();
+    var pageCount = this.$getPageCount();
+    var desired = Math.max( 0, Math.min( index, pageCount - 1 ) );
+
+    if ( pageIndex !== desired )
+    {
+      this.$setPageIndex( desired );
+
+      if ( !dontRun )
+      {
+        this.$run();
+      }
+    }
+
+    return this;
+  },
+
+  $first: function(dontRun)
+  {
+    return this.$goto( 0, dontRun );
+  },
+
+  $last: function(dontRun)
+  {
+    return this.$goto( this.$getPageCount() - 1, dontRun );
+  },
+
+  $prev: function(dontRun)
+  {
+    return this.$goto( this.$getPageIndex() - 1, dontRun );
+  },
+
+  $next: function(dontRun)
+  {
+    return this.$goto( this.$getPageIndex() + 1, dontRun );
+  },
+
+  $decode: function(response)
+  {
+    this.$updatePageSize( response );
+    this.$updatePageIndex( response );
+    this.$updateTotal( response );
+
+    return this.$decodeResults( response );
+  },
+
+  $decodeResults: function(response)
+  {
+    return response.results;
+  },
+
+  $updatePageSize: function(response)
+  {
+    if ( isNumber( response.page_size ) )
+    {
+      this.page_size = response.page_size;
+    }
+  },
+
+  $setPageSize: function(page_size)
+  {
+    this.page_size = page_size;
+  },
+
+  $getPageSize: function()
+  {
+    return this.page_size;
+  },
+
+  $updatePageIndex: function(response)
+  {
+    if ( isNumber( response.page_index ) )
+    {
+      this.page_index = response.page_index;
+    }
+  },
+
+  $setPageIndex: function(page_index)
+  {
+    this.page_index = page_index || 0;
+  },
+
+  $getPageIndex: function()
+  {
+    return this.page_index;
+  },
+
+  $getPageOffset: function()
+  {
+    return this.page_index * this.page_size;
+  },
+
+  $updateTotal: function(response)
+  {
+    if ( isNumber( response.total ) )
+    {
+      this.total = response.total;
+    }
+  },
+
+  $setTotal: function(total)
+  {
+    this.total = total || 0;
+  },
+
+  $getTotal: function()
+  {
+    return this.total;
+  },
+
+  $getPageCount: function()
+  {
+    return Math.ceil( this.$getTotal() / this.$getPageSize() );
+  }
+
+});
+
 function NeuroPage(collection, pageSize, pageIndex)
 {
   this.onChanges = bind( this, this.handleChanges );
@@ -10115,6 +10445,8 @@ var NeuroPolymorphic =
   global.Neuro.Relation = NeuroRelation;
   global.Neuro.Operation = NeuroOperation;
   global.Neuro.Transaction = NeuroTransaction;
+  global.Neuro.Search = NeuroSearch;
+  global.Neuro.SearchPaged = NeuroSearchPaged;
 
   /* Collections */
   global.Neuro.Map = NeuroMap;

@@ -55,7 +55,7 @@ function TestTimer()
   this.time = 0;
 }
 
-TestTimer.prototype = 
+TestTimer.prototype =
 {
   wait: function(millis, func)
   {
@@ -146,7 +146,7 @@ function TestStore()
   this.lastKey = this.lastRecord = null;
 }
 
-TestStore.prototype = 
+TestStore.prototype =
 {
   finishDelayed: function(success, failure, arg0, arg1)
   {
@@ -253,7 +253,7 @@ function TestLive(database)
   this.lastMessage = null;
 }
 
-TestLive.prototype = 
+TestLive.prototype =
 {
   save: function(model, data)
   {
@@ -295,7 +295,7 @@ TestLive.prototype =
 };
 
 // Neuro.rest."database name".(all|create|update|remove)
- 
+
 Neuro.rest = function(database)
 {
   var rest = Neuro.rest[ database.name ];
@@ -315,7 +315,7 @@ function TestRest()
   this.status = 200;
   this.returnValue = false;
   this.delay = 0;
-  this.lastModel = this.lastRecord = null;
+  this.lastModel = this.lastRecord = this.lastOperation = null;
 }
 
 TestRest.prototype =
@@ -346,7 +346,7 @@ TestRest.prototype =
 
     if ( successful )
     {
-      if ( success ) success( returnedValue, status );        
+      if ( success ) success( returnedValue, status );
     }
     else
     {
@@ -355,6 +355,7 @@ TestRest.prototype =
   },
   get: function(model, success, failure)
   {
+    this.lastOperation = 'get';
     this.lastModel = model;
 
     var map = this.map;
@@ -372,11 +373,12 @@ TestRest.prototype =
   },
   create: function(model, encoded, success, failure)
   {
+    this.lastOperation = 'create';
     this.lastModel = model;
     this.lastRecord = encoded;
 
     var map = this.map;
-    function onCreate() 
+    function onCreate()
     {
       map.put( model.$key(), encoded );
       success.apply( this, arguments );
@@ -386,6 +388,7 @@ TestRest.prototype =
   },
   update: function(model, encoded, success, failure)
   {
+    this.lastOperation = 'update';
     this.lastModel = model;
     this.lastRecord = encoded;
 
@@ -401,6 +404,7 @@ TestRest.prototype =
   },
   remove: function(model, success, failure)
   {
+    this.lastOperation = 'remove';
     this.lastModel = model;
 
     var map = this.map;
@@ -414,10 +418,12 @@ TestRest.prototype =
   },
   all: function(success, failure)
   {
+    this.lastOperation = 'all';
     this.finishDelayed( success, failure, this.map.values );
   },
   query: function(query, success, failure)
   {
+    this.lastOperation = 'query';
     this.finishDelayed( success, failure, this.queries.get( query ) );
   }
 };

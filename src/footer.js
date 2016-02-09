@@ -8,6 +8,8 @@
   global.Neuro.Relation = NeuroRelation;
   global.Neuro.Operation = NeuroOperation;
   global.Neuro.Transaction = NeuroTransaction;
+  global.Neuro.Search = NeuroSearch;
+  global.Neuro.SearchPaged = NeuroSearchPaged;
 
   /* Collections */
   global.Neuro.Map = NeuroMap;

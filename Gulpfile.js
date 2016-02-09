@@ -33,6 +33,8 @@ var build = {
     './src/lib/collections/NeuroDiscriminateCollection.js',
     './src/lib/query/NeuroQuery.js',
     './src/lib/query/NeuroRemoteQuery.js',
+    './src/lib/search/NeuroSearch.js',
+    './src/lib/search/NeuroSearchPaged.js',
     './src/lib/NeuroPage.js',
     './src/lib/NeuroOperation.js',
     './src/lib/operations/*.js',
