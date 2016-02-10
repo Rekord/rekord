@@ -92,17 +92,41 @@ t0.$remove();
 
 var t1 = new Todo({name: 'Use Neurosync'});
 t1.$isSaved(); // false
-t1.id; // undefined
+t1.id; // UUID
 t1.$save();
 
-var t2 = Todo.boot({id: 34, name: 'Profit'});
+var t2 = Todo.boot({id: 34, name: 'Profit'}); // Todo data that already exists remotely
 t2.$isSaved(); // true
 t2.name = '???';
 t2.$hasChanges(); // true
 
-var t3 = Todo.fetch(45);
+var t3 = Todo.fetch(45); // REST call if doesn't exist locally
 
 Todo.all(); // [t1, t2, t3]
+
+Todo.collect(t1, t2); // creates a collection of todos
+
+var allRemote = Todo.fetchAll(function(all) {}); // call REST API
+
+var f0 = Todo.find('name', 'Download Neurosync'); // first match
+var f1 = Todo.find({done: true});
+
+var w0 = Todo.where('done', true); // all done todos
+var w1 = Todo.where({finished_at: null});
+
+var g0 = Todo.get(34); // get cached version
+
+var g1 = Todo.grab(34); // get cached version, otherwise call REST API
+var a0 = Todo.grabAll(function(all) {}); // get all cached, if none cached call REST API
+
+Todo.ready(function() {}); // when it has been initialized locally and/or remotely (depends on options).
+
+Todo.refresh(); // re-fetch from REST API
+
+var search0 = Todo.search({done: true}); // sends a search to the REST API (POST by default)
+
+var searchPaged0 = Todo.searchPaged({done: true, page_offset: 0, page_size: 20});
+searchPaged0.$next();
 ```
 
 **Less Simple Task List Example**
