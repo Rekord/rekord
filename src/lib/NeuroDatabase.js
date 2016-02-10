@@ -609,7 +609,7 @@ NeuroDatabase.prototype =
 
         if ( isValue( mk ) && isValue( dk ) && mk !== dk )
         {
-          throw 'Model keys cannot be changed.';
+          throw new Error('Model keys cannot be changed');
         }
       }
 
