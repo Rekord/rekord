@@ -17,6 +17,10 @@ The easiest way to install neurosync is through bower via `bower install neurosy
 - If REST call fails because application is offline, wait until application comes back online to proceed with changes
 - If the application restarts with pending operations, they will be resumed
 
+**Restrictions**
+
+One minor restriction currently exists - id has to be supplied upon instance creation otherwise a UUID is generated and must be used as the ID of the instance.
+
 **Features**
 - Stores data locally through `Neuro.store` interface (ex: [neurosync-storkjs](https://github.com/ClickerMonkey/neurosync-storkjs))
 - Stores data remotely through `Neuro.rest` interface (ex: [neurosync-angular](https://github.com/ClickerMonkey/neurosync-angular) or [neurosync-jquery](https://github.com/ClickerMonkey/neurosync-jquery))
@@ -28,6 +32,8 @@ The easiest way to install neurosync is through bower via `bower install neurosy
 - Query REST API with `model.query( URL or HTTP options )`
 - Fetch a single model from the REST API with `model.fetch( key )`
 - Load bootstrapped data with `model.boot( model or array of models )`
+- Execute searches (fields are sent to REST API and an array of models is expected)
+- Execute paginated searches
 - Supports composite keys
 - Specify default values
 - Handle collisions with a "revision" field
