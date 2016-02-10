@@ -84,6 +84,7 @@ var executeTest = function(file)
 };
 
 gulp.task( 'docs', shell.task(['./node_modules/.bin/jsdoc -c jsdoc.json']));
+gulp.task( 'clean', shell.task(['rm -rf build/*.js', 'rm -rf build/*.map']));
 gulp.task( 'test', executeTest( './test/index.html' ) );
 
 gulp.task( 'js:min', executeMinifiedBuild( build ) );
