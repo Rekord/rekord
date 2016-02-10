@@ -6,6 +6,8 @@
 
 Neurosync is a javascript ORM that is offline & real-time capable.
 
+*ORM you say?* Neurosync doesn't do anything crazy directly with a database - the database to Neurosync is a facade typically backed by a REST API. It's an ORM in the sense that it handles creating, updating, and deleting relational data to any degree you wish.
+
 **Installation**
 
 The easiest way to install neurosync is through bower via `bower install neurosync`.
