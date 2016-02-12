@@ -56,9 +56,9 @@ function NeuroDatabase(options)
   this.prepare( this, options );
 
   // Services
-  this.rest   = Neuro.rest( this );
-  this.store  = Neuro.store( this );
-  this.live   = Neuro.live( this );
+  this.rest   = this.createRest( this );
+  this.store  = this.createStore( this );
+  this.live   = this.createLive( this );
 
   // Functions
   this.setComparator( this.comparator, this.comparatorNullsFirst );
@@ -138,6 +138,21 @@ function defaultSummarize(model)
   return model.$key();
 }
 
+function defaultCreateRest(database)
+{
+  return Neuro.rest( database );
+}
+
+function defaultCreateStore(database)
+{
+  return Neuro.store( database );
+}
+
+function defaultCreateLive( database )
+{
+  return Neuro.live( database );
+}
+
 NeuroDatabase.Events =
 {
   NoLoad:       'no-load',
@@ -174,7 +189,10 @@ NeuroDatabase.Defaults =
   prepare:              noop,
   encode:               defaultEncode,
   decode:               defaultDecode,
-  summarize:            defaultSummarize
+  summarize:            defaultSummarize,
+  createRest:           defaultCreateRest,
+  createStore:          defaultCreateStore,
+  createLive:           defaultCreateLive
 };
 
 NeuroDatabase.prototype =

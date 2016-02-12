@@ -9,14 +9,14 @@ test( '$run default', function(assert)
     fields: ['name', 'done']
   });
 
+  strictEqual( Task.all().length, 0 );
+
   var rest = Task.Database.rest;
 
   rest.returnValue = [
     {id: 1, name: 't0', done: 1},
     {id: 2, name: 't1', done: 0}
   ];
-
-  strictEqual( Task.all().length, 0 );
 
   var search = Task.search();
   search.name = 'names';

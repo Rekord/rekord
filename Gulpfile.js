@@ -47,6 +47,7 @@ var build = {
     './src/lib/relations/NeuroHasManyThrough.js',
     './src/lib/relations/NeuroHasRemote.js',
     './src/lib/relations/NeuroPolymorphic.js',
+    './src/lib/NeuroShard.js',
     './src/footer.js'
   ]
 };

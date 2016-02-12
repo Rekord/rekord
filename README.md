@@ -30,6 +30,7 @@ One minor restriction currently exists - id has to be supplied upon instance cre
 - Relationships `hasOne`, `belongsTo`, `hasMany`, `hasManyThrough`, & `hasRemote`
 - Polymorphic relationships for `hasOne`, `belongsTo` & `hasMany`
 - Extend an existing model
+- Horizontal scaling with sharding
 - Look at a subset of models with `model.where( properties to match or custom function )`
 - Query REST API with `model.query( URL or HTTP options )`
 - Fetch a single model from the REST API with `model.fetch( key )`
