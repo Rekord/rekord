@@ -7,6 +7,8 @@ Neuro.shard = function(methods)
 
     transfer( methods, shard );
 
+    shard.initialize( database );
+
     return shard;
   };
 };
@@ -46,6 +48,11 @@ NeuroShard.prototype =
   getShardsForQuery: function(query)
   {
     return this.getShards();
+  },
+
+  initialize: function(database)
+  {
+
   },
 
   all: function(success, failure)

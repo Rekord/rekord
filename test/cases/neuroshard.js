@@ -207,3 +207,31 @@ test( 'all', function(assert)
   strictEqual( Task.all()[2].name, 't3' );
   strictEqual( Task.all()[3].name, 't4' );
 });
+
+test( 'initialize override', function(assert)
+{
+  var prefix = 'NeuroShard_initialize_override_';
+
+  var shards = [
+    new TestRest(), new TestRest(), new TestRest()
+  ];
+
+  var multiplex = Neuro.shard({
+    initialize: function(db) {
+      strictEqual( db.name, prefix + '_task', 'database passed' );
+    },
+    getShardForModel: function(model) {
+      return shards[ model.id % 3 ];
+    },
+    getShards: function() {
+      return shards;
+    }
+  });
+
+  var Task = Neuro({
+    name: prefix + '_task',
+    fields: ['name', 'done'],
+    createRest: multiplex,
+    comparator: 'name'
+  });
+});
