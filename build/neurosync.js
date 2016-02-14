@@ -1504,6 +1504,8 @@ function Neuro(options)
     return Neuro.cache[ options.name ];
   }
 
+  Neuro.trigger( Neuro.Events.Options, [options] );
+
   var database = new NeuroDatabase( options );
 
   var model = new Function('return function ' + database.className + '(props, remoteData) { this.$init( props, remoteData ) }')();
@@ -1622,6 +1624,7 @@ Neuro.Events =
 {
   Initialized:  'initialized',
   Plugins:      'plugins',
+  Options:      'options',
   Online:       'online',
   Offline:      'offline'
 };
@@ -2172,6 +2175,18 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
   {
     return new NeuroSearchPaged( db, options );
   };
+});
+
+Neuro.on( Neuro.Events.Options, function(options)
+{
+  var shard = options.shard || NeuroDatabase.Defaults.shard;
+
+  if ( !isObject( shard ) )
+  {
+    return;
+  }
+
+  options.createRest = Neuro.shard( shard );
 });
 
 Neuro.on( Neuro.Events.Plugins, function(model, db, options)

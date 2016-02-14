@@ -14,6 +14,8 @@ function Neuro(options)
     return Neuro.cache[ options.name ];
   }
 
+  Neuro.trigger( Neuro.Events.Options, [options] );
+
   var database = new NeuroDatabase( options );
 
   var model = new Function('return function ' + database.className + '(props, remoteData) { this.$init( props, remoteData ) }')();
@@ -132,6 +134,7 @@ Neuro.Events =
 {
   Initialized:  'initialized',
   Plugins:      'plugins',
+  Options:      'options',
   Online:       'online',
   Offline:      'offline'
 };

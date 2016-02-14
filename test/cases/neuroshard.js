@@ -8,19 +8,19 @@ test( 'get', function(assert)
     new TestRest(), new TestRest(), new TestRest()
   ];
 
-  var multiplex = Neuro.shard({
+  var sharder = {
     getShardForModel: function(model) {
       return shards[ model.id % 3 ];
     },
     getShards: function() {
       return shards;
     }
-  });
+  };
 
   var Task = Neuro({
     name: prefix + '_task',
     fields: ['name', 'done'],
-    createRest: multiplex
+    shard: sharder
   });
 
   shards[0].map.put( 3, {id: 3, name: 't3', done: 0} );
@@ -71,19 +71,19 @@ test( 'create', function(assert)
     new TestRest(), new TestRest(), new TestRest()
   ];
 
-  var multiplex = Neuro.shard({
+  var sharder = {
     getShardForModel: function(model) {
       return shards[ model.id % 3 ];
     },
     getShards: function() {
       return shards;
     }
-  });
+  };
 
   var Task = Neuro({
     name: prefix + '_task',
     fields: ['name', 'done'],
-    createRest: multiplex
+    shard: sharder
   });
 
   var t4 = Task.create({id: 4, name: 't4', done: false});
@@ -101,19 +101,19 @@ test( 'update', function(assert)
     new TestRest(), new TestRest(), new TestRest()
   ];
 
-  var multiplex = Neuro.shard({
+  var sharder = {
     getShardForModel: function(model) {
       return shards[ model.id % 3 ];
     },
     getShards: function() {
       return shards;
     }
-  });
+  };
 
   var Task = Neuro({
     name: prefix + '_task',
     fields: ['name', 'done'],
-    createRest: multiplex
+    shard: sharder
   });
 
   shards[ 1 ].map.put( 4, {id: 4, name: 't4', done: false} );
@@ -141,19 +141,19 @@ test( 'remove', function(assert)
     new TestRest(), new TestRest(), new TestRest()
   ];
 
-  var multiplex = Neuro.shard({
+  var sharder = {
     getShardForModel: function(model) {
       return shards[ model.id % 3 ];
     },
     getShards: function() {
       return shards;
     }
-  });
+  };
 
   var Task = Neuro({
     name: prefix + '_task',
     fields: ['name', 'done'],
-    createRest: multiplex
+    shard: sharder
   });
 
   shards[ 1 ].map.put( 4, {id: 4, name: 't4', done: false} );
@@ -180,14 +180,14 @@ test( 'all', function(assert)
     new TestRest(), new TestRest(), new TestRest()
   ];
 
-  var multiplex = Neuro.shard({
+  var sharder = {
     getShardForModel: function(model) {
       return shards[ model.id % 3 ];
     },
     getShards: function() {
       return shards;
     }
-  });
+  };
 
   shards[1].map.put( 1, {id: 1, name: 't1', done: 0} );
   shards[2].map.put( 2, {id: 2, name: 't2', done: 1} );
@@ -197,7 +197,7 @@ test( 'all', function(assert)
   var Task = Neuro({
     name: prefix + '_task',
     fields: ['name', 'done'],
-    createRest: multiplex,
+    shard: sharder,
     comparator: 'name'
   });
 
@@ -216,7 +216,7 @@ test( 'initialize override', function(assert)
     new TestRest(), new TestRest(), new TestRest()
   ];
 
-  var multiplex = Neuro.shard({
+  var sharder = {
     initialize: function(db) {
       strictEqual( db.name, prefix + '_task', 'database passed' );
     },
@@ -226,12 +226,12 @@ test( 'initialize override', function(assert)
     getShards: function() {
       return shards;
     }
-  });
+  };
 
   var Task = Neuro({
     name: prefix + '_task',
     fields: ['name', 'done'],
-    createRest: multiplex,
+    shard: sharder,
     comparator: 'name'
   });
 });
