@@ -28,21 +28,21 @@ NeuroShard.prototype =
   STATUS_FAIL_REMOVE: 500,
   STATUS_FAIL_QUERY: 500,
 
-  getShards: function()
+  getShards: function(forRead)
   {
     throw 'getShards not implemented';
   },
 
-  getShardForModel: function(model)
+  getShardForModel: function(model, forRead)
   {
     throw 'getShardForModel not implemented';
   },
 
-  getShardsForModel: function(model)
+  getShardsForModel: function(model, forRead)
   {
-    var single = this.getShardForModel( model );
+    var single = this.getShardForModel( model, forRead );
 
-    return single ? [ single ] : this.getShards();
+    return single ? [ single ] : this.getShards( forRead );
   },
 
   getShardsForQuery: function(query)
@@ -57,7 +57,7 @@ NeuroShard.prototype =
 
   all: function(success, failure)
   {
-    var shards = this.getShards();
+    var shards = this.getShards( true );
     var all = [];
 
     function invoke(shard, onShardSuccess, onShardFailure)
@@ -88,7 +88,7 @@ NeuroShard.prototype =
 
   get: function(model, success, failure)
   {
-    var shards = this.getShardsForModel( model );
+    var shards = this.getShardsForModel( model, true );
     var gotten = null;
 
     function invoke(shard, onShardSuccess, onShardFailure)
@@ -119,7 +119,7 @@ NeuroShard.prototype =
 
   create: function( model, encoded, success, failure )
   {
-    var shards = this.getShardsForModel( model );
+    var shards = this.getShardsForModel( model, false );
     var returned = null;
 
     function invoke(shard, onShardSuccess, onShardFailure)
@@ -150,7 +150,7 @@ NeuroShard.prototype =
 
   update: function( model, encoded, success, failure )
   {
-    var shards = this.getShardsForModel( model );
+    var shards = this.getShardsForModel( model, false );
     var returned = null;
 
     function invoke(shard, onShardSuccess, onShardFailure)
@@ -181,7 +181,7 @@ NeuroShard.prototype =
 
   remove: function( model, success, failure )
   {
-    var shards = this.getShardsForModel( model );
+    var shards = this.getShardsForModel( model, false );
     var returned = null;
 
     function invoke(shard, onShardSuccess, onShardFailure)

@@ -235,3 +235,69 @@ test( 'initialize override', function(assert)
     comparator: 'name'
   });
 });
+
+test( 'writer readers', function(assert)
+{
+  var prefix = 'NeuroShard_writer_readers_';
+
+  var writer = new TestRest();
+  var writers = [ writer ];
+  var readers = [
+    new TestRest(),
+    new TestRest(),
+    new TestRest()
+  ];
+  var readerIndex = 0;
+
+  readers[0].map = writer.map;
+  readers[1].map = writer.map;
+  readers[2].map = writer.map;
+
+  writer.map.put( 4, {id: 4, name: 't4', done: 0} );
+
+  var sharder = {
+    getShardsForModel: function(model, forRead) {
+      if ( forRead ) {
+        readerIndex = (readerIndex + 1) % readers.length;
+        return [ readers[ readerIndex ] ];
+      } else {
+        return writers;
+      }
+    },
+    getShards: function(forRead) {
+      return forRead ? readers : writers;
+    }
+  };
+
+  var Task = Neuro({
+    name: prefix + '_task',
+    fields: ['name', 'done'],
+    shard: sharder,
+    comparator: 'name'
+  });
+
+  var t4 = Task.fetch( 4 );
+
+  strictEqual( readers[ 0 ].lastModel, null );
+  strictEqual( readers[ 1 ].lastModel, t4 );
+  strictEqual( readers[ 2 ].lastModel, null );
+  strictEqual( writer.lastModel, null );
+
+  readers[ 1 ].lastModel = null;
+
+  t4.$refresh();
+
+  strictEqual( readers[ 0 ].lastModel, null );
+  strictEqual( readers[ 1 ].lastModel, null );
+  strictEqual( readers[ 2 ].lastModel, t4 );
+  strictEqual( writer.lastModel, null );
+
+  readers[ 2 ].lastModel = null;
+
+  t4.$save('name', 't4a');
+
+  strictEqual( readers[ 0 ].lastModel, null );
+  strictEqual( readers[ 1 ].lastModel, null );
+  strictEqual( readers[ 2 ].lastModel, null );
+  strictEqual( writer.lastModel, t4 );
+});
