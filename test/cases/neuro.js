@@ -263,3 +263,84 @@ test( 'remove while iterating related', function(assert)
 
   deepEqual( names, ['t0', 't1', 't2', 't3'] );
 });
+
+test( 'loadRemote false get by object', function(assert)
+{
+  var prefix = 'Neuro_loadRemote_false_get_by_object_';
+
+  var Task = Neuro({
+    name: prefix + 'task',
+    fields: ['name', 'done'],
+    loadRemote: false
+  });
+
+  Task.Database.rest.map.put( 2, {id: 2, name: 't2', done: true} );
+
+  expect( 3 );
+
+  Task.get( {id: 2, name: 't2a'}, function(t)
+  {
+    ok( t.$isSaved() );
+    strictEqual( t.done, true );
+    strictEqual( t.name, 't2a' );
+  });
+});
+
+test( 'loadRemote false get by id', function(assert)
+{
+  var prefix = 'Neuro_loadRemote_false_get_by_id_';
+
+  var Task = Neuro({
+    name: prefix + 'task',
+    fields: ['name', 'done'],
+    loadRemote: false
+  });
+
+  Task.Database.rest.map.put( 2, {id: 2, name: 't2', done: true} );
+
+  expect( 3 );
+
+  Task.get( 2, function(t)
+  {
+    ok( t.$isSaved() );
+    strictEqual( t.done, true );
+    strictEqual( t.name, 't2' );
+  });
+});
+
+test( 'loadRemote false hasOne', function(assert)
+{
+  var prefix = 'Neuro_loadRemote_false_hasOne_';
+
+  var User = Neuro({
+    name: prefix + 'user',
+    fields: ['name'],
+    loadRemote: false
+  });
+
+  User.Database.rest.map.put( 1, {id: 1, name: 'u1'} );
+
+  var Task = Neuro({
+    name: prefix + 'task',
+    fields: ['name', 'created_by'],
+    hasOne: {
+      creator: {
+        model: User,
+        local: 'created_by'
+      }
+    }
+  });
+
+  strictEqual( User.all().length, 0 );
+
+  var t1 = Task.boot({
+    id: 1,
+    name: 't1',
+    created_by: 1
+  });
+
+  strictEqual( User.all().length, 1 );
+
+  ok( t1.creator );
+  strictEqual( t1.creator.name, 'u1' );
+});

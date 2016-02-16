@@ -268,11 +268,38 @@ NeuroDatabase.prototype =
 
       if ( result !== false && !grabbed )
       {
-        grabbed = true;
-        callback.call( callbackContext, result );
+        if ( !db.loadRemote && !db.remoteLoaded && (result === null || !result.$isSaved()) )
+        {
+          if ( !result )
+          {
+            result = db.buildObjectFromKey( db.buildKeyFromInput( input ) );
+          }
+
+          result.$once( NeuroModel.Events.RemoteGets, function()
+          {
+            if ( !grabbed )
+            {
+              grabbed = true;
+
+              if ( isObject( input ) )
+              {
+                result.$set( input );
+              }
+
+              callback.call( callbackContext, result.$isSaved() ? result : null );
+            }
+          });
+
+          result.$refresh();
+        }
+        else
+        {
+          grabbed = true;
+          callback.call( callbackContext, result );
+        }
       }
 
-      return result === null ? false : true;
+      return grabbed ? false : true;
     }
 
     if ( checkModel() )
