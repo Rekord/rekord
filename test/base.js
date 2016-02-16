@@ -365,7 +365,7 @@ TestRest.prototype =
       if ( cached ) {
         success.call( this, cached );
       } else {
-        failure.call( this, null, -1 );
+        failure.call( this, null, 404 );
       }
     }
 

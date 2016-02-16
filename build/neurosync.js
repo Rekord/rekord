@@ -10498,6 +10498,13 @@ NeuroShard.prototype =
   STATUS_FAIL_REMOVE: 500,
   STATUS_FAIL_QUERY: 500,
 
+  ATOMIC_ALL: false,
+  ATOMIC_GET: false,
+  ATOMIC_CREATE: true,
+  ATOMIC_UPDATE: true,
+  ATOMIC_REMOVE: false,
+  ATOMIC_QUERY: true,
+
   getShards: function(forRead)
   {
     throw 'getShards not implemented';
@@ -10543,7 +10550,7 @@ NeuroShard.prototype =
     }
     function onComplete(successful, alreadyFailed, failedStatus)
     {
-      if ( successful )
+      if ( successful || (all.length && !this.ATOMIC_ALL) )
       {
         success( all );
       }
@@ -10553,7 +10560,7 @@ NeuroShard.prototype =
       }
     }
 
-    this.multiplex( shards, invoke, onSuccess, failure, onComplete );
+    this.multiplex( shards, this.ATOMIC_ALL, invoke, onSuccess, failure, onComplete );
   },
 
   get: function(model, success, failure)
@@ -10584,7 +10591,7 @@ NeuroShard.prototype =
       }
     }
 
-    this.multiplex( shards, invoke, onSuccess, noop, onComplete );
+    this.multiplex( shards, this.ATOMIC_GET, invoke, onSuccess, noop, onComplete );
   },
 
   create: function( model, encoded, success, failure )
@@ -10615,7 +10622,7 @@ NeuroShard.prototype =
       }
     }
 
-    this.multiplex( shards, invoke, onSuccess, noop, onComplete );
+    this.multiplex( shards, this.ATOMIC_CREATE, invoke, onSuccess, noop, onComplete );
   },
 
   update: function( model, encoded, success, failure )
@@ -10646,7 +10653,7 @@ NeuroShard.prototype =
       }
     }
 
-    this.multiplex( shards, invoke, onSuccess, noop, onComplete );
+    this.multiplex( shards, this.ATOMIC_UPDATE, invoke, onSuccess, noop, onComplete );
   },
 
   remove: function( model, success, failure )
@@ -10677,7 +10684,7 @@ NeuroShard.prototype =
       }
     }
 
-    this.multiplex( shards, invoke, onSuccess, noop, onComplete );
+    this.multiplex( shards, this.ATOMIC_REMOVE, invoke, onSuccess, noop, onComplete );
   },
 
   query: function( query, success, failure )
@@ -10698,7 +10705,7 @@ NeuroShard.prototype =
     }
     function onComplete(successful, alreadyFailed, failedStatus)
     {
-      if ( successful )
+      if ( successful || (results.length && !this.ATOMIC_QUERY) )
       {
         success( results );
       }
@@ -10708,12 +10715,13 @@ NeuroShard.prototype =
       }
     }
 
-    this.multiplex( shards, invoke, onSuccess, noop, onComplete );
+    this.multiplex( shards, this.ATOMIC_QUERY, invoke, onSuccess, noop, onComplete );
   },
 
-  multiplex: function(shards, invoke, onSuccess, onFailure, onComplete)
+  multiplex: function(shards, atomic, invoke, onSuccess, onFailure, onComplete)
   {
     var successful = true;
+    var failureCalled = false;
     var failedStatus = undefined;
     var total = 0;
 
@@ -10721,12 +10729,12 @@ NeuroShard.prototype =
     {
       if ( ++total === shards.length )
       {
-        onComplete.call( this, successful, !successful, failedStatus );
+        onComplete.call( this, successful, failureCalled, failedStatus );
       }
     }
     function onShardSuccess(data)
     {
-      if ( successful )
+      if ( successful || !atomic )
       {
         onSuccess.apply( this, arguments );
       }
@@ -10739,7 +10747,11 @@ NeuroShard.prototype =
       {
         successful = false;
 
-        onFailure.apply( this, arguments );
+        if ( atomic )
+        {
+          failureCalled = true;
+          onFailure.apply( this, arguments );
+        }
       }
 
       if ( isNumber( status ) && (failedStatus === undefined || status < failedStatus) )
