@@ -6,7 +6,7 @@
 /**
  * Determines whether the given variable is defined.
  *
- * @memberOf Neuro
+ * @memberof Neuro
  * @param  {Any} x
  *         The variable to test.
  * @return {Boolean} -
@@ -20,7 +20,7 @@ function isDefined(x)
 /**
  * Determines whether the given variable is a function.
  *
- * @memberOf Neuro
+ * @memberof Neuro
  * @param  {Any} x
  *         The variable to test.
  * @return {Boolean} -
@@ -36,7 +36,7 @@ function isFunction(x)
  * constructor for a model and also has a Database variable. A Neuro object is
  * strictly created by the Neuro function.
  *
- * @memberOf Neuro
+ * @memberof Neuro
  * @param  {Any} x
  *         The variable to test.
  * @return {Boolean} -
@@ -50,7 +50,7 @@ function isNeuro(x)
 /**
  * Determines whether the given variable is a string.
  *
- * @memberOf Neuro
+ * @memberof Neuro
  * @param  {Any} x
  *         The variable to test.
  * @return {Boolean} -
@@ -65,7 +65,7 @@ function isString(x)
  * Determines whether the given variable is a valid number. NaN and Infinity are
  * not valid numbers.
  *
- * @memberOf Neuro
+ * @memberof Neuro
  * @param  {Any} x
  *         The variable to test.
  * @return {Boolean} -
@@ -79,7 +79,7 @@ function isNumber(x)
 /**
  * Determines whether the given variable is a boolean value.
  *
- * @memberOf Neuro
+ * @memberof Neuro
  * @param  {Any} x
  *         The variable to test.
  * @return {Boolean} -
@@ -93,7 +93,7 @@ function isBoolean(x)
 /**
  * Determines whether the given variable is an instance of Date.
  *
- * @memberOf Neuro
+ * @memberof Neuro
  * @param  {Any} x
  *         The variable to test.
  * @return {Boolean} -
@@ -107,7 +107,7 @@ function isDate(x)
 /**
  * Determines whether the given variable is an instance of RegExp.
  *
- * @memberOf Neuro
+ * @memberof Neuro
  * @param  {Any} x
  *         The variable to test.
  * @return {Boolean} -
@@ -121,7 +121,7 @@ function isRegExp(x)
 /**
  * Determines whether the given variable is an instance of Array.
  *
- * @memberOf Neuro
+ * @memberof Neuro
  * @param  {Any} x
  *         The variable to test.
  * @return {Boolean} -
@@ -136,7 +136,7 @@ function isArray(x)
  * Determines whether the given variable is a non-null object. As a note,
  * Arrays are considered objects.
  *
- * @memberOf Neuro
+ * @memberof Neuro
  * @param  {Any} x
  *         The variable to test.
  * @return {Boolean} -
@@ -153,7 +153,7 @@ function isObject(x)
  * array then it is returned. If the variable is any other type it may result
  * in an error.
  *
- * @memberOf Neuro
+ * @memberof Neuro
  * @param  {String|String[]} x
  *         The variable to convert to an Array.
  * @param  {String} [delimiter]
@@ -169,7 +169,7 @@ function toArray(x, delimiter)
 /**
  * Determines whether the given variable is not null and is not undefined.
  *
- * @memberOf Neuro
+ * @memberof Neuro
  * @param  {Any}  x
  *         The variable to test.
  * @return {Boolean} -
@@ -185,7 +185,7 @@ function isValue(x)
  * comparison function. If the variable is not found in the array then `false`
  * is returned.
  *
- * @memberOf Neuro
+ * @memberof Neuro
  * @param  {Array} arr
  *         The array to search through.
  * @param  {Any} x
@@ -216,7 +216,7 @@ function indexOf(arr, x, comparator)
 /**
  * A function that doesn't perform any operations.
  *
- * @memberOf Neuro
+ * @memberof Neuro
  */
 function noop()
 {
@@ -228,7 +228,7 @@ function noop()
  * benefits of returning a "copy" of the function which makes it ideal for use
  * in listening on/once events and off events.
  *
- * @memberOf Neuro
+ * @memberof Neuro
  * @param  {Object} context
  *         The value of `this` for the given function.
  * @param  {Function}
@@ -247,7 +247,7 @@ function bind(context, func)
 /**
  * Generates a UUID using the random number method.
  *
- * @memberOf Neuro
+ * @memberof Neuro
  * @return {String} -
  *         The generated UUID.
  */
@@ -455,6 +455,24 @@ function toCamelCase(name)
 
 toCamelCase.REGEX = /(^.|_.)/g;
 
+/**
+ * Returns an instance of {@link Neuro.Collection} with the initial values
+ * passed as arguments to this function.
+ *
+ * ```javascript
+ * Neuro.collect(1, 2, 3, 4);
+ * Neuro.collect([1, 2, 3, 4]); // same as above
+ * Neuro.collect();
+ * Neuro.collect([]); // same as above
+ * ```
+ *
+ * @memberof Neuro
+ * @param  {Any[]|...Any} a
+ *         The initial values in the collection. You can pass an array of values
+ *         or any number of arguments.
+ * @return {Neuro.Collection} -
+ *         A newly created instance containing the given values.
+ */
 function collect(a)
 {
   var values = arguments.length > 1 || !isArray(a) ? Array.prototype.slice.call( arguments ) : a;
@@ -820,6 +838,20 @@ function addComparator(second, comparator, nullsFirst)
   };
 }
 
+/**
+ * A string, a function, or an array of mixed values.
+ * @typedef {String|Function|Array} ComparatorInput
+ */
+
+/**
+ * Creates a function which compares two values.
+ *
+ * @memberof Neuro
+ * @param  {ComparatorInput} comparator
+ *         The input which creates a comparison function.
+ * @return {Boolean} -
+ *         True if null values should be sorted first.
+ */
 function createComparator(comparator, nullsFirst)
 {
   if ( isFunction( comparator ) )
@@ -2326,16 +2358,16 @@ Neuro.Debugs = {
   CREATION: 0,                // options
 
   REST: 1,                    // options
-  AUTO_REFRESH: 73,           // 
+  AUTO_REFRESH: 73,           //
 
   REMOTE_UPDATE: 2,           // encoded, NeuroModel
   REMOTE_CREATE: 3,           // encoded, NeuroModel
   REMOTE_REMOVE: 4,           // NeuroModel
   REMOTE_LOAD: 5,             // encoded[]
-  REMOTE_LOAD_OFFLINE: 6,     // 
+  REMOTE_LOAD_OFFLINE: 6,     //
   REMOTE_LOAD_ERROR: 7,       // status
   REMOTE_LOAD_REMOVE: 8,      // key
-  REMOTE_LOAD_RESUME: 22,     // 
+  REMOTE_LOAD_RESUME: 22,     //
 
   LOCAL_LOAD: 9,              // encoded[]
   LOCAL_RESUME_DELETE: 10,    // NeuroModel
@@ -2452,7 +2484,7 @@ Neuro.Debugs = {
   HASMANYTHRU_NINJA_ADD: 99,        // relation, NeuroModel
   HASMANYTHRU_AUTO_SAVE: 100,       // relation
   HASMANYTHRU_PREREMOVE: 101,       // NeuroModel, relation
-  HASMANYTHRU_POSTSAVE: 102,        // NeuroModel, relation  
+  HASMANYTHRU_POSTSAVE: 102,        // NeuroModel, relation
   HASMANYTHRU_THRU_ADD: 103,        // relation, NeuroModel
   HASMANYTHRU_THRU_REMOVE: 68,      // relation, NeuroModel, NeuroModel
   HASMANYTHRU_QUERY: 117,           // NeuroModel, NeuroRemoteQuery, queryOption, query
@@ -2465,6 +2497,7 @@ Neuro.Debugs = {
   HASREMOVE_QUERY: 119,             // NeuroModel, NeuroRemoteQuery, queryOption, query
   HASREMOVE_QUERY_RESULTS: 120      // NeuroModel, NeuroRemoteQuery
 };
+
 
 // Neuro.rest = function(options, success(data), failure(data, status))
 
@@ -4606,8 +4639,8 @@ addEventFunction( NeuroModel.prototype, '$change', NeuroModel.Events.Changes, tr
 
 /**
  * A NeuroMap has the key-to-value benefits of a map and iteration benefits of an
- * array. This is especially beneficial when most of the time the contents of 
- * the structure need to be iterated and order doesn't matter (since removal 
+ * array. This is especially beneficial when most of the time the contents of
+ * the structure need to be iterated and order doesn't matter (since removal
  * performs a swap which breaks insertion order).
  *
  * @constructor
@@ -4640,7 +4673,7 @@ NeuroMap.prototype =
 
   /**
    * Resets the map by initializing the values, keys, and indexes.
-   * 
+   *
    * @return {Neuro.Map} -
    *         The reference to this map.
    */
@@ -4775,9 +4808,9 @@ NeuroMap.prototype =
   },
 
   /**
-   * Passes all values & keys in this map to a callback and if it returns a 
+   * Passes all values & keys in this map to a callback and if it returns a
    * truthy value then the key and value are placed in the destination map.
-   * 
+   *
    * @param  {Function} callback [description]
    * @param  {Neuro.Map} [dest]     [description]
    * @return {Neuro.Map}            [description]
@@ -4805,7 +4838,7 @@ NeuroMap.prototype =
 
   /**
    * Reverses the order of the underlying values & keys.
-   * 
+   *
    * @return {Neuro.Map} -
    *         The referense to this map.
    */
@@ -4826,7 +4859,7 @@ NeuroMap.prototype =
   },
 
   /**
-   * 
+   *
    * @param  {function}  comparator [description]
    * @return {Boolean}            [description]
    */
@@ -4837,7 +4870,7 @@ NeuroMap.prototype =
 
   /**
    * Sorts the underlying values & keys given a value compare function.
-   * 
+   *
    * @param  {function} comparator
    *         A function which accepts two values and returns a number used for
    *         sorting. If the first argument is less than the second argument, a
@@ -4858,7 +4891,7 @@ NeuroMap.prototype =
       var i = left;
       var j = right;
 
-      while (i <= j) 
+      while (i <= j)
       {
         while (comparator( map.values[i], pivot ) < 0) i++
         while (comparator( map.values[j], pivot ) > 0) j--;
@@ -4879,12 +4912,12 @@ NeuroMap.prototype =
     {
       var index = partition( left, right );
 
-      if (left < index - 1) 
+      if (left < index - 1)
       {
         qsort( left, index - 1 );
       }
 
-      if (index < right) 
+      if (index < right)
       {
         qsort( index, right );
       }
@@ -4905,7 +4938,7 @@ NeuroMap.prototype =
 
   /**
    * Rebuilds the index based on the keys.
-   * 
+   *
    * @return {Neuro.Map} -
    *         The reference to this map.
    */
@@ -4922,27 +4955,161 @@ NeuroMap.prototype =
   }
 
 };
+
+
+/**
+ * An extension of the Array class adding many useful functions and events. This
+ * is the base collection class in Neurosync.
+ *
+ * A collection of any type can be created via {@link Neuro.collect}.
+ *
+ * ```
+ * var nc = new Neuro.Collection([1, 2, 3, 4]);
+ * ```
+ *
+ * @constructor
+ * @memberof Neuro
+ * @alias Collection
+ * @see Neuro.collect
+ */
 function NeuroCollection(values)
 {
   this.addAll( values );
 }
 
+/**
+ * The events a collection can emit.
+ *
+ * {@link Neuro.Collection#event:add Add}
+ * {@link Neuro.Collection#event:adds Adds}
+ * {@link Neuro.Collection#event:sort Sort}
+ * {@link Neuro.Collection#event:remove Remove}
+ * {@link Neuro.Collection#event:removes Removes}
+ * {@link Neuro.Collection#event:updates Updates}
+ * {@link Neuro.Collection#event:reset Reset}
+ * {@link Neuro.Collection#event:cleared Cleared}
+ * {@link Neuro.Collection#event:changes Changes}
+ *
+ * @static
+ */
 NeuroCollection.Events =
 {
+  /**
+   * An event triggered when a single value is added to a collection.
+   *
+   * @event Neuro.Collection#add
+   * @argument {Neuro.Collection} collection - The collection that triggered the event.
+   * @argument {T} value - The value added.
+   * @see Neuro.Collection#add
+   * @see Neuro.Collection#insertAt
+   * @see Neuro.ModelCollection#add
+   * @see Neuro.ModelCollection#push
+   */
   Add:            'add',
+
+  /**
+   * An event triggered when multiple values are added to a collection.
+   *
+   * @event Neuro.Collection#adds
+   * @argument {Neuro.Collection} collection - The collection that triggered the event.
+   * @argument {T[]} value - The values added.
+   * @see Neuro.Collection#addAll
+   * @see Neuro.ModelCollection#addAll
+   */
   Adds:           'adds',
+
+  /**
+   * An event triggered when a collection is resorted. This may automatically
+   * be triggered by any method that modifies the collection.
+   *
+   * @event Neuro.Collection#sort
+   * @argument {Neuro.Collection} collection - The collection that triggered the event.
+   * @see Neuro.Collection#resort
+   * @see Neuro.ModelCollection#resort
+   */
   Sort:           'sort',
+
+  /**
+   * An event triggered when a collection has an element removed at a given index.
+   *
+   * @event Neuro.Collection#remove
+   * @argument {Neuro.Collection} collection - The collection that triggered the event.
+   * @argument {Any} removing - The element that was removed.
+   * @argument {Number} index - The index where the element was removed at.
+   * @see Neuro.Collection#remove
+   * @see Neuro.Collection#removeAt
+   * @see Neuro.ModelCollection#remove
+   */
   Remove:         'remove',
+
+  /**
+   * An event triggered when a collection has multiple elements removed.
+   *
+   * @event Neuro.Collection#removes
+   * @argument {Neuro.Collection} collection - The collection that triggered the event.
+   * @argument {Any[]} removed - The array of elements removed from the collection.
+   * @see Neuro.Collection#removeAll
+   * @see Neuro.Collection#removeWhere
+   */
   Removes:        'removes',
+
+  /**
+   * An event triggered when a collection has elements modified.
+   *
+   * @event Neuro.Collection#updates
+   * @argument {Neuro.Collection} collection - The collection that triggered the event.
+   * @argument {Array} updated - The array of elements modified.
+   * @see Neuro.ModelCollection#update
+   * @see Neuro.ModelCollection#updateWhere
+   */
   Updates:        'updates',
+
+  /**
+   * An event triggered when a collection's elements are entirely replaced by
+   * a new set of elements.
+   *
+   * @event Neuro.Collection#reset
+   * @argument {Neuro.Collection} collection - The collection that triggered the event.
+   * @argument {Array} updated - The array of elements modified.
+   * @see Neuro.FilteredCollection#sync
+   * @see Neuro.ModelCollection#reset
+   * @see Neuro.Query#sync
+   */
   Reset:          'reset',
+
+  /**
+   * An event triggered when a collection is cleared of all elements.
+   *
+   * @event Neuro.Collection#cleared
+   * @argument {Neuro.Collection} collection - The collection that triggered the event.
+   * @see Neuro.Collection#clear
+   */
   Cleared:        'cleared',
+
+  /**
+   * All events triggered by a collection when the contents of the collection changes.
+   *
+   * @event Neuro.Collection#changes
+   * @argument {Neuro.Collection} collection - The collection that triggered the event.
+   */
   Changes:        'add adds sort remove removes updates reset cleared'
+
 };
 
 extendArray( Array, NeuroCollection,
 {
 
+  /**
+   * setComparator
+   *
+   * @method
+   * @memberof Neuro.Collection#
+   * @param {ComparatorInput} comparator
+   * @param {boolean} nullsFirst
+   * @emits Neuro.Collection#sort
+   * @see Neuro.createComparator
+   * @return {Neuro.Collection}
+   */
   setComparator: function(comparator, nullsFirst)
   {
     this.comparator = createComparator( comparator, nullsFirst );
@@ -4951,6 +5118,17 @@ extendArray( Array, NeuroCollection,
     return this;
   },
 
+  /**
+   * addComparator
+   *
+   * @method
+   * @memberof Neuro.Collection#
+   * @param {ComparatorInput} comparator
+   * @param {boolean} nullsFirst
+   * @emits Neuro.Collection#sort
+   * @see Neuro.createComparator
+   * @return {Neuro.Collection}
+   */
   addComparator: function(comparator, nullsFirst)
   {
     this.comparator = addComparator( this.comparator, comparator, nullsFirst );
@@ -4959,6 +5137,12 @@ extendArray( Array, NeuroCollection,
     return this;
   },
 
+  /**
+   * isSorted
+   *
+   * @method
+   * @memberof Neuro.Collection#
+   */
   isSorted: function(comparator, nullsFirst)
   {
     var cmp = comparator ? createComparator( comparator, nullsFirst ) : this.comparator;
@@ -4966,6 +5150,17 @@ extendArray( Array, NeuroCollection,
     return isSorted( cmp, this );
   },
 
+  /**
+   * RESORT
+   *
+   * @method
+   * @memberof Neuro.Collection#
+   * @param {ComparatorInput} comparator
+   * @param {boolean} nullsFirst
+   * @emits Neuro.Collection#sort
+   * @see Neuro.createComparator
+   * @return {Neuro.Collection}
+   */
   resort: function(comparator, nullsFirst)
   {
     var cmp = comparator ? createComparator( comparator, nullsFirst ) : this.comparator;

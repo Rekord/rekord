@@ -9,16 +9,16 @@ Neuro.Debugs = {
   CREATION: 0,                // options
 
   REST: 1,                    // options
-  AUTO_REFRESH: 73,           // 
+  AUTO_REFRESH: 73,           //
 
   REMOTE_UPDATE: 2,           // encoded, NeuroModel
   REMOTE_CREATE: 3,           // encoded, NeuroModel
   REMOTE_REMOVE: 4,           // NeuroModel
   REMOTE_LOAD: 5,             // encoded[]
-  REMOTE_LOAD_OFFLINE: 6,     // 
+  REMOTE_LOAD_OFFLINE: 6,     //
   REMOTE_LOAD_ERROR: 7,       // status
   REMOTE_LOAD_REMOVE: 8,      // key
-  REMOTE_LOAD_RESUME: 22,     // 
+  REMOTE_LOAD_RESUME: 22,     //
 
   LOCAL_LOAD: 9,              // encoded[]
   LOCAL_RESUME_DELETE: 10,    // NeuroModel
@@ -135,7 +135,7 @@ Neuro.Debugs = {
   HASMANYTHRU_NINJA_ADD: 99,        // relation, NeuroModel
   HASMANYTHRU_AUTO_SAVE: 100,       // relation
   HASMANYTHRU_PREREMOVE: 101,       // NeuroModel, relation
-  HASMANYTHRU_POSTSAVE: 102,        // NeuroModel, relation  
+  HASMANYTHRU_POSTSAVE: 102,        // NeuroModel, relation
   HASMANYTHRU_THRU_ADD: 103,        // relation, NeuroModel
   HASMANYTHRU_THRU_REMOVE: 68,      // relation, NeuroModel, NeuroModel
   HASMANYTHRU_QUERY: 117,           // NeuroModel, NeuroRemoteQuery, queryOption, query
