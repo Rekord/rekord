@@ -103,7 +103,7 @@ function NeuroDatabase(options)
   }
 }
 
-function defaultEncode(data)
+function defaultEncode(model, data, forSaving)
 {
   var encodings = this.encodings;
 
@@ -111,7 +111,7 @@ function defaultEncode(data)
   {
     if ( prop in encodings )
     {
-      data[ prop ] = encodings[ prop ]( data[ prop ] );
+      data[ prop ] = encodings[ prop ]( data[ prop ], model, prop, forSaving );
     }
   }
 
@@ -126,7 +126,7 @@ function defaultDecode(rawData)
   {
     if ( prop in decodings )
     {
-      rawData[ prop ] = decodings[ prop ]( rawData[ prop ] );
+      rawData[ prop ] = decodings[ prop ]( rawData[ prop ], rawData, prop );
     }
   }
 

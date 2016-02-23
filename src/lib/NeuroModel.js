@@ -514,7 +514,7 @@ NeuroModel.prototype =
 
   $push: function(fields)
   {
-    this.$savedState = this.$db.encode( grab( this, fields || this.$db.fields, true ) );
+    this.$savedState = this.$db.encode( this, grab( this, fields || this.$db.fields, true ), false );
   },
 
   $pop: function(dontDiscard)
@@ -557,7 +557,7 @@ NeuroModel.prototype =
 
   $toJSON: function( forSaving )
   {
-    var encoded = this.$db.encode( grab( this, this.$db.fields, true ) );
+    var encoded = this.$db.encode( this, grab( this, this.$db.fields, true ), forSaving );
 
     var databaseRelations = this.$db.relations;
     var relations = this.$relations;

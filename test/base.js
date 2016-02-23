@@ -97,6 +97,74 @@ function wait(millis, func)
   QUnit.assert.currentTimer.wait( millis, func );
 }
 
+// Mock File
+
+function TestFile(name, size, type, contents)
+{
+  this.name = name;
+  this.size = size;
+  this.type = type;
+  this.contents = contents;
+}
+
+function TestFileReader()
+{
+  this.onload = Neuro.noop;
+}
+
+TestFileReader.prototype =
+{
+  readAsText: function(file)
+  {
+    if ( TestFileReader.IMMEDIATE )
+    {
+      this.readAsTextNow( file );
+    }
+    else
+    {
+      TestFileReader.pending.push( [this, 'readAsTextNow', file] );
+    }
+  },
+  readAsTextNow: function(file)
+  {
+    this.onload( {target:{result: file.contents}} );
+  },
+  readAsDataURL: function(file)
+  {
+    if ( TestFileReader.IMMEDIATE )
+    {
+      this.readAsDataURLNow( file );
+    }
+    else
+    {
+      TestFileReader.pending.push( [this, 'readAsDataURLNow', file] );
+    }
+  },
+  readAsDataURLNow: function(file)
+  {
+    this.onload( {target:{result: 'data:text/plain;base64,' + btoa(file.contents)}} );
+  }
+};
+
+TestFileReader.IMMEDIATE = true;
+TestFileReader.pending = [];
+
+TestFileReader.executePending = function()
+{
+  for (var i = 0; i < TestFileReader.pending.length; i++)
+  {
+    var pair = TestFileReader.pending[ i ];
+
+    pair[ 0 ][ pair[ 1 ] ]( pair[ 2 ] );
+  }
+
+  TestFileReader.pending.length = 0;
+};
+
+window.File = TestFile;
+window.FileList = Array;
+window.FileReader = TestFileReader;
+
 // Utility Methods
 
 function offline()
