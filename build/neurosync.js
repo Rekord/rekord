@@ -2,15 +2,138 @@
 {
 
 
+/**
+ * A function which takes a value (typically an object) and returns a true or
+ * false value.
+ *
+ * @callback whereCallback
+ * @param {Any} value -
+ *    The value to test.
+ * @return {Boolean} -
+ *    Whether or not the value passed the test.
+ * @see Neuro.createWhere
+ * @see Neuro.saveWhere
+ */
+
+/**
+ * A function for comparing two values and determine whether they're considered
+ * equal.
+ *
+ * @callback equalityCallback
+ * @param {Any} a -
+ *    The first value to test.
+ * @param {Any} b -
+ *    The second value to test.
+ * @return {Boolean} -
+ *    Whether or not the two values are considered equivalent.
+ * @see Neuro.equals
+ * @see Neuro.equalsStrict
+ * @see Neuro.equalsCompare
+ */
+
+/**
+ * A function for comparing two values to determine if one is greater or lesser
+ * than the other or if they're equal.
+ *
+ * ```javascript
+ * comparisonCallback( a, b ) < 0 // a < b
+ * comparisonCallback( a, b ) > 0 // a > b
+ * comparisonCallback( a, b ) == 0 // a == b
+ * ```
+ *
+ * @callback comparisonCallback
+ * @param {Any} a -
+ *    The first value to test.
+ * @param {Any} b -
+ *    The second value to test.
+ * @return {Number} -
+ *    0 if the two values are considered equal, a negative value if `a` is
+ *    considered less than `b`, and a positive value if `a` is considered
+ *    greater than `b`.
+ * @see Neuro.compare
+ * @see Neuro.compareNumbers
+ */
+
+/**
+ * A function for resolving a value from a given value. Typically used to
+ * transform an object into one of it's properties.
+ *
+ * @callback propertyResolverCallback
+ * @param {Any} model -
+ *    The model to use to resolve a value.
+ * @return {Any} -
+ *    The resolved value.
+ * @see Neuro.createPropertyResolver
+ */
+
+ /**
+  * A string, a function, or an array of mixed values.
+  *
+  * ```javascript
+  * 'age'                   // age property of an object
+  * '-age'                  // age property of an object, ordering reversed
+  * function(a, b) {}       // a function which compares two values
+  * ['age', 'done']         // age property of an object, and when equal, the done value
+  * 'creator.name'          // name sub-property of creator property
+  * '{creator.name}, {age}' // formatted string
+  * ```
+  *
+  * @typedef {String|comparisonCallback|Array} comparatorInput
+  */
+
+/**
+ * An expression which resolves a value from another value.
+ *
+ * ```javascript
+ * // {age: 6, name: 'x', user: {first: 'tom'}}
+ * 'age'                    // age property of an object
+ * 'user.first'             // sub property
+ * '{age}, {user.first}'    // a formatted string built from object values
+ * function(a) {}           // a function which returns a value itself
+ * ['age', 'name']          // multiple properties joined with a delimiter
+ * {age:null, user:'first'} // multiple properties joined with a delimiter including a sub property
+ * ```
+ *
+ * @typedef {String|Function|Array|Object} propertyResolverInput
+ */
+
+/**
+ * An expression which can be used to generate a function for testing a value
+ * and returning a boolean result. The following types can be given and will
+ * result in the following tests:
+ *
+ * - `String`: If a string & value are given - the generated function will test
+ *    if the object has a property with the given value. If a string is given
+ *    and no value is given - the generated function will test if the object
+ *    has the property and a non-null value.
+ * - `Object`: If an object is given - the generated function will test all
+ *    properties of the given object and return true only if the object being
+ *    tested has the same values.
+ * - `Array`: If an array is given - each element in the array is passed as
+ *    arguments to generate a new function. The returned function will only
+ *    return true if all generated functions return true - otherwise false.
+ * - `whereCallback`: A function can be given which is immediately returned as
+ *    the test function.
+ *
+ * @typedef {String|Object|Array|whereCallback} whereInput
+ */
 
 /**
  * Determines whether the given variable is defined.
  *
+ * ```javascript
+ * Neuro.isDefined(); // false
+ * Neuro.isDefined(0); // true
+ * Neuro.isDefined(true); // true
+ * Neuro.isDefined(void 0); // false
+ * Neuro.isDefined(undefined); // false
+ * ```
+ *
  * @memberof Neuro
- * @param  {Any} x
- *         The variable to test.
+ * @param {Any} x
+ *    The variable to test.
  * @return {Boolean} -
- *         True if the variable is defined, otherwise false.
+ *    True if the variable is defined, otherwise false.
  */
 function isDefined(x)
 {
@@ -20,11 +143,17 @@ function isDefined(x)
 /**
  * Determines whether the given variable is a function.
  *
+ * ```javascript
+ * Neuro.isFunction(); // false
+ * Neuro.isFunction(parseInt); // true
+ * Neuro.isFunction(2); // false
+ * ```
+ *
  * @memberof Neuro
- * @param  {Any} x
- *         The variable to test.
+ * @param {Any} x
+ *    The variable to test.
  * @return {Boolean} -
- *         True if the variable is a function, otherwise false.
+ *    True if the variable is a function, otherwise false.
  */
 function isFunction(x)
 {
@@ -36,11 +165,19 @@ function isFunction(x)
  * constructor for a model and also has a Database variable. A Neuro object is
  * strictly created by the Neuro function.
  *
+ * ```javascript
+ * var Task = Neuro({
+ *   name: 'task',
+ *   fields: ['name', 'done', 'finished_at', 'created_at', 'assigned_to']
+ * });
+ * Neuro.isNeuro( Task ); // true
+ * ```
+ *
  * @memberof Neuro
- * @param  {Any} x
- *         The variable to test.
+ * @param {Any} x
+ *    The variable to test.
  * @return {Boolean} -
- *         True if the variable is a Neuro object, otherwise false.
+ *    True if the variable is a Neuro object, otherwise false.
  */
 function isNeuro(x)
 {
@@ -50,11 +187,17 @@ function isNeuro(x)
 /**
  * Determines whether the given variable is a string.
  *
+ * ```javascript
+ * Neuro.isString(); // false
+ * Neuro.isString('x'): // true
+ * Neuro.isString(1); // false
+ * ```
+ *
  * @memberof Neuro
- * @param  {Any} x
- *         The variable to test.
+ * @param {Any} x
+ *    The variable to test.
  * @return {Boolean} -
- *         True if the variable is a string, otherwise false.
+ *    True if the variable is a string, otherwise false.
  */
 function isString(x)
 {
@@ -65,11 +208,19 @@ function isString(x)
  * Determines whether the given variable is a valid number. NaN and Infinity are
  * not valid numbers.
  *
+ * ```javascript
+ * Neuro.isNumber(); // false
+ * Neuro.isNumber('x'): // false
+ * Neuro.isNumber(1); // true
+ * Neuro.isNumber(NaN); // false
+ * Neuro.isNumber(Infinity); // true
+ * ```
+ *
  * @memberof Neuro
- * @param  {Any} x
- *         The variable to test.
+ * @param {Any} x
+ *    The variable to test.
  * @return {Boolean} -
- *         True if the variable is a valid number, otherwise false.
+ *    True if the variable is a valid number, otherwise false.
  */
 function isNumber(x)
 {
@@ -79,11 +230,18 @@ function isNumber(x)
 /**
  * Determines whether the given variable is a boolean value.
  *
+ * ```javascript
+ * Neuro.isBoolean(); // false
+ * Neuro.isBoolean('x'): // false
+ * Neuro.isBoolean(1); // false
+ * Neuro.isBoolean(true); // true
+ * ```
+ *
  * @memberof Neuro
- * @param  {Any} x
- *         The variable to test.
+ * @param {Any} x
+ *    The variable to test.
  * @return {Boolean} -
- *         True if the variable is a boolean value, otherwise false.
+ *    True if the variable is a boolean value, otherwise false.
  */
 function isBoolean(x)
 {
@@ -93,11 +251,19 @@ function isBoolean(x)
 /**
  * Determines whether the given variable is an instance of Date.
  *
+ * ```javascript
+ * Neuro.isDate(); // false
+ * Neuro.isDate('x'): // false
+ * Neuro.isDate(1); // false
+ * Neuro.isDate(true); // false
+ * Neuro.isDate(new Date()); // true
+ * ```
+ *
  * @memberof Neuro
- * @param  {Any} x
- *         The variable to test.
+ * @param {Any} x
+ *    The variable to test.
  * @return {Boolean} -
- *         True if the variable is an instance of Date, otherwise false.
+ *    True if the variable is an instance of Date, otherwise false.
  */
 function isDate(x)
 {
@@ -107,11 +273,19 @@ function isDate(x)
 /**
  * Determines whether the given variable is an instance of RegExp.
  *
+ * ```javascript
+ * Neuro.isRegExp(); // false
+ * Neuro.isRegExp('x'): // false
+ * Neuro.isRegExp(1); // false
+ * Neuro.isRegExp(true); // false
+ * Neuro.isRegExp(/[xyz]/); // true
+ * ```
+ *
  * @memberof Neuro
- * @param  {Any} x
- *         The variable to test.
+ * @param {Any} x
+ *    The variable to test.
  * @return {Boolean} -
- *         True if the variable is an instance of RegExp, otherwise false.
+ *    True if the variable is an instance of RegExp, otherwise false.
  */
 function isRegExp(x)
 {
@@ -121,11 +295,19 @@ function isRegExp(x)
 /**
  * Determines whether the given variable is an instance of Array.
  *
+ * ```javascript
+ * Neuro.isArray(); // false
+ * Neuro.isArray('x'): // false
+ * Neuro.isArray(1); // false
+ * Neuro.isArray([]); // true
+ * Neuro.isArray(Neuro.collect(1, 2, 3)); // true
+ * ```
+ *
  * @memberof Neuro
- * @param  {Any} x
- *         The variable to test.
+ * @param {Any} x
+ *    The variable to test.
  * @return {Boolean} -
- *         True if the variable is an instance of Array, otherwise false.
+ *    True if the variable is an instance of Array, otherwise false.
  */
 function isArray(x)
 {
@@ -136,11 +318,20 @@ function isArray(x)
  * Determines whether the given variable is a non-null object. As a note,
  * Arrays are considered objects.
  *
+ * ```javascript
+ * Neuro.isObject(); // false
+ * Neuro.isObject('x'): // false
+ * Neuro.isObject(1); // false
+ * Neuro.isObject([]); // true
+ * Neuro.isObject({}); // true
+ * Neuro.isObject(null); // false
+ * ```
+ *
  * @memberof Neuro
- * @param  {Any} x
- *         The variable to test.
+ * @param {Any} x
+ *    The variable to test.
  * @return {Boolean} -
- *         True if the variable is a non-null object, otherwise false.
+ *    True if the variable is a non-null object, otherwise false.
  */
 function isObject(x)
 {
@@ -153,13 +344,18 @@ function isObject(x)
  * array then it is returned. If the variable is any other type it may result
  * in an error.
  *
+ * ```javascript
+ * Neuro.toArray([1, 2, 3]); // [1, 2, 3]
+ * Neuro.toArray('1,2,3', ','); // ['1', '2', '3']
+ * ```
+ *
  * @memberof Neuro
- * @param  {String|String[]} x
- *         The variable to convert to an Array.
- * @param  {String} [delimiter]
- *         The delimiter to split if the given variable is a string.
+ * @param {String|String[]} x
+ *    The variable to convert to an Array.
+ * @param {String} [delimiter]
+ *    The delimiter to split if the given variable is a string.
  * @return {String[]} -
- *         The array of strings created.
+ *    The array of strings created.
  */
 function toArray(x, delimiter)
 {
@@ -169,11 +365,22 @@ function toArray(x, delimiter)
 /**
  * Determines whether the given variable is not null and is not undefined.
  *
+ * ```javascript
+ * Neuro.isValue(); // false
+ * Neuro.isValue('x'): // true
+ * Neuro.isValue(1); // true
+ * Neuro.isValue([]); // true
+ * Neuro.isValue({}); // true
+ * Neuro.isValue(null); // false
+ * Neuro.isValue(void 0); // false
+ * Neuro.isValue(undefined); // false
+ * ```
+ *
  * @memberof Neuro
- * @param  {Any}  x
- *         The variable to test.
+ * @param {Any}  x
+ *    The variable to test.
  * @return {Boolean} -
- *         True if the variable is non-null and not undefined.
+ *    True if the variable is non-null and not undefined.
  */
 function isValue(x)
 {
@@ -185,18 +392,25 @@ function isValue(x)
  * comparison function. If the variable is not found in the array then `false`
  * is returned.
  *
+ * ```javascript
+ * Neuro.indexOf([1, 2, 3], 1); // 0
+ * Neuro.indexOf([1, 2, 3], 4); // false
+ * Neuro.indexOf([1, 2, 2], 2); // 1
+ * ```
+ *
+ *
  * @memberof Neuro
- * @param  {Array} arr
- *         The array to search through.
- * @param  {Any} x
- *         The variable to search for.
- * @param  {Function} [comparator]
- *         The function to use which compares two values and returns a truthy
- *         value if they are considered equivalent. If a comparator is not given
- *         then strict comparison is used to determine equivalence.
+ * @param {Array} arr
+ *    The array to search through.
+ * @param {Any} x
+ *    The variable to search for.
+ * @param {Function} [comparator]
+ *    The function to use which compares two values and returns a truthy
+ *    value if they are considered equivalent. If a comparator is not given
+ *    then strict comparison is used to determine equivalence.
  * @return {Number|Boolean} -
- *         The index in the array the variable exists at, otherwise false if
- *         the variable wasn't found in the array.
+ *    The index in the array the variable exists at, otherwise false if
+ *    the variable wasn't found in the array.
  */
 function indexOf(arr, x, comparator)
 {
@@ -228,13 +442,22 @@ function noop()
  * benefits of returning a "copy" of the function which makes it ideal for use
  * in listening on/once events and off events.
  *
+ * ```javascript
+ * var context = {};
+ * var func = Neuro.bind( context, function(x) {
+ *   this.y = x * 2;
+ * });
+ * func( 4 );
+ * context.y; // 8
+ * ```
+ *
  * @memberof Neuro
- * @param  {Object} context
- *         The value of `this` for the given function.
- * @param  {Function}
- *         The function to invoke with the given context.
+ * @param {Object} context
+ *    The value of `this` for the given function.
+ * @param {Function}
+ *    The function to invoke with the given context.
  * @return {Function} -
- *         A new function which is a copy of the given function with a new context.
+ *    A new function which is a copy of the given function with a new context.
  */
 function bind(context, func)
 {
@@ -249,7 +472,7 @@ function bind(context, func)
  *
  * @memberof Neuro
  * @return {String} -
- *         The generated UUID.
+ *    The generated UUID.
  */
 function uuid()
 {
@@ -261,11 +484,33 @@ function S4()
   return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
 }
 
-function propsMatch(test, testFields, expected, expectedFields)
+/**
+ * Determines whether the properties on one object equals the properties on
+ * another object.
+ *
+ * @memberof Neuro
+ * @param {Object} test -
+ *    The object to test for matching.
+ * @param {String|String[]} testFields -
+ *    The property name or array of properties to test for equality on `test`.
+ * @param {Object} expected -
+ *    The object with the expected values.
+ * @param {String|String[]} expectedFields -
+ *    The property name or array of properties to test for equality on `expected`.
+ * @param {equalityCallback} [equals] -
+ *    The equality function which compares two values and returns whether they
+ *    are considered equivalent.
+ * @return {Boolean} -
+ *    True if the `testFields` properties on `test` are equivalent to the
+ *    `expectedFields` on `expected` according to the `equals` function.
+ */
+function propsMatch(test, testFields, expected, expectedFields, equals)
 {
+  var equality = equals || Neuro.equals;
+
   if ( isString( testFields ) ) // && isString( expectedFields )
   {
-    return test[ testFields ] === expected[ expectedFields ];
+    return equality( test[ testFields ], expected[ expectedFields ] );
   }
   else // if ( isArray( testFields ) && isArray( expectedFields ) )
   {
@@ -274,7 +519,7 @@ function propsMatch(test, testFields, expected, expectedFields)
       var testProp = testFields[ i ];
       var expectedProp = expectedFields[ i ];
 
-      if ( !equals( test[ testProp ], expected[ expectedProp ] ) )
+      if ( !equality( test[ testProp ], expected[ expectedProp ] ) )
       {
         return false;
       }
@@ -467,11 +712,11 @@ toCamelCase.REGEX = /(^.|_.)/g;
  * ```
  *
  * @memberof Neuro
- * @param  {Any[]|...Any} a
- *         The initial values in the collection. You can pass an array of values
- *         or any number of arguments.
+ * @param {Any[]|...Any} a
+ *    The initial values in the collection. You can pass an array of values
+ *    or any number of arguments.
  * @return {Neuro.Collection} -
- *         A newly created instance containing the given values.
+ *    A newly created instance containing the given values.
  */
 function collect(a)
 {
@@ -839,18 +1084,14 @@ function addComparator(second, comparator, nullsFirst)
 }
 
 /**
- * A string, a function, or an array of mixed values.
- * @typedef {String|Function|Array} ComparatorInput
- */
-
-/**
  * Creates a function which compares two values.
  *
  * @memberof Neuro
- * @param  {ComparatorInput} comparator
- *         The input which creates a comparison function.
- * @return {Boolean} -
- *         True if null values should be sorted first.
+ * @param {comparatorInput} comparator
+ *    The input which creates a comparison function.
+ * @param {Boolean} [nullsFirst=false] -
+ *    True if null values should be sorted first.
+ * @return {comparisonCallback}
  */
 function createComparator(comparator, nullsFirst)
 {
@@ -939,29 +1180,17 @@ function saveNumberResolver(name, numbers)
 
 function createNumberResolver(numbers)
 {
-  if ( isFunction( numbers ) )
-  {
-    return numbers;
-  }
-  else if ( isString( numbers ) )
-  {
-    if ( numbers in Neuro.NumberResolvers )
-    {
-      return Neuro.NumberResolvers[ numbers ];
-    }
+  var resolver = createPropertyResolver( numbers );
 
-    return function resolveNumber(model)
-    {
-      return isValue( model ) ? parseFloat( model[ numbers ] ) : undefined;
-    };
-  }
-  else
+  if ( isString( numbers ) && numbers in Neuro.NumberResolvers )
   {
-    return function resolveNumber(value)
-    {
-      return parseFloat( value );
-    };
+    return Neuro.NumberResolvers[ numbers ];
   }
+
+  return function resolveNumber(model)
+  {
+    return parseFloat( resolver( model ) );
+  };
 }
 
 Neuro.PropertyResolvers = {};
@@ -971,6 +1200,29 @@ function savePropertyResolver(name, properties, delim)
   return Neuro.PropertyResolvers[ name ] = createPropertyResolver( properties, delim );
 }
 
+/**
+ * Creates a function which resolves a value from another value given an
+ * expression. This is often used to get a property value of an object.
+ *
+ * ```javascript
+ * // x = {age: 6, name: 'tom', user: {first: 'jack'}}
+ * createPropertyResolver()( x )                          // x
+ * createPropertyResolver( 'age' )( x )                   // 6
+ * createPropertyResolver( 'user.first' )( x )            // 'jack'
+ * createPropertyResolver( '{name} & {user.first}')( x )  // 'tom & jack'
+ * createPropertyResolver( ['name', 'age'] )( x )         // 'tom,6'
+ * createPropertyResolver( ['name', 'age'], ' is ' )( x ) // 'tom is 6'
+ * createPropertyResolver( {age:null, user:'first'})( x ) // '6,jack'
+ * ```
+ *
+ * @memberof Neuro
+ * @param {propertyResolverInput} [properties] -
+ *    The expression which converts one value into another.
+ * @param {String} [delim=','] -
+ *    A delimiter to use to join multiple properties into a string.
+ * @return {propertyResolverCallback} -
+ *    A function to take values and resolve new ones.
+ */
 function createPropertyResolver(properties, delim)
 {
   if ( isFunction( properties ) )
@@ -984,10 +1236,27 @@ function createPropertyResolver(properties, delim)
       return Neuro.PropertyResolvers[ properties ];
     }
 
-    return function resolveProperty(model)
+    if ( properties.indexOf('{') !== -1 )
     {
-      return model[ properties ];
-    };
+      return function resolveFormatted(model)
+      {
+        return format( properties, model );
+      };
+    }
+    else if ( properties.indexOf('.') !== -1 )
+    {
+      return function resolveExpression(model)
+      {
+        return parse( properties, model );
+      };
+    }
+    else
+    {
+      return function resolveProperty(model)
+      {
+        return model[ properties ];
+      };
+    }
   }
   else if ( isArray( properties ) )
   {
@@ -1028,13 +1297,72 @@ function createPropertyResolver(properties, delim)
   }
 }
 
+/**
+ * A map of saved {@link whereCallback} functions.
+ *
+ * @type {Object}
+ */
 Neuro.Wheres = {};
 
+/**
+ * Saves a function created with {@link Neuro.createWhere} to a cache of
+ * filter functions which can be created more quickly in subsequent calls. It's
+ * advised to make use of saved where's even in simpler scenarios for several
+ * reasons:
+ *
+ * - You can name a comparison which is self documenting
+ * - When refactoring, you only need to modify a single place in the code
+ * - It's slightly more efficient (time & memory) to cache filter functions
+ *
+ * ```javascript
+ * Neuro.saveWhere('whereName', 'field', true);
+ * Neuro.createWhere('whereName'); // returns the same function except quicker
+ * ```
+ *
+ * @memberof Neuro
+ * @param {String} name -
+ *    The name of the filter function to save for later use.
+ * @param {String|Object|Array|whereCallback} [properties] -
+ *    See {@link Neuro.createWhere}
+ * @param {Any} [value] -
+ *    See {@link Neuro.createWhere}
+ * @param {equalityCallback} [equals=Neuro.equalsStrict] -
+ *    See {@link Neuro.createWhere}
+ * @see Neuro.createWhere
+ */
 function saveWhere(name, properties, values, equals)
 {
   return Neuro.Wheres[ name ] = createWhere( properties, values, equals );
 }
 
+/**
+ * Creates a function which returns a true or false value given a test value.
+ * This is also known as a filter function.
+ *
+ * ```javascript
+ * Neuro.createWhere('field', true);  // when an object has property where field=true
+ * Neuro.createWhere('field'); // when an object has the property named field
+ * Neuro.createWhere(function(){}); // a function can be given which is immediately returned
+ * Neuro.createWhere(['field', function(){}, ['field', true]]); // when an object meets all of the above criteria
+ * Neuro.createWhere({foo: 1, bar: 2}); // when an object has foo=1 and bar=2
+ * Neuro.createWhere('field', true, myEquals); // A custom comparison function can be given.
+ * Neuro.createWhere(); // always returns true
+ * ```
+ *
+ * @memberof Neuro
+ * @param {whereInput} [properties] -
+ *    The first expression used to generate a filter function.
+ * @param {Any} [value] -
+ *    When the first argument is a string this argument will be treated as a
+ *    value to compare to the value of the named property on the object passed
+ *    through the filter function.
+ * @param {equalityCallback} [equals=Neuro.equalsStrict] -
+ *    An alternative function can be used to compare to values.
+ * @return {whereCallback} -
+ *    A function which takes a value (typically an object) and returns a true
+ *    or false value.
+ * @see Neuro.saveWhere
+ */
 function createWhere(properties, value, equals)
 {
   var equality = equals || equalsStrict;
@@ -1089,18 +1417,20 @@ function createWhere(properties, value, equals)
       return Neuro.Wheres[ properties ];
     }
 
+    var resolver = createPropertyResolver( properties );
+
     if ( isValue( value ) )
     {
       return function whereEqualsValue(model)
       {
-        return equality( model[ properties ], value );
+        return equality( resolver( model ), value );
       };
     }
     else
     {
       return function whereHasValue(model)
       {
-        return isValue( model[ properties ] );
+        return isValue( resolver( model ) );
       };
     }
   }
@@ -4290,7 +4620,7 @@ addEventFunction( NeuroDatabase.prototype, 'change', NeuroDatabase.Events.Change
  * An instance
  *
  * @constructor
- * @memberOf Neuro
+ * @memberof Neuro
  * @alias Model
  * @param {Neuro.Database} db
  *        The database instance used in model instances.
@@ -5300,6 +5630,7 @@ NeuroMap.prototype =
  * @constructor
  * @memberof Neuro
  * @alias Collection
+ * @extends Array
  * @see Neuro.collect
  */
 function NeuroCollection(values)
@@ -5328,8 +5659,10 @@ NeuroCollection.Events =
    * An event triggered when a single value is added to a collection.
    *
    * @event Neuro.Collection#add
-   * @argument {Neuro.Collection} collection - The collection that triggered the event.
-   * @argument {T} value - The value added.
+   * @argument {Neuro.Collection} collection -
+   *    The collection that triggered the event.
+   * @argument {T} value -
+   *    The value added.
    * @see Neuro.Collection#add
    * @see Neuro.Collection#insertAt
    * @see Neuro.ModelCollection#add
@@ -5341,8 +5674,10 @@ NeuroCollection.Events =
    * An event triggered when multiple values are added to a collection.
    *
    * @event Neuro.Collection#adds
-   * @argument {Neuro.Collection} collection - The collection that triggered the event.
-   * @argument {T[]} value - The values added.
+   * @argument {Neuro.Collection} collection -
+   *    The collection that triggered the event.
+   * @argument {T[]} value -
+   *    The values added.
    * @see Neuro.Collection#addAll
    * @see Neuro.ModelCollection#addAll
    */
@@ -5353,7 +5688,8 @@ NeuroCollection.Events =
    * be triggered by any method that modifies the collection.
    *
    * @event Neuro.Collection#sort
-   * @argument {Neuro.Collection} collection - The collection that triggered the event.
+   * @argument {Neuro.Collection} collection -
+   *    The collection that triggered the event.
    * @see Neuro.Collection#resort
    * @see Neuro.ModelCollection#resort
    */
@@ -5363,9 +5699,12 @@ NeuroCollection.Events =
    * An event triggered when a collection has an element removed at a given index.
    *
    * @event Neuro.Collection#remove
-   * @argument {Neuro.Collection} collection - The collection that triggered the event.
-   * @argument {Any} removing - The element that was removed.
-   * @argument {Number} index - The index where the element was removed at.
+   * @argument {Neuro.Collection} collection -
+   *    The collection that triggered the event.
+   * @argument {Any} removing -
+   *    The element that was removed.
+   * @argument {Number} index -
+   *    The index where the element was removed at.
    * @see Neuro.Collection#remove
    * @see Neuro.Collection#removeAt
    * @see Neuro.ModelCollection#remove
@@ -5376,8 +5715,10 @@ NeuroCollection.Events =
    * An event triggered when a collection has multiple elements removed.
    *
    * @event Neuro.Collection#removes
-   * @argument {Neuro.Collection} collection - The collection that triggered the event.
-   * @argument {Any[]} removed - The array of elements removed from the collection.
+   * @argument {Neuro.Collection} collection -
+   *    The collection that triggered the event.
+   * @argument {Any[]} removed -
+   *    The array of elements removed from the collection.
    * @see Neuro.Collection#removeAll
    * @see Neuro.Collection#removeWhere
    */
@@ -5387,8 +5728,10 @@ NeuroCollection.Events =
    * An event triggered when a collection has elements modified.
    *
    * @event Neuro.Collection#updates
-   * @argument {Neuro.Collection} collection - The collection that triggered the event.
-   * @argument {Array} updated - The array of elements modified.
+   * @argument {Neuro.Collection} collection -
+   *    The collection that triggered the event.
+   * @argument {Array} updated -
+   *    The array of elements modified.
    * @see Neuro.ModelCollection#update
    * @see Neuro.ModelCollection#updateWhere
    */
@@ -5399,8 +5742,10 @@ NeuroCollection.Events =
    * a new set of elements.
    *
    * @event Neuro.Collection#reset
-   * @argument {Neuro.Collection} collection - The collection that triggered the event.
-   * @argument {Array} updated - The array of elements modified.
+   * @argument {Neuro.Collection} collection -
+   *    The collection that triggered the event.
+   * @argument {Array} updated -
+   *    The array of elements modified.
    * @see Neuro.FilteredCollection#sync
    * @see Neuro.ModelCollection#reset
    * @see Neuro.Query#sync
@@ -5411,7 +5756,8 @@ NeuroCollection.Events =
    * An event triggered when a collection is cleared of all elements.
    *
    * @event Neuro.Collection#cleared
-   * @argument {Neuro.Collection} collection - The collection that triggered the event.
+   * @argument {Neuro.Collection} collection -
+   *    The collection that triggered the event.
    * @see Neuro.Collection#clear
    */
   Cleared:        'cleared',
@@ -5420,7 +5766,8 @@ NeuroCollection.Events =
    * All events triggered by a collection when the contents of the collection changes.
    *
    * @event Neuro.Collection#changes
-   * @argument {Neuro.Collection} collection - The collection that triggered the event.
+   * @argument {Neuro.Collection} collection -
+   *    The collection that triggered the event.
    */
   Changes:        'add adds sort remove removes updates reset cleared'
 
@@ -5430,12 +5777,15 @@ extendArray( Array, NeuroCollection,
 {
 
   /**
-   * setComparator
+   * Sets the comparator for this collection and performs a resort.
    *
    * @method
    * @memberof Neuro.Collection#
-   * @param {ComparatorInput} comparator
-   * @param {boolean} nullsFirst
+   * @param {ComparatorInput} comparator -
+   *    The comparator input to convert to a comparison function.
+   * @param {Boolean} [nullsFirst=false] -
+   *    When a comparison is done involving a null/undefined value this can
+   *    determine which is ordered before the other.
    * @emits Neuro.Collection#sort
    * @see Neuro.createComparator
    * @return {Neuro.Collection}
@@ -5449,12 +5799,17 @@ extendArray( Array, NeuroCollection,
   },
 
   /**
-   * addComparator
+   * Adds a comparator to the existing comparator. This added comparator is ran
+   * after the current comparator when it finds two elements equal. If no
+   * comparator exists on this collection then it's set to the given comparator.
    *
    * @method
    * @memberof Neuro.Collection#
-   * @param {ComparatorInput} comparator
-   * @param {boolean} nullsFirst
+   * @param {ComparatorInput} comparator -
+   *    The comparator input to convert to a comparison function.
+   * @param {Boolean} [nullsFirst=false] -
+   *    When a comparison is done involving a null/undefined value this can
+   *    determine which is ordered before the other.
    * @emits Neuro.Collection#sort
    * @see Neuro.createComparator
    * @return {Neuro.Collection}
@@ -5468,10 +5823,18 @@ extendArray( Array, NeuroCollection,
   },
 
   /**
-   * isSorted
+   * Determines if the collection is currently sorted based on the current
+   * comparator of the collection unless a comparator is given
    *
    * @method
    * @memberof Neuro.Collection#
+   * @param {ComparatorInput} [comparator] -
+   *    The comparator input to convert to a comparison function.
+   * @param {Boolean} [nullsFirst=false] -
+   *    When a comparison is done involving a null/undefined value this can
+   *    determine which is ordered before the other.
+   * @see Neuro.createComparator
+   * @return {Boolean}
    */
   isSorted: function(comparator, nullsFirst)
   {
@@ -5481,15 +5844,22 @@ extendArray( Array, NeuroCollection,
   },
 
   /**
-   * RESORT
+   * Sorts the elements in this collection based on the current comparator
+   * unless a comparator is given. If a comparator is given it will not override
+   * the current comparator, subsequent operations to the collection may trigger
+   * a resort if the collection has a comparator.
    *
    * @method
    * @memberof Neuro.Collection#
-   * @param {ComparatorInput} comparator
-   * @param {boolean} nullsFirst
+   * @param {ComparatorInput} [comparator] -
+   *    The comparator input to convert to a comparison function.
+   * @param {Boolean} [nullsFirst=false] -
+   *    When a comparison is done involving a null/undefined value this can
+   *    determine which is ordered before the other.
+   * @return {Neuro.Collection} -
+   *    The reference to this collection.
    * @emits Neuro.Collection#sort
    * @see Neuro.createComparator
-   * @return {Neuro.Collection}
    */
   resort: function(comparator, nullsFirst)
   {
@@ -5504,11 +5874,46 @@ extendArray( Array, NeuroCollection,
     return this;
   },
 
+  /**
+   * Creates a limited view of this collection known as a page. The resulting
+   * page object changes when this collection changes. At the very least the
+   * page size is required, and a starting page index can be specified.
+   *
+   * @method
+   * @memberof Neuro.Collection#
+   * @param {Number} pageSize -
+   *    The maximum number of elements allowed in the page at once.
+   * @param {Number} [pageIndex=0]
+   *    The starting page offset. This isn't an element offset, but the element
+   *    offset can be calculated by multiplying the page index by the page size.
+   * @return {Neuro.Page} -
+   *    The newly created Page.
+   */
   page: function(pageSize, pageIndex)
   {
     return new NeuroPage( this, pageSize, pageIndex );
   },
 
+  /**
+   * Creates a sub view of this collection known as a filtered collection. The
+   * resulting collection changes when this collection changes. Any time an
+   * element is added or removed to this collection it may be added or removed
+   * from the filtered collection if it fits the filter function. The filter
+   * function is created by passing the arguments of this function to
+   * {@link Neuro.createWhere}.
+   *
+   * @method
+   * @memberof Neuro.Collection#
+   * @param {String|Object|Array|whereCallback} [whereProperties] -
+   *    See {@link Neuro.createWhere}
+   * @param {Any} [whereValue] -
+   *    See {@link Neuro.createWhere}
+   * @param {equalityCallback} [whereEquals] -
+   *    See {@link Neuro.createWhere}
+   * @return {Neuro.Collection} -
+   *    The newly created live filtered view of this collection.
+   * @see Neuro.createWhere
+   */
   filtered: function(whereProperties, whereValue, whereEquals)
   {
     var filter = createWhere( whereProperties, whereValue, whereEquals );
@@ -5516,10 +5921,36 @@ extendArray( Array, NeuroCollection,
     return new NeuroFilteredCollection( this, filter );
   },
 
-  filter: function(whereProperties, whereValue, whereEquals)
+  /**
+   * Creates a copy of this collection with elements that match the supplied
+   * parameters. The parameters are passed to the {@link Neuro.createWhere}
+   * to generate a function which tests each element of this collection for
+   * inclusion in the newly created collection.
+   *
+   * ```javascript
+   * var isEven = function() { return x % 2 == 0; };
+   * var c = Neuro.collect(1, 2, 3, 4, 5);
+   * var w = c.where(isEven); // [2, 4]
+   * ```
+   *
+   * @method
+   * @memberof Neuro.Collection#
+   * @param {String|Object|Array|whereCallback} [whereProperties] -
+   *    See {@link Neuro.createWhere}
+   * @param {Any} [whereValue] -
+   *    See {@link Neuro.createWhere}
+   * @param {equalityCallback} [whereEquals] -
+   *    See {@link Neuro.createWhere}
+   * @param {Array} [out=new this.constructor()] -
+   *    The array to place the elements that match.
+   * @return {Neuro.Collection} -
+   *    The copy of this collection ran through a filtering function.
+   * @see Neuro.createWhere
+   */
+  where: function(whereProperties, whereValue, whereEquals, out)
   {
     var where = createWhere( whereProperties, whereValue, whereEquals );
-    var target = new this.constructor();
+    var target = out || new this.constructor();
 
     for (var i = 0; i < this.length; i++)
     {
@@ -5534,9 +5965,36 @@ extendArray( Array, NeuroCollection,
     return target;
   },
 
-  subtract: function(collection, out)
+  /**
+   * Returns a collection with elements that exist in this collection but does
+   * not exist in the given collection.
+   *
+   * ```javascript
+   * var a = Neuro.collect(1, 2, 3, 4);
+   * var b = Neuro.collect(1, 3, 5);
+   * var c = a.subtract( b ); // [2, 4]
+   * ```
+   *
+   * @method
+   * @memberof Neuro.Collection#
+   * @param {Array} collection -
+   *    The array of elements that shouldn't exist in the resulting collection.
+   * @param {Array} [out=new this.constructor()] -
+   *    The array to place the elements that exist in this collection but not in
+   *    the given collection. If this is not given - a collection of this type
+   *    will be created.
+   * @param {equalityCallback} [equals=Neuro.equalsStrict] -
+   *    The function which determines whether one of the elements that exist in
+   *    this collection are equivalent to an element that exists in the given
+   *    collection.
+   * @return {Array} -
+   *    The collection of elements that exist in this collection and not the
+   *    given collection.
+   */
+  subtract: function(collection, out, equals)
   {
     var target = out || new this.constructor();
+    var equality = equals || equalsStrict;
 
     for (var i = 0; i < this.length; i++)
     {
@@ -5545,7 +6003,7 @@ extendArray( Array, NeuroCollection,
 
       for (var j = 0; j < collection.length && !exists; j++)
       {
-        exists = equals( a, collection[ j ] );
+        exists = equality( a, collection[ j ] );
       }
 
       if (!exists)
@@ -5557,9 +6015,35 @@ extendArray( Array, NeuroCollection,
     return target;
   },
 
-  intersect: function(collection, out)
+  /**
+   * Returns a collection of elements that are shared between this collection
+   * and the given collection.
+   *
+   * ```javascript
+   * var a = Neuro.collect(1, 2, 3, 4);
+   * var b = Neuro.collect(1, 3, 5);
+   * var c = a.intersect( b ); // [1, 3]
+   * ```
+   *
+   * @method
+   * @memberof Neuro.Collection#
+   * @param {Array} collection -
+   *    The collection of elements to intersect with this collection.
+   * @param {Array} [out=new this.constructor()] -
+   *    The array to place the elements that exist in both this collection and
+   *    the given collection. If this is not given - a collection of this type
+   *    will be created.
+   * @param {equalityCallback} [equals=Neuro.equalsStrict] -
+   *    The function which determines whether one of the elements that exist in
+   *    this collection are equivalent to an element that exists in the given
+   *    collection.
+   * @return {Array} -
+   *    The collection of elements that exist in both collections.
+   */
+  intersect: function(collection, out, equals)
   {
     var target = out || new this.constructor();
+    var equality = equals || equalsStrict;
 
     for (var i = 0; i < collection.length; i++)
     {
@@ -5568,7 +6052,7 @@ extendArray( Array, NeuroCollection,
 
       for (var j = 0; j < this.length && !exists; j++)
       {
-        exists = equals( a, this[ j ] );
+        exists = equality( a, this[ j ] );
       }
 
       if (exists)
@@ -5580,9 +6064,36 @@ extendArray( Array, NeuroCollection,
     return target;
   },
 
-  complement: function(collection, out)
+  /**
+   * Returns a collection of elements that exist in the given collection but
+   * not in this collection.
+   *
+   * ```javascript
+   * var a = Neuro.collect(1, 2, 3, 4);
+   * var b = Neuro.collect(1, 3, 5);
+   * var c = a.complement( b ); // [5]
+   * ```
+   *
+   * @method
+   * @memberof Neuro.Collection#
+   * @param {Array} collection -
+   *    The array of elements that could exist in the resulting collection.
+   * @param {Array} [out=new this.constructor()] -
+   *    The array to place the elements that exist in given collection but not
+   *    in this collection. If this is not given - a collection of this type
+   *    will be created.
+   * @param {equalityCallback} [equals=Neuro.equalsStrict] -
+   *    The function which determines whether one of the elements that exist in
+   *    this collection are equivalent to an element that exists in the given
+   *    collection.
+   * @return {Array} -
+   *    The collection of elements that exist in the given collection and not
+   *    this collection.
+   */
+  complement: function(collection, out, equals)
   {
     var target = out || new this.constructor();
+    var equality = equals || equalsStrict;
 
     for (var i = 0; i < collection.length; i++)
     {
@@ -5591,7 +6102,7 @@ extendArray( Array, NeuroCollection,
 
       for (var j = 0; j < this.length && !exists; j++)
       {
-        exists = equals( a, this[ j ] );
+        exists = equality( a, this[ j ] );
       }
 
       if (!exists)
@@ -5603,12 +6114,51 @@ extendArray( Array, NeuroCollection,
     return target;
   },
 
+  /**
+   * Clears all elements from this collection.
+   *
+   * ```javascript
+   * var a = Neuro.collect(1, 2, 3, 4);
+   * a.clear(); // []
+   * ```
+   *
+   * @method
+   * @memberof Neuro.Collection#
+   * @return {Neuro.Collection} -
+   *    The reference to this collection.
+   * @emits Neuro.Collection#sort
+   */
   clear: function()
   {
     this.length = 0;
     this.trigger( NeuroCollection.Events.Cleared, [this] );
+
+    return this;
   },
 
+
+  /**
+   * Adds an element to this collection - resorting the collection if a
+   * comparator is set on this collection and `delaySort` is not a specified or
+   * a true value.
+   *
+   * ```javascript
+   * var a = Neuro.collect(1, 2, 3, 4);
+   * a.add( 5 ); // [1, 2, 3, 4, 5]
+   * ```
+   *
+   * @method
+   * @memberof Neuro.Collection#
+   * @param {Any} value -
+   *    The value to add to this collection.
+   * @param {Boolean} [delaySort=false] -
+   *    Whether automatic sorting should be delayed until the user manually
+   *    calls {@link Neuro.Collection#resort resort}.
+   * @return {Neuro.Collection} -
+   *    The reference to this collection.
+   * @emits Neuro.Collection#add
+   * @emits Neuro.Collection#sort
+   */
   add: function(value, delaySort)
   {
     this.push( value );
@@ -5618,8 +6168,32 @@ extendArray( Array, NeuroCollection,
     {
       this.resort();
     }
+
+    return this;
   },
 
+  /**
+   * Adds all elements in the given array to this collection - resorting the
+   * collection if a comparator is set on this collection and `delaySort` is
+   * not specified or a true value.
+   *
+   * ```javascript
+   * var a = Neuro.collect(1, 2, 3, 4);
+   * a.addAll( [5, 6] ); // [1, 2, 3, 4, 5, 6]
+   * ```
+   *
+   * @method
+   * @memberof Neuro.Collection#
+   * @param {Any[]} values -
+   *    The values to add to this collection.
+   * @param {Boolean} [delaySort=false] -
+   *    Whether automatic sorting should be delayed until the user manually
+   *    calls {@link Neuro.Collection#resort resort}.
+   * @return {Neuro.Collection} -
+   *    The reference to this collection.
+   * @emits Neuro.Collection#adds
+   * @emits Neuro.Collection#sort
+   */
   addAll: function(values, delaySort)
   {
     if ( isArray( values ) && values.length )
@@ -5632,13 +6206,79 @@ extendArray( Array, NeuroCollection,
         this.resort();
       }
     }
+
+    return this;
   },
 
+  /**
+   * Inserts an element into this collection at the given index - resorting the
+   * collection if a comparator is set on this collection and `delaySort` is not
+   * specified or a true value.
+   *
+   * ```javascript
+   * var c = Neuro.collect(1, 2, 3, 4);
+   * c.insertAt( 0, 0 ); // [0, 1, 2, 3, 4]
+   * c.insertAt( 2, 1.5 ); // [0, 1, 1.5, 2, 3, 4]
+   * ```
+   *
+   * @method
+   * @memberof Neuro.Collection#
+   * @param {Number} i -
+   *    The index to insert the element at.
+   * @param {Any} value -
+   *    The value to insert into the collection.
+   * @param {Boolean} [delaySort=false] -
+   *    Whether automatic sorting should be delayed until the user manually
+   *    calls {@link Neuro.Collection#resort resort}.
+   * @return {Neuro.Collection} -
+   *    The reference to this collection.
+   * @emits Neuro.Collection#add
+   * @emits Neuro.Collection#sort
+   */
+  insertAt: function(i, value, delaySort)
+  {
+    this.splice( i, 0, value );
+    this.trigger( NeuroCollection.Events.Add, [this, value] );
+
+    if ( !delaySort )
+    {
+      this.resort();
+    }
+
+    return this;
+  },
+
+  /**
+   * Removes the element in this collection at the given index `i` - resorting
+   * the collection if a comparator is set on this collection and `delaySort` is
+   * not specified or a true value.
+   *
+   * ```javascript
+   * var c = Neuro.collect(1, 2, 3, 4);
+   * c.removeAt( 1 ); // 2
+   * c.removeAt( 5 ); // undefined
+   * c // [1, 3, 4]
+   * ```
+   *
+   * @method
+   * @memberof Neuro.Collection#
+   * @param {Number} i -
+   *    The index of the element to remove.
+   * @param {Boolean} [delaySort=false] -
+   *    Whether automatic sorting should be delayed until the user manually
+   *    calls {@link Neuro.Collection#resort resort}.
+   * @return {Any} -
+   *    The element removed, or undefined if the index was invalid.
+   * @emits Neuro.Collection#remove
+   * @emits Neuro.Collection#sort
+   */
   removeAt: function(i, delaySort)
   {
+    var removing;
+
     if (i >= 0 && i < this.length)
     {
-      var removing = this[ i ];
+      removing = this[ i ];
 
       this.splice( i, 1 );
       this.trigger( NeuroCollection.Events.Remove, [this, removing, i] );
@@ -5648,24 +6288,82 @@ extendArray( Array, NeuroCollection,
         this.resort();
       }
     }
+
+    return removing;
   },
 
-  remove: function(value)
+  /**
+   * Removes the given value from this collection if it exists - resorting the
+   * collection if a comparator is set on this collection and `delaySort` is not
+   * specified or a true value.
+   *
+   * ```javascript
+   * var c = Neuro.collect(1, 2, 3, 4);
+   * c.remove( 1 ); // 1
+   * c.remove( 5 ); // undefined
+   * c // [2, 3, 4]
+   * ```
+   *
+   * @method
+   * @memberof Neuro.Collection#
+   * @param {Any} value -
+   *    The value to remove from this collection if it exists.
+   * @param {Boolean} [delaySort=false] -
+   *    Whether automatic sorting should be delayed until the user manually
+   *    calls {@link Neuro.Collection#resort resort}.
+   * @param {equalityCallback} [equals=Neuro.equalsStrict] -
+   *    The function which determines whether one of the elements that exist in
+   *    this collection are equivalent to the given value.
+   * @return {Any} -
+   *    The element removed from this collection.
+   * @emits Neuro.Collection#remove
+   * @emits Neuro.Collection#sort
+   */
+  remove: function(value, delaySort, equals)
   {
-    var i = this.indexOf( value );
+    var i = this.indexOf( value, equals );
+    var element = this[ i ];
 
     if ( i !== -1 )
     {
-      this.removeAt( i );
+      this.removeAt( i, delaySort );
     }
+
+    return element;
   },
 
-  removeAll: function(values, equals, delaySort)
+  /**
+   * Removes the given values from this collection - resorting the collection if
+   * a comparator is set on this collection and `delaySort` is not specified or
+   * a true value.
+   *
+   * ```javascript
+   * var c = Neuro.collect(1, 2, 3, 4);
+   * c.removeAll( [1, 5] ); // [1]
+   * c // [2, 3, 4]
+   * ```
+   *
+   * @method
+   * @memberof Neuro.Collection#
+   * @param {Any[]} values -
+   *    The values to remove from this collection if they exist.
+   * @param {Boolean} [delaySort=false] -
+   *    Whether automatic sorting should be delayed until the user manually
+   *    calls {@link Neuro.Collection#resort resort}.
+   * @param {equalityCallback} [equals=Neuro.equalsStrict] -
+   *    The function which determines whether one of the elements that exist in
+   *    this collection are equivalent to any of the given values.
+   * @return {Any[]} -
+   *    The elements removed from this collection.
+   * @emits Neuro.Collection#removes
+   * @emits Neuro.Collection#sort
+   */
+  removeAll: function(values, delaySort, equals)
   {
+    var removed = [];
+
     if ( isArray( values ) && values.length )
     {
-      var removed = [];
-
       for (var i = 0; i < values.length; i++)
       {
         var value = values[ i ];
@@ -5684,15 +6382,46 @@ extendArray( Array, NeuroCollection,
       {
         this.resort();
       }
-
-      return removed;
     }
+
+    return removed;
   },
 
-  removeWhere: function(whereProperties, whereValue, whereEquals)
+  /**
+   * Removes elements from this collection that meet the specified criteria. The
+   * given criteria are passed to {@link Neuro.createWhere} to create a filter
+   * function. All elements removed are returned
+   *
+   * ```javascript
+   * var isEven = function(x) { return x % 2 === 0; };
+   * var c = Neuro.collect(1, 2, 3, 4);
+   * c.removeWhere( isEven ); // [2, 4];
+   * c // [1, 3]
+   * ```
+   *
+   * @method
+   * @memberof Neuro.Collection#
+   * @param {whereInput} [whereProperties] -
+   *    See {@link Neuro.createWhere}
+   * @param {Any} [whereValue] -
+   *    See {@link Neuro.createWhere}
+   * @param {equalityCallback} [whereEquals] -
+   *    See {@link Neuro.createWhere}
+   * @param {Array} [out=new this.constructor()] -
+   *    The array to place the elements that match.
+   * @param {Boolean} [delaySort=false] -
+   *    Whether automatic sorting should be delayed until the user manually
+   *    calls {@link Neuro.Collection#resort resort}.
+   * @return {Neuro.Collection} -
+   *    The reference to this collection.
+   * @emits Neuro.Collection#removes
+   * @emits Neuro.Collection#sort
+   * @see Neuro.createWhere
+   */
+  removeWhere: function(whereProperties, whereValue, whereEquals, out, delaySort)
   {
     var where = createWhere( whereProperties, whereValue, whereEquals );
-    var removed = [];
+    var removed = out || new this.constructor();
 
     for (var i = this.length - 1; i >= 0; i--)
     {
@@ -5706,11 +6435,38 @@ extendArray( Array, NeuroCollection,
     }
 
     this.trigger( NeuroCollection.Events.Removes, [this, removed] );
-    this.resort();
+
+    if ( !delaySort )
+    {
+      this.resort();
+    }
 
     return removed;
   },
 
+  /**
+   * Returns the index of the given element in this collection or returns -1
+   * if the element doesn't exist in this collection.
+   *
+   * ```javascript
+   * var c = Neuro.collect(1, 2, 3, 4);
+   * c.indexOf( 1 ); // 0
+   * c.indexOf( 2 ); // 1
+   * c.indexOf( 5 ); // -1
+   * ```
+   *
+   * @method
+   * @memberof Neuro.Collection#
+   * @param {Any} value -
+   *    The value to search for.
+   * @param {equalityCallback} [equals=Neuro.equalsStrict] -
+   *    The function which determines whether one of the elements that exist in
+   *    this collection are equivalent to the given value.
+   * @return {Number} -
+   *    The index of the element in this collection or -1 if it was not found.
+   * @see Neuro.equals
+   * @see Neuro.equalsStrict
+   */
   indexOf: function(value, equals)
   {
     var equality = equals || equalsStrict;
@@ -5726,21 +6482,31 @@ extendArray( Array, NeuroCollection,
     return -1;
   },
 
-  insertAt: function(i, value, delaySort)
-  {
-    this.splice( i, 0, value );
-    this.trigger( NeuroCollection.Events.Add, [this, value] );
-
-    if ( !delaySort )
-    {
-      this.resort();
-    }
-  },
-
-  minModel: function(comparator)
+  /**
+   * Returns the element with the minimum value given a comparator.
+   *
+   * ```javascript
+   * var c = Neuro.collect({age: 4}, {age: 5}, {age: 6}, {age: 3});
+   * c.minModel('age'); // {age: 3}
+   * c.minModel('-age'); // {age: 6}
+   * ```
+   *
+   * @method
+   * @memberof Neuro.Collection#
+   * @param {comparatorInput} comparator -
+   *    The comparator which calculates the minimum model.
+   * @param {Any} [startingValue]
+   *    The initial minimum value. If a value is specified, it's compared
+   *    against all elements in this collection until the comparator function
+   *    finds a more minimal value. If it doesn't - this is the value returned.
+   * @return {Any} -
+   *    The minimum element in the collection given the comparator function.
+   * @see Neuro.createComparator
+   */
+  minModel: function(comparator, startingValue)
   {
     var cmp = createComparator( comparator || this.comparator, false );
-    var min = undefined;
+    var min = startingValue;
 
     for (var i = 0; i < this.length; i++)
     {
@@ -5753,10 +6519,31 @@ extendArray( Array, NeuroCollection,
     return min;
   },
 
-  maxModel: function(comparator)
+  /**
+   * Returns the element with the maximum value given a comparator.
+   *
+   * ```javascript
+   * var c = Neuro.collect({age: 4}, {age: 5}, {age: 6}, {age: 3});
+   * c.maxModel('age'); // {age: 6}
+   * c.maxModel('-age'); // {age: 3}
+   * ```
+   *
+   * @method
+   * @memberof Neuro.Collection#
+   * @param {comparatorInput} comparator -
+   *    The comparator which calculates the maximum model.
+   * @param {Any} [startingValue] -
+   *    The initial maximum value. If a value is specified, it's compared
+   *    against all elements in this collection until the comparator function
+   *    finds a more maximal value. If it doesn't - this is the value returned.
+   * @return {Any} -
+   *    The maximum element in the collection given the comparator function.
+   * @see Neuro.createComparator
+   */
+  maxModel: function(comparator, startingValue)
   {
     var cmp = createComparator( comparator || this.comparator, true );
-    var max = undefined;
+    var max = startingValue;
 
     for (var i = 0; i < this.length; i++)
     {
@@ -5769,10 +6556,35 @@ extendArray( Array, NeuroCollection,
     return max;
   },
 
-  min: function(properties, delim)
+  /**
+   * Returns the minimum value for the given property expression out of all the
+   * elements this collection.
+   *
+   * ```javascript
+   * var c = Neuro.collect({age: 6}, {age: 5}, {notage: 5});
+   * c.min('age');  // 5
+   * ```
+   *
+   * @method
+   * @memberof Neuro.Collection#
+   * @param {propertyResolverInput} [properties] -
+   *    The expression which takes an element in this container and resolves a
+   *    value that can be compared to the current minimum.
+   * @param {String} [delim=','] -
+   *    A delimiter to use to join multiple properties into a string.
+   * @param {Any} [startingValue] -
+   *    The initial minimum value. If a value is specified, it's compared
+   *    against all elements in this collection until the comparator function
+   *    finds a more minimal value. If it doesn't - this is the value returned.
+   * @return {Any} -
+   *    The minimum value found.
+   * @see Neuro.createPropertyResolver
+   * @see Neuro.compare
+   */
+  min: function(properties, delim, startingValue)
   {
     var resolver = createPropertyResolver( properties, delim );
-    var min = undefined;
+    var min = startingValue;
 
     for (var i = 0; i < this.length; i++)
     {
@@ -5787,10 +6599,35 @@ extendArray( Array, NeuroCollection,
     return min;
   },
 
-  max: function(properties, delim)
+  /**
+   * Returns the maximum value for the given property expression out of all the
+   * elements this collection.
+   *
+   * ```javascript
+   * var c = Neuro.collect({age: 6}, {age: 5}, {notage: 5});
+   * c.max('age');  // 6
+   * ```
+   *
+   * @method
+   * @memberof Neuro.Collection#
+   * @param {propertyResolverInput} [properties] -
+   *    The expression which takes an element in this container and resolves a
+   *    value that can be compared to the current maximum.
+   * @param {String} [delim=','] -
+   *    A delimiter to use to join multiple properties into a string.
+   * @param {Any} [startingValue] -
+   *    The initial maximum value. If a value is specified, it's compared
+   *    against all elements in this collection until the comparator function
+   *    finds a more maximal value. If it doesn't - this is the value returned.
+   * @return {Any} -
+   *    The maximum value found.
+   * @see Neuro.createPropertyResolver
+   * @see Neuro.compare
+   */
+  max: function(properties, delim, startingValue)
   {
     var resolver = createPropertyResolver( properties, delim );
-    var max = undefined;
+    var max = startingValue;
 
     for (var i = 0; i < this.length; i++)
     {
@@ -5805,6 +6642,30 @@ extendArray( Array, NeuroCollection,
     return max;
   },
 
+  /**
+   * Returns the first element where the given expression is true.
+   *
+   * ```javascript
+   * var c = Neuro.collect([{x: 5}, {y: 6}, {y: 6, age: 8}, {z: 7}]);
+   * c.firstWhere('y', 6); // {x: 6}
+   * c.firstWhere(); // {x: 5}
+   * ```
+   *
+   * @method
+   * @memberof Neuro.Collection#
+   * @param {whereInput} [properties] -
+   *    The expression used to create a function to test the elements in this
+   *    collection.
+   * @param {Any} [value] -
+   *    When the first argument is a string this argument will be treated as a
+   *    value to compare to the value of the named property on the object passed
+   *    through the filter function.
+   * @param {equalityCallback} [equals=Neuro.equalsStrict] -
+   *    An alternative function can be used to compare to values.
+   * @return {Any} -
+   *    The first element in this collection that matches the given expression.
+   * @see Neuro.createWhere
+   */
   firstWhere: function(properties, value, equals)
   {
     var where = createWhere( properties, value, equals );
@@ -5822,6 +6683,27 @@ extendArray( Array, NeuroCollection,
     return null;
   },
 
+  /**
+   * Returns the first non-null value in this collection given a property
+   * expression. If no non-null values exist for the given property expression,
+   * then undefined will be returned.
+   *
+   * ```javascript
+   * var c = Neuro.collect([{x: 5}, {y: 6}, {y: 4}, {z: 7}]);
+   * c.first('y'); // 6
+   * c.first(); // {x: 5}
+   * ```
+   *
+   * @method
+   * @memberof Neuro.Collection#
+   * @param {propertyResolverInput} [properties] -
+   *    The expression which converts one value into another.
+   * @param {String} [delim=','] -
+   *    A delimiter to use to join multiple properties into a string.
+   * @return {Any} -
+   * @see Neuro.createPropertyResolver
+   * @see Neuro.isValue
+   */
   first: function(properties, delim)
   {
     var resolver = createPropertyResolver( properties, delim );
@@ -5837,6 +6719,30 @@ extendArray( Array, NeuroCollection,
     }
   },
 
+  /**
+   * Returns the last element where the given expression is true.
+   *
+   * ```javascript
+   * var c = Neuro.collect([{x: 5}, {y: 6}, {y: 6, age: 8}, {z: 7}]);
+   * c.lastWhere('y', 6); // {x: 6, age: 8}
+   * c.lastWhere(); // {z: 7}
+   * ```
+   *
+   * @method
+   * @memberof Neuro.Collection#
+   * @param {whereInput} [properties] -
+   *    The expression used to create a function to test the elements in this
+   *    collection.
+   * @param {Any} [value] -
+   *    When the first argument is a string this argument will be treated as a
+   *    value to compare to the value of the named property on the object passed
+   *    through the filter function.
+   * @param {equalityCallback} [equals=Neuro.equalsStrict] -
+   *    An alternative function can be used to compare to values.
+   * @return {Any} -
+   *    The last element in this collection that matches the given expression.
+   * @see Neuro.createWhere
+   */
   lastWhere: function(properties, value, equals)
   {
     var where = createWhere( properties, value, equals );
@@ -5854,6 +6760,27 @@ extendArray( Array, NeuroCollection,
     return null;
   },
 
+   /**
+    * Returns the last non-null value in this collection given a property
+    * expression. If no non-null values exist for the given property expression,
+    * then undefined will be returned.
+    *
+    * ```javascript
+    * var c = Neuro.collect([{x: 5}, {y: 6}, {y: 4}, {z: 7}]);
+    * c.last('y'); // 4
+    * c.last(); // {z: 7}
+    * ```
+    *
+    * @method
+    * @memberof Neuro.Collection#
+    * @param {propertyResolverInput} [properties] -
+    *    The expression which converts one value into another.
+    * @param {String} [delim=','] -
+    *    A delimiter to use to join multiple properties into a string.
+    * @return {Any} -
+    * @see Neuro.createPropertyResolver
+    * @see Neuro.isValue
+    */
   last: function(properties, delim)
   {
     var resolver = createPropertyResolver( properties, delim );
@@ -5869,6 +6796,29 @@ extendArray( Array, NeuroCollection,
     }
   },
 
+  /**
+   * Iterates over all elements in this collection and passes them through the
+   * `resolver` function. The returned value is passed through the `validator`
+   * function and if that returns true the resolved value is passed through the
+   * `process` function. After iteration, the `getResult` function is executed
+   * and the returned value is returned by this function.
+   *
+   * @method
+   * @memberof Neuro.Collection#
+   * @param {Function} resolver -
+   *    The function which takes an element in this collection and returns a
+   *    value based on that element.
+   * @param {Function} validator -
+   *    The function which takes the resolved value and determines whether it
+   *    passes some test.
+   * @param {Function} process -
+   *    The function which is given the resolved value if it passes the test.
+   * @param {Function} getResult -
+   *    The function which is executed at the end of iteration and the result is
+   *    is returned by this function.
+   * @return {Any} -
+   *    The value returned by `getResult`.
+   */
   aggregate: function(resolver, validator, process, getResult)
   {
     for (var i = 0; i < this.length; i++)
@@ -5884,6 +6834,25 @@ extendArray( Array, NeuroCollection,
     return getResult();
   },
 
+  /**
+   * Sums all numbers resolved from the given property expression and returns
+   * the result.
+   *
+   * ```javascript
+   * var c = Neuro.collect([2, 3, 4]);
+   * c.sum(); // 9
+   * var d = Neuro.collect([{age: 5}, {age: 4}, {age: 2}]);
+   * d.sum('age'); // 11
+   * ```
+   *
+   * @method
+   * @memberof Neuro.Collection#
+   * @param {propertyResolverInput} [numbers]
+   *    The expression which converts an element in this collection to a number.
+   * @return {Number} -
+   *    The sum of all valid numbers found in this collection.
+   * @see Neuro.createNumberResolver
+   */
   sum: function(numbers)
   {
     var resolver = createNumberResolver( numbers );
@@ -5902,6 +6871,25 @@ extendArray( Array, NeuroCollection,
     return this.aggregate( resolver, isNumber, process, getResult );
   },
 
+  /**
+   * Averages all numbers resolved from the given property expression and
+   * returns the result.
+   *
+   * ```javascript
+   * var c = Neuro.collect([2, 3, 4]);
+   * c.avg(); // 3
+   * var d = Neuro.collect([{age: 5}, {age: 4}, {age: 2}]);
+   * d.avg('age'); // 3.66666
+   * ```
+   *
+   * @method
+   * @memberof Neuro.Collection#
+   * @param {propertyResolverInput} [numbers]
+   *    The expression which converts an element in this collection to a number.
+   * @return {Number} -
+   *    The average of all valid numbers found in this collection.
+   * @see Neuro.createNumberResolver
+   */
   avg: function(numbers)
   {
     var resolver = createNumberResolver( numbers );
@@ -5922,6 +6910,32 @@ extendArray( Array, NeuroCollection,
     return this.aggregate( resolver, isNumber, process, getResult );
   },
 
+  /**
+   * Counts the number of elements in this collection that past the test
+   * function generated by {@link Neuro.createWhere}.
+   *
+   * ```javascript
+   * var c = Neuro.collect([{name: 't1', done: 1}, {name: 't2', done: 0}, {name: 't3', done: 1}, {name: 't4'}]);
+   * c.countWhere('done'); // 3
+   * c.countWhere('done', 0); // 1
+   * c.countWhere('done', 1); // 2
+   * ```
+   *
+   * @method
+   * @memberof Neuro.Collection#
+   * @param {whereInput} [properties] -
+   *    The expression used to create a function to test the elements in this
+   *    collection.
+   * @param {Any} [value] -
+   *    When the first argument is a string this argument will be treated as a
+   *    value to compare to the value of the named property on the object passed
+   *    through the filter function.
+   * @param {equalityCallback} [equals=Neuro.equalsStrict] -
+   *    An alternative function can be used to compare to values.
+   * @return {Number} -
+   *    The number of elements in the collection that passed the test.
+   * @see Neuro.createWhere
+   */
   countWhere: function(properties, value, equals)
   {
     var where = createWhere( properties, value, equals );
@@ -5940,6 +6954,26 @@ extendArray( Array, NeuroCollection,
     return met;
   },
 
+  /**
+   * Counts the number of elements in this collection that has a value for the
+   * given property expression.
+   *
+   * ```javascript
+   * var c = Neuro.collect([{age: 2}, {age: 3}, {taco: 4}]);
+   * c.count('age'); // 2
+   * c.count('taco'); // 1
+   * c.count(); // 3
+   * ```
+   *
+   * @method
+   * @memberof Neuro.Collection#
+   * @param {propertyResolverInput} [properties] -
+   *    The expression which converts one value into another.
+   * @return {Number} -
+   *    The number of elements that had values for the property expression.
+   * @see Neuro.createPropertyResolver
+   * @see Neuro.isValue
+   */
   count: function(properties)
   {
     if ( !isValue( properties ) )
@@ -5963,6 +6997,35 @@ extendArray( Array, NeuroCollection,
     return result;
   },
 
+  /**
+   * Plucks values from elements in the collection. If only a `values` property
+   * expression is given the result will be an array of resolved values. If the
+   * `keys` property expression is given, the result will be an object where the
+   * property of the object is determined by the key expression.
+   *
+   * ```javascript
+   * var c = Neuro.collect([{age: 2, nm: 'T'}, {age: 4, nm: 'R'}, {age: 5, nm: 'G'}]);
+   * c.pluck(); // c
+   * c.pluck('age'); // [2, 4, 5]
+   * c.pluck('age', 'nm'); // {T: e, R: 4, G: 5}
+   * c.pluck(null, 'nm'); // {T: {age: 2, nm: 'T'}, R: {age: 4, nm: 'R'}, G: {age: 5, nm: 'G'}}
+   * c.pluck('{age}-{nm}'); // ['2-T', '4-R', '5-G']
+   * ```
+   *
+   * @method
+   * @memberof Neuro.Collection#
+   * @param {propertyResolverInput} [values] -
+   *    The expression which converts an element into a value to pluck.
+   * @param {propertyResolverInput} [keys] -
+   *    The expression which converts an element into an object property (key).
+   * @param {String} [valuesDelim=','] -
+   *    A delimiter to use to join multiple value properties into a string.
+   * @param {String} [keysDelim=','] -
+   *    A delimiter to use to join multiple key properties into a string.
+   * @return {Array|Object} -
+   *    The plucked values.
+   * @see Neuro.createPropertyResolver
+   */
   pluck: function(values, keys, valuesDelim, keysDelim)
   {
     var valuesResolver = createPropertyResolver( values, valuesDelim );
@@ -5999,6 +7062,20 @@ extendArray( Array, NeuroCollection,
     }
   },
 
+  /**
+   * Iterates over each element in this collection and passes the element and
+   * it's index to the given function. An optional function context can be given.
+   *
+   * @method
+   * @memberof Neuro.Collection#
+   * @param {Function} callback -
+   *    The function to invoke for each element of this collection passing the
+   *    element and the index where it exists.
+   * @param {Object} [context] -
+   *    The context to the callback function.
+   * @return {Neuro.Collection} -
+   *    The reference to this collection.
+   */
   each: function(callback, context)
   {
     var callbackContext = context || this;
@@ -6014,8 +7091,33 @@ extendArray( Array, NeuroCollection,
         i--;
       }
     }
+
+    return this;
   },
 
+  /**
+   * Reduces all the elements of this collection to a single value. All elements
+   * are passed to a function which accepts the currently reduced value and the
+   * current element and returns the new reduced value.
+   *
+   * ```javascript
+   * var reduceIt = function(curr, elem) {
+   *  return curr + ( elem[0] * elem[1] );
+   * };
+   * var c = Neuro.collect([[2, 1], [3, 2], [5, 6]]);
+   * c.reduce( reduceIt, 0 ); // 38
+   * ```
+   *
+   * @method
+   * @memberof Neuro.Collection#
+   * @param {Function} reducer -
+   *    A function which accepts the current reduced value and an element and
+   *    returns the new reduced value.
+   * @param {Any} [initialValue] -
+   *    The first value to pass to the reducer function.
+   * @return {Any} -
+   *    The reduced value.
+   */
   reduce: function(reducer, initialValue)
   {
     for (var i = 0; i < this.length; i++)
@@ -6026,6 +7128,14 @@ extendArray( Array, NeuroCollection,
     return initialValue;
   },
 
+  /**
+   * Returns a random element in this collection.
+   *
+   * @method
+   * @memberof Neuro.Collection#
+   * @return {Any} -
+   *    The randomly chosen element from this collection.
+   */
   random: function()
   {
     var i = Math.floor( Math.random() * this.length );
@@ -6033,6 +7143,24 @@ extendArray( Array, NeuroCollection,
     return this[ i ];
   },
 
+  /**
+   * Breaks up the collection into an array of arrays of a maximum size (chunks).
+   * A destination array can be used to avoid re-allocating arrays.
+   *
+   * ```javascript
+   * var c = Neuro.collect([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+   * c.chunk(4); // [[1, 2, 3, 4], [5, 6, 7, 8], [9]]
+   * ```
+   *
+   * @method
+   * @memberof Neuro.Collection#
+   * @param {Number} chunkSize -
+   *    The maximum number of elements that can exist in a chunk.
+   * @param {Array} [out] -
+   *    The destination array to place the chunks.
+   * @return {Array} -
+   *    The array of chunks of elements taken from this collection.
+   */
   chunk: function(chunkSize, out)
   {
     var outer = out || [];
@@ -6064,24 +7192,33 @@ extendArray( Array, NeuroCollection,
     return outer;
   },
 
-  where: function(properties, value, equals)
-  {
-    var where = createWhere( properties, value, equals );
-    var result = [];
-
-    for (var i = 0; i < this.length; i++)
-    {
-      var model = this[ i ];
-
-      if ( where( model ) )
-      {
-        result.push( model );
-      }
-    }
-
-    return result;
-  },
-
+  /**
+   * Determines whether at least one element in this collection matches the
+   * given criteria.
+   *
+   * ```javascript
+   * var c = Neuro.collect([{age: 2}, {age: 6}]);
+   * c.contains('age', 2); // true
+   * c.contains('age', 3); // false
+   * c.contains('age'); // true
+   * c.contains('name'); // false
+   * ```
+   *
+   * @method
+   * @memberof Neuro.Collection#
+   * @param {whereInput} [properties] -
+   *    The expression used to create a function to test the elements in this
+   *    collection.
+   * @param {Any} [value] -
+   *    When the first argument is a string this argument will be treated as a
+   *    value to compare to the value of the named property on the object passed
+   *    through the filter function.
+   * @param {equalityCallback} [equals=Neuro.equalsStrict] -
+   *    An alternative function can be used to compare to values.
+   * @return {Boolean} -
+   *    True if any of the elements passed the test function, otherwise false.
+   * @see Neuro.createWhere
+   */
   contains: function(properties, value, equals)
   {
     var where = createWhere( properties, value, equals );
@@ -6099,11 +7236,59 @@ extendArray( Array, NeuroCollection,
     return false;
   },
 
-  toArray: function()
-  {
-    return this.slice();
-  },
-
+  /**
+   * Groups the elements into sub collections given some property expression to
+   * use as the value to group by.
+   *
+   * ```javascript
+   * var c = Neuro.collect([
+   *  { name: 'Tom', age: 6, group: 'X' },
+   *  { name: 'Jon', age: 7, group: 'X' },
+   *  { name: 'Rob', age: 8, group: 'X' },
+   *  { name: 'Bon', age: 9, group: 'Y' },
+   *  { name: 'Ran', age: 10, group: 'Y' },
+   *  { name: 'Man', age: 11, group: 'Y' },
+   *  { name: 'Tac', age: 12, group: 'Z' }
+   * ]);
+   *
+   * c.group({by: 'group'});
+   * // [{group: 'X', $count: 3, $group: [...]},
+   * //  {group: 'Y', $count: 3, $group: [...]},
+   * //  {group: 'Z', $count: 1, $group: [.]}]
+   *
+   * c.group({by: 'group', select: {age: 'avg', name: 'first'}});
+   * // [{group: 'X', age: 7, name: 'Tom', $count: 3, $group: [...]},
+   * //  {group: 'Y', age: 9, name: 'Bon', $count: 3, $group: [...]},
+   * //  {group: 'Z', age: 12, name: 'Tac', $count: 1, $group: [.]}]
+   *
+   * c.group({by: 'group', track: false, count: false});
+   * // [{group: 'X'}, {group: 'Y'}, {group: 'Z'}]
+   *
+   * var havingMoreThanOne = function(grouping, groupElements) {
+   *  return groupElements.length > 0;
+   * };
+   * c.group({by: 'group', select: {age: 'avg'}, comparator: '-age', having: havingMoreThanOne, track: false, count: false});
+   * // [{group: 'Y', age: 9},
+   * //  {group: 'X', age: 7}]
+   * ```
+   *
+   * @method
+   * @memberof Neuro.Collection#
+   * @param {Object} grouping -
+   *    An object specifying how elements in this collection are to be grouped
+   *    and what properties from the elements should be aggregated in the
+   *    resulting groupings.
+   *      - `by`: A property expression that resolves how elements will be grouped.
+   *      - `bySeparator`: When an array or object property expression is specified, this is the string that joins them.
+   *      - `select`: An object which contains properties that should be aggregated where the value is the aggregate collection function to call (sum, avg, count, first, last, etc).
+   *      - `having`: A having expression which takes a grouping and the grouped elements and determines whether the grouping should be in the final result.
+   *      - `comparator`: A comparator for sorting the resulting collection of groupings.
+   *      - `comparatorNullsFirst`: Whether nulls should be sorted to the top.
+   *      - `track`: Whether all elements in the group should exist in a collection in the `$group` property of each grouping.
+   *      - `count`: Whether the number of elements in the group should be placed in the `$count` property of each grouping.
+   * @return {Neuro.Collection} -
+   *    A collection of groupings.
+   */
   group: function(grouping)
   {
     var by = createPropertyResolver( grouping.by, grouping.bySeparator || '/' );
@@ -6176,7 +7361,7 @@ extendArray( Array, NeuroCollection,
         grouped.$count = groupArray.length;
       }
 
-      if ( having( grouped ) )
+      if ( having( grouped, groupArray ) )
       {
         groupings.push( grouped );
       }
@@ -6185,11 +7370,38 @@ extendArray( Array, NeuroCollection,
     groupings.resort();
 
     return groupings;
+  },
+
+  /**
+   * Returns a copy of this collection as a plain Array.
+   *
+   * @method
+   * @memberof Neuro.Collection#
+   * @return {Array} -
+   *    The copy of this collection as a plain array.
+   */
+  toArray: function()
+  {
+    return this.slice();
   }
 
 });
 
 eventize( NeuroCollection.prototype );
+
+/**
+ * Adds a listener for change events on this collection.
+ *
+ * @method change
+ * @memberof Neuro.Collection#
+ * @param {Function} callback -
+ *    A function to call every time a change occurs in this collection.
+ * @param {Object} [context] -
+ *    The desired context (this) for the given callback function.
+ * @return {Function} -
+ *    A function to call to stop listening for change events.
+ * @see Neuro.Collection#event:changes
+ */
 addEventFunction( NeuroCollection.prototype, 'change', NeuroCollection.Events.Changes );
 
 function NeuroFilteredCollection(base, filter)

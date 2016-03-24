@@ -1,13 +1,136 @@
 
+/**
+ * A function which takes a value (typically an object) and returns a true or
+ * false value.
+ *
+ * @callback whereCallback
+ * @param {Any} value -
+ *    The value to test.
+ * @return {Boolean} -
+ *    Whether or not the value passed the test.
+ * @see Neuro.createWhere
+ * @see Neuro.saveWhere
+ */
+
+/**
+ * A function for comparing two values and determine whether they're considered
+ * equal.
+ *
+ * @callback equalityCallback
+ * @param {Any} a -
+ *    The first value to test.
+ * @param {Any} b -
+ *    The second value to test.
+ * @return {Boolean} -
+ *    Whether or not the two values are considered equivalent.
+ * @see Neuro.equals
+ * @see Neuro.equalsStrict
+ * @see Neuro.equalsCompare
+ */
+
+/**
+ * A function for comparing two values to determine if one is greater or lesser
+ * than the other or if they're equal.
+ *
+ * ```javascript
+ * comparisonCallback( a, b ) < 0 // a < b
+ * comparisonCallback( a, b ) > 0 // a > b
+ * comparisonCallback( a, b ) == 0 // a == b
+ * ```
+ *
+ * @callback comparisonCallback
+ * @param {Any} a -
+ *    The first value to test.
+ * @param {Any} b -
+ *    The second value to test.
+ * @return {Number} -
+ *    0 if the two values are considered equal, a negative value if `a` is
+ *    considered less than `b`, and a positive value if `a` is considered
+ *    greater than `b`.
+ * @see Neuro.compare
+ * @see Neuro.compareNumbers
+ */
+
+/**
+ * A function for resolving a value from a given value. Typically used to
+ * transform an object into one of it's properties.
+ *
+ * @callback propertyResolverCallback
+ * @param {Any} model -
+ *    The model to use to resolve a value.
+ * @return {Any} -
+ *    The resolved value.
+ * @see Neuro.createPropertyResolver
+ */
+
+ /**
+  * A string, a function, or an array of mixed values.
+  *
+  * ```javascript
+  * 'age'                   // age property of an object
+  * '-age'                  // age property of an object, ordering reversed
+  * function(a, b) {}       // a function which compares two values
+  * ['age', 'done']         // age property of an object, and when equal, the done value
+  * 'creator.name'          // name sub-property of creator property
+  * '{creator.name}, {age}' // formatted string
+  * ```
+  *
+  * @typedef {String|comparisonCallback|Array} comparatorInput
+  */
+
+/**
+ * An expression which resolves a value from another value.
+ *
+ * ```javascript
+ * // {age: 6, name: 'x', user: {first: 'tom'}}
+ * 'age'                    // age property of an object
+ * 'user.first'             // sub property
+ * '{age}, {user.first}'    // a formatted string built from object values
+ * function(a) {}           // a function which returns a value itself
+ * ['age', 'name']          // multiple properties joined with a delimiter
+ * {age:null, user:'first'} // multiple properties joined with a delimiter including a sub property
+ * ```
+ *
+ * @typedef {String|Function|Array|Object} propertyResolverInput
+ */
+
+/**
+ * An expression which can be used to generate a function for testing a value
+ * and returning a boolean result. The following types can be given and will
+ * result in the following tests:
+ *
+ * - `String`: If a string & value are given - the generated function will test
+ *    if the object has a property with the given value. If a string is given
+ *    and no value is given - the generated function will test if the object
+ *    has the property and a non-null value.
+ * - `Object`: If an object is given - the generated function will test all
+ *    properties of the given object and return true only if the object being
+ *    tested has the same values.
+ * - `Array`: If an array is given - each element in the array is passed as
+ *    arguments to generate a new function. The returned function will only
+ *    return true if all generated functions return true - otherwise false.
+ * - `whereCallback`: A function can be given which is immediately returned as
+ *    the test function.
+ *
+ * @typedef {String|Object|Array|whereCallback} whereInput
+ */
 
 /**
  * Determines whether the given variable is defined.
  *
- * @memberOf Neuro
- * @param  {Any} x
- *         The variable to test.
+ * ```javascript
+ * Neuro.isDefined(); // false
+ * Neuro.isDefined(0); // true
+ * Neuro.isDefined(true); // true
+ * Neuro.isDefined(void 0); // false
+ * Neuro.isDefined(undefined); // false
+ * ```
+ *
+ * @memberof Neuro
+ * @param {Any} x
+ *    The variable to test.
  * @return {Boolean} -
- *         True if the variable is defined, otherwise false.
+ *    True if the variable is defined, otherwise false.
  */
 function isDefined(x)
 {
@@ -17,11 +140,17 @@ function isDefined(x)
 /**
  * Determines whether the given variable is a function.
  *
- * @memberOf Neuro
- * @param  {Any} x
- *         The variable to test.
+ * ```javascript
+ * Neuro.isFunction(); // false
+ * Neuro.isFunction(parseInt); // true
+ * Neuro.isFunction(2); // false
+ * ```
+ *
+ * @memberof Neuro
+ * @param {Any} x
+ *    The variable to test.
  * @return {Boolean} -
- *         True if the variable is a function, otherwise false.
+ *    True if the variable is a function, otherwise false.
  */
 function isFunction(x)
 {
@@ -33,11 +162,19 @@ function isFunction(x)
  * constructor for a model and also has a Database variable. A Neuro object is
  * strictly created by the Neuro function.
  *
- * @memberOf Neuro
- * @param  {Any} x
- *         The variable to test.
+ * ```javascript
+ * var Task = Neuro({
+ *   name: 'task',
+ *   fields: ['name', 'done', 'finished_at', 'created_at', 'assigned_to']
+ * });
+ * Neuro.isNeuro( Task ); // true
+ * ```
+ *
+ * @memberof Neuro
+ * @param {Any} x
+ *    The variable to test.
  * @return {Boolean} -
- *         True if the variable is a Neuro object, otherwise false.
+ *    True if the variable is a Neuro object, otherwise false.
  */
 function isNeuro(x)
 {
@@ -47,11 +184,17 @@ function isNeuro(x)
 /**
  * Determines whether the given variable is a string.
  *
- * @memberOf Neuro
- * @param  {Any} x
- *         The variable to test.
+ * ```javascript
+ * Neuro.isString(); // false
+ * Neuro.isString('x'): // true
+ * Neuro.isString(1); // false
+ * ```
+ *
+ * @memberof Neuro
+ * @param {Any} x
+ *    The variable to test.
  * @return {Boolean} -
- *         True if the variable is a string, otherwise false.
+ *    True if the variable is a string, otherwise false.
  */
 function isString(x)
 {
@@ -62,11 +205,19 @@ function isString(x)
  * Determines whether the given variable is a valid number. NaN and Infinity are
  * not valid numbers.
  *
- * @memberOf Neuro
- * @param  {Any} x
- *         The variable to test.
+ * ```javascript
+ * Neuro.isNumber(); // false
+ * Neuro.isNumber('x'): // false
+ * Neuro.isNumber(1); // true
+ * Neuro.isNumber(NaN); // false
+ * Neuro.isNumber(Infinity); // true
+ * ```
+ *
+ * @memberof Neuro
+ * @param {Any} x
+ *    The variable to test.
  * @return {Boolean} -
- *         True if the variable is a valid number, otherwise false.
+ *    True if the variable is a valid number, otherwise false.
  */
 function isNumber(x)
 {
@@ -76,11 +227,18 @@ function isNumber(x)
 /**
  * Determines whether the given variable is a boolean value.
  *
- * @memberOf Neuro
- * @param  {Any} x
- *         The variable to test.
+ * ```javascript
+ * Neuro.isBoolean(); // false
+ * Neuro.isBoolean('x'): // false
+ * Neuro.isBoolean(1); // false
+ * Neuro.isBoolean(true); // true
+ * ```
+ *
+ * @memberof Neuro
+ * @param {Any} x
+ *    The variable to test.
  * @return {Boolean} -
- *         True if the variable is a boolean value, otherwise false.
+ *    True if the variable is a boolean value, otherwise false.
  */
 function isBoolean(x)
 {
@@ -90,11 +248,19 @@ function isBoolean(x)
 /**
  * Determines whether the given variable is an instance of Date.
  *
- * @memberOf Neuro
- * @param  {Any} x
- *         The variable to test.
+ * ```javascript
+ * Neuro.isDate(); // false
+ * Neuro.isDate('x'): // false
+ * Neuro.isDate(1); // false
+ * Neuro.isDate(true); // false
+ * Neuro.isDate(new Date()); // true
+ * ```
+ *
+ * @memberof Neuro
+ * @param {Any} x
+ *    The variable to test.
  * @return {Boolean} -
- *         True if the variable is an instance of Date, otherwise false.
+ *    True if the variable is an instance of Date, otherwise false.
  */
 function isDate(x)
 {
@@ -104,11 +270,19 @@ function isDate(x)
 /**
  * Determines whether the given variable is an instance of RegExp.
  *
- * @memberOf Neuro
- * @param  {Any} x
- *         The variable to test.
+ * ```javascript
+ * Neuro.isRegExp(); // false
+ * Neuro.isRegExp('x'): // false
+ * Neuro.isRegExp(1); // false
+ * Neuro.isRegExp(true); // false
+ * Neuro.isRegExp(/[xyz]/); // true
+ * ```
+ *
+ * @memberof Neuro
+ * @param {Any} x
+ *    The variable to test.
  * @return {Boolean} -
- *         True if the variable is an instance of RegExp, otherwise false.
+ *    True if the variable is an instance of RegExp, otherwise false.
  */
 function isRegExp(x)
 {
@@ -118,11 +292,19 @@ function isRegExp(x)
 /**
  * Determines whether the given variable is an instance of Array.
  *
- * @memberOf Neuro
- * @param  {Any} x
- *         The variable to test.
+ * ```javascript
+ * Neuro.isArray(); // false
+ * Neuro.isArray('x'): // false
+ * Neuro.isArray(1); // false
+ * Neuro.isArray([]); // true
+ * Neuro.isArray(Neuro.collect(1, 2, 3)); // true
+ * ```
+ *
+ * @memberof Neuro
+ * @param {Any} x
+ *    The variable to test.
  * @return {Boolean} -
- *         True if the variable is an instance of Array, otherwise false.
+ *    True if the variable is an instance of Array, otherwise false.
  */
 function isArray(x)
 {
@@ -133,11 +315,20 @@ function isArray(x)
  * Determines whether the given variable is a non-null object. As a note,
  * Arrays are considered objects.
  *
- * @memberOf Neuro
- * @param  {Any} x
- *         The variable to test.
+ * ```javascript
+ * Neuro.isObject(); // false
+ * Neuro.isObject('x'): // false
+ * Neuro.isObject(1); // false
+ * Neuro.isObject([]); // true
+ * Neuro.isObject({}); // true
+ * Neuro.isObject(null); // false
+ * ```
+ *
+ * @memberof Neuro
+ * @param {Any} x
+ *    The variable to test.
  * @return {Boolean} -
- *         True if the variable is a non-null object, otherwise false.
+ *    True if the variable is a non-null object, otherwise false.
  */
 function isObject(x)
 {
@@ -150,13 +341,18 @@ function isObject(x)
  * array then it is returned. If the variable is any other type it may result
  * in an error.
  *
- * @memberOf Neuro
- * @param  {String|String[]} x
- *         The variable to convert to an Array.
- * @param  {String} [delimiter]
- *         The delimiter to split if the given variable is a string.
+ * ```javascript
+ * Neuro.toArray([1, 2, 3]); // [1, 2, 3]
+ * Neuro.toArray('1,2,3', ','); // ['1', '2', '3']
+ * ```
+ *
+ * @memberof Neuro
+ * @param {String|String[]} x
+ *    The variable to convert to an Array.
+ * @param {String} [delimiter]
+ *    The delimiter to split if the given variable is a string.
  * @return {String[]} -
- *         The array of strings created.
+ *    The array of strings created.
  */
 function toArray(x, delimiter)
 {
@@ -166,11 +362,22 @@ function toArray(x, delimiter)
 /**
  * Determines whether the given variable is not null and is not undefined.
  *
- * @memberOf Neuro
- * @param  {Any}  x
- *         The variable to test.
+ * ```javascript
+ * Neuro.isValue(); // false
+ * Neuro.isValue('x'): // true
+ * Neuro.isValue(1); // true
+ * Neuro.isValue([]); // true
+ * Neuro.isValue({}); // true
+ * Neuro.isValue(null); // false
+ * Neuro.isValue(void 0); // false
+ * Neuro.isValue(undefined); // false
+ * ```
+ *
+ * @memberof Neuro
+ * @param {Any}  x
+ *    The variable to test.
  * @return {Boolean} -
- *         True if the variable is non-null and not undefined.
+ *    True if the variable is non-null and not undefined.
  */
 function isValue(x)
 {
@@ -182,18 +389,25 @@ function isValue(x)
  * comparison function. If the variable is not found in the array then `false`
  * is returned.
  *
- * @memberOf Neuro
- * @param  {Array} arr
- *         The array to search through.
- * @param  {Any} x
- *         The variable to search for.
- * @param  {Function} [comparator]
- *         The function to use which compares two values and returns a truthy
- *         value if they are considered equivalent. If a comparator is not given
- *         then strict comparison is used to determine equivalence.
+ * ```javascript
+ * Neuro.indexOf([1, 2, 3], 1); // 0
+ * Neuro.indexOf([1, 2, 3], 4); // false
+ * Neuro.indexOf([1, 2, 2], 2); // 1
+ * ```
+ *
+ *
+ * @memberof Neuro
+ * @param {Array} arr
+ *    The array to search through.
+ * @param {Any} x
+ *    The variable to search for.
+ * @param {Function} [comparator]
+ *    The function to use which compares two values and returns a truthy
+ *    value if they are considered equivalent. If a comparator is not given
+ *    then strict comparison is used to determine equivalence.
  * @return {Number|Boolean} -
- *         The index in the array the variable exists at, otherwise false if
- *         the variable wasn't found in the array.
+ *    The index in the array the variable exists at, otherwise false if
+ *    the variable wasn't found in the array.
  */
 function indexOf(arr, x, comparator)
 {
@@ -213,7 +427,7 @@ function indexOf(arr, x, comparator)
 /**
  * A function that doesn't perform any operations.
  *
- * @memberOf Neuro
+ * @memberof Neuro
  */
 function noop()
 {
@@ -225,13 +439,22 @@ function noop()
  * benefits of returning a "copy" of the function which makes it ideal for use
  * in listening on/once events and off events.
  *
- * @memberOf Neuro
- * @param  {Object} context
- *         The value of `this` for the given function.
- * @param  {Function}
- *         The function to invoke with the given context.
+ * ```javascript
+ * var context = {};
+ * var func = Neuro.bind( context, function(x) {
+ *   this.y = x * 2;
+ * });
+ * func( 4 );
+ * context.y; // 8
+ * ```
+ *
+ * @memberof Neuro
+ * @param {Object} context
+ *    The value of `this` for the given function.
+ * @param {Function}
+ *    The function to invoke with the given context.
  * @return {Function} -
- *         A new function which is a copy of the given function with a new context.
+ *    A new function which is a copy of the given function with a new context.
  */
 function bind(context, func)
 {
@@ -244,9 +467,9 @@ function bind(context, func)
 /**
  * Generates a UUID using the random number method.
  *
- * @memberOf Neuro
+ * @memberof Neuro
  * @return {String} -
- *         The generated UUID.
+ *    The generated UUID.
  */
 function uuid()
 {
@@ -258,11 +481,33 @@ function S4()
   return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
 }
 
-function propsMatch(test, testFields, expected, expectedFields)
+/**
+ * Determines whether the properties on one object equals the properties on
+ * another object.
+ *
+ * @memberof Neuro
+ * @param {Object} test -
+ *    The object to test for matching.
+ * @param {String|String[]} testFields -
+ *    The property name or array of properties to test for equality on `test`.
+ * @param {Object} expected -
+ *    The object with the expected values.
+ * @param {String|String[]} expectedFields -
+ *    The property name or array of properties to test for equality on `expected`.
+ * @param {equalityCallback} [equals] -
+ *    The equality function which compares two values and returns whether they
+ *    are considered equivalent.
+ * @return {Boolean} -
+ *    True if the `testFields` properties on `test` are equivalent to the
+ *    `expectedFields` on `expected` according to the `equals` function.
+ */
+function propsMatch(test, testFields, expected, expectedFields, equals)
 {
+  var equality = equals || Neuro.equals;
+
   if ( isString( testFields ) ) // && isString( expectedFields )
   {
-    return test[ testFields ] === expected[ expectedFields ];
+    return equality( test[ testFields ], expected[ expectedFields ] );
   }
   else // if ( isArray( testFields ) && isArray( expectedFields ) )
   {
@@ -271,7 +516,7 @@ function propsMatch(test, testFields, expected, expectedFields)
       var testProp = testFields[ i ];
       var expectedProp = expectedFields[ i ];
 
-      if ( !equals( test[ testProp ], expected[ expectedProp ] ) )
+      if ( !equality( test[ testProp ], expected[ expectedProp ] ) )
       {
         return false;
       }
@@ -452,6 +697,24 @@ function toCamelCase(name)
 
 toCamelCase.REGEX = /(^.|_.)/g;
 
+/**
+ * Returns an instance of {@link Neuro.Collection} with the initial values
+ * passed as arguments to this function.
+ *
+ * ```javascript
+ * Neuro.collect(1, 2, 3, 4);
+ * Neuro.collect([1, 2, 3, 4]); // same as above
+ * Neuro.collect();
+ * Neuro.collect([]); // same as above
+ * ```
+ *
+ * @memberof Neuro
+ * @param {Any[]|...Any} a
+ *    The initial values in the collection. You can pass an array of values
+ *    or any number of arguments.
+ * @return {Neuro.Collection} -
+ *    A newly created instance containing the given values.
+ */
 function collect(a)
 {
   var values = arguments.length > 1 || !isArray(a) ? Array.prototype.slice.call( arguments ) : a;
@@ -817,6 +1080,16 @@ function addComparator(second, comparator, nullsFirst)
   };
 }
 
+/**
+ * Creates a function which compares two values.
+ *
+ * @memberof Neuro
+ * @param {comparatorInput} comparator
+ *    The input which creates a comparison function.
+ * @param {Boolean} [nullsFirst=false] -
+ *    True if null values should be sorted first.
+ * @return {comparisonCallback}
+ */
 function createComparator(comparator, nullsFirst)
 {
   if ( isFunction( comparator ) )
@@ -904,29 +1177,17 @@ function saveNumberResolver(name, numbers)
 
 function createNumberResolver(numbers)
 {
-  if ( isFunction( numbers ) )
-  {
-    return numbers;
-  }
-  else if ( isString( numbers ) )
-  {
-    if ( numbers in Neuro.NumberResolvers )
-    {
-      return Neuro.NumberResolvers[ numbers ];
-    }
+  var resolver = createPropertyResolver( numbers );
 
-    return function resolveNumber(model)
-    {
-      return isValue( model ) ? parseFloat( model[ numbers ] ) : undefined;
-    };
-  }
-  else
+  if ( isString( numbers ) && numbers in Neuro.NumberResolvers )
   {
-    return function resolveNumber(value)
-    {
-      return parseFloat( value );
-    };
+    return Neuro.NumberResolvers[ numbers ];
   }
+
+  return function resolveNumber(model)
+  {
+    return parseFloat( resolver( model ) );
+  };
 }
 
 Neuro.PropertyResolvers = {};
@@ -936,6 +1197,29 @@ function savePropertyResolver(name, properties, delim)
   return Neuro.PropertyResolvers[ name ] = createPropertyResolver( properties, delim );
 }
 
+/**
+ * Creates a function which resolves a value from another value given an
+ * expression. This is often used to get a property value of an object.
+ *
+ * ```javascript
+ * // x = {age: 6, name: 'tom', user: {first: 'jack'}}
+ * createPropertyResolver()( x )                          // x
+ * createPropertyResolver( 'age' )( x )                   // 6
+ * createPropertyResolver( 'user.first' )( x )            // 'jack'
+ * createPropertyResolver( '{name} & {user.first}')( x )  // 'tom & jack'
+ * createPropertyResolver( ['name', 'age'] )( x )         // 'tom,6'
+ * createPropertyResolver( ['name', 'age'], ' is ' )( x ) // 'tom is 6'
+ * createPropertyResolver( {age:null, user:'first'})( x ) // '6,jack'
+ * ```
+ *
+ * @memberof Neuro
+ * @param {propertyResolverInput} [properties] -
+ *    The expression which converts one value into another.
+ * @param {String} [delim=','] -
+ *    A delimiter to use to join multiple properties into a string.
+ * @return {propertyResolverCallback} -
+ *    A function to take values and resolve new ones.
+ */
 function createPropertyResolver(properties, delim)
 {
   if ( isFunction( properties ) )
@@ -949,10 +1233,27 @@ function createPropertyResolver(properties, delim)
       return Neuro.PropertyResolvers[ properties ];
     }
 
-    return function resolveProperty(model)
+    if ( properties.indexOf('{') !== -1 )
     {
-      return model[ properties ];
-    };
+      return function resolveFormatted(model)
+      {
+        return format( properties, model );
+      };
+    }
+    else if ( properties.indexOf('.') !== -1 )
+    {
+      return function resolveExpression(model)
+      {
+        return parse( properties, model );
+      };
+    }
+    else
+    {
+      return function resolveProperty(model)
+      {
+        return model[ properties ];
+      };
+    }
   }
   else if ( isArray( properties ) )
   {
@@ -993,13 +1294,72 @@ function createPropertyResolver(properties, delim)
   }
 }
 
+/**
+ * A map of saved {@link whereCallback} functions.
+ *
+ * @type {Object}
+ */
 Neuro.Wheres = {};
 
+/**
+ * Saves a function created with {@link Neuro.createWhere} to a cache of
+ * filter functions which can be created more quickly in subsequent calls. It's
+ * advised to make use of saved where's even in simpler scenarios for several
+ * reasons:
+ *
+ * - You can name a comparison which is self documenting
+ * - When refactoring, you only need to modify a single place in the code
+ * - It's slightly more efficient (time & memory) to cache filter functions
+ *
+ * ```javascript
+ * Neuro.saveWhere('whereName', 'field', true);
+ * Neuro.createWhere('whereName'); // returns the same function except quicker
+ * ```
+ *
+ * @memberof Neuro
+ * @param {String} name -
+ *    The name of the filter function to save for later use.
+ * @param {String|Object|Array|whereCallback} [properties] -
+ *    See {@link Neuro.createWhere}
+ * @param {Any} [value] -
+ *    See {@link Neuro.createWhere}
+ * @param {equalityCallback} [equals=Neuro.equalsStrict] -
+ *    See {@link Neuro.createWhere}
+ * @see Neuro.createWhere
+ */
 function saveWhere(name, properties, values, equals)
 {
   return Neuro.Wheres[ name ] = createWhere( properties, values, equals );
 }
 
+/**
+ * Creates a function which returns a true or false value given a test value.
+ * This is also known as a filter function.
+ *
+ * ```javascript
+ * Neuro.createWhere('field', true);  // when an object has property where field=true
+ * Neuro.createWhere('field'); // when an object has the property named field
+ * Neuro.createWhere(function(){}); // a function can be given which is immediately returned
+ * Neuro.createWhere(['field', function(){}, ['field', true]]); // when an object meets all of the above criteria
+ * Neuro.createWhere({foo: 1, bar: 2}); // when an object has foo=1 and bar=2
+ * Neuro.createWhere('field', true, myEquals); // A custom comparison function can be given.
+ * Neuro.createWhere(); // always returns true
+ * ```
+ *
+ * @memberof Neuro
+ * @param {whereInput} [properties] -
+ *    The first expression used to generate a filter function.
+ * @param {Any} [value] -
+ *    When the first argument is a string this argument will be treated as a
+ *    value to compare to the value of the named property on the object passed
+ *    through the filter function.
+ * @param {equalityCallback} [equals=Neuro.equalsStrict] -
+ *    An alternative function can be used to compare to values.
+ * @return {whereCallback} -
+ *    A function which takes a value (typically an object) and returns a true
+ *    or false value.
+ * @see Neuro.saveWhere
+ */
 function createWhere(properties, value, equals)
 {
   var equality = equals || equalsStrict;
@@ -1054,18 +1414,20 @@ function createWhere(properties, value, equals)
       return Neuro.Wheres[ properties ];
     }
 
+    var resolver = createPropertyResolver( properties );
+
     if ( isValue( value ) )
     {
       return function whereEqualsValue(model)
       {
-        return equality( model[ properties ], value );
+        return equality( resolver( model ), value );
       };
     }
     else
     {
       return function whereHasValue(model)
       {
-        return isValue( model[ properties ] );
+        return isValue( resolver( model ) );
       };
     }
   }

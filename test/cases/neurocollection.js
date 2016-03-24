@@ -239,7 +239,7 @@ test( 'where', function(assert)
 {
   var c = createNeuroCollection();
 
-  deepEqual( c.where('age', 28), [
+  deepEqual( c.where('age', 28).slice(), [
     c[2], c[4]
   ]);
 });
@@ -259,17 +259,17 @@ test( 'group', function(assert)
   var c = createNeuroCollection();
 
   var grouped = c.group({
-    by: 'sex', 
-    select: {age: 'avg', name: 'max'}, 
+    by: 'sex',
+    select: {age: 'avg', name: 'max'},
     comparator: 'sex',
-    count: false, 
+    count: false,
     track: false
   });
 
   strictEqual( grouped.length, 2 );
   deepEqual( grouped[0], {sex: 'F', age: 29, name: 'Sam'} );
   deepEqual( grouped[1], {sex: 'M', age: 27.333333333333332, name: 'Robert'} );
-  
+
 });
 
 test( 'clear', function(assert)
@@ -339,7 +339,7 @@ test( 'removeAll', function(assert)
 test( 'indexOf', function(assert)
 {
   var c = Neuro.collect(1, 3, 4, 5, 6, 3);
-  
+
   strictEqual( c.indexOf( 0 ), -1 );
   strictEqual( c.indexOf( 1 ), 0 );
   strictEqual( c.indexOf( 2 ), -1 );
@@ -463,7 +463,7 @@ test( 'change', function(assert)
 
   expect(2);
 
-  var off = c.change(function() 
+  var off = c.change(function()
   {
     strictEqual( this[0], 23 );
   });

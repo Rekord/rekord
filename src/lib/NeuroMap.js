@@ -1,8 +1,8 @@
 
 /**
  * A NeuroMap has the key-to-value benefits of a map and iteration benefits of an
- * array. This is especially beneficial when most of the time the contents of 
- * the structure need to be iterated and order doesn't matter (since removal 
+ * array. This is especially beneficial when most of the time the contents of
+ * the structure need to be iterated and order doesn't matter (since removal
  * performs a swap which breaks insertion order).
  *
  * @constructor
@@ -35,7 +35,7 @@ NeuroMap.prototype =
 
   /**
    * Resets the map by initializing the values, keys, and indexes.
-   * 
+   *
    * @return {Neuro.Map} -
    *         The reference to this map.
    */
@@ -170,9 +170,9 @@ NeuroMap.prototype =
   },
 
   /**
-   * Passes all values & keys in this map to a callback and if it returns a 
+   * Passes all values & keys in this map to a callback and if it returns a
    * truthy value then the key and value are placed in the destination map.
-   * 
+   *
    * @param  {Function} callback [description]
    * @param  {Neuro.Map} [dest]     [description]
    * @return {Neuro.Map}            [description]
@@ -200,7 +200,7 @@ NeuroMap.prototype =
 
   /**
    * Reverses the order of the underlying values & keys.
-   * 
+   *
    * @return {Neuro.Map} -
    *         The referense to this map.
    */
@@ -221,7 +221,7 @@ NeuroMap.prototype =
   },
 
   /**
-   * 
+   *
    * @param  {function}  comparator [description]
    * @return {Boolean}            [description]
    */
@@ -232,7 +232,7 @@ NeuroMap.prototype =
 
   /**
    * Sorts the underlying values & keys given a value compare function.
-   * 
+   *
    * @param  {function} comparator
    *         A function which accepts two values and returns a number used for
    *         sorting. If the first argument is less than the second argument, a
@@ -253,7 +253,7 @@ NeuroMap.prototype =
       var i = left;
       var j = right;
 
-      while (i <= j) 
+      while (i <= j)
       {
         while (comparator( map.values[i], pivot ) < 0) i++
         while (comparator( map.values[j], pivot ) > 0) j--;
@@ -274,12 +274,12 @@ NeuroMap.prototype =
     {
       var index = partition( left, right );
 
-      if (left < index - 1) 
+      if (left < index - 1)
       {
         qsort( left, index - 1 );
       }
 
-      if (index < right) 
+      if (index < right)
       {
         qsort( index, right );
       }
@@ -300,7 +300,7 @@ NeuroMap.prototype =
 
   /**
    * Rebuilds the index based on the keys.
-   * 
+   *
    * @return {Neuro.Map} -
    *         The reference to this map.
    */

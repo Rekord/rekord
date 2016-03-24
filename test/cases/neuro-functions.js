@@ -279,7 +279,7 @@ test( 'Neuro.compare', function(assert)
   var d2 = currentTime()();
   var d0 = new Date( d2 );
   var d1 = new Date( d2 );
-  
+
 
   strictEqual( Neuro.compare( 1, 1 ), 0, 'okay - equivalent values' );
   strictEqual( Neuro.compare( 1, '1' ), 0 );
@@ -580,10 +580,3 @@ test( 'Neuro.hasFields', function(assert)
   notOk( Neuro.hasFields( m0, 'noprop', exists ) );
   notOk( Neuro.hasFields( m0, ['id', 'noprop'], exists ) );
 });
-
-
-
-
-
-
-

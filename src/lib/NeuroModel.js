@@ -3,7 +3,7 @@
  * An instance
  *
  * @constructor
- * @memberOf Neuro
+ * @memberof Neuro
  * @alias Model
  * @param {Neuro.Database} db
  *        The database instance used in model instances.
