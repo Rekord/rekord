@@ -65,8 +65,8 @@ NeuroMap.prototype =
     else
     {
       this.indices[ key ] = this.values.length;
-      this.values.push( value );
-      this.keys.push( key );
+      AP.push.call( this.values, value );
+      AP.push.call( this.keys, key );
     }
 
     return this;
@@ -112,8 +112,8 @@ NeuroMap.prototype =
   removeAt: function(index)
   {
     var key = this.keys[ index ];
-    var lastValue = this.values.pop();
-    var lastKey = this.keys.pop();
+    var lastValue = AP.pop.apply( this.values );
+    var lastKey = AP.pop.apply( this.keys );
 
     if ( index < this.values.length )
     {

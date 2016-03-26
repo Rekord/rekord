@@ -3,7 +3,7 @@ function NeuroRelationMultiple()
 }
 
 
-extend( NeuroRelation, NeuroRelationMultiple, 
+extend( NeuroRelation, NeuroRelationMultiple,
 {
 
   debugAutoSave: null,
@@ -44,7 +44,7 @@ extend( NeuroRelation, NeuroRelationMultiple,
     this.sort( relation );
     this.checkSave( relation, remoteData );
   },
-  
+
   set: function(model, input, remoteData)
   {
     if ( isEmpty( input ) )
@@ -81,7 +81,7 @@ extend( NeuroRelation, NeuroRelationMultiple,
 
       var removing = existing.subtract( given );
       var adding = given.subtract( existing );
-      
+
       this.bulk( relation, function()
       {
         for (var i = 0; i < adding.length; i++)
@@ -93,7 +93,7 @@ extend( NeuroRelation, NeuroRelationMultiple,
         {
           this.removeModel( relation, removing[ i ], remoteData );
         }
-        
+
       }, remoteData);
     }
   },
@@ -135,7 +135,7 @@ extend( NeuroRelation, NeuroRelationMultiple,
     if ( this.isModelArray( input ) )
     {
       this.bulk( relation, function()
-      { 
+      {
         for (var i = 0; i < input.length; i++)
         {
           var related = this.parseModel( input[ i ] );
@@ -161,7 +161,7 @@ extend( NeuroRelation, NeuroRelationMultiple,
       var all = relation.related;
 
       this.bulk( relation, function()
-      { 
+      {
         for (var i = all.length - 1; i >= 0; i--)
         {
           this.removeModel( relation, all[ i ], remoteData );
@@ -174,7 +174,7 @@ extend( NeuroRelation, NeuroRelationMultiple,
   {
     var relation = model.$relations[ this.name ];
     var existing = relation.related;
-    
+
     if ( this.isModelArray( input ) )
     {
       for (var i = 0; i < input.length; i++)
@@ -238,13 +238,13 @@ extend( NeuroRelation, NeuroRelationMultiple,
   sort: function(relation)
   {
     var related = relation.related;
-    
+
     if ( !relation.delaySorting )
     {
       Neuro.debug( this.debugSort, this, relation );
 
-      related.resort( this.comparator );
-     
+      related.sort( this.comparator );
+
       relation.parent.$trigger( NeuroModel.Events.RelationUpdate, [this, relation] );
     }
   }

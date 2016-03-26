@@ -139,7 +139,7 @@ extendArray( NeuroCollection, NeuroFilteredCollection,
       }
     }
 
-    this.resort();
+    this.sort();
   },
 
   handleCleared: function(collection)

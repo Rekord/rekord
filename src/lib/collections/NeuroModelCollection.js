@@ -3,7 +3,7 @@ function NeuroModelCollection(database, models, remoteData)
   this.init( database, models, remoteData );
 }
 
-extendArray( NeuroCollection, NeuroModelCollection, 
+extendArray( NeuroCollection, NeuroModelCollection,
 {
 
   init: function(database, models, remoteData)
@@ -14,15 +14,18 @@ extendArray( NeuroCollection, NeuroModelCollection,
     this.reset( models, remoteData );
   },
 
-  resort: function(comparator, comparatorNullsFirst)
+  sort: function(comparator, comparatorNullsFirst)
   {
     var cmp = comparator ? createComparator( comparator, comparatorNullsFirst ) : this.comparator;
 
     if ( !isSorted( cmp, this ) )
     {
       this.map.sort( cmp );
+
       this.trigger( NeuroCollection.Events.Sort, [this] );
     }
+
+    return this;
   },
 
   buildKeyFromInput: function(input)
@@ -139,7 +142,7 @@ extendArray( NeuroCollection, NeuroModelCollection,
     }
 
     this.trigger( NeuroCollection.Events.Reset, [this] );
-    this.resort();
+    this.sort();
   },
 
   add: function(model, delaySort)
@@ -149,7 +152,7 @@ extendArray( NeuroCollection, NeuroModelCollection,
 
     if ( !delaySort )
     {
-      this.resort();
+      this.sort();
     }
   },
 
@@ -168,7 +171,7 @@ extendArray( NeuroCollection, NeuroModelCollection,
 
       if ( !delaySort )
       {
-        this.resort();
+        this.sort();
       }
     }
   },
@@ -180,7 +183,7 @@ extendArray( NeuroCollection, NeuroModelCollection,
 
     if ( !delaySort )
     {
-      this.resort();
+      this.sort();
     }
   },
 
@@ -206,7 +209,7 @@ extendArray( NeuroCollection, NeuroModelCollection,
 
       if ( !delaySort )
       {
-        this.resort();
+        this.sort();
       }
     }
   },
@@ -232,7 +235,7 @@ extendArray( NeuroCollection, NeuroModelCollection,
 
     if ( !delaySort )
     {
-      this.resort();
+      this.sort();
     }
 
     return removed;
@@ -284,7 +287,7 @@ extendArray( NeuroCollection, NeuroModelCollection,
     }
 
     this.trigger( NeuroCollection.Events.Removes, [this, removed] );
-    this.resort();
+    this.sort();
 
     return removed;
   },
@@ -300,7 +303,7 @@ extendArray( NeuroCollection, NeuroModelCollection,
     }
 
     this.trigger( NeuroCollection.Events.Updates, [this, this] );
-    this.resort();
+    this.sort();
 
     return this;
   },
@@ -316,14 +319,14 @@ extendArray( NeuroCollection, NeuroModelCollection,
       if ( where( model ) )
       {
         model.$set( props, value, remoteData );
-        model.$save();   
+        model.$save();
 
-        updated.push( model );     
+        updated.push( model );
       }
     }
 
     this.trigger( NeuroCollection.Events.Updates, [this, updated] );
-    this.resort();
+    this.sort();
 
     return updated;
   }

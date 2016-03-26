@@ -115,6 +115,8 @@
  * @typedef {String|Object|Array|whereCallback} whereInput
  */
 
+ var AP = Array.prototype;
+
 /**
  * Determines whether the given variable is defined.
  *

@@ -591,7 +591,7 @@ NeuroDatabase.prototype =
   // Sorts the database if it isn't sorted.
   sort: function()
   {
-    this.models.resort();
+    this.models.sort();
   },
 
   // Determines whether this database is sorted.

@@ -71,11 +71,11 @@ test( 'isSorted', function(assert)
 
   deepEqual( c.toArray(), [1, 2, 4, 5] );
 
-  c.push( 3 );
+  Array.prototype.push.call( c, 3 );
 
   notOk( c.isSorted() );
 
-  c.resort();
+  c.sort();
 
   ok( c.isSorted() );
 });

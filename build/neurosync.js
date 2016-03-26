@@ -118,6 +118,8 @@
  * @typedef {String|Object|Array|whereCallback} whereInput
  */
 
+ var AP = Array.prototype;
+
 /**
  * Determines whether the given variable is defined.
  *
@@ -3967,7 +3969,7 @@ NeuroDatabase.prototype =
   // Sorts the database if it isn't sorted.
   sort: function()
   {
-    this.models.resort();
+    this.models.sort();
   },
 
   // Determines whether this database is sorted.
@@ -5363,8 +5365,8 @@ NeuroMap.prototype =
     else
     {
       this.indices[ key ] = this.values.length;
-      this.values.push( value );
-      this.keys.push( key );
+      AP.push.call( this.values, value );
+      AP.push.call( this.keys, key );
     }
 
     return this;
@@ -5410,8 +5412,8 @@ NeuroMap.prototype =
   removeAt: function(index)
   {
     var key = this.keys[ index ];
-    var lastValue = this.values.pop();
-    var lastKey = this.keys.pop();
+    var lastValue = AP.pop.apply( this.values );
+    var lastKey = AP.pop.apply( this.keys );
 
     if ( index < this.values.length )
     {
@@ -5684,14 +5686,14 @@ NeuroCollection.Events =
   Adds:           'adds',
 
   /**
-   * An event triggered when a collection is resorted. This may automatically
+   * An event triggered when a collection is sorted. This may automatically
    * be triggered by any method that modifies the collection.
    *
    * @event Neuro.Collection#sort
    * @argument {Neuro.Collection} collection -
    *    The collection that triggered the event.
-   * @see Neuro.Collection#resort
-   * @see Neuro.ModelCollection#resort
+   * @see Neuro.Collection#sort
+   * @see Neuro.ModelCollection#sort
    */
   Sort:           'sort',
 
@@ -5777,7 +5779,7 @@ extendArray( Array, NeuroCollection,
 {
 
   /**
-   * Sets the comparator for this collection and performs a resort.
+   * Sets the comparator for this collection and performs a sort.
    *
    * @method
    * @memberof Neuro.Collection#
@@ -5793,7 +5795,7 @@ extendArray( Array, NeuroCollection,
   setComparator: function(comparator, nullsFirst)
   {
     this.comparator = createComparator( comparator, nullsFirst );
-    this.resort();
+    this.sort();
 
     return this;
   },
@@ -5817,7 +5819,7 @@ extendArray( Array, NeuroCollection,
   addComparator: function(comparator, nullsFirst)
   {
     this.comparator = addComparator( this.comparator, comparator, nullsFirst );
-    this.resort();
+    this.sort();
 
     return this;
   },
@@ -5847,7 +5849,7 @@ extendArray( Array, NeuroCollection,
    * Sorts the elements in this collection based on the current comparator
    * unless a comparator is given. If a comparator is given it will not override
    * the current comparator, subsequent operations to the collection may trigger
-   * a resort if the collection has a comparator.
+   * a sort if the collection has a comparator.
    *
    * @method
    * @memberof Neuro.Collection#
@@ -5861,13 +5863,14 @@ extendArray( Array, NeuroCollection,
    * @emits Neuro.Collection#sort
    * @see Neuro.createComparator
    */
-  resort: function(comparator, nullsFirst)
+  sort: function(comparator, nullsFirst)
   {
     var cmp = comparator ? createComparator( comparator, nullsFirst ) : this.comparator;
 
     if ( !isSorted( cmp, this ) )
     {
-      this.sort( cmp );
+      AP.sort.call( this, cmp );
+
       this.trigger( NeuroCollection.Events.Sort, [this] );
     }
 
@@ -6138,7 +6141,7 @@ extendArray( Array, NeuroCollection,
 
 
   /**
-   * Adds an element to this collection - resorting the collection if a
+   * Adds an element to this collection - sorting the collection if a
    * comparator is set on this collection and `delaySort` is not a specified or
    * a true value.
    *
@@ -6153,7 +6156,7 @@ extendArray( Array, NeuroCollection,
    *    The value to add to this collection.
    * @param {Boolean} [delaySort=false] -
    *    Whether automatic sorting should be delayed until the user manually
-   *    calls {@link Neuro.Collection#resort resort}.
+   *    calls {@link Neuro.Collection#sort sort}.
    * @return {Neuro.Collection} -
    *    The reference to this collection.
    * @emits Neuro.Collection#add
@@ -6161,19 +6164,84 @@ extendArray( Array, NeuroCollection,
    */
   add: function(value, delaySort)
   {
-    this.push( value );
+    AP.push.call( this, value );
+
     this.trigger( NeuroCollection.Events.Add, [this, value] );
 
     if ( !delaySort )
     {
-      this.resort();
+      this.sort();
     }
 
     return this;
   },
 
   /**
-   * Adds all elements in the given array to this collection - resorting the
+   * Adds one or more elements to the end of this collection - sorting the
+   * collection if a comparator is set on this collection.
+   *
+   * ```javascript
+   * var a = Neuro.collect(1, 2, 3, 4);
+   * a.push( 5, 6, 7 ); // 7
+   * a // [1, 2, 3, 4, 5, 6, 7]
+   * ```
+   *
+   * @method
+   * @memberof Neuro.Collection#
+   * @param {Any...} value -
+   *    The values to add to this collection.
+   * @return {Number} -
+   *    The new length of this collection.
+   * @emits Neuro.Collection#add
+   * @emits Neuro.Collection#sort
+   */
+  push: function()
+  {
+    var values = arguments;
+
+    AP.push.apply( this, values );
+
+    this.trigger( NeuroCollection.Events.Adds, [this, values] );
+
+    this.sort();
+
+    return this.length;
+  },
+
+  /**
+   * Adds one or more elements to the beginning of this collection - sorting the
+   * collection if a comparator is set on this collection.
+   *
+   * ```javascript
+   * var a = Neuro.collect(1, 2, 3, 4);
+   * a.unshift( 5, 6, 7 ); // 7
+   * a // [5, 6, 7, 1, 2, 3, 4]
+   * ```
+   *
+   * @method
+   * @memberof Neuro.Collection#
+   * @param {Any...} value -
+   *    The values to add to this collection.
+   * @return {Number} -
+   *    The new length of this collection.
+   * @emits Neuro.Collection#add
+   * @emits Neuro.Collection#sort
+   */
+  unshift: function()
+  {
+    var values = arguments;
+
+    AP.unshift.apply( this, values );
+
+    this.trigger( NeuroCollection.Events.Adds, [this, values] );
+
+    this.sort();
+
+    return this.length;
+  },
+
+  /**
+   * Adds all elements in the given array to this collection - sorting the
    * collection if a comparator is set on this collection and `delaySort` is
    * not specified or a true value.
    *
@@ -6188,7 +6256,7 @@ extendArray( Array, NeuroCollection,
    *    The values to add to this collection.
    * @param {Boolean} [delaySort=false] -
    *    Whether automatic sorting should be delayed until the user manually
-   *    calls {@link Neuro.Collection#resort resort}.
+   *    calls {@link Neuro.Collection#sort sort}.
    * @return {Neuro.Collection} -
    *    The reference to this collection.
    * @emits Neuro.Collection#adds
@@ -6198,12 +6266,13 @@ extendArray( Array, NeuroCollection,
   {
     if ( isArray( values ) && values.length )
     {
-      this.push.apply( this, values );
+      AP.push.apply( this, values );
+
       this.trigger( NeuroCollection.Events.Adds, [this, values] );
 
       if ( !delaySort )
       {
-        this.resort();
+        this.sort();
       }
     }
 
@@ -6211,7 +6280,7 @@ extendArray( Array, NeuroCollection,
   },
 
   /**
-   * Inserts an element into this collection at the given index - resorting the
+   * Inserts an element into this collection at the given index - sorting the
    * collection if a comparator is set on this collection and `delaySort` is not
    * specified or a true value.
    *
@@ -6229,7 +6298,7 @@ extendArray( Array, NeuroCollection,
    *    The value to insert into the collection.
    * @param {Boolean} [delaySort=false] -
    *    Whether automatic sorting should be delayed until the user manually
-   *    calls {@link Neuro.Collection#resort resort}.
+   *    calls {@link Neuro.Collection#sort sort}.
    * @return {Neuro.Collection} -
    *    The reference to this collection.
    * @emits Neuro.Collection#add
@@ -6237,19 +6306,88 @@ extendArray( Array, NeuroCollection,
    */
   insertAt: function(i, value, delaySort)
   {
-    this.splice( i, 0, value );
+    AP.splice.call( this, i, 0, value );
     this.trigger( NeuroCollection.Events.Add, [this, value] );
 
     if ( !delaySort )
     {
-      this.resort();
+      this.sort();
     }
 
     return this;
   },
 
   /**
-   * Removes the element in this collection at the given index `i` - resorting
+   * Removes the last element in this collection and returns it - sorting the
+   * collection if a comparator is set on this collection and `delaySort` is
+   * no specified or a true value.
+   *
+   * ```javascript
+   * var c = Neuro.collect(1, 2, 3, 4);
+   * c.pop(); // 4
+   * ```
+   *
+   * @method
+   * @memberof Neuro.Collection#
+   * @param {Boolean} [delaySort=false] -
+   *    Whether automatic sorting should be delayed until the user manually
+   *    calls {@link Neuro.Collection#sort sort}.
+   * @return {Any} -
+   *    The element removed from the end of the collection.
+   * @emits Neuro.Collection#remove
+   * @emits Neuro.Collection#sort
+   */
+  pop: function(delaySort)
+  {
+    var removed = AP.pop.apply( this );
+    var i = this.length;
+
+    this.trigger( NeuroCollection.Events.Remove, [this, removed, i] );
+
+    if ( !delaySort )
+    {
+      this.sort();
+    }
+
+    return removed;
+  },
+
+  /**
+   * Removes the first element in this collection and returns it - sorting the
+   * collection if a comparator is set on this collection and `delaySort` is
+   * no specified or a true value.
+   *
+   * ```javascript
+   * var c = Neuro.collect(1, 2, 3, 4);
+   * c.shift(); // 1
+   * ```
+   *
+   * @method
+   * @memberof Neuro.Collection#
+   * @param {Boolean} [delaySort=false] -
+   *    Whether automatic sorting should be delayed until the user manually
+   *    calls {@link Neuro.Collection#sort sort}.
+   * @return {Any} -
+   *    The element removed from the beginning of the collection.
+   * @emits Neuro.Collection#remove
+   * @emits Neuro.Collection#sort
+   */
+  shift: function(delaySort)
+  {
+    var removed = AP.shift.apply( this );
+
+    this.trigger( NeuroCollection.Events.Remove, [this, removed, 0] );
+
+    if ( !delaySort )
+    {
+      this.sort();
+    }
+
+    return removed;
+  },
+
+  /**
+   * Removes the element in this collection at the given index `i` - sorting
    * the collection if a comparator is set on this collection and `delaySort` is
    * not specified or a true value.
    *
@@ -6266,7 +6404,7 @@ extendArray( Array, NeuroCollection,
    *    The index of the element to remove.
    * @param {Boolean} [delaySort=false] -
    *    Whether automatic sorting should be delayed until the user manually
-   *    calls {@link Neuro.Collection#resort resort}.
+   *    calls {@link Neuro.Collection#sort sort}.
    * @return {Any} -
    *    The element removed, or undefined if the index was invalid.
    * @emits Neuro.Collection#remove
@@ -6280,12 +6418,12 @@ extendArray( Array, NeuroCollection,
     {
       removing = this[ i ];
 
-      this.splice( i, 1 );
+      AP.splice.call( this, i, 1 );
       this.trigger( NeuroCollection.Events.Remove, [this, removing, i] );
 
       if ( !delaySort )
       {
-        this.resort();
+        this.sort();
       }
     }
 
@@ -6293,7 +6431,7 @@ extendArray( Array, NeuroCollection,
   },
 
   /**
-   * Removes the given value from this collection if it exists - resorting the
+   * Removes the given value from this collection if it exists - sorting the
    * collection if a comparator is set on this collection and `delaySort` is not
    * specified or a true value.
    *
@@ -6310,7 +6448,7 @@ extendArray( Array, NeuroCollection,
    *    The value to remove from this collection if it exists.
    * @param {Boolean} [delaySort=false] -
    *    Whether automatic sorting should be delayed until the user manually
-   *    calls {@link Neuro.Collection#resort resort}.
+   *    calls {@link Neuro.Collection#sort sort}.
    * @param {equalityCallback} [equals=Neuro.equalsStrict] -
    *    The function which determines whether one of the elements that exist in
    *    this collection are equivalent to the given value.
@@ -6333,7 +6471,7 @@ extendArray( Array, NeuroCollection,
   },
 
   /**
-   * Removes the given values from this collection - resorting the collection if
+   * Removes the given values from this collection - sorting the collection if
    * a comparator is set on this collection and `delaySort` is not specified or
    * a true value.
    *
@@ -6349,7 +6487,7 @@ extendArray( Array, NeuroCollection,
    *    The values to remove from this collection if they exist.
    * @param {Boolean} [delaySort=false] -
    *    Whether automatic sorting should be delayed until the user manually
-   *    calls {@link Neuro.Collection#resort resort}.
+   *    calls {@link Neuro.Collection#sort sort}.
    * @param {equalityCallback} [equals=Neuro.equalsStrict] -
    *    The function which determines whether one of the elements that exist in
    *    this collection are equivalent to any of the given values.
@@ -6371,7 +6509,7 @@ extendArray( Array, NeuroCollection,
 
         if ( k !== -1 )
         {
-          this.splice( k, 1 );
+          AP.splice.call( this, k, 1 );
           removed.push( value );
         }
       }
@@ -6380,7 +6518,7 @@ extendArray( Array, NeuroCollection,
 
       if ( !delaySort )
       {
-        this.resort();
+        this.sort();
       }
     }
 
@@ -6411,7 +6549,7 @@ extendArray( Array, NeuroCollection,
    *    The array to place the elements that match.
    * @param {Boolean} [delaySort=false] -
    *    Whether automatic sorting should be delayed until the user manually
-   *    calls {@link Neuro.Collection#resort resort}.
+   *    calls {@link Neuro.Collection#sort sort}.
    * @return {Neuro.Collection} -
    *    The reference to this collection.
    * @emits Neuro.Collection#removes
@@ -6429,7 +6567,7 @@ extendArray( Array, NeuroCollection,
 
       if ( where( value ) )
       {
-        this.splice( i, 1 );
+        AP.splice.call( this, i, 1 );
         removed.push( value );
       }
     }
@@ -6438,10 +6576,95 @@ extendArray( Array, NeuroCollection,
 
     if ( !delaySort )
     {
-      this.resort();
+      this.sort();
     }
 
     return removed;
+  },
+
+  /**
+   * Splices elements out of and into this collection - sorting the collection
+   * if a comparator is set on this collection.
+   *
+   * @method
+   * @memberof Neuro.Collection#
+   * @param {Number} start -
+   *    Index at which to start changing the array (with origin 0). If greater
+   *    than the length of the array, actual starting index will be set to the
+   *    length of the array. If negative, will begin that many elements from the end.
+   * @param {Number} deleteCount -
+   *    An integer indicating the number of old array elements to remove. If
+   *    deleteCount is 0, no elements are removed. In this case, you should
+   *    specify at least one new element. If deleteCount is greater than the
+   *    number of elements left in the array starting at start, then all of the
+   *    elements through the end of the array will be deleted.
+   *    If deleteCount is omitted, deleteCount will be equal to (arr.length - start).
+   * @param {Any...} values -
+   *    The elements to add to the array, beginning at the start index. If you
+   *    don't specify any elements, splice() will only remove elements from the array.
+   * @return {Any[]} -
+   *    The array of deleted elements.
+   * @emits Neuro.Collection#removes
+   * @emits Neuro.Collection#adds
+   * @emits Neuro.Collection#sort
+   */
+  splice: function(start, deleteCount)
+  {
+    var adding = AP.splice.call( arguments, 0, 2 );
+    var removed = AP.splice.apply( this, arguments );
+
+    if ( deleteCount )
+    {
+      this.trigger( NeuroCollection.Events.Removes, [this, removed] );
+    }
+
+    if ( adding.length )
+    {
+      this.trigger( NeuroCollection.Events.Adds, [this, adding] );
+    }
+
+    this.sort();
+
+    return removed;
+  },
+
+  /**
+   * Reverses the order of elements in this collection.
+   *
+   * ```javascript
+   * var c = Neuro.collect(1, 2, 3, 4);
+   * c.reverse(); // [4, 3, 2, 1]
+   * ```
+   *
+   * @method
+   * @memberof Neuro.Collection#
+   * @return {Neuro.Collection} -
+   *    The reference to this collection.
+   * @emits Neuro.Collection#updates
+   */
+  reverse: function()
+  {
+    if ( AP.reverse )
+    {
+      AP.reverse.apply( this );
+    }
+    else
+    {
+      var n = this.length;
+      var half = Math.floor( n / 2 );
+
+      for (var i = 0; i < half; i++)
+      {
+        var k = n - i - 1;
+        var a = this[ i ];
+        this[ i ] = this[ k ];
+        this[ k ] = a;
+      }
+    }
+
+    this.trigger( NeuroCollection.Events.Updates, [this] );
+
+    return this;
   },
 
   /**
@@ -7367,7 +7590,7 @@ extendArray( Array, NeuroCollection,
       }
     }
 
-    groupings.resort();
+    groupings.sort();
 
     return groupings;
   },
@@ -7545,7 +7768,7 @@ extendArray( NeuroCollection, NeuroFilteredCollection,
       }
     }
 
-    this.resort();
+    this.sort();
   },
 
   handleCleared: function(collection)
@@ -7554,12 +7777,13 @@ extendArray( NeuroCollection, NeuroFilteredCollection,
   }
 
 });
+
 function NeuroModelCollection(database, models, remoteData)
 {
   this.init( database, models, remoteData );
 }
 
-extendArray( NeuroCollection, NeuroModelCollection, 
+extendArray( NeuroCollection, NeuroModelCollection,
 {
 
   init: function(database, models, remoteData)
@@ -7570,15 +7794,18 @@ extendArray( NeuroCollection, NeuroModelCollection,
     this.reset( models, remoteData );
   },
 
-  resort: function(comparator, comparatorNullsFirst)
+  sort: function(comparator, comparatorNullsFirst)
   {
     var cmp = comparator ? createComparator( comparator, comparatorNullsFirst ) : this.comparator;
 
     if ( !isSorted( cmp, this ) )
     {
       this.map.sort( cmp );
+
       this.trigger( NeuroCollection.Events.Sort, [this] );
     }
+
+    return this;
   },
 
   buildKeyFromInput: function(input)
@@ -7695,7 +7922,7 @@ extendArray( NeuroCollection, NeuroModelCollection,
     }
 
     this.trigger( NeuroCollection.Events.Reset, [this] );
-    this.resort();
+    this.sort();
   },
 
   add: function(model, delaySort)
@@ -7705,7 +7932,7 @@ extendArray( NeuroCollection, NeuroModelCollection,
 
     if ( !delaySort )
     {
-      this.resort();
+      this.sort();
     }
   },
 
@@ -7724,7 +7951,7 @@ extendArray( NeuroCollection, NeuroModelCollection,
 
       if ( !delaySort )
       {
-        this.resort();
+        this.sort();
       }
     }
   },
@@ -7736,7 +7963,7 @@ extendArray( NeuroCollection, NeuroModelCollection,
 
     if ( !delaySort )
     {
-      this.resort();
+      this.sort();
     }
   },
 
@@ -7762,7 +7989,7 @@ extendArray( NeuroCollection, NeuroModelCollection,
 
       if ( !delaySort )
       {
-        this.resort();
+        this.sort();
       }
     }
   },
@@ -7788,7 +8015,7 @@ extendArray( NeuroCollection, NeuroModelCollection,
 
     if ( !delaySort )
     {
-      this.resort();
+      this.sort();
     }
 
     return removed;
@@ -7840,7 +8067,7 @@ extendArray( NeuroCollection, NeuroModelCollection,
     }
 
     this.trigger( NeuroCollection.Events.Removes, [this, removed] );
-    this.resort();
+    this.sort();
 
     return removed;
   },
@@ -7856,7 +8083,7 @@ extendArray( NeuroCollection, NeuroModelCollection,
     }
 
     this.trigger( NeuroCollection.Events.Updates, [this, this] );
-    this.resort();
+    this.sort();
 
     return this;
   },
@@ -7872,19 +8099,20 @@ extendArray( NeuroCollection, NeuroModelCollection,
       if ( where( model ) )
       {
         model.$set( props, value, remoteData );
-        model.$save();   
+        model.$save();
 
-        updated.push( model );     
+        updated.push( model );
       }
     }
 
     this.trigger( NeuroCollection.Events.Updates, [this, updated] );
-    this.resort();
+    this.sort();
 
     return updated;
   }
 
 });
+
 
 function NeuroRelationCollection(database, model, relator)
 {
@@ -10410,7 +10638,7 @@ function NeuroRelationMultiple()
 }
 
 
-extend( NeuroRelation, NeuroRelationMultiple, 
+extend( NeuroRelation, NeuroRelationMultiple,
 {
 
   debugAutoSave: null,
@@ -10451,7 +10679,7 @@ extend( NeuroRelation, NeuroRelationMultiple,
     this.sort( relation );
     this.checkSave( relation, remoteData );
   },
-  
+
   set: function(model, input, remoteData)
   {
     if ( isEmpty( input ) )
@@ -10488,7 +10716,7 @@ extend( NeuroRelation, NeuroRelationMultiple,
 
       var removing = existing.subtract( given );
       var adding = given.subtract( existing );
-      
+
       this.bulk( relation, function()
       {
         for (var i = 0; i < adding.length; i++)
@@ -10500,7 +10728,7 @@ extend( NeuroRelation, NeuroRelationMultiple,
         {
           this.removeModel( relation, removing[ i ], remoteData );
         }
-        
+
       }, remoteData);
     }
   },
@@ -10542,7 +10770,7 @@ extend( NeuroRelation, NeuroRelationMultiple,
     if ( this.isModelArray( input ) )
     {
       this.bulk( relation, function()
-      { 
+      {
         for (var i = 0; i < input.length; i++)
         {
           var related = this.parseModel( input[ i ] );
@@ -10568,7 +10796,7 @@ extend( NeuroRelation, NeuroRelationMultiple,
       var all = relation.related;
 
       this.bulk( relation, function()
-      { 
+      {
         for (var i = all.length - 1; i >= 0; i--)
         {
           this.removeModel( relation, all[ i ], remoteData );
@@ -10581,7 +10809,7 @@ extend( NeuroRelation, NeuroRelationMultiple,
   {
     var relation = model.$relations[ this.name ];
     var existing = relation.related;
-    
+
     if ( this.isModelArray( input ) )
     {
       for (var i = 0; i < input.length; i++)
@@ -10645,18 +10873,19 @@ extend( NeuroRelation, NeuroRelationMultiple,
   sort: function(relation)
   {
     var related = relation.related;
-    
+
     if ( !relation.delaySorting )
     {
       Neuro.debug( this.debugSort, this, relation );
 
-      related.resort( this.comparator );
-     
+      related.sort( this.comparator );
+
       relation.parent.$trigger( NeuroModel.Events.RelationUpdate, [this, relation] );
     }
   }
 
 });
+
 function NeuroBelongsTo()
 {
 }
