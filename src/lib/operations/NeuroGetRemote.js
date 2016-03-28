@@ -48,19 +48,19 @@ extend( NeuroOperation, NeuroGetRemote,
     model.$trigger( NeuroModel.Events.RemoteGet, [model] );
   },
 
-  onFailure: function(data, status)
+  onFailure: function(response, status)
   {
     var model = this.model;
 
-    Neuro.debug( Neuro.Debugs.GET_REMOTE_ERROR, model, data, status );
+    Neuro.debug( Neuro.Debugs.GET_REMOTE_ERROR, model, response, status );
 
     if ( status === 0 )
     {
-      model.$trigger( NeuroModel.Events.RemoteGetOffline, [model] );
+      model.$trigger( NeuroModel.Events.RemoteGetOffline, [model, response] );
     }
     else
     {
-      model.$trigger( NeuroModel.Events.RemoteGetFailure, [model] );
+      model.$trigger( NeuroModel.Events.RemoteGetFailure, [model, response] );
     }
   }
 

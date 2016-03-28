@@ -22,7 +22,7 @@ extend( NeuroOperation, NeuroRemoveRemote,
 
       this.finish();
     }
-    else 
+    else
     {
       model.$status = NeuroModel.Status.RemovePending;
 
@@ -35,7 +35,7 @@ extend( NeuroOperation, NeuroRemoveRemote,
     this.finishRemove();
   },
 
-  onFailure: function(data, status)
+  onFailure: function(response, status)
   {
     var model = this.model;
     var key = model.$key();
@@ -46,11 +46,11 @@ extend( NeuroOperation, NeuroRemoveRemote,
 
       this.finishRemove();
     }
-    else if ( status !== 0 ) 
+    else if ( status !== 0 )
     {
-      Neuro.debug( Neuro.Debugs.REMOVE_ERROR, model, status, key );
+      Neuro.debug( Neuro.Debugs.REMOVE_ERROR, model, status, key, response );
 
-      model.$trigger( NeuroModel.Events.RemoteRemoveFailure, [model] );
+      model.$trigger( NeuroModel.Events.RemoteRemoveFailure, [model, response] );
     }
     else
     {
@@ -58,18 +58,18 @@ extend( NeuroOperation, NeuroRemoveRemote,
       Neuro.checkNetworkStatus();
 
       // If we are offline, wait until we're online again to resume the delete
-      if (!Neuro.online) 
+      if (!Neuro.online)
       {
-        Neuro.once( 'online', this.handleOnline, this );
-        
-        model.$trigger( NeuroModel.Events.RemoteRemoveOffline, [model] );
+        Neuro.once( Neuro.Events.Online, this.handleOnline, this );
+
+        model.$trigger( NeuroModel.Events.RemoteRemoveOffline, [model, response] );
       }
       else
       {
-        model.$trigger( NeuroModel.Events.RemoteRemoveFailure, [model] );
+        model.$trigger( NeuroModel.Events.RemoteRemoveFailure, [model, response] );
       }
 
-      Neuro.debug( Neuro.Debugs.REMOVE_OFFLINE, model );
+      Neuro.debug( Neuro.Debugs.REMOVE_OFFLINE, model, response );
     }
   },
 
@@ -122,4 +122,3 @@ extend( NeuroOperation, NeuroRemoveRemote,
   }
 
 });
-

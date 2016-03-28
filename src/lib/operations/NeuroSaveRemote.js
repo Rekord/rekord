@@ -18,7 +18,7 @@ extend( NeuroOperation, NeuroSaveRemote,
     {
       Neuro.debug( Neuro.Debugs.SAVE_REMOTE_DELETED, model );
 
-      this.markSynced( model, true, NeuroModel.Events.RemoteSaveFailure );
+      this.markSynced( model, true, NeuroModel.Events.RemoteSaveFailure, null );
       this.finish();
     }
     else if ( !model.$isDependentsSaved( this.tryAgain, this ) )
@@ -28,7 +28,7 @@ extend( NeuroOperation, NeuroSaveRemote,
     else if ( !db.hasData( model.$saving ) || this.notCascade( Neuro.Cascade.Rest ) )
     {
       this.liveSave();
-      this.markSynced( model, true, NeuroModel.Events.RemoteSave );
+      this.markSynced( model, true, NeuroModel.Events.RemoteSave, null );
       this.finish();
     }
     else
@@ -77,13 +77,13 @@ extend( NeuroOperation, NeuroSaveRemote,
 
       this.insertNext( NeuroRemoveNow );
 
-      model.$trigger( NeuroModel.Events.RemoteSaveFailure, [model] );
+      model.$trigger( NeuroModel.Events.RemoteSaveFailure, [model, response] );
     }
     else if ( status !== 0 )
     {
       Neuro.debug( Neuro.Debugs.SAVE_ERROR, model, status );
 
-      this.markSynced( model, true, NeuroModel.Events.RemoteSaveFailure );
+      this.markSynced( model, true, NeuroModel.Events.RemoteSaveFailure, response );
     }
     else
     {
@@ -93,20 +93,20 @@ extend( NeuroOperation, NeuroSaveRemote,
       // If not online for sure, try saving once online again
       if (!Neuro.online)
       {
-        Neuro.once( 'online', this.handleOnline, this );
+        Neuro.once( Neuro.Events.Online, this.handleOnline, this );
 
-        model.$trigger( NeuroModel.Events.RemoteSaveOffline, [model] );
+        model.$trigger( NeuroModel.Events.RemoteSaveOffline, [model, response] );
       }
       else
       {
-        this.markSynced( model, true, NeuroModel.Events.RemoteSaveFailure );
+        this.markSynced( model, true, NeuroModel.Events.RemoteSaveFailure, response );
       }
 
-      Neuro.debug( Neuro.Debugs.SAVE_OFFLINE, model );
+      Neuro.debug( Neuro.Debugs.SAVE_OFFLINE, model, response );
     }
   },
 
-  markSynced: function(model, saveNow, eventType)
+  markSynced: function(model, saveNow, eventType, response)
   {
     model.$status = NeuroModel.Status.Synced;
 
@@ -119,7 +119,7 @@ extend( NeuroOperation, NeuroSaveRemote,
 
     if ( eventType )
     {
-      model.$trigger( eventType, [model] );
+      model.$trigger( eventType, [model, response] );
     }
   },
 
@@ -170,7 +170,7 @@ extend( NeuroOperation, NeuroSaveRemote,
     }
 
     this.liveSave();
-    this.markSynced( model, false, NeuroModel.Events.RemoteSave );
+    this.markSynced( model, false, NeuroModel.Events.RemoteSave, null );
 
     if ( db.cache === Neuro.Cache.Pending )
     {

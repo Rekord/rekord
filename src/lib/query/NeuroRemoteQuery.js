@@ -107,23 +107,23 @@ extendArray( NeuroQuery, NeuroRemoteQuery,
     return models;
   },
 
-  handleSuccess: function()
+  handleSuccess: function(response)
   {
     var models = this.parse.apply( this, arguments );
 
     this.status = NeuroRemoteQuery.Status.Success;
     this.reset( models, true );
     this.off( NeuroRemoteQuery.Events.Failure, this.onFailure );
-    this.trigger( NeuroRemoteQuery.Events.Ready, [this] );
-    this.trigger( NeuroRemoteQuery.Events.Success, [this] );
+    this.trigger( NeuroRemoteQuery.Events.Ready, [this, response] );
+    this.trigger( NeuroRemoteQuery.Events.Success, [this, response] );
   },
 
-  handleFailure: function(models, error)
+  handleFailure: function(response, error)
   {
     this.status = NeuroRemoteQuery.Status.Failure;
     this.off( NeuroRemoteQuery.Events.Success, this.onSuccess );
-    this.trigger( NeuroRemoteQuery.Events.Ready, [this] );
-    this.trigger( NeuroRemoteQuery.Events.Failure, [this] );
+    this.trigger( NeuroRemoteQuery.Events.Ready, [this, response] );
+    this.trigger( NeuroRemoteQuery.Events.Failure, [this, response] );
   }
 
 });

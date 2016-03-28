@@ -136,7 +136,7 @@ NeuroSearch.prototype =
 
   $encode: function()
   {
-    return cleanFunctions(copy(this));
+    return cleanFunctions( copy( this ) );
   },
 
   $decode: function(models)

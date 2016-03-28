@@ -1076,7 +1076,7 @@ NeuroDatabase.prototype =
       }
     }
 
-    function onLoadError(models, status)
+    function onLoadError(response, status)
     {
       if ( status === 0 )
       {
@@ -1086,7 +1086,7 @@ NeuroDatabase.prototype =
         {
           db.pendingRefresh = true;
 
-          Neuro.once( 'online', db.onRefreshOnline, db );
+          Neuro.once( Neuro.Events.Online, db.onRefreshOnline, db );
         }
 
         Neuro.debug( Neuro.Debugs.REMOTE_LOAD_OFFLINE, db );
@@ -1096,7 +1096,7 @@ NeuroDatabase.prototype =
         Neuro.debug( Neuro.Debugs.REMOTE_LOAD_ERROR, db, status );
 
         db.initialized = true;
-        db.trigger( NeuroDatabase.Events.NoLoad, [db] );
+        db.trigger( NeuroDatabase.Events.NoLoad, [db, response] );
       }
 
       if ( callback )
