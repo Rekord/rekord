@@ -153,6 +153,16 @@ function defaultCreateLive( database )
   return Neuro.live( database );
 }
 
+function defaultResolveModel( response )
+{
+  return response;
+}
+
+function defaultResolveModels( response )
+{
+  return response;
+}
+
 NeuroDatabase.Events =
 {
   NoLoad:       'no-load',
@@ -189,6 +199,8 @@ NeuroDatabase.Defaults =
   prepare:              noop,
   encode:               defaultEncode,
   decode:               defaultDecode,
+  resolveModel:         defaultResolveModel,
+  resolveModels:        defaultResolveModels,
   summarize:            defaultSummarize,
   createRest:           defaultCreateRest,
   createStore:          defaultCreateStore,
@@ -1013,8 +1025,9 @@ NeuroDatabase.prototype =
     var db = this;
     var callbackContext = context || db;
 
-    function onModels(models)
+    function onModels(response)
     {
+      var models = db.resolveModels( response );
       var mapped = {};
 
       for (var i = 0; i < models.length; i++)

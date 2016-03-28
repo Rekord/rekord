@@ -32,9 +32,10 @@ extend( NeuroOperation, NeuroGetRemote,
     }
   },
 
-  onSuccess: function(data)
+  onSuccess: function(response)
   {
     var db = this.db;
+    var data = db.resolveModel( response );
     var model = this.model;
 
     if ( isObject( data ) )
@@ -58,7 +59,7 @@ extend( NeuroOperation, NeuroGetRemote,
       model.$trigger( NeuroModel.Events.RemoteGetOffline, [model] );
     }
     else
-    {  
+    {
       model.$trigger( NeuroModel.Events.RemoteGetFailure, [model] );
     }
   }

@@ -7,13 +7,13 @@ function NeuroPage(collection, pageSize, pageIndex)
   this.setCollection( collection );
 }
 
-NeuroPage.Events = 
+NeuroPage.Events =
 {
   Change:       'change',
   Changes:      'change'
 };
 
-extendArray( Array, NeuroPage, 
+extendArray( Array, NeuroPage,
 {
 
   setPageSize: function(pageSize)
@@ -24,14 +24,7 @@ extendArray( Array, NeuroPage,
 
   setPageIndex: function(pageIndex)
   {
-    var actualIndex = Math.max( 0, Math.min( pageIndex, this.pageCount - 1 ) );
-
-    if ( actualIndex !== this.pageIndex )
-    {
-      this.pageIndex = actualIndex;
-      this.update();
-      this.trigger( NeuroPage.Events.Change, [ this ] );
-    }
+    this.goto( pageIndex );
   },
 
   setCollection: function(collection)
@@ -59,29 +52,41 @@ extendArray( Array, NeuroPage,
     this.collection.off( NeuroCollection.Events.Changes, this.onChanges );
   },
 
+  goto: function(pageIndex)
+  {
+    var actualIndex = Math.max( 0, Math.min( pageIndex, this.pageCount - 1 ) );
+
+    if ( actualIndex !== this.pageIndex )
+    {
+      this.pageIndex = actualIndex;
+      this.update();
+      this.trigger( NeuroPage.Events.Change, [ this ] );
+    }
+  },
+
   next: function()
   {
-    this.setPageIndex( this.pageIndex + 1 );
+    this.goto( this.pageIndex + 1 );
   },
 
   prev: function()
   {
-    this.setPageIndex( this.pageIndex - 1 );
+    this.goto( this.pageIndex - 1 );
   },
 
   jump: function(to)
   {
-    this.setPageIndex( to );
+    this.goto( to );
   },
 
   first: function()
   {
-    this.setPageIndex( 0 );
+    this.goto( 0 );
   },
 
   last: function()
   {
-    this.setPageIndex( this.pageCount - 1 );
+    this.goto( this.pageCount - 1 );
   },
 
   handleChanges: function(forceApply)
@@ -94,10 +99,10 @@ extendArray( Array, NeuroPage,
 
     this.pageIndex = pageIndex;
     this.pageCount = pageCount;
-    
+
     if ( apply )
     {
-      this.update(); 
+      this.update();
     }
     if ( changes )
     {

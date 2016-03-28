@@ -3531,6 +3531,16 @@ function defaultCreateLive( database )
   return Neuro.live( database );
 }
 
+function defaultResolveModel( response )
+{
+  return response;
+}
+
+function defaultResolveModels( response )
+{
+  return response;
+}
+
 NeuroDatabase.Events =
 {
   NoLoad:       'no-load',
@@ -3567,6 +3577,8 @@ NeuroDatabase.Defaults =
   prepare:              noop,
   encode:               defaultEncode,
   decode:               defaultDecode,
+  resolveModel:         defaultResolveModel,
+  resolveModels:        defaultResolveModels,
   summarize:            defaultSummarize,
   createRest:           defaultCreateRest,
   createStore:          defaultCreateStore,
@@ -4391,8 +4403,9 @@ NeuroDatabase.prototype =
     var db = this;
     var callbackContext = context || db;
 
-    function onModels(models)
+    function onModels(response)
     {
+      var models = db.resolveModels( response );
       var mapped = {};
 
       for (var i = 0; i < models.length; i++)
@@ -8872,13 +8885,13 @@ function NeuroPage(collection, pageSize, pageIndex)
   this.setCollection( collection );
 }
 
-NeuroPage.Events = 
+NeuroPage.Events =
 {
   Change:       'change',
   Changes:      'change'
 };
 
-extendArray( Array, NeuroPage, 
+extendArray( Array, NeuroPage,
 {
 
   setPageSize: function(pageSize)
@@ -8889,14 +8902,7 @@ extendArray( Array, NeuroPage,
 
   setPageIndex: function(pageIndex)
   {
-    var actualIndex = Math.max( 0, Math.min( pageIndex, this.pageCount - 1 ) );
-
-    if ( actualIndex !== this.pageIndex )
-    {
-      this.pageIndex = actualIndex;
-      this.update();
-      this.trigger( NeuroPage.Events.Change, [ this ] );
-    }
+    this.goto( pageIndex );
   },
 
   setCollection: function(collection)
@@ -8924,29 +8930,41 @@ extendArray( Array, NeuroPage,
     this.collection.off( NeuroCollection.Events.Changes, this.onChanges );
   },
 
+  goto: function(pageIndex)
+  {
+    var actualIndex = Math.max( 0, Math.min( pageIndex, this.pageCount - 1 ) );
+
+    if ( actualIndex !== this.pageIndex )
+    {
+      this.pageIndex = actualIndex;
+      this.update();
+      this.trigger( NeuroPage.Events.Change, [ this ] );
+    }
+  },
+
   next: function()
   {
-    this.setPageIndex( this.pageIndex + 1 );
+    this.goto( this.pageIndex + 1 );
   },
 
   prev: function()
   {
-    this.setPageIndex( this.pageIndex - 1 );
+    this.goto( this.pageIndex - 1 );
   },
 
   jump: function(to)
   {
-    this.setPageIndex( to );
+    this.goto( to );
   },
 
   first: function()
   {
-    this.setPageIndex( 0 );
+    this.goto( 0 );
   },
 
   last: function()
   {
-    this.setPageIndex( this.pageCount - 1 );
+    this.goto( this.pageCount - 1 );
   },
 
   handleChanges: function(forceApply)
@@ -8959,10 +8977,10 @@ extendArray( Array, NeuroPage,
 
     this.pageIndex = pageIndex;
     this.pageCount = pageCount;
-    
+
     if ( apply )
     {
-      this.update(); 
+      this.update();
     }
     if ( changes )
     {
@@ -8995,6 +9013,7 @@ extendArray( Array, NeuroPage,
 
 eventize( NeuroPage.prototype );
 addEventFunction( NeuroPage.prototype, 'change', NeuroPage.Events.Changes );
+
 
 function NeuroOperation()
 {
@@ -9232,9 +9251,10 @@ extend( NeuroOperation, NeuroGetRemote,
     }
   },
 
-  onSuccess: function(data)
+  onSuccess: function(response)
   {
     var db = this.db;
+    var data = db.resolveModel( response );
     var model = this.model;
 
     if ( isObject( data ) )
@@ -9258,7 +9278,7 @@ extend( NeuroOperation, NeuroGetRemote,
       model.$trigger( NeuroModel.Events.RemoteGetOffline, [model] );
     }
     else
-    {  
+    {
       model.$trigger( NeuroModel.Events.RemoteGetFailure, [model] );
     }
   }
@@ -9752,8 +9772,10 @@ extend( NeuroOperation, NeuroSaveRemote,
     }
   },
 
-  onSuccess: function(data)
+  onSuccess: function(response)
   {
+    var db = this.db;
+    var data = db.resolveModel( response );
     var model = this.model;
 
     Neuro.debug( Neuro.Debugs.SAVE_REMOTE, model );
@@ -9761,10 +9783,11 @@ extend( NeuroOperation, NeuroSaveRemote,
     this.handleData( data );
   },
 
-  onFailure: function(data, status)
+  onFailure: function(response, status)
   {
     var operation = this;
     var db = this.db;
+    var data = db.resolveModel( response );
     var model = this.model;
 
     // A non-zero status means a real problem occurred

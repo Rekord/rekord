@@ -46,8 +46,10 @@ extend( NeuroOperation, NeuroSaveRemote,
     }
   },
 
-  onSuccess: function(data)
+  onSuccess: function(response)
   {
+    var db = this.db;
+    var data = db.resolveModel( response );
     var model = this.model;
 
     Neuro.debug( Neuro.Debugs.SAVE_REMOTE, model );
@@ -55,10 +57,11 @@ extend( NeuroOperation, NeuroSaveRemote,
     this.handleData( data );
   },
 
-  onFailure: function(data, status)
+  onFailure: function(response, status)
   {
     var operation = this;
     var db = this.db;
+    var data = db.resolveModel( response );
     var model = this.model;
 
     // A non-zero status means a real problem occurred
