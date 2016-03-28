@@ -3,9 +3,7 @@ function NeuroRemoteQuery(database, query)
   this.init( database );
   this.query = query;
   this.status = NeuroRemoteQuery.Status.Success;
-
-  this.onSuccess = bind( this, this.handleSuccess );
-  this.onFailure = bind( this, this.handleFailure );
+  this.request = new NeuroRequest( this, this.handleSuccess, this.handleFailure );
 }
 
 NeuroRemoteQuery.Status =
@@ -46,7 +44,7 @@ extendArray( NeuroQuery, NeuroRemoteQuery,
       this.cancel();
     }
 
-    this.database.rest.query( this.query, this.onSuccess, this.onFailure );
+    this.database.rest.query( this.query, this.request.onSuccess(), this.request.onFailure() );
 
     return this;
   },
@@ -56,6 +54,8 @@ extendArray( NeuroQuery, NeuroRemoteQuery,
     this.off( NeuroRemoteQuery.Events.Ready );
     this.off( NeuroRemoteQuery.Events.Success );
     this.off( NeuroRemoteQuery.Events.Failure );
+
+    this.request.cancel();
 
     return this;
   },

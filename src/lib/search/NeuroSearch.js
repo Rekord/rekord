@@ -33,7 +33,7 @@ NeuroSearch.prototype =
     this.$db = database;
     this.$results = new NeuroModelCollection( database );
     this.$status = NeuroSearch.Status.Success;
-    this.$concurrent = 0;
+    this.$request = new NeuroRequest( this, this.$handleSuccess, this.$handleFailure );
   },
 
   $run: function()
@@ -41,10 +41,9 @@ NeuroSearch.prototype =
     var encoded = this.$encode();
 
     this.$status = NeuroSearch.Status.Pending;
-    this.$concurrent++;
 
-    var success = bind( this, this.$handleSuccess( this.$concurrent ) );
-    var failure = bind( this, this.$handleFailure( this.$concurrent ) );
+    var success = this.$request.onSuccess();
+    var failure = this.$request.onFailure();
 
     switch (this.$method) {
       case 'create':
@@ -59,6 +58,17 @@ NeuroSearch.prototype =
       default:
         throw 'Invalid search method: ' + this.$method;
     }
+  },
+
+  $cancel: function()
+  {
+    this.$off( NeuroSearch.Events.Ready );
+    this.$off( NeuroSearch.Events.Success );
+    this.$off( NeuroSearch.Events.Failure );
+
+    this.$request.cancel();
+
+    return this;
   },
 
   $ready: function(callback, context)
@@ -103,35 +113,21 @@ NeuroSearch.prototype =
     return this;
   },
 
-  $handleSuccess: function(concurrentCount)
+  $handleSuccess: function(response)
   {
-    return function onSuccess()
-    {
-      if (this.$concurrent === concurrentCount)
-      {
-        var models = this.$decode.apply( this, arguments );
+    var models = this.$decode.apply( this, arguments );
 
-        this.$concurrent = 0;
-        this.$status = NeuroSearch.Status.Success;
-        this.$results.reset( models, true );
-        this.$trigger( NeuroSearch.Events.Ready, [this] );
-        this.$trigger( NeuroSearch.Events.Success, [this] );
-      }
-    };
+    this.$status = NeuroSearch.Status.Success;
+    this.$results.reset( models, true );
+    this.$trigger( NeuroSearch.Events.Ready, [this, response] );
+    this.$trigger( NeuroSearch.Events.Success, [this, response] );
   },
 
-  $handleFailure: function(concurrentCount)
+  $handleFailure: function(response)
   {
-    return function onFailure()
-    {
-      if (this.$concurrent === concurrentCount)
-      {
-        this.$concurrent = 0;
-        this.$status = NeuroSearch.Status.Failure;
-        this.$trigger( NeuroSearch.Events.Ready, [this] );
-        this.$trigger( NeuroSearch.Events.Failure, [this] );
-      }
-    };
+    this.$status = NeuroSearch.Status.Failure;
+    this.$trigger( NeuroSearch.Events.Ready, [this, response] );
+    this.$trigger( NeuroSearch.Events.Failure, [this, response] );
   },
 
   $encode: function()

@@ -88,3 +88,79 @@ test( '$run concurrent', function(assert)
 
   timer.run();
 });
+
+test( '$run concurrent, ensure latest', function(assert)
+{
+  var timer = assert.timer();
+
+  var prefix = 'NeuroSearch_run_concurrent_latest_';
+
+  var Task = Neuro({
+    name: prefix + 'task',
+    fields: ['name', 'done']
+  });
+
+  var rest = Task.Database.rest;
+
+  rest.delay = 5;
+  rest.returnValue = [
+    {id: 1, name: 't0', done: 1},
+    {id: 2, name: 't1', done: 0}
+  ];
+
+  var search = Task.search();
+  search.name = 'names';
+  search.$run();
+
+  wait( 1, function()
+  {
+    rest.delay = 2;
+
+    search.name = 'names2';
+    search.$run();
+  });
+
+  wait( 4, function()
+  {
+    strictEqual( search.$results.length, 2 );
+  });
+
+  timer.run();
+});
+
+
+test( '$cancel', function(assert)
+{
+  var timer = assert.timer();
+
+  var prefix = 'NeuroSearch_cancel_';
+
+  var Task = Neuro({
+    name: prefix + 'task',
+    fields: ['name', 'done']
+  });
+
+  var rest = Task.Database.rest;
+
+  rest.delay = 2;
+  rest.returnValue = [
+    {id: 1, name: 't0', done: 1},
+    {id: 2, name: 't1', done: 0}
+  ];
+
+  var search = Task.search();
+  search.name = 'names';
+  search.$run();
+
+  wait( 1, function()
+  {
+    search.$cancel();
+  });
+
+  wait( 3, function()
+  {
+    strictEqual( search.$results.length, 0 );
+  });
+
+  timer.run();
+});
