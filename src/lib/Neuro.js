@@ -128,6 +128,26 @@ Neuro.get = function(name, callback, context)
   return cached;
 };
 
+/**
+ * A value which identifies a model instance. This can be the key of the model,
+ * an array of values (if the model has composite keys), an object which at
+ * least contains fields which identify the model, an instance of a model, the
+ * reference to a Neuro instance, or a function.
+ *
+ * If a plain object is given and it shares the same key as an existing model -
+ * the other fields on the object will be applied to the existing instance. If
+ * a plain object is given and it's key doesn't map to an existing model - a new
+ * one is created.
+ *
+ * If a reference to a Neuro instance is given - a new model instance is created
+ * with default values.
+ *
+ * If a function is given - it's invoked and the returning value is used as the
+ * value to identify the model instance.
+ *
+ * @typedef {String|Number|String[]|Number[]|Object|Neuro|Neuro.Model|Function} modelInput
+ */
+
 eventize( Neuro );
 
 Neuro.Events =

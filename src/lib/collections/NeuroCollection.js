@@ -568,7 +568,7 @@ extendArray( Array, NeuroCollection,
    *
    * @method
    * @memberof Neuro.Collection#
-   * @param {Any...} value -
+   * @param {...Any} value -
    *    The values to add to this collection.
    * @return {Number} -
    *    The new length of this collection.
@@ -600,7 +600,7 @@ extendArray( Array, NeuroCollection,
    *
    * @method
    * @memberof Neuro.Collection#
-   * @param {Any...} value -
+   * @param {...Any} value -
    *    The values to add to this collection.
    * @return {Number} -
    *    The new length of this collection.
@@ -979,7 +979,7 @@ extendArray( Array, NeuroCollection,
    *    number of elements left in the array starting at start, then all of the
    *    elements through the end of the array will be deleted.
    *    If deleteCount is omitted, deleteCount will be equal to (arr.length - start).
-   * @param {Any...} values -
+   * @param {...Any} values -
    *    The elements to add to the array, beginning at the start index. If you
    *    don't specify any elements, splice() will only remove elements from the array.
    * @return {Any[]} -

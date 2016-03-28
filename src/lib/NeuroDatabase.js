@@ -347,6 +347,10 @@ NeuroDatabase.prototype =
     {
       input = new input();
     }
+    if ( isFunction( input ) )
+    {
+      input = input();
+    }
 
     var key = db.buildKeyFromInput( input );
 

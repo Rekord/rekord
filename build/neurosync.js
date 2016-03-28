@@ -1982,6 +1982,26 @@ Neuro.get = function(name, callback, context)
   return cached;
 };
 
+/**
+ * A value which identifies a model instance. This can be the key of the model,
+ * an array of values (if the model has composite keys), an object which at
+ * least contains fields which identify the model, an instance of a model, the
+ * reference to a Neuro instance, or a function.
+ *
+ * If a plain object is given and it shares the same key as an existing model -
+ * the other fields on the object will be applied to the existing instance. If
+ * a plain object is given and it's key doesn't map to an existing model - a new
+ * one is created.
+ *
+ * If a reference to a Neuro instance is given - a new model instance is created
+ * with default values.
+ *
+ * If a function is given - it's invoked and the returning value is used as the
+ * value to identify the model instance.
+ *
+ * @typedef {String|Number|String[]|Number[]|Object|Neuro|Neuro.Model|Function} modelInput
+ */
+
 eventize( Neuro );
 
 Neuro.Events =
@@ -3762,6 +3782,10 @@ NeuroDatabase.prototype =
     if ( isNeuro( input ) )
     {
       input = new input();
+    }
+    if ( isFunction( input ) )
+    {
+      input = input();
     }
 
     var key = db.buildKeyFromInput( input );
@@ -6282,7 +6306,7 @@ extendArray( Array, NeuroCollection,
    *
    * @method
    * @memberof Neuro.Collection#
-   * @param {Any...} value -
+   * @param {...Any} value -
    *    The values to add to this collection.
    * @return {Number} -
    *    The new length of this collection.
@@ -6314,7 +6338,7 @@ extendArray( Array, NeuroCollection,
    *
    * @method
    * @memberof Neuro.Collection#
-   * @param {Any...} value -
+   * @param {...Any} value -
    *    The values to add to this collection.
    * @return {Number} -
    *    The new length of this collection.
@@ -6693,7 +6717,7 @@ extendArray( Array, NeuroCollection,
    *    number of elements left in the array starting at start, then all of the
    *    elements through the end of the array will be deleted.
    *    If deleteCount is omitted, deleteCount will be equal to (arr.length - start).
-   * @param {Any...} values -
+   * @param {...Any} values -
    *    The elements to add to the array, beginning at the start index. If you
    *    don't specify any elements, splice() will only remove elements from the array.
    * @return {Any[]} -
@@ -8240,11 +8264,36 @@ extendArray( NeuroModelCollection, NeuroRelationCollection,
   }
 
 });
+
+/**
+ * Overrides functions in the given model collection to turn it into a collection
+ * which contains models with a discriminator field.
+ *
+ * @param {Neuro.ModelCollection} collection -
+ *    The collection instance with discriminated models.
+ * @param {String} discriminator -
+ *    The name of the field which contains the discriminator.
+ * @param {Object} discriminatorsToModel -
+ *    A map of discriminators to the Neuro instances.
+ * @return {Neuro.ModelCollection} -
+ *    The reference to the given collection.
+ */
 function NeuroDiscriminateCollection(collection, discriminator, discriminatorsToModel)
 {
   collection.discriminator = discriminator;
   collection.discriminatorsToModel = discriminatorsToModel;
 
+  /**
+   * Builds a key from input. Discriminated collections only accept objects as
+   * input - otherwise there's no way to determine the discriminator. If the
+   * discriminator on the input doesn't map to a Neuro instance OR the input
+   * is not an object the input will be returned instead of a model instance.
+   *
+   * @param {modelInput} input -
+   *    The input to create a key for.
+   * @return {Any} -
+   *    The built key or the given input if a key could not be built.
+   */
   collection.buildKeyFromInput = function(input)
   {
     if ( isObject( input ) )
@@ -8257,13 +8306,24 @@ function NeuroDiscriminateCollection(collection, discriminator, discriminatorsTo
         return model.Database.buildKeyFromInput( input );
       }
     }
-    
+
     return input;
   };
 
+  /**
+   * Takes input and returns a model instance. The input is expected to be an
+   * object, any other type will return null.
+   *
+   * @param {modelInput} input -
+   *    The input to parse to a model instance.
+   * @param {Boolean} [remoteData=false] -
+   *    Whether or not the input is coming from a remote source.
+   * @return {Neuro.Model} -
+   *    The model instance parsed or null if none was found.
+   */
   collection.parseModel = function(input, remoteData)
   {
-    var discriminatedValue = input[ this.discriminator ];
+    var discriminatedValue = isValue( input ) ? input[ this.discriminator ] : null;
     var model = this.discriminatorsToModel[ discriminatedValue ];
 
     return model ? model.Database.parseModel( input, remoteData ) : null;
@@ -8271,6 +8331,7 @@ function NeuroDiscriminateCollection(collection, discriminator, discriminatorsTo
 
   return collection;
 }
+
 function NeuroQuery(database, whereProperties, whereValue, whereEquals)
 {
   this.onModelAdd     = bind( this, this.handleModelAdded );
