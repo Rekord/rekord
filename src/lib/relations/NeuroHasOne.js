@@ -41,7 +41,7 @@ extend( NeuroRelationSingle, NeuroHasOne,
     return NeuroHasOne.Defaults;
   },
 
-  handleLoad: function(model, initialValue, remoteData)
+  load: NeuroGate(function(model, initialValue, remoteData)
   {
     var relation = model.$relations[ this.name ] =
     {
@@ -83,7 +83,7 @@ extend( NeuroRelationSingle, NeuroHasOne,
     {
       relation.query = this.executeQuery( model );
     }
-  },
+  }),
 
   preClone: function(model, clone, properties)
   {

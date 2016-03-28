@@ -22,6 +22,7 @@ var build = {
     './src/lib/Neuro.store.js',
     './src/lib/Neuro.live.js',
     './src/lib/Neuro.offline.js',
+    './src/lib/NeuroGate.js',
     './src/lib/NeuroDatabase.js',
     './src/lib/NeuroModel.js',
     './src/lib/NeuroMap.js',

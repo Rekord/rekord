@@ -46,9 +46,6 @@ NeuroRelation.prototype =
     this.database = database;
     this.name = field;
     this.options = options;
-    this.pendingLoads = [];
-    this.pendingRemoteDatas = [];
-    this.pendingInitials = [];
     this.initialized = false;
     this.property = this.property || (indexOf( database.fields, this.name ) !== false);
     this.discriminated = !isEmpty( this.discriminators );
@@ -97,19 +94,7 @@ NeuroRelation.prototype =
   finishInitialization: function()
   {
     this.initialized = true;
-
-    var pending = this.pendingLoads;
-    var initials = this.pendingInitials;
-    var remotes = this.pendingRemoteDatas;
-
-    for (var i = 0; i < pending.length; i++)
-    {
-      this.handleLoad( pending[ i ], initials[ i ], remotes[ i ] );
-    }
-
-    pending.length = 0;
-    initials.length = 0;
-    remotes.length = 0;
+    this.load.open();
   },
 
   /**
@@ -120,24 +105,11 @@ NeuroRelation.prototype =
    *
    * @param  {Neuro.Model} model [description]
    */
-  load: function(model, initialValue, remoteData)
-  {
-    if ( !this.initialized )
-    {
-      this.pendingLoads.push( model );
-      this.pendingInitials.push( initialValue );
-      this.pendingRemoteDatas.push( remoteData );
-    }
-    else
-    {
-      this.handleLoad( model, initialValue, remoteData );
-    }
-  },
 
-  handleLoad: function(model, initialValue, remoteData)
+  load: NeuroGate(function(model, initialValue, remoteData)
   {
 
-  },
+  }),
 
   set: function(model, input, remoteData)
   {

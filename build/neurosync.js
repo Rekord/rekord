@@ -3377,6 +3377,44 @@ Neuro.checkNetworkStatus = function()
   }
 };
 
+function NeuroGate(callback)
+{
+  var opened = false;
+  var blocked = [];
+
+  var gate = function()
+  {
+    if ( opened )
+    {
+      callback.apply( this, arguments );
+    }
+    else
+    {
+      blocked.push( this, AP.slice.apply( arguments ) );
+    }
+  };
+
+  gate.open = function()
+  {
+    if ( !opened )
+    {
+      for (var i = 0; i < blocked.length; i += 2)
+      {
+        var context = blocked[ i ];
+        var args = blocked[ i + 1 ];
+
+        callback.apply( context, args );
+      }
+
+      blocked.length = 0;
+      opened = true;
+    }
+  };
+
+  return gate;
+}
+
+
 
 function NeuroDatabase(options)
 {
@@ -10029,9 +10067,6 @@ NeuroRelation.prototype =
     this.database = database;
     this.name = field;
     this.options = options;
-    this.pendingLoads = [];
-    this.pendingRemoteDatas = [];
-    this.pendingInitials = [];
     this.initialized = false;
     this.property = this.property || (indexOf( database.fields, this.name ) !== false);
     this.discriminated = !isEmpty( this.discriminators );
@@ -10080,19 +10115,7 @@ NeuroRelation.prototype =
   finishInitialization: function()
   {
     this.initialized = true;
-
-    var pending = this.pendingLoads;
-    var initials = this.pendingInitials;
-    var remotes = this.pendingRemoteDatas;
-
-    for (var i = 0; i < pending.length; i++)
-    {
-      this.handleLoad( pending[ i ], initials[ i ], remotes[ i ] );
-    }
-
-    pending.length = 0;
-    initials.length = 0;
-    remotes.length = 0;
+    this.load.open();
   },
 
   /**
@@ -10103,24 +10126,11 @@ NeuroRelation.prototype =
    *
    * @param  {Neuro.Model} model [description]
    */
-  load: function(model, initialValue, remoteData)
-  {
-    if ( !this.initialized )
-    {
-      this.pendingLoads.push( model );
-      this.pendingInitials.push( initialValue );
-      this.pendingRemoteDatas.push( remoteData );
-    }
-    else
-    {
-      this.handleLoad( model, initialValue, remoteData );
-    }
-  },
 
-  handleLoad: function(model, initialValue, remoteData)
+  load: NeuroGate(function(model, initialValue, remoteData)
   {
 
-  },
+  }),
 
   set: function(model, input, remoteData)
   {
@@ -10990,7 +11000,7 @@ extend( NeuroRelationSingle, NeuroBelongsTo,
     return NeuroBelongsTo.Defaults;
   },
 
-  handleLoad: function(model, initialValue, remoteData)
+  load: NeuroGate(function(model, initialValue, remoteData)
   {
     var relation = model.$relations[ this.name ] =
     {
@@ -11042,7 +11052,7 @@ extend( NeuroRelationSingle, NeuroBelongsTo,
     {
       relation.query = this.executeQuery( model );
     }
-  },
+  }),
 
   postRemove: function(model)
   {
@@ -11117,7 +11127,7 @@ extend( NeuroRelationSingle, NeuroHasOne,
     return NeuroHasOne.Defaults;
   },
 
-  handleLoad: function(model, initialValue, remoteData)
+  load: NeuroGate(function(model, initialValue, remoteData)
   {
     var relation = model.$relations[ this.name ] =
     {
@@ -11159,7 +11169,7 @@ extend( NeuroRelationSingle, NeuroHasOne,
     {
       relation.query = this.executeQuery( model );
     }
-  },
+  }),
 
   preClone: function(model, clone, properties)
   {
@@ -11289,7 +11299,7 @@ extend( NeuroRelationMultiple, NeuroHasMany,
     this.finishInitialization();
   },
 
-  handleLoad: function(model, initialValue, remoteData)
+  load: NeuroGate(function(model, initialValue, remoteData)
   {
     var relator = this;
     var relation = model.$relations[ this.name ] =
@@ -11357,7 +11367,7 @@ extend( NeuroRelationMultiple, NeuroHasMany,
 
     // We only need to set the property once since the underlying array won't change.
     this.setProperty( relation );
-  },
+  }),
 
   postClone: function(model, clone, properties)
   {
@@ -11636,7 +11646,7 @@ extend( NeuroRelationMultiple, NeuroHasManyThrough,
     this.finishInitialization();
   },
 
-  handleLoad: function(model, initialValue, remoteData)
+  load: NeuroGate(function(model, initialValue, remoteData)
   {
     var that = this;
     var throughDatabase = this.through.Database;
@@ -11708,7 +11718,7 @@ extend( NeuroRelationMultiple, NeuroHasManyThrough,
 
     // We only need to set the property once since the underlying array won't change.
     this.setProperty( relation );
-  },
+  }),
 
   preClone: function(model, clone, properties)
   {
@@ -12090,7 +12100,7 @@ function NeuroHasRemote()
 
 Neuro.Relations.hasRemote = NeuroHasRemote;
 
-NeuroHasRemote.Defaults = 
+NeuroHasRemote.Defaults =
 {
   model:                undefined,
   lazy:                 false,
@@ -12105,7 +12115,7 @@ NeuroHasRemote.Defaults =
   autoRefresh:          false // NeuroModel.Events.RemoteGets
 };
 
-extend( NeuroRelationMultiple, NeuroHasRemote, 
+extend( NeuroRelationMultiple, NeuroHasRemote,
 {
 
   type: 'hasRemote',
@@ -12122,16 +12132,15 @@ extend( NeuroRelationMultiple, NeuroHasRemote,
   onInitialized: function(database, field, options)
   {
     this.comparator = createComparator( this.comparator, this.comparatorNullsFirst );
-   
+
     Neuro.debug( Neuro.Debugs.HASREMOTE_INIT, this );
 
     this.finishInitialization();
   },
 
-  handleLoad: function(model, remoteData)
+  load: NeuroGate(function(model, initialValue, remoteData)
   {
     var relator = this;
-    var initial = model[ this.name ];
     var relation = model.$relations[ this.name ] =
     {
       parent: model,
@@ -12171,7 +12180,7 @@ extend( NeuroRelationMultiple, NeuroHasRemote,
 
     // We only need to set the property once since the underlying array won't change.
     this.setProperty( relation );
-  },
+  }),
 
   onRefresh: function(relation)
   {
@@ -12194,7 +12203,7 @@ extend( NeuroRelationMultiple, NeuroHasRemote,
     var adding = !target.has( key );
 
     if ( adding )
-    { 
+    {
       Neuro.debug( Neuro.Debugs.HASMANY_ADD, this, relation, related );
 
       target.put( key, related );
@@ -12242,6 +12251,7 @@ extend( NeuroRelationMultiple, NeuroHasRemote,
   }
 
 });
+
 
 var NeuroPolymorphic = 
 {

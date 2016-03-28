@@ -4,7 +4,7 @@ function NeuroHasRemote()
 
 Neuro.Relations.hasRemote = NeuroHasRemote;
 
-NeuroHasRemote.Defaults = 
+NeuroHasRemote.Defaults =
 {
   model:                undefined,
   lazy:                 false,
@@ -19,7 +19,7 @@ NeuroHasRemote.Defaults =
   autoRefresh:          false // NeuroModel.Events.RemoteGets
 };
 
-extend( NeuroRelationMultiple, NeuroHasRemote, 
+extend( NeuroRelationMultiple, NeuroHasRemote,
 {
 
   type: 'hasRemote',
@@ -36,16 +36,15 @@ extend( NeuroRelationMultiple, NeuroHasRemote,
   onInitialized: function(database, field, options)
   {
     this.comparator = createComparator( this.comparator, this.comparatorNullsFirst );
-   
+
     Neuro.debug( Neuro.Debugs.HASREMOTE_INIT, this );
 
     this.finishInitialization();
   },
 
-  handleLoad: function(model, remoteData)
+  load: NeuroGate(function(model, initialValue, remoteData)
   {
     var relator = this;
-    var initial = model[ this.name ];
     var relation = model.$relations[ this.name ] =
     {
       parent: model,
@@ -85,7 +84,7 @@ extend( NeuroRelationMultiple, NeuroHasRemote,
 
     // We only need to set the property once since the underlying array won't change.
     this.setProperty( relation );
-  },
+  }),
 
   onRefresh: function(relation)
   {
@@ -108,7 +107,7 @@ extend( NeuroRelationMultiple, NeuroHasRemote,
     var adding = !target.has( key );
 
     if ( adding )
-    { 
+    {
       Neuro.debug( Neuro.Debugs.HASMANY_ADD, this, relation, related );
 
       target.put( key, related );

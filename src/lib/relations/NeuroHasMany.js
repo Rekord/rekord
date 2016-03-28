@@ -50,7 +50,7 @@ extend( NeuroRelationMultiple, NeuroHasMany,
     this.finishInitialization();
   },
 
-  handleLoad: function(model, initialValue, remoteData)
+  load: NeuroGate(function(model, initialValue, remoteData)
   {
     var relator = this;
     var relation = model.$relations[ this.name ] =
@@ -118,7 +118,7 @@ extend( NeuroRelationMultiple, NeuroHasMany,
 
     // We only need to set the property once since the underlying array won't change.
     this.setProperty( relation );
-  },
+  }),
 
   postClone: function(model, clone, properties)
   {

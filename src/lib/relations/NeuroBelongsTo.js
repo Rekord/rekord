@@ -41,7 +41,7 @@ extend( NeuroRelationSingle, NeuroBelongsTo,
     return NeuroBelongsTo.Defaults;
   },
 
-  handleLoad: function(model, initialValue, remoteData)
+  load: NeuroGate(function(model, initialValue, remoteData)
   {
     var relation = model.$relations[ this.name ] =
     {
@@ -93,7 +93,7 @@ extend( NeuroRelationSingle, NeuroBelongsTo,
     {
       relation.query = this.executeQuery( model );
     }
-  },
+  }),
 
   postRemove: function(model)
   {

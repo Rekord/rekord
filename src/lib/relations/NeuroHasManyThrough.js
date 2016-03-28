@@ -74,7 +74,7 @@ extend( NeuroRelationMultiple, NeuroHasManyThrough,
     this.finishInitialization();
   },
 
-  handleLoad: function(model, initialValue, remoteData)
+  load: NeuroGate(function(model, initialValue, remoteData)
   {
     var that = this;
     var throughDatabase = this.through.Database;
@@ -146,7 +146,7 @@ extend( NeuroRelationMultiple, NeuroHasManyThrough,
 
     // We only need to set the property once since the underlying array won't change.
     this.setProperty( relation );
-  },
+  }),
 
   preClone: function(model, clone, properties)
   {
