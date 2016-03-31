@@ -287,7 +287,7 @@ extendArray( Array, NeuroCollection,
    *
    * @method
    * @memberof Neuro.Collection#
-   * @param {String|Object|Array|whereCallback} [whereProperties] -
+   * @param {whereInput} [whereProperties] -
    *    See {@link Neuro.createWhere}
    * @param {Any} [whereValue] -
    *    See {@link Neuro.createWhere}
@@ -318,7 +318,7 @@ extendArray( Array, NeuroCollection,
    *
    * @method
    * @memberof Neuro.Collection#
-   * @param {String|Object|Array|whereCallback} [whereProperties] -
+   * @param {whereInput} [whereProperties] -
    *    See {@link Neuro.createWhere}
    * @param {Any} [whereValue] -
    *    See {@link Neuro.createWhere}

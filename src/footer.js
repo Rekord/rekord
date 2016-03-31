@@ -14,6 +14,7 @@
   /* Collections */
   global.Neuro.Map = NeuroMap;
   global.Neuro.Collection = NeuroCollection;
+  global.Neuro.FilteredCollection = NeuroFilteredCollection;
   global.Neuro.ModelCollection = NeuroModelCollection;
   global.Neuro.Query = NeuroQuery;
   global.Neuro.RemoteQuery = NeuroRemoteQuery;
@@ -43,11 +44,14 @@
   global.Neuro.indexOf = indexOf;
   global.Neuro.propsMatch = propsMatch;
   global.Neuro.hasFields = hasFields;
+  global.Neuro.toArray = toArray;
 
   global.Neuro.eventize = eventize;
 
   global.Neuro.extend = extend;
   global.Neuro.extendArray = extendArray;
+  global.Neuro.copyConstructor = copyConstructor;
+  global.Neuro.factory = factory;
 
   global.Neuro.transfer = transfer;
   global.Neuro.collapse = collapse;
@@ -61,6 +65,12 @@
   global.Neuro.sizeof = sizeof;
   global.Neuro.isEmpty = isEmpty;
   global.Neuro.collect = collect;
+  global.Neuro.applyOptions = applyOptions;
+  global.Neuro.toCamelCase = toCamelCase;
+  global.Neuro.evaluate = evaluate;
+
+  global.Neuro.clean = clean;
+  global.Neuro.cleanFunctions = cleanFunctions;
 
   global.Neuro.compare = compare;
   global.Neuro.equals = equals;
