@@ -2002,6 +2002,12 @@ Neuro.get = function(name, callback, context)
  * @typedef {String|Number|String[]|Number[]|Object|Neuro|Neuro.Model|Function} modelInput
  */
 
+ /**
+  * A key to a model instance.
+  *
+  * @typedef {String|Number} modelKey
+  */
+
 eventize( Neuro );
 
 Neuro.Events =
@@ -5751,12 +5757,21 @@ NeuroRequest.prototype =
  * @memberof Neuro
  * @alias Collection
  * @extends Array
+ * @param {Array} [values] 0
+ *    The initial set of values in this collection.
  * @see Neuro.collect
  */
 function NeuroCollection(values)
 {
   this.addAll( values );
 }
+
+/**
+* A comparator to keep the collection sorted with.
+*
+* @memberof Neuro.Collection#
+* @member {comparisonCallback} [comparator]
+*/
 
 /**
  * The events a collection can emit.
@@ -6025,7 +6040,7 @@ extendArray( Array, NeuroCollection,
    *
    * @method
    * @memberof Neuro.Collection#
-   * @param {String|Object|Array|whereCallback} [whereProperties] -
+   * @param {whereInput} [whereProperties] -
    *    See {@link Neuro.createWhere}
    * @param {Any} [whereValue] -
    *    See {@link Neuro.createWhere}
@@ -6056,13 +6071,13 @@ extendArray( Array, NeuroCollection,
    *
    * @method
    * @memberof Neuro.Collection#
-   * @param {String|Object|Array|whereCallback} [whereProperties] -
+   * @param {whereInput} [whereProperties] -
    *    See {@link Neuro.createWhere}
    * @param {Any} [whereValue] -
    *    See {@link Neuro.createWhere}
    * @param {equalityCallback} [whereEquals] -
    *    See {@link Neuro.createWhere}
-   * @param {Array} [out=new this.constructor()] -
+   * @param {Array} [out=this.cloneEmpty()] -
    *    The array to place the elements that match.
    * @return {Neuro.Collection} -
    *    The copy of this collection ran through a filtering function.
@@ -6071,7 +6086,7 @@ extendArray( Array, NeuroCollection,
   where: function(whereProperties, whereValue, whereEquals, out)
   {
     var where = createWhere( whereProperties, whereValue, whereEquals );
-    var target = out || new this.constructor();
+    var target = out || this.cloneEmpty();
 
     for (var i = 0; i < this.length; i++)
     {
@@ -6100,7 +6115,7 @@ extendArray( Array, NeuroCollection,
    * @memberof Neuro.Collection#
    * @param {Array} collection -
    *    The array of elements that shouldn't exist in the resulting collection.
-   * @param {Array} [out=new this.constructor()] -
+   * @param {Array} [out=this.cloneEmpty()] -
    *    The array to place the elements that exist in this collection but not in
    *    the given collection. If this is not given - a collection of this type
    *    will be created.
@@ -6114,7 +6129,7 @@ extendArray( Array, NeuroCollection,
    */
   subtract: function(collection, out, equals)
   {
-    var target = out || new this.constructor();
+    var target = out || this.cloneEmpty();
     var equality = equals || equalsStrict;
 
     for (var i = 0; i < this.length; i++)
@@ -6150,7 +6165,7 @@ extendArray( Array, NeuroCollection,
    * @memberof Neuro.Collection#
    * @param {Array} collection -
    *    The collection of elements to intersect with this collection.
-   * @param {Array} [out=new this.constructor()] -
+   * @param {Array} [out=this.cloneEmpty()] -
    *    The array to place the elements that exist in both this collection and
    *    the given collection. If this is not given - a collection of this type
    *    will be created.
@@ -6163,7 +6178,7 @@ extendArray( Array, NeuroCollection,
    */
   intersect: function(collection, out, equals)
   {
-    var target = out || new this.constructor();
+    var target = out || this.cloneEmpty();
     var equality = equals || equalsStrict;
 
     for (var i = 0; i < collection.length; i++)
@@ -6199,7 +6214,7 @@ extendArray( Array, NeuroCollection,
    * @memberof Neuro.Collection#
    * @param {Array} collection -
    *    The array of elements that could exist in the resulting collection.
-   * @param {Array} [out=new this.constructor()] -
+   * @param {Array} [out=this.cloneEmpty()] -
    *    The array to place the elements that exist in given collection but not
    *    in this collection. If this is not given - a collection of this type
    *    will be created.
@@ -6213,7 +6228,7 @@ extendArray( Array, NeuroCollection,
    */
   complement: function(collection, out, equals)
   {
-    var target = out || new this.constructor();
+    var target = out || this.cloneEmpty();
     var equality = equals || equalsStrict;
 
     for (var i = 0; i < collection.length; i++)
@@ -6342,7 +6357,7 @@ extendArray( Array, NeuroCollection,
    *    The values to add to this collection.
    * @return {Number} -
    *    The new length of this collection.
-   * @emits Neuro.Collection#add
+   * @emits Neuro.Collection#adds
    * @emits Neuro.Collection#sort
    */
   unshift: function()
@@ -6663,7 +6678,7 @@ extendArray( Array, NeuroCollection,
    *    See {@link Neuro.createWhere}
    * @param {equalityCallback} [whereEquals] -
    *    See {@link Neuro.createWhere}
-   * @param {Array} [out=new this.constructor()] -
+   * @param {Array} [out=this.cloneEmpty()] -
    *    The array to place the elements that match.
    * @param {Boolean} [delaySort=false] -
    *    Whether automatic sorting should be delayed until the user manually
@@ -6677,7 +6692,7 @@ extendArray( Array, NeuroCollection,
   removeWhere: function(whereProperties, whereValue, whereEquals, out, delaySort)
   {
     var where = createWhere( whereProperties, whereValue, whereEquals );
-    var removed = out || new this.constructor();
+    var removed = out || this.cloneEmpty();
 
     for (var i = this.length - 1; i >= 0; i--)
     {
@@ -6994,22 +7009,22 @@ extendArray( Array, NeuroCollection,
    *
    * @method
    * @memberof Neuro.Collection#
-   * @param {whereInput} [properties] -
+   * @param {whereInput} [whereProperties] -
    *    The expression used to create a function to test the elements in this
    *    collection.
-   * @param {Any} [value] -
+   * @param {Any} [whereValue] -
    *    When the first argument is a string this argument will be treated as a
    *    value to compare to the value of the named property on the object passed
    *    through the filter function.
-   * @param {equalityCallback} [equals=Neuro.equalsStrict] -
+   * @param {equalityCallback} [whereEquals=Neuro.equalsStrict] -
    *    An alternative function can be used to compare to values.
    * @return {Any} -
    *    The first element in this collection that matches the given expression.
    * @see Neuro.createWhere
    */
-  firstWhere: function(properties, value, equals)
+  firstWhere: function(whereProperties, whereValue, whereEquals)
   {
-    var where = createWhere( properties, value, equals );
+    var where = createWhere( whereProperties, whereValue, whereEquals );
 
     for (var i = 0; i < this.length; i++)
     {
@@ -7663,13 +7678,13 @@ extendArray( Array, NeuroCollection,
 
       if ( !group )
       {
-        group = map[ key ] = new this.constructor();
+        group = map[ key ] = this.cloneEmpty();
       }
 
       group.add( model, true );
     }
 
-    var groupings = new this.constructor();
+    var groupings = this.cloneEmpty();
 
     groupings.setComparator( grouping.comparator, grouping.comparatorNullsFirst );
 
@@ -7724,6 +7739,32 @@ extendArray( Array, NeuroCollection,
   toArray: function()
   {
     return this.slice();
+  },
+
+  /**
+   * Returns a clone of this collection.
+   *
+   * @method
+   * @memberof Neuro.Collection#
+   * @return {Neuro.Collection} -
+   *    The reference to a clone collection.
+   */
+  clone: function()
+  {
+    return new this.constructor( this );
+  },
+
+  /**
+   * Returns an empty clone of this collection.
+   *
+   * @method
+   * @memberof Neuro.Collection#
+   * @return {Neuro.Collection} -
+   *    The reference to a clone collection.
+   */
+  cloneEmpty: function()
+  {
+    return new this.constructor();
   }
 
 });
@@ -7745,6 +7786,32 @@ eventize( NeuroCollection.prototype );
  */
 addEventFunction( NeuroCollection.prototype, 'change', NeuroCollection.Events.Changes );
 
+
+/**
+ * An extension of the {@link Neuro.Collection} class which is a filtered view
+ * of another collection.
+ *
+ * ```javascript
+ * var isEven = function(x) { return x % 2 === 0; };
+ * var c = Neuro.collect([1, 2, 3, 4, 5, 6, 7]);
+ * var f = c.filtered( isEven );
+ * f; // [2, 4, 6]
+ * c.add( 8 );
+ * c.remove( 2 );
+ * f; // [4, 6, 8]
+ * ```
+ *
+ * @constructor
+ * @memberof Neuro
+ * @alias FilteredCollection
+ * @extends Neuro.Collection
+ * @param {Neuro.Collection} base -
+ *    The collection to listen to for changes to update this collection.
+ * @param {whereCallback} filter -
+ *    The function which determines whether an element in the base collection
+ *    should exist in this collection.
+ * @see Neuro.Collection#filtered
+ */
 function NeuroFilteredCollection(base, filter)
 {
   this.onAdd      = bind( this, this.handleAdd );
@@ -7758,8 +7825,39 @@ function NeuroFilteredCollection(base, filter)
   this.init( base, filter );
 }
 
+/**
+ * The collection to listen to for changes to update this collection.
+ *
+ * @memberof Neuro.FilteredCollection#
+ * @member {Neuro.Collection} base
+ */
+
+ /**
+  * The function which determines whether an element in the base collection
+  * should exist in this collection.
+  *
+  * @memberof Neuro.FilteredCollection#
+  * @member {whereCallback} filter
+  */
+
 extendArray( NeuroCollection, NeuroFilteredCollection,
 {
+
+  /**
+   * Initializes the filtered collection by setting the base collection and the
+   * filtering function.
+   *
+   * @method
+   * @memberof Neuro.FilteredCollection#
+   * @param {Neuro.Collection} base -
+   *    The collection to listen to for changes to update this collection.
+   * @param {whereCallback} filter -
+   *    The function which determines whether an element in the base collection
+   *    should exist in this collection.
+   * @return {Neuro.FilteredCollection} -
+   *    The reference to this collection.
+   * @emits Neuro.Collection#reset
+   */
   init: function(base, filter)
   {
     if ( this.base !== base )
@@ -7775,14 +7873,43 @@ extendArray( NeuroCollection, NeuroFilteredCollection,
 
     this.filter = filter;
     this.sync();
+
+    return this;
   },
 
+  /**
+   * Sets the filter function of this collection and re-sychronizes it with the
+   * base collection.
+   *
+   * @method
+   * @memberof Neuro.FilteredCollection#
+   * @param {whereInput} [whereProperties] -
+   *    See {@link Neuro.createWhere}
+   * @param {Any} [whereValue] -
+   *    See {@link Neuro.createWhere}
+   * @param {equalityCallback} [whereEquals] -
+   *    See {@link Neuro.createWhere}
+   * @return {Neuro.FilteredCollection} -
+   *    The reference to this collection.
+   * @see Neuro.createWhere
+   * @emits Neuro.Collection#reset
+   */
   setFilter: function(whereProperties, whereValue, whereEquals)
   {
     this.filter = createWhere( whereProperties, whereValue, whereEquals );
     this.sync();
+
+    return this;
   },
 
+  /**
+   * Registers callbacks with events of the base collection.
+   *
+   * @method
+   * @memberof Neuro.FilteredCollection#
+   * @return {Neuro.FilteredCollection} -
+   *    The reference to this collection.
+   */
   connect: function()
   {
     this.base.on( NeuroCollection.Events.Add, this.onAdd );
@@ -7792,8 +7919,18 @@ extendArray( NeuroCollection, NeuroFilteredCollection,
     this.base.on( NeuroCollection.Events.Reset, this.onReset );
     this.base.on( NeuroCollection.Events.Updates, this.onUpdates );
     this.base.on( NeuroCollection.Events.Cleared, this.onClear );
+
+    return this;
   },
 
+  /**
+   * Unregisters callbacks with events from the base collection.
+   *
+   * @method
+   * @memberof Neuro.FilteredCollection#
+   * @return {Neuro.FilteredCollection} -
+   *    The reference to this collection.
+   */
   disconnect: function()
   {
     this.base.off( NeuroCollection.Events.Add, this.onAdd );
@@ -7803,8 +7940,22 @@ extendArray( NeuroCollection, NeuroFilteredCollection,
     this.base.off( NeuroCollection.Events.Reset, this.onReset );
     this.base.off( NeuroCollection.Events.Updates, this.onUpdates );
     this.base.off( NeuroCollection.Events.Cleared, this.onClear );
+
+    return this;
   },
 
+  /**
+   * Synchronizes this collection with the base collection. Synchronizing
+   * involves iterating over the base collection and passing each element into
+   * the filter function and if it returns a truthy value it's added to this
+   * collection.
+   *
+   * @method
+   * @memberof Neuro.FilteredCollection#
+   * @return {Neuro.FilteredCollection} -
+   *    The reference to this collection.
+   * @emits Neuro.Collection#reset
+   */
   sync: function()
   {
     var base = this.base;
@@ -7823,8 +7974,13 @@ extendArray( NeuroCollection, NeuroFilteredCollection,
     }
 
     this.trigger( NeuroCollection.Events.Reset, [this] );
+
+    return this;
   },
 
+  /**
+   * Responds to the {@link Neuro.Collection#event:add} event.
+   */
   handleAdd: function(collection, value)
   {
     var filter = this.filter;
@@ -7835,6 +7991,9 @@ extendArray( NeuroCollection, NeuroFilteredCollection,
     }
   },
 
+  /**
+   * Responds to the {@link Neuro.Collection#event:adds} event.
+   */
   handleAdds: function(collection, values)
   {
     var filter = this.filter;
@@ -7853,21 +8012,33 @@ extendArray( NeuroCollection, NeuroFilteredCollection,
     this.addAll( filtered );
   },
 
+  /**
+   * Responds to the {@link Neuro.Collection#event:remove} event.
+   */
   handleRemove: function(collection, value)
   {
     this.remove( value );
   },
 
+  /**
+   * Responds to the {@link Neuro.Collection#event:removes} event.
+   */
   handleRemoves: function(collection, values)
   {
     this.removeAll( values );
   },
 
+  /**
+   * Responds to the {@link Neuro.Collection#event:reset} event.
+   */
   handleReset: function(collection)
   {
     this.sync();
   },
 
+  /**
+   * Responds to the {@link Neuro.Collection#event:updates} event.
+   */
   handleUpdates: function(collection, updates)
   {
     var filter = this.filter;
@@ -7889,29 +8060,115 @@ extendArray( NeuroCollection, NeuroFilteredCollection,
     this.sort();
   },
 
+  /**
+   * Responds to the {@link Neuro.Collection#event:cleared} event.
+   */
   handleCleared: function(collection)
   {
     this.clear();
+  },
+
+  /**
+   * Returns a clone of this collection.
+   *
+   * @method
+   * @memberof Neuro.FilteredCollection#
+   * @return {Neuro.FilteredCollection} -
+   *    The reference to a clone collection.
+   */
+  clone: function()
+  {
+    return new this.constructor( this.base, this.filter );
+  },
+
+  /**
+   * Returns an empty clone of this collection.
+   *
+   * @method
+   * @memberof Neuro.ModelCollection#
+   * @return {Neuro.ModelCollection} -
+   *    The reference to a clone collection.
+   */
+  cloneEmpty: function()
+  {
+    return new this.constructor( this.base, this.filter );
   }
 
 });
 
+
+/**
+ * An extension of the {@link Neuro.Collection} class for {@link Neuro.Model}
+ * instances.
+ *
+ * @constructor
+ * @memberof Neuro
+ * @alias ModelCollection
+ * @extends Neuro.Collection
+ * @param {Neuro.Database} database -
+ *    The database for the models in this collection.
+ * @param {modelInput[]} [models] -
+ *    The initial array of models in this collection.
+ * @param {Boolean} [remoteData=false] -
+ *    If the models array is from a remote source. Remote sources place the
+ *    model directly into the database while local sources aren't stored in the
+ *    database until they're saved.
+ * @see Neuro.Models.boot
+ * @see Neuro.Models.collect
+ */
 function NeuroModelCollection(database, models, remoteData)
 {
   this.init( database, models, remoteData );
 }
 
+/**
+ * The map of models which keeps an index (by model key) of the models.
+ *
+ * @memberof Neuro.ModelCollection#
+ * @member {Neuro.Map} map
+ */
+
+/**
+ * The database for the models in this collection.
+ *
+ * @memberof Neuro.ModelCollection#
+ * @member {Neuro.Database} database
+ */
+
 extendArray( NeuroCollection, NeuroModelCollection,
 {
 
+  /**
+   * Initializes the model collection by setting the database, the initial set
+   * of models, and whether the initial set of models is from a remote source.
+   *
+   * @method
+   * @memberof Neuro.ModelCollection#
+   * @param {Neuro.Database} database -
+   *    The database for the models in this collection.
+   * @param {modelInput[]} [models] -
+   *    The initial array of models in this collection.
+   * @param {Boolean} [remoteData=false] -
+   *    If the models array is from a remote source. Remote sources place the
+   *    model directly into the database while local sources aren't stored in the
+   *    database until they're saved.
+   * @return {Neuro.ModelCollection} -
+   *    The reference to this collection.
+   * @emits Neuro.ModelCollection#reset
+   */
   init: function(database, models, remoteData)
   {
     this.map = new NeuroMap();
     this.map.values = this;
     this.database = database;
     this.reset( models, remoteData );
+
+    return this;
   },
 
+  /**
+   * Documented in NeuroCollection.js
+   */
   sort: function(comparator, comparatorNullsFirst)
   {
     var cmp = comparator ? createComparator( comparator, comparatorNullsFirst ) : this.comparator;
@@ -7926,19 +8183,51 @@ extendArray( NeuroCollection, NeuroModelCollection,
     return this;
   },
 
+  /**
+   * Takes input provided to the collection for adding, removing, or querying
+   * and generates the key which uniquely identifies a model.
+   *
+   * @method
+   * @memberof Neuro.ModelCollection#
+   * @param {modelInput} input -
+   *    The input to convert to a key.
+   * @return {modelKey} -
+   *    The key built from the input.
+   */
   buildKeyFromInput: function(input)
   {
     return this.database.buildKeyFromInput( input );
   },
 
+  /**
+   * Takes input provided to this collection for adding, removing, or querying
+   * and returns a model instance. An existing model can be referenced or a new
+   * model can be created on the spot.
+   *
+   * @method
+   * @memberof Neuro.ModelCollection#
+   * @param {modelInput} input -
+   *    The input to convert to a model instance.
+   * @param {Boolean} [remoteData=false] -
+   *    If the model is from a remote source. Remote sources place the model
+   *    directly into the database while local sources aren't stored in the
+   *    database until they're saved.
+   * @return {Neuro.Model} -
+   *    A model instance parsed from the input.
+   */
   parseModel: function(input, remoteData)
   {
     return this.database.parseModel( input, remoteData );
   },
 
+  /**
+   * Documented in NeuroCollection.js
+   *
+   * @see Neuro.ModelCollection#buildKeyFromInput
+   */
   subtract: function(models, out)
   {
-    var target = out || new this.constructor();
+    var target = out || this.cloneEmpty();
 
     for (var i = 0; i < this.length; i++)
     {
@@ -7969,9 +8258,12 @@ extendArray( NeuroCollection, NeuroModelCollection,
     return target;
   },
 
+  /**
+   * Documented in NeuroCollection.js
+   */
   intersect: function(models, out)
   {
-    var target = out || new this.constructor();
+    var target = out || this.cloneEmpty();
 
     for (var i = 0; i < models.length; i++)
     {
@@ -7987,9 +8279,12 @@ extendArray( NeuroCollection, NeuroModelCollection,
     return target;
   },
 
+  /**
+   * Documented in NeuroCollection.js
+   */
   complement: function(models, out)
   {
-    var target = out || new this.constructor();
+    var target = out || this.cloneEmpty();
 
     for (var i = 0; i < models.length; i++)
     {
@@ -8005,11 +8300,30 @@ extendArray( NeuroCollection, NeuroModelCollection,
     return target;
   },
 
+  /**
+   * Documented in NeuroCollection.js
+   */
   clear: function()
   {
     return this.map.reset();
   },
 
+  /**
+   * Resets the models in this collection with a new collection of models.
+   *
+   * @method
+   * @memberof Neuro.ModelCollection#
+   * @param {modelInput[]} [models] -
+   *    The initial array of models in this collection.
+   * @param {Boolean} [remoteData=false] -
+   *    If the models array is from a remote source. Remote sources place the
+   *    model directly into the database while local sources aren't stored in the
+   *    database until they're saved.
+   * @return {Neuro.ModelCollection} -
+   *    The reference to this collection.
+   * @see Neuro.ModelCollection#parseModel
+   * @emits Neuro.ModelCollection#reset
+   */
   reset: function(models, remoteData)
   {
     var map = this.map;
@@ -8043,9 +8357,58 @@ extendArray( NeuroCollection, NeuroModelCollection,
     this.sort();
   },
 
-  add: function(model, delaySort)
+  /**
+   * Returns whether this collection contains a model with the given key.
+   *
+   * @method
+   * @memberof Neuro.ModelCollection#
+   * @param {modelKey} key -
+   *    The key of the model to check for existence.
+   * @return {Boolean} -
+   *    True if a model with the given key exists in this collection, otherwise
+   *    false.
+   */
+  has: function(key)
   {
-    this.map.put( model.$key(), model );
+    return this.map.has( key );
+  },
+
+  /**
+   * Returns the model in this collection with the given key.
+   *
+   * @method
+   * @memberof Neuro.ModelCollection#
+   * @param {modelKey} key -
+   *    The key of the model to return.
+   * @return {Neuro.Model} -
+   *    The model instance for the given key, or undefined if a model wasn't
+   *    found.
+   */
+  get: function(key)
+  {
+    return this.map.get( key );
+  },
+
+  /**
+   * Places a model in this collection providing a key to use.
+   *
+   * @method
+   * @memberof Neuro.ModelCollection#
+   * @param {modelKey} key -
+   *    The key of the model.
+   * @param {Neuro.Model} model -
+   *    The model instance to place in the collection.
+   * @param {Boolean} [delaySort=false] -
+   *    Whether automatic sorting should be delayed until the user manually
+   *    calls {@link Neuro.ModelCollection#sort sort}.
+   * @return {Neuro.ModelCollection} -
+   *    The reference to this collection.
+   * @emits Neuro.ModelCollection#add
+   * @emits Neuro.ModelCollection#sort
+   */
+  put: function(key, model, delaySort)
+  {
+    this.map.put( key, model );
     this.trigger( NeuroCollection.Events.Add, [this, model] );
 
     if ( !delaySort )
@@ -8054,13 +8417,108 @@ extendArray( NeuroCollection, NeuroModelCollection,
     }
   },
 
+  /**
+   * Adds a model to this collection - sorting the collection if a comparator
+   * is set on this collection and `delaySort` is not a specified or a true
+   * value.
+   *
+   * @method
+   * @memberof Neuro.ModelCollection#
+   * @param {modelInput} input -
+   *    The model to add to this collection.
+   * @param {Boolean} [delaySort=false] -
+   *    Whether automatic sorting should be delayed until the user manually
+   *    calls {@link Neuro.ModelCollection#sort sort}.
+   * @return {Neuro.ModelCollection} -
+   *    The reference to this collection.
+   * @emits Neuro.ModelCollection#add
+   * @emits Neuro.ModelCollection#sort
+   */
+  add: function(input, delaySort)
+  {
+    var model = this.parseModel( input );
+
+    this.map.put( model.$key(), model );
+    this.trigger( NeuroCollection.Events.Add, [this, model] );
+
+    if ( !delaySort )
+    {
+      this.sort();
+    }
+
+    return this;
+  },
+
+  /**
+   * Adds one or more models to the end of this collection - sorting the
+   * collection if a comparator is set on this collection.
+   *
+   * @method
+   * @memberof Neuro.ModelCollection#
+   * @param {...modelInput} value -
+   *    The models to add to this collection.
+   * @return {Number} -
+   *    The new length of this collection.
+   * @emits Neuro.ModelCollection#add
+   * @emits Neuro.ModelCollection#sort
+   */
+  push: function()
+  {
+    var values = arguments;
+
+    for (var i = 0; i < values.length; i++)
+    {
+      var model = this.parseModel( values[ i ] );
+
+      this.map.put( model.$key(), model );
+    }
+
+    this.trigger( NeuroCollection.Events.Adds, [this, values] );
+    this.sort();
+
+    return this.length;
+  },
+
+  /**
+   * @method
+   * @memberof Neuro.ModelCollection#
+   * @see Neuro.ModelCollection#push
+   * @param {...modelInput} value -
+   *    The values to add to this collection.
+   * @return {Number} -
+   *    The new length of this collection.
+   * @emits Neuro.ModelCollection#adds
+   * @emits Neuro.ModelCollection#sort
+   */
+  unshift: function()
+  {
+    return this.push.apply( this, arguments );
+  },
+
+  /**
+   * Adds all models in the given array to this collection - sorting the
+   * collection if a comparator is set on this collection and `delaySort` is
+   * not specified or a true value.
+   *
+   * @method
+   * @memberof Neuro.ModelCollection#
+   * @param {modelInput[]} models -
+   *    The models to add to this collection.
+   * @param {Boolean} [delaySort=false] -
+   *    Whether automatic sorting should be delayed until the user manually
+   *    calls {@link Neuro.ModelCollection#sort sort}.
+   * @return {Neuro.ModelCollection} -
+   *    The reference to this collection.
+   * @emits Neuro.ModelCollection#adds
+   * @emits Neuro.ModelCollection#sort
+   */
   addAll: function(models, delaySort)
   {
     if ( isArray( models ) )
     {
       for (var i = 0; i < models.length; i++)
       {
-        var model = models[ i ];
+        var model = this.parseModel( models[ i ] );
 
         this.map.put( model.$key(), model );
       }
@@ -8074,27 +8532,143 @@ extendArray( NeuroCollection, NeuroModelCollection,
     }
   },
 
-  put: function(key, model, delaySort)
+  /**
+   * @method
+   * @memberof Neuro.ModelCollection#
+   * @see Neuro.ModelCollection#add
+   * @return {Neuro.ModelCollection} -
+   *    The reference to this collection.
+   * @emits Neuro.ModelCollection#add
+   * @emits Neuro.ModelCollection#sort
+   */
+  insertAt: function(i, value, delaySort)
   {
-    this.map.put( key, model );
-    this.trigger( NeuroCollection.Events.Add, [this, model] );
+    return this.add( value, delaySort );
+  },
+
+  /**
+   * Removes the last model in this collection and returns it - sorting the
+   * collection if a comparator is set on this collection and `delaySort` is
+   * no specified or a true value.
+   *
+   * @method
+   * @memberof Neuro.ModelCollection#
+   * @param {Boolean} [delaySort=false] -
+   *    Whether automatic sorting should be delayed until the user manually
+   *    calls {@link Neuro.ModelCollection#sort sort}.
+   * @return {Neuro.Model} -
+   *    The model removed from the end of the collection.
+   * @emits Neuro.ModelCollection#remove
+   * @emits Neuro.ModelCollection#sort
+   */
+  pop: function(delaySort)
+  {
+    var i = this.length - 1;
+    var removed = this[ i ];
+
+    this.map.removeAt( i );
+    this.trigger( NeuroCollection.Events.Remove, [this, removed, i] );
 
     if ( !delaySort )
     {
       this.sort();
     }
+
+    return removed;
   },
 
-  has: function(key)
+  /**
+   * Removes the first model in this collection and returns it - sorting the
+   * collection if a comparator is set on this collection and `delaySort` is
+   * no specified or a true value.
+   *
+   * ```javascript
+   * var c = Neuro.collect(1, 2, 3, 4);
+   * c.shift(); // 1
+   * ```
+   *
+   * @method
+   * @memberof Neuro.ModelCollection#
+   * @param {Boolean} [delaySort=false] -
+   *    Whether automatic sorting should be delayed until the user manually
+   *    calls {@link Neuro.ModelCollection#sort sort}.
+   * @return {Neuro.Model} -
+   *    The model removed from the beginning of the collection.
+   * @emits Neuro.ModelCollection#remove
+   * @emits Neuro.ModelCollection#sort
+   */
+  shift: function(delaySort)
   {
-    return this.map.has( key );
+    var removed = this[ 0 ];
+
+    this.map.removeAt( 0 );
+    this.trigger( NeuroCollection.Events.Remove, [this, removed, 0] );
+
+    if ( !delaySort )
+    {
+      this.sort();
+    }
+
+    return removed;
   },
 
-  get: function(key)
+  /**
+   * Removes the model in this collection at the given index `i` - sorting
+   * the collection if a comparator is set on this collection and `delaySort` is
+   * not specified or a true value.
+   *
+   * @method
+   * @memberof Neuro.ModelCollection#
+   * @param {Number} i -
+   *    The index of the model to remove.
+   * @param {Boolean} [delaySort=false] -
+   *    Whether automatic sorting should be delayed until the user manually
+   *    calls {@link Neuro.ModelCollection#sort sort}.
+   * @return {Neuro.Model} -
+   *    The model removed, or undefined if the index was invalid.
+   * @emits Neuro.ModelCollection#remove
+   * @emits Neuro.ModelCollection#sort
+   */
+  removeAt: function(i, delaySort)
   {
-    return this.map.get( key );
+    var removing;
+
+    if (i >= 0 && i < this.length)
+    {
+      removing = this[ i ];
+
+      this.map.removeAt( i );
+      this.trigger( NeuroCollection.Events.Remove, [this, removing, i] );
+
+      if ( !delaySort )
+      {
+        this.sort();
+      }
+    }
+
+    return removing;
   },
 
+  /**
+   * Removes the given model from this collection if it exists - sorting the
+   * collection if a comparator is set on this collection and `delaySort` is not
+   * specified or a true value.
+   *
+   * @method
+   * @memberof Neuro.ModelCollection#
+   * @param {modelInput} input -
+   *    The model to remove from this collection if it exists.
+   * @param {Boolean} [delaySort=false] -
+   *    Whether automatic sorting should be delayed until the user manually
+   *    calls {@link Neuro.ModelCollection#sort sort}.
+   * @param {equalityCallback} [equals=Neuro.equalsStrict] -
+   *    The function which determines whether one of the elements that exist in
+   *    this collection are equivalent to the given value.
+   * @return {Neuro.Model} -
+   *    The element removed from this collection.
+   * @emits Neuro.ModelCollection#remove
+   * @emits Neuro.ModelCollection#sort
+   */
   remove: function(input, delaySort)
   {
     var key = this.buildKeyFromInput( input );
@@ -8112,6 +8686,23 @@ extendArray( NeuroCollection, NeuroModelCollection,
     }
   },
 
+  /**
+   * Removes the given models from this collection - sorting the collection if
+   * a comparator is set on this collection and `delaySort` is not specified or
+   * a true value.
+   *
+   * @method
+   * @memberof Neuro.ModelCollection#
+   * @param {modelInput[]} inputs -
+   *    The models to remove from this collection if they exist.
+   * @param {Boolean} [delaySort=false] -
+   *    Whether automatic sorting should be delayed until the user manually
+   *    calls {@link Neuro.ModelCollection#sort sort}.
+   * @return {Neuro.Model[]} -
+   *    The models removed from this collection.
+   * @emits Neuro.ModelCollection#removes
+   * @emits Neuro.ModelCollection#sort
+   */
   removeAll: function(inputs, delaySort)
   {
     var map = this.map;
@@ -8139,6 +8730,17 @@ extendArray( NeuroCollection, NeuroModelCollection,
     return removed;
   },
 
+  /**
+   * Returns the index of the given model in this collection or returns -1
+   * if the model doesn't exist in this collection.
+   *
+   * @method
+   * @memberof Neuro.ModelCollection#
+   * @param {modelInput} input -
+   *    The model to search for.
+   * @return {Number} -
+   *    The index of the model in this collection or -1 if it was not found.
+   */
   indexOf: function(input)
   {
     var key = this.buildKeyFromInput( input );
@@ -8147,21 +8749,71 @@ extendArray( NeuroCollection, NeuroModelCollection,
     return index === undefined ? -1 : index;
   },
 
+  /**
+   * Rebuilds the internal index which maps keys to the index of the model in
+   * this collection.
+   *
+   * @method
+   * @memberof Neuro.ModelCollection#
+   * @return {Neuro.ModelCollection} -
+   *    The reference to this collection.
+   */
   rebuild: function()
   {
     this.map.rebuildIndex();
   },
 
+  /**
+   * Returns the array of keys that correspond to the models in this collection.
+   *
+   * @method
+   * @memberof Neuro.ModelCollection#
+   * @return {modelKey[]} -
+   *    The array of model keys.
+   */
   keys: function()
   {
     return this.map.keys;
   },
 
+  /**
+   * Reverses the order of models in this collection.
+   *
+   * @method
+   * @memberof Neuro.ModelCollection#
+   * @return {Neuro.ModelCollection} -
+   *    The reference to this collection.
+   * @emits Neuro.ModelCollection#updates
+   */
   reverse: function()
   {
     this.map.reverse();
+
+    this.trigger( NeuroCollection.Events.Updates, [this] );
+
+    return this;
   },
 
+  /**
+   * Removes the models from this collection where the given expression is true.
+   * The first argument, if `true`, can call {@link Neuro.Model#$remove} on each
+   * model removed from this colleciton.
+   *
+   * @method
+   * @memberof Neuro.ModelCollection#
+   * @param {Boolean} [callRemove=false] -
+   *    Whether {@link Neuro.Model#$remove} should be called on each removed model.
+   * @param {whereInput} [whereProperties] -
+   *    See {@link Neuro.createWhere}
+   * @param {Any} [whereValue] -
+   *    See {@link Neuro.createWhere}
+   * @param {equalityCallback} [whereEquals] -
+   *    See {@link Neuro.createWhere}
+   * @return {Neuro.Model[]} -
+   *    An array of models removed from this collection.
+   * @emits Neuro.ModelCollection#removes
+   * @emits Neuro.ModelCollection#sort
+   */
   removeWhere: function(callRemove, whereProperties, whereValue, whereEquals)
   {
     var where = createWhere( whereProperties, whereValue, whereEquals );
@@ -8190,14 +8842,40 @@ extendArray( NeuroCollection, NeuroModelCollection,
     return removed;
   },
 
-  update: function(props, value, remoteData)
+  /**
+   * Updates the given property(s) in all models in this collection with the
+   * given value. If `avoidSave` is not a truthy value then
+   * {@link Neuro.Model#$save} is called on every model in this collection.
+   *
+   * @method
+   * @memberof Neuro.ModelCollection#
+   * @param {String|Object} props -
+   *    The property or properties to update.
+   * @param {Any} [value] -
+   *    The value to set if a String `props` is given.
+   * @param {Boolean} [remoteData=false] -
+   *    If the properties are from a remote source. Remote sources place the
+   *    model directly into the database while local sources aren't stored in the
+   *    database until they're saved.
+   * @param {Boolean} [avoidSave=false] -
+   *    True for NOT calling {@link Neuro.Model#$save}, otherwise false.
+   * @return {Neuro.ModelCollection} -
+   *    The reference to this collection.
+   * @emits Neuro.ModelCollection#updates
+   * @emits Neuro.ModelCollection#sort
+   */
+  update: function(props, value, remoteData, avoidSave)
   {
     for (var i = 0; i < this.length; i++)
     {
       var model = this[ i ];
 
       model.$set( props, value, remoteData );
-      model.$save();
+
+      if ( !avoidSave )
+      {
+        model.$save();
+      }
     }
 
     this.trigger( NeuroCollection.Events.Updates, [this, this] );
@@ -8206,7 +8884,31 @@ extendArray( NeuroCollection, NeuroModelCollection,
     return this;
   },
 
-  updateWhere: function(where, props, value, remoteData)
+  /**
+   * Updates the given property(s) in models in this collection which pass the
+   * `where` function with the given value. If `avoidSave` is not a truthy value
+   * then {@link Neuro.Model#$save} is called on every model in this collection.
+   *
+   * @method
+   * @memberof Neuro.ModelCollection#
+   * @param {whereCallback} where -
+   *    The function which determines whether a model should be updated.
+   * @param {String|Object} props -
+   *    The property or properties to update.
+   * @param {*} [value] -
+   *    The value to set if a String `props` is given.
+   * @param {Boolean} [remoteData=false] -
+   *    If the properties are from a remote source. Remote sources place the
+   *    model directly into the database while local sources aren't stored in the
+   *    database until they're saved.
+   * @param {Boolean} [avoidSave=false] -
+   *    True for NOT calling {@link Neuro.Model#$save}, otherwise false.
+   * @return {Neuro.Model[]} -
+   *    An array of models updated.
+   * @emits Neuro.ModelCollection#updates
+   * @emits Neuro.ModelCollection#sort
+   */
+  updateWhere: function(where, props, value, remoteData, avoidSave)
   {
     var updated = [];
 
@@ -8217,7 +8919,11 @@ extendArray( NeuroCollection, NeuroModelCollection,
       if ( where( model ) )
       {
         model.$set( props, value, remoteData );
-        model.$save();
+
+        if ( !autoSave )
+        {
+          model.$save();
+        }
 
         updated.push( model );
       }
@@ -8227,17 +8933,43 @@ extendArray( NeuroCollection, NeuroModelCollection,
     this.sort();
 
     return updated;
+  },
+
+  /**
+   * Returns a clone of this collection.
+   *
+   * @method
+   * @memberof Neuro.ModelCollection#
+   * @return {Neuro.ModelCollection} -
+   *    The reference to a clone collection.
+   */
+  clone: function()
+  {
+    return new NeuroModelCollection( this.database, this, true );
+  },
+
+  /**
+   * Returns an empty clone of this collection.
+   *
+   * @method
+   * @memberof Neuro.ModelCollection#
+   * @return {Neuro.ModelCollection} -
+   *    The reference to a clone collection.
+   */
+  cloneEmpty: function()
+  {
+    return new NeuroModelCollection( this.database );
   }
 
 });
 
 
-function NeuroRelationCollection(database, model, relator)
+function NeuroRelationCollection(database, model, relator, models, remoteData)
 {
   this.model = model;
   this.relator = relator;
-  
-  this.init( database );
+
+  this.init( database, models, remoteData );
 }
 
 extendArray( NeuroModelCollection, NeuroRelationCollection,
@@ -8247,23 +8979,50 @@ extendArray( NeuroModelCollection, NeuroRelationCollection,
   {
     this.relator.set( this.model, input );
   },
-  
+
   relate: function(input)
   {
     this.relator.relate( this.model, input );
   },
-  
+
   unrelate: function(input)
   {
     this.relator.unrelate( this.model, input );
   },
-  
+
   isRelated: function(input)
   {
     return this.relator.isRelated( this.model, input );
+  },
+
+  /**
+   * Returns a clone of this collection.
+   *
+   * @method
+   * @memberof Neuro.RelationCollection#
+   * @return {Neuro.RelationCollection} -
+   *    The reference to a clone collection.
+   */
+  clone: function()
+  {
+    return new NeuroRelationCollection( this.database, this.model, this.relator, this, true );
+  },
+
+  /**
+   * Returns an empty clone of this collection.
+   *
+   * @method
+   * @memberof Neuro.ModelCollection#
+   * @return {Neuro.ModelCollection} -
+   *    The reference to a clone collection.
+   */
+  cloneEmpty: function()
+  {
+    return new NeuroRelationCollection( this.database, this.model, this.relator );
   }
 
 });
+
 
 /**
  * Overrides functions in the given model collection to turn it into a collection
@@ -8282,6 +9041,12 @@ function NeuroDiscriminateCollection(collection, discriminator, discriminatorsTo
 {
   collection.discriminator = discriminator;
   collection.discriminatorsToModel = discriminatorsToModel;
+
+  // Original Functions
+  var buildKeyFromInput = collection.buildKeyFromInput;
+  var parseModel = collection.parseModel;
+  var clone = collection.clone;
+  var cloneEmpty = collection.cloneEmpty;
 
   /**
    * Builds a key from input. Discriminated collections only accept objects as
@@ -8323,10 +9088,41 @@ function NeuroDiscriminateCollection(collection, discriminator, discriminatorsTo
    */
   collection.parseModel = function(input, remoteData)
   {
+    if ( input instanceof NeuroModel )
+    {
+      return input;
+    }
+
     var discriminatedValue = isValue( input ) ? input[ this.discriminator ] : null;
     var model = this.discriminatorsToModel[ discriminatedValue ];
 
     return model ? model.Database.parseModel( input, remoteData ) : null;
+  };
+
+  /**
+   * Returns a clone of this collection.
+   *
+   * @method
+   * @memberof Neuro.Collection#
+   * @return {Neuro.Collection} -
+   *    The reference to a clone collection.
+   */
+  collection.clone = function()
+  {
+    return NeuroDiscriminateCollection( clone.apply( this ), discriminator, discriminatorsToModel );
+  };
+
+  /**
+   * Returns an empty clone of this collection.
+   *
+   * @method
+   * @memberof Neuro.Collection#
+   * @return {Neuro.Collection} -
+   *    The reference to a clone collection.
+   */
+  collection.cloneEmpty = function()
+  {
+    return NeuroDiscriminateCollection( cloneEmpty.apply( this ), discriminator, discriminatorsToModel );
   };
 
   return collection;
@@ -12918,6 +13714,7 @@ NeuroShard.prototype =
   /* Collections */
   global.Neuro.Map = NeuroMap;
   global.Neuro.Collection = NeuroCollection;
+  global.Neuro.FilteredCollection = NeuroFilteredCollection;
   global.Neuro.ModelCollection = NeuroModelCollection;
   global.Neuro.Query = NeuroQuery;
   global.Neuro.RemoteQuery = NeuroRemoteQuery;
@@ -12947,11 +13744,14 @@ NeuroShard.prototype =
   global.Neuro.indexOf = indexOf;
   global.Neuro.propsMatch = propsMatch;
   global.Neuro.hasFields = hasFields;
+  global.Neuro.toArray = toArray;
 
   global.Neuro.eventize = eventize;
 
   global.Neuro.extend = extend;
   global.Neuro.extendArray = extendArray;
+  global.Neuro.copyConstructor = copyConstructor;
+  global.Neuro.factory = factory;
 
   global.Neuro.transfer = transfer;
   global.Neuro.collapse = collapse;
@@ -12965,6 +13765,12 @@ NeuroShard.prototype =
   global.Neuro.sizeof = sizeof;
   global.Neuro.isEmpty = isEmpty;
   global.Neuro.collect = collect;
+  global.Neuro.applyOptions = applyOptions;
+  global.Neuro.toCamelCase = toCamelCase;
+  global.Neuro.evaluate = evaluate;
+
+  global.Neuro.clean = clean;
+  global.Neuro.cleanFunctions = cleanFunctions;
 
   global.Neuro.compare = compare;
   global.Neuro.equals = equals;

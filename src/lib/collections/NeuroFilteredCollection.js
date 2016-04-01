@@ -278,6 +278,32 @@ extendArray( NeuroCollection, NeuroFilteredCollection,
   handleCleared: function(collection)
   {
     this.clear();
+  },
+
+  /**
+   * Returns a clone of this collection.
+   *
+   * @method
+   * @memberof Neuro.FilteredCollection#
+   * @return {Neuro.FilteredCollection} -
+   *    The reference to a clone collection.
+   */
+  clone: function()
+  {
+    return new this.constructor( this.base, this.filter );
+  },
+
+  /**
+   * Returns an empty clone of this collection.
+   *
+   * @method
+   * @memberof Neuro.FilteredCollection#
+   * @return {Neuro.FilteredCollection} -
+   *    The reference to a clone collection.
+   */
+  cloneEmpty: function()
+  {
+    return new this.constructor( this.base, this.filter );
   }
 
 });

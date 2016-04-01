@@ -148,6 +148,12 @@ Neuro.get = function(name, callback, context)
  * @typedef {String|Number|String[]|Number[]|Object|Neuro|Neuro.Model|Function} modelInput
  */
 
+ /**
+  * A key to a model instance.
+  *
+  * @typedef {String|Number} modelKey
+  */
+
 eventize( Neuro );
 
 Neuro.Events =

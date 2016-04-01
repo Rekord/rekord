@@ -13,12 +13,21 @@
  * @memberof Neuro
  * @alias Collection
  * @extends Array
+ * @param {Array} [values] 0
+ *    The initial set of values in this collection.
  * @see Neuro.collect
  */
 function NeuroCollection(values)
 {
   this.addAll( values );
 }
+
+/**
+* A comparator to keep the collection sorted with.
+*
+* @memberof Neuro.Collection#
+* @member {comparisonCallback} [comparator]
+*/
 
 /**
  * The events a collection can emit.
@@ -324,7 +333,7 @@ extendArray( Array, NeuroCollection,
    *    See {@link Neuro.createWhere}
    * @param {equalityCallback} [whereEquals] -
    *    See {@link Neuro.createWhere}
-   * @param {Array} [out=new this.constructor()] -
+   * @param {Array} [out=this.cloneEmpty()] -
    *    The array to place the elements that match.
    * @return {Neuro.Collection} -
    *    The copy of this collection ran through a filtering function.
@@ -333,7 +342,7 @@ extendArray( Array, NeuroCollection,
   where: function(whereProperties, whereValue, whereEquals, out)
   {
     var where = createWhere( whereProperties, whereValue, whereEquals );
-    var target = out || new this.constructor();
+    var target = out || this.cloneEmpty();
 
     for (var i = 0; i < this.length; i++)
     {
@@ -362,7 +371,7 @@ extendArray( Array, NeuroCollection,
    * @memberof Neuro.Collection#
    * @param {Array} collection -
    *    The array of elements that shouldn't exist in the resulting collection.
-   * @param {Array} [out=new this.constructor()] -
+   * @param {Array} [out=this.cloneEmpty()] -
    *    The array to place the elements that exist in this collection but not in
    *    the given collection. If this is not given - a collection of this type
    *    will be created.
@@ -376,7 +385,7 @@ extendArray( Array, NeuroCollection,
    */
   subtract: function(collection, out, equals)
   {
-    var target = out || new this.constructor();
+    var target = out || this.cloneEmpty();
     var equality = equals || equalsStrict;
 
     for (var i = 0; i < this.length; i++)
@@ -412,7 +421,7 @@ extendArray( Array, NeuroCollection,
    * @memberof Neuro.Collection#
    * @param {Array} collection -
    *    The collection of elements to intersect with this collection.
-   * @param {Array} [out=new this.constructor()] -
+   * @param {Array} [out=this.cloneEmpty()] -
    *    The array to place the elements that exist in both this collection and
    *    the given collection. If this is not given - a collection of this type
    *    will be created.
@@ -425,7 +434,7 @@ extendArray( Array, NeuroCollection,
    */
   intersect: function(collection, out, equals)
   {
-    var target = out || new this.constructor();
+    var target = out || this.cloneEmpty();
     var equality = equals || equalsStrict;
 
     for (var i = 0; i < collection.length; i++)
@@ -461,7 +470,7 @@ extendArray( Array, NeuroCollection,
    * @memberof Neuro.Collection#
    * @param {Array} collection -
    *    The array of elements that could exist in the resulting collection.
-   * @param {Array} [out=new this.constructor()] -
+   * @param {Array} [out=this.cloneEmpty()] -
    *    The array to place the elements that exist in given collection but not
    *    in this collection. If this is not given - a collection of this type
    *    will be created.
@@ -475,7 +484,7 @@ extendArray( Array, NeuroCollection,
    */
   complement: function(collection, out, equals)
   {
-    var target = out || new this.constructor();
+    var target = out || this.cloneEmpty();
     var equality = equals || equalsStrict;
 
     for (var i = 0; i < collection.length; i++)
@@ -604,7 +613,7 @@ extendArray( Array, NeuroCollection,
    *    The values to add to this collection.
    * @return {Number} -
    *    The new length of this collection.
-   * @emits Neuro.Collection#add
+   * @emits Neuro.Collection#adds
    * @emits Neuro.Collection#sort
    */
   unshift: function()
@@ -925,7 +934,7 @@ extendArray( Array, NeuroCollection,
    *    See {@link Neuro.createWhere}
    * @param {equalityCallback} [whereEquals] -
    *    See {@link Neuro.createWhere}
-   * @param {Array} [out=new this.constructor()] -
+   * @param {Array} [out=this.cloneEmpty()] -
    *    The array to place the elements that match.
    * @param {Boolean} [delaySort=false] -
    *    Whether automatic sorting should be delayed until the user manually
@@ -939,7 +948,7 @@ extendArray( Array, NeuroCollection,
   removeWhere: function(whereProperties, whereValue, whereEquals, out, delaySort)
   {
     var where = createWhere( whereProperties, whereValue, whereEquals );
-    var removed = out || new this.constructor();
+    var removed = out || this.cloneEmpty();
 
     for (var i = this.length - 1; i >= 0; i--)
     {
@@ -1256,22 +1265,22 @@ extendArray( Array, NeuroCollection,
    *
    * @method
    * @memberof Neuro.Collection#
-   * @param {whereInput} [properties] -
+   * @param {whereInput} [whereProperties] -
    *    The expression used to create a function to test the elements in this
    *    collection.
-   * @param {Any} [value] -
+   * @param {Any} [whereValue] -
    *    When the first argument is a string this argument will be treated as a
    *    value to compare to the value of the named property on the object passed
    *    through the filter function.
-   * @param {equalityCallback} [equals=Neuro.equalsStrict] -
+   * @param {equalityCallback} [whereEquals=Neuro.equalsStrict] -
    *    An alternative function can be used to compare to values.
    * @return {Any} -
    *    The first element in this collection that matches the given expression.
    * @see Neuro.createWhere
    */
-  firstWhere: function(properties, value, equals)
+  firstWhere: function(whereProperties, whereValue, whereEquals)
   {
-    var where = createWhere( properties, value, equals );
+    var where = createWhere( whereProperties, whereValue, whereEquals );
 
     for (var i = 0; i < this.length; i++)
     {
@@ -1925,13 +1934,13 @@ extendArray( Array, NeuroCollection,
 
       if ( !group )
       {
-        group = map[ key ] = new this.constructor();
+        group = map[ key ] = this.cloneEmpty();
       }
 
       group.add( model, true );
     }
 
-    var groupings = new this.constructor();
+    var groupings = this.cloneEmpty();
 
     groupings.setComparator( grouping.comparator, grouping.comparatorNullsFirst );
 
@@ -1986,6 +1995,32 @@ extendArray( Array, NeuroCollection,
   toArray: function()
   {
     return this.slice();
+  },
+
+  /**
+   * Returns a clone of this collection.
+   *
+   * @method
+   * @memberof Neuro.Collection#
+   * @return {Neuro.Collection} -
+   *    The reference to a clone collection.
+   */
+  clone: function()
+  {
+    return new this.constructor( this );
+  },
+
+  /**
+   * Returns an empty clone of this collection.
+   *
+   * @method
+   * @memberof Neuro.Collection#
+   * @return {Neuro.Collection} -
+   *    The reference to a clone collection.
+   */
+  cloneEmpty: function()
+  {
+    return new this.constructor();
   }
 
 });

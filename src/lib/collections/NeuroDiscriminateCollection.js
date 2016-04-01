@@ -17,6 +17,12 @@ function NeuroDiscriminateCollection(collection, discriminator, discriminatorsTo
   collection.discriminator = discriminator;
   collection.discriminatorsToModel = discriminatorsToModel;
 
+  // Original Functions
+  var buildKeyFromInput = collection.buildKeyFromInput;
+  var parseModel = collection.parseModel;
+  var clone = collection.clone;
+  var cloneEmpty = collection.cloneEmpty;
+
   /**
    * Builds a key from input. Discriminated collections only accept objects as
    * input - otherwise there's no way to determine the discriminator. If the
@@ -57,10 +63,41 @@ function NeuroDiscriminateCollection(collection, discriminator, discriminatorsTo
    */
   collection.parseModel = function(input, remoteData)
   {
+    if ( input instanceof NeuroModel )
+    {
+      return input;
+    }
+
     var discriminatedValue = isValue( input ) ? input[ this.discriminator ] : null;
     var model = this.discriminatorsToModel[ discriminatedValue ];
 
     return model ? model.Database.parseModel( input, remoteData ) : null;
+  };
+
+  /**
+   * Returns a clone of this collection.
+   *
+   * @method
+   * @memberof Neuro.Collection#
+   * @return {Neuro.Collection} -
+   *    The reference to a clone collection.
+   */
+  collection.clone = function()
+  {
+    return NeuroDiscriminateCollection( clone.apply( this ), discriminator, discriminatorsToModel );
+  };
+
+  /**
+   * Returns an empty clone of this collection.
+   *
+   * @method
+   * @memberof Neuro.Collection#
+   * @return {Neuro.Collection} -
+   *    The reference to a clone collection.
+   */
+  collection.cloneEmpty = function()
+  {
+    return NeuroDiscriminateCollection( cloneEmpty.apply( this ), discriminator, discriminatorsToModel );
   };
 
   return collection;
