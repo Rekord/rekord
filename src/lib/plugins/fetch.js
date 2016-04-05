@@ -19,7 +19,7 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
     {
       var callbackContext = context || this;
 
-      instance.$once( NeuroModel.Events.RemoteGets, function()
+      instance.$once( Model.Events.RemoteGets, function()
       {
         callback.call( callbackContext, instance );
       });

@@ -40,7 +40,7 @@ test( 'save with cache:none should go right to remote', function(assert)
 
   var t0 = Todo.create({name: 'todo#0'});
 
-  strictEqual( t0.$operation.type, 'NeuroSaveRemote' );
+  strictEqual( t0.$operation.type, 'SaveRemote' );
 
   timer.run();
 });

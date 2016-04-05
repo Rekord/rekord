@@ -183,7 +183,7 @@ function isFunction(x)
  */
 function isNeuro(x)
 {
-  return !!(x && x.Database && isFunction( x ) && x.prototype instanceof NeuroModel);
+  return !!(x && x.Database && isFunction( x ) && x.prototype instanceof Model);
 }
 
 /**
@@ -724,7 +724,7 @@ function collect(a)
 {
   var values = arguments.length > 1 || !isArray(a) ? Array.prototype.slice.call( arguments ) : a;
 
-  return new NeuroCollection( values );
+  return new Collection( values );
 }
 
 function evaluate(x)
@@ -1870,10 +1870,10 @@ function Neuro(options)
 
   Neuro.trigger( Neuro.Events.Options, [options] );
 
-  var database = new NeuroDatabase( options );
+  var database = new Database( options );
 
   var model = new Function('return function ' + database.className + '(props, remoteData) { this.$init( props, remoteData ) }')();
-  model.prototype = new NeuroModel( database );
+  model.prototype = new Model( database );
 
   database.Model = model;
   model.Database = database;
@@ -2067,7 +2067,7 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
   {
     if ( isArray( input ) )
     {
-      return new NeuroModelCollection( db, input, true );
+      return new ModelCollection( db, input, true );
     }
     else if ( isObject( input ) )
     {
@@ -2077,6 +2077,7 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
     return input;
   };
 });
+
 Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 {
   model.collect = function(a)
@@ -2084,9 +2085,10 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
     var models = arguments.length > 1 || !isArray(a) ?
       Array.prototype.slice.call( arguments ) : a;
 
-    return new NeuroModelCollection( db, models );
+    return new ModelCollection( db, models );
   };
 });
+
 Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 {
   model.create = function( props )
@@ -2102,7 +2104,7 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 });
 Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 {
-  var dynamics = collapse( options.dynamic, NeuroDatabase.Defaults.dynamic );
+  var dynamics = collapse( options.dynamic, Database.Defaults.dynamic );
 
   if ( !isEmpty( dynamics ) )
   {
@@ -2153,14 +2155,14 @@ function addDynamicProperty(modelPrototype, property, definition)
         }
       };
 
-      this.$after( NeuroModel.Events.Changes, handleChange, this );
+      this.$after( Model.Events.Changes, handleChange, this );
     };
   }
 }
 
 Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 {
-  var events = collapse( options.events, NeuroDatabase.Defaults.events );
+  var events = collapse( options.events, Database.Defaults.events );
 
   if ( !isEmpty( events ) )
   {
@@ -2172,8 +2174,8 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
       var callback = events[ eventType ];
       var eventName = toCamelCase( eventType );
 
-      var databaseEventString = NeuroDatabase.Events[ eventName ];
-      var modelEventString = NeuroModel.Events[ eventName ];
+      var databaseEventString = Database.Events[ eventName ];
+      var modelEventString = Model.Events[ eventName ];
 
       if ( databaseEventString )
       {
@@ -2279,14 +2281,14 @@ function applyEventListeners(target, listeners)
 
 Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 {
-  var extend = options.extend || NeuroDatabase.Defaults.extend;
+  var extend = options.extend || Database.Defaults.extend;
 
   if ( !isNeuro( extend ) )
   {
     return;
   }
 
-  var defaults = NeuroDatabase.Defaults;
+  var defaults = Database.Defaults;
   var edb = extend.Database;
   var eoptions = edb.options;
 
@@ -2408,7 +2410,7 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
     {
       var callbackContext = context || this;
 
-      instance.$once( NeuroModel.Events.RemoteGets, function()
+      instance.$once( Model.Events.RemoteGets, function()
       {
         callback.call( callbackContext, instance );
       });
@@ -2430,7 +2432,7 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 });
 Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 {
-  var files = options.files || NeuroDatabase.Defaults.files;
+  var files = options.files || Database.Defaults.files;
 
   if ( !isObject( files ) )
   {
@@ -2743,11 +2745,11 @@ function FileEncoder(input, model, field, forSaving)
     {
       if ( forSaving && cached.file )
       {
-        model.$once( NeuroModel.Events.RemoteSave, function()
+        model.$once( Model.Events.RemoteSave, function()
         {
           delete cached.file;
 
-          model.$addOperation( NeuroSaveLocal, Neuro.Cascade.Local );
+          model.$addOperation( SaveLocal, Neuro.Cascade.Local );
         });
       }
 
@@ -2845,7 +2847,7 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 });
 Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 {
-  var methods = collapse( options.methods, NeuroDatabase.Defaults.methods );
+  var methods = collapse( options.methods, Database.Defaults.methods );
 
   if ( !isEmpty( methods ) )
   {
@@ -2857,16 +2859,17 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 {
   model.query = function(query)
   {
-    var q = new NeuroRemoteQuery( db, query );
+    var q = new RemoteQuery( db, query );
 
     if ( isValue( query ) )
     {
-      q.sync();      
+      q.sync();
     }
 
     return q;
   };
 });
+
 Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 {
   model.ready = function( callback, context, persistent )
@@ -2885,7 +2888,7 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 {
   model.search = function(options)
   {
-    return new NeuroSearch( db, options );
+    return new Search( db, options );
   };
 });
 
@@ -2893,13 +2896,13 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 {
   model.searchPaged = function(options)
   {
-    return new NeuroSearchPaged( db, options );
+    return new SearchPaged( db, options );
   };
 });
 
 Neuro.on( Neuro.Events.Options, function(options)
 {
-  var shard = options.shard || NeuroDatabase.Defaults.shard;
+  var shard = options.shard || Database.Defaults.shard;
 
   if ( !isObject( shard ) )
   {
@@ -2911,8 +2914,8 @@ Neuro.on( Neuro.Events.Options, function(options)
 
 Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 {
-  var time = options.timestamps || NeuroDatabase.Defaults.timestamps;
-  var timeAsDate = options.timestampsAsDate || NeuroDatabase.Defaults.timestampsAsDate;
+  var time = options.timestamps || Database.Defaults.timestamps;
+  var timeAsDate = options.timestampsAsDate || Database.Defaults.timestampsAsDate;
   var currentTimestamp = timeAsDate ? currentDate : currentTime;
 
   if ( !time )
@@ -3032,9 +3035,10 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 {
   model.where = function(whereProperties, whereValue, whereEquals)
   {
-    return new NeuroQuery( db, whereProperties, whereValue, whereEquals );
+    return new Query( db, whereProperties, whereValue, whereEquals );
   };
 });
+
 
 Neuro.debug = function(event, source)  /*, data.. */
 {
@@ -3048,9 +3052,9 @@ Neuro.Debugs = {
   REST: 1,                    // options
   AUTO_REFRESH: 73,           //
 
-  REMOTE_UPDATE: 2,           // encoded, NeuroModel
-  REMOTE_CREATE: 3,           // encoded, NeuroModel
-  REMOTE_REMOVE: 4,           // NeuroModel
+  REMOTE_UPDATE: 2,           // encoded, Model
+  REMOTE_CREATE: 3,           // encoded, Model
+  REMOTE_REMOVE: 4,           // Model
   REMOTE_LOAD: 5,             // encoded[]
   REMOTE_LOAD_OFFLINE: 6,     //
   REMOTE_LOAD_ERROR: 7,       // status
@@ -3058,132 +3062,132 @@ Neuro.Debugs = {
   REMOTE_LOAD_RESUME: 22,     //
 
   LOCAL_LOAD: 9,              // encoded[]
-  LOCAL_RESUME_DELETE: 10,    // NeuroModel
-  LOCAL_RESUME_SAVE: 11,      // NeuroModel
-  LOCAL_LOAD_SAVED: 12,       // NeuroModel
+  LOCAL_RESUME_DELETE: 10,    // Model
+  LOCAL_RESUME_SAVE: 11,      // Model
+  LOCAL_LOAD_SAVED: 12,       // Model
 
   REALTIME_SAVE: 13,          // encoded, key
   REALTIME_REMOVE: 14,        // key
 
-  SAVE_VALUES: 15,            // encoded, NeuroModel
-  SAVE_PUBLISH: 16,           // encoded, NeuroModel
-  SAVE_CONFLICT: 17,          // encoded, NeuroModel
-  SAVE_UPDATE_FAIL: 18,       // NeuroModel
-  SAVE_ERROR: 19,             // NeuroModel, status
-  SAVE_OFFLINE: 20,           // NeuroModel
-  SAVE_RESUME: 21,            // NeuroModel
-  SAVE_REMOTE: 25,            // NeuroModel
-  SAVE_DELETED: 40,           // NeuroModel
+  SAVE_VALUES: 15,            // encoded, Model
+  SAVE_PUBLISH: 16,           // encoded, Model
+  SAVE_CONFLICT: 17,          // encoded, Model
+  SAVE_UPDATE_FAIL: 18,       // Model
+  SAVE_ERROR: 19,             // Model, status
+  SAVE_OFFLINE: 20,           // Model
+  SAVE_RESUME: 21,            // Model
+  SAVE_REMOTE: 25,            // Model
+  SAVE_DELETED: 40,           // Model
 
-  SAVE_OLD_REVISION: 48,      // NeuroModel, encoded
+  SAVE_OLD_REVISION: 48,      // Model, encoded
 
-  SAVE_LOCAL: 23,             // NeuroModel
-  SAVE_LOCAL_ERROR: 24,       // NeuroModel, error
-  SAVE_LOCAL_DELETED: 38,     // NeuroModel
-  SAVE_LOCAL_BLOCKED: 39,     // NeuroModel
+  SAVE_LOCAL: 23,             // Model
+  SAVE_LOCAL_ERROR: 24,       // Model, error
+  SAVE_LOCAL_DELETED: 38,     // Model
+  SAVE_LOCAL_BLOCKED: 39,     // Model
 
-  SAVE_REMOTE_DELETED: 41,    // NeuroModel, [encoded]
-  SAVE_REMOTE_BLOCKED: 42,    // NeuroModel
+  SAVE_REMOTE_DELETED: 41,    // Model, [encoded]
+  SAVE_REMOTE_BLOCKED: 42,    // Model
 
-  REMOVE_PUBLISH: 26,         // key, NeuroModel
-  REMOVE_LOCAL: 27,           // key, NeuroModel
-  REMOVE_MISSING: 28,         // key, NeuroModel
-  REMOVE_ERROR: 29,           // status, key, NeuroModel
-  REMOVE_OFFLINE: 30,         // NeuroModel
-  REMOVE_RESUME: 31,          // NeuroModel
-  REMOVE_REMOTE: 32,          // NeuroModel
-  REMOVE_CANCEL_SAVE: 47,     // NeuroModel
+  REMOVE_PUBLISH: 26,         // key, Model
+  REMOVE_LOCAL: 27,           // key, Model
+  REMOVE_MISSING: 28,         // key, Model
+  REMOVE_ERROR: 29,           // status, key, Model
+  REMOVE_OFFLINE: 30,         // Model
+  REMOVE_RESUME: 31,          // Model
+  REMOVE_REMOTE: 32,          // Model
+  REMOVE_CANCEL_SAVE: 47,     // Model
 
-  REMOVE_LOCAL: 33,           // NeuroModel
-  REMOVE_LOCAL_ERROR: 34,     // NeuroModel, error
-  REMOVE_LOCAL_BLOCKED: 44,   // NeuroModel
-  REMOVE_LOCAL_NONE: 45,      // NeuroModel
-  REMOVE_LOCAL_UNSAVED: 46,   // NeuroModel
+  REMOVE_LOCAL: 33,           // Model
+  REMOVE_LOCAL_ERROR: 34,     // Model, error
+  REMOVE_LOCAL_BLOCKED: 44,   // Model
+  REMOVE_LOCAL_NONE: 45,      // Model
+  REMOVE_LOCAL_UNSAVED: 46,   // Model
 
-  REMOVE_REMOTE_BLOCKED: 43,  // NeuroModel
+  REMOVE_REMOTE_BLOCKED: 43,  // Model
 
-  GET_LOCAL_SKIPPED: 104,     // NeuroModel
-  GET_LOCAL: 105,             // NeuroModel, encoded
-  GET_LOCAL_ERROR: 106,       // NeuroModel, e
-  GET_REMOTE: 107,            // NeuroModel, data
-  GET_REMOTE_ERROR: 108,      // NeuroModel, data, status
+  GET_LOCAL_SKIPPED: 104,     // Model
+  GET_LOCAL: 105,             // Model, encoded
+  GET_LOCAL_ERROR: 106,       // Model, e
+  GET_REMOTE: 107,            // Model, data
+  GET_REMOTE_ERROR: 108,      // Model, data, status
 
   ONLINE: 35,                 //
   OFFLINE: 36,                //
 
   PUBSUB_CREATED: 37,         // PubSub
 
-  HASONE_INIT: 53,            // NeuroHasOne
-  HASONE_NINJA_REMOVE: 49,    // NeuroModel, relation
-  HASONE_INITIAL_PULLED: 51,  // NeuroModel, initial
-  HASONE_INITIAL: 52,         // NeuroModel, initial
+  HASONE_INIT: 53,            // HasOne
+  HASONE_NINJA_REMOVE: 49,    // Model, relation
+  HASONE_INITIAL_PULLED: 51,  // Model, initial
+  HASONE_INITIAL: 52,         // Model, initial
   HASONE_CLEAR_MODEL: 54,     // relation
   HASONE_SET_MODEL: 55,       // relation
-  HASONE_PRESAVE: 56,         // NeuroModel, relation
-  HASONE_POSTREMOVE: 57,      // NeuroModel, relation
-  HASONE_CLEAR_KEY: 58,       // NeuroModel, local
-  HASONE_UPDATE_KEY: 59,      // NeuroModel, local, NeuroModel, foreign
-  HASONE_LOADED: 60,          // NeuroModel, relation, [NeuroModel]
-  HASONE_QUERY: 111,          // NeuroModel, NeuroRemoteQuery, queryOption, query
-  HASONE_QUERY_RESULTS: 112,  // NeuroModel, NeuroRemoteQuery
+  HASONE_PRESAVE: 56,         // Model, relation
+  HASONE_POSTREMOVE: 57,      // Model, relation
+  HASONE_CLEAR_KEY: 58,       // Model, local
+  HASONE_UPDATE_KEY: 59,      // Model, local, Model, foreign
+  HASONE_LOADED: 60,          // Model, relation, [Model]
+  HASONE_QUERY: 111,          // Model, RemoteQuery, queryOption, query
+  HASONE_QUERY_RESULTS: 112,  // Model, RemoteQuery
 
-  BELONGSTO_INIT: 61,          // NeuroHasOne
-  BELONGSTO_NINJA_REMOVE: 62,  // NeuroModel, relation
-  BELONGSTO_NINJA_SAVE: 63,    // NeuroModel, relation
-  BELONGSTO_INITIAL_PULLED: 64,// NeuroModel, initial
-  BELONGSTO_INITIAL: 65,       // NeuroModel, initial
+  BELONGSTO_INIT: 61,          // HasOne
+  BELONGSTO_NINJA_REMOVE: 62,  // Model, relation
+  BELONGSTO_NINJA_SAVE: 63,    // Model, relation
+  BELONGSTO_INITIAL_PULLED: 64,// Model, initial
+  BELONGSTO_INITIAL: 65,       // Model, initial
   BELONGSTO_CLEAR_MODEL: 66,   // relation
   BELONGSTO_SET_MODEL: 67,     // relation
-  BELONGSTO_POSTREMOVE: 69,    // NeuroModel, relation
-  BELONGSTO_CLEAR_KEY: 70,     // NeuroModel, local
-  BELONGSTO_UPDATE_KEY: 71,    // NeuroModel, local, NeuroModel, foreign
-  BELONGSTO_LOADED: 72,        // NeuroModel, relation, [NeuroModel]
-  BELONGSTO_QUERY: 113,        // NeuroModel, NeuroRemoteQuery, queryOption, query
-  BELONGSTO_QUERY_RESULTS: 114,// NeuroModel, NeuroRemoteQuery
+  BELONGSTO_POSTREMOVE: 69,    // Model, relation
+  BELONGSTO_CLEAR_KEY: 70,     // Model, local
+  BELONGSTO_UPDATE_KEY: 71,    // Model, local, Model, foreign
+  BELONGSTO_LOADED: 72,        // Model, relation, [Model]
+  BELONGSTO_QUERY: 113,        // Model, RemoteQuery, queryOption, query
+  BELONGSTO_QUERY_RESULTS: 114,// Model, RemoteQuery
 
-  HASMANY_INIT: 74,             // NeuroHasMany
-  HASMANY_NINJA_REMOVE: 75,     // NeuroModel, NeuroModel, relation
-  HASMANY_NINJA_SAVE: 76,       // NeuroModel, NeuroModel, relation
-  HASMANY_INITIAL: 77,          // NeuroModel, relation, initial
-  HASMANY_INITIAL_PULLED: 78,   // NeuroModel, relation
-  HASMANY_REMOVE: 79,           // relation, NeuroModel
+  HASMANY_INIT: 74,             // HasMany
+  HASMANY_NINJA_REMOVE: 75,     // Model, Model, relation
+  HASMANY_NINJA_SAVE: 76,       // Model, Model, relation
+  HASMANY_INITIAL: 77,          // Model, relation, initial
+  HASMANY_INITIAL_PULLED: 78,   // Model, relation
+  HASMANY_REMOVE: 79,           // relation, Model
   HASMANY_SORT: 80,             // relation
-  HASMANY_ADD: 81,              // relation, NeuroModel
-  HASMANY_LAZY_LOAD: 82,        // relation, NeuroModel[]
-  HASMANY_INITIAL_GRABBED: 83,  // relation, NeuroModel
-  HASMANY_NINJA_ADD: 84,        // relation, NeuroModel
+  HASMANY_ADD: 81,              // relation, Model
+  HASMANY_LAZY_LOAD: 82,        // relation, Model[]
+  HASMANY_INITIAL_GRABBED: 83,  // relation, Model
+  HASMANY_NINJA_ADD: 84,        // relation, Model
   HASMANY_AUTO_SAVE: 85,        // relation
-  HASMANY_PREREMOVE: 86,        // NeuroModel, relation
-  HASMANY_POSTSAVE: 87,         // NeuroModel, relation
-  HASMANY_QUERY: 115,           // NeuroModel, NeuroRemoteQuery, queryOption, query
-  HASMANY_QUERY_RESULTS: 116,   // NeuroModel, NeuroRemoteQuery
+  HASMANY_PREREMOVE: 86,        // Model, relation
+  HASMANY_POSTSAVE: 87,         // Model, relation
+  HASMANY_QUERY: 115,           // Model, RemoteQuery, queryOption, query
+  HASMANY_QUERY_RESULTS: 116,   // Model, RemoteQuery
 
-  HASMANYTHRU_INIT: 88,             // NeuroHasMany
-  HASMANYTHRU_NINJA_REMOVE: 89,     // NeuroModel, NeuroModel, relation
-  HASMANYTHRU_NINJA_SAVE: 90,       // NeuroModel, NeuroModel, relation
-  HASMANYTHRU_NINJA_THRU_REMOVE: 91,// NeuroModel, NeuroModel, relation
-  HASMANYTHRU_INITIAL: 92,          // NeuroModel, relation, initial
-  HASMANYTHRU_INITIAL_PULLED: 93,   // NeuroModel, relation
-  HASMANYTHRU_REMOVE: 94,           // relation, NeuroModel
+  HASMANYTHRU_INIT: 88,             // HasMany
+  HASMANYTHRU_NINJA_REMOVE: 89,     // Model, Model, relation
+  HASMANYTHRU_NINJA_SAVE: 90,       // Model, Model, relation
+  HASMANYTHRU_NINJA_THRU_REMOVE: 91,// Model, Model, relation
+  HASMANYTHRU_INITIAL: 92,          // Model, relation, initial
+  HASMANYTHRU_INITIAL_PULLED: 93,   // Model, relation
+  HASMANYTHRU_REMOVE: 94,           // relation, Model
   HASMANYTHRU_SORT: 95,             // relation
-  HASMANYTHRU_ADD: 96,              // relation, NeuroModel
-  HASMANYTHRU_LAZY_LOAD: 97,        // relation, NeuroModel[]
-  HASMANYTHRU_INITIAL_GRABBED: 98,  // relation, NeuroModel
-  HASMANYTHRU_NINJA_ADD: 99,        // relation, NeuroModel
+  HASMANYTHRU_ADD: 96,              // relation, Model
+  HASMANYTHRU_LAZY_LOAD: 97,        // relation, Model[]
+  HASMANYTHRU_INITIAL_GRABBED: 98,  // relation, Model
+  HASMANYTHRU_NINJA_ADD: 99,        // relation, Model
   HASMANYTHRU_AUTO_SAVE: 100,       // relation
-  HASMANYTHRU_PREREMOVE: 101,       // NeuroModel, relation
-  HASMANYTHRU_POSTSAVE: 102,        // NeuroModel, relation
-  HASMANYTHRU_THRU_ADD: 103,        // relation, NeuroModel
-  HASMANYTHRU_THRU_REMOVE: 68,      // relation, NeuroModel, NeuroModel
-  HASMANYTHRU_QUERY: 117,           // NeuroModel, NeuroRemoteQuery, queryOption, query
-  HASMANYTHRU_QUERY_RESULTS: 118,   // NeuroModel, NeuroRemoteQuery
+  HASMANYTHRU_PREREMOVE: 101,       // Model, relation
+  HASMANYTHRU_POSTSAVE: 102,        // Model, relation
+  HASMANYTHRU_THRU_ADD: 103,        // relation, Model
+  HASMANYTHRU_THRU_REMOVE: 68,      // relation, Model, Model
+  HASMANYTHRU_QUERY: 117,           // Model, RemoteQuery, queryOption, query
+  HASMANYTHRU_QUERY_RESULTS: 118,   // Model, RemoteQuery
 
-  HASREMOTE_INIT: 50,               // NeuroHasRemote
+  HASREMOTE_INIT: 50,               // HasRemote
   HASREMOTE_SORT: 121,              // relation
-  HASREMOVE_NINJA_REMOVE: 109,      // NeuroModel, NeuroModel, relation
-  HASREMOVE_NINJA_SAVE: 110,        // NeuroModel, NeuroModel, relation
-  HASREMOVE_QUERY: 119,             // NeuroModel, NeuroRemoteQuery, queryOption, query
-  HASREMOVE_QUERY_RESULTS: 120      // NeuroModel, NeuroRemoteQuery
+  HASREMOVE_NINJA_REMOVE: 109,      // Model, Model, relation
+  HASREMOVE_NINJA_SAVE: 110,        // Model, Model, relation
+  HASREMOVE_QUERY: 119,             // Model, RemoteQuery, queryOption, query
+  HASREMOVE_QUERY_RESULTS: 120      // Model, RemoteQuery
 };
 
 
@@ -3243,7 +3247,7 @@ Neuro.rest = function(database)
  * A factory function for returning an object capable of storing objects for
  * retrieval later by the application.
  * 
- * @param  {NeuroDatabase} database
+ * @param  {Database} database
  *         The database this store is for.
  * @return {Object} -
  *         An object with put, remove, and all functions.
@@ -3319,11 +3323,11 @@ Neuro.store = function(database)
 /**
  * The factory responsible for creating a service which publishes operations
  * and receives operations that have occurred. The first argument is a reference
- * to the NeuroDatabase and the second argument is a function to invoke when a
+ * to the Database and the second argument is a function to invoke when a
  * live operation occurs. This function must return a function that can be passed
  * an operation to be delegated to other clients.
  * 
- * @param  {NeuroDatabase} database
+ * @param  {Database} database
  *         The database this live function is for.
  * @return {function} -
  *         The function which sends operations.
@@ -3403,7 +3407,7 @@ Neuro.checkNetworkStatus = function()
   }
 };
 
-function NeuroGate(callback)
+function Gate(callback)
 {
   var opened = false;
   var blocked = [];
@@ -3442,9 +3446,9 @@ function NeuroGate(callback)
 
 
 
-function NeuroDatabase(options)
+function Database(options)
 {
-  var defaults = NeuroDatabase.Defaults;
+  var defaults = Database.Defaults;
 
   // Apply the options to this database!
   applyOptions( this, options, defaults );
@@ -3481,7 +3485,7 @@ function NeuroDatabase(options)
 
   // Properties
   this.keys = toArray( this.key );
-  this.models = new NeuroModelCollection( this );
+  this.models = new ModelCollection( this );
   this.all = {};
   this.loaded = {};
   this.className = this.className || toCamelCase( this.name );
@@ -3520,7 +3524,7 @@ function NeuroDatabase(options)
 
     var RelationClass = Neuro.Relations[ relationType ];
 
-    if ( !(RelationClass.prototype instanceof NeuroRelation ) )
+    if ( !(RelationClass.prototype instanceof Relation ) )
     {
       continue;
     }
@@ -3605,7 +3609,7 @@ function defaultResolveModels( response )
   return response;
 }
 
-NeuroDatabase.Events =
+Database.Events =
 {
   NoLoad:       'no-load',
   RemoteLoad:   'remote-load',
@@ -3618,7 +3622,7 @@ NeuroDatabase.Events =
   Changes:      'updated'
 };
 
-NeuroDatabase.Defaults =
+Database.Defaults =
 {
   name:                 undefined,  // required
   className:            null,       // defaults to toCamelCase( name )
@@ -3649,7 +3653,7 @@ NeuroDatabase.Defaults =
   createLive:           defaultCreateLive
 };
 
-NeuroDatabase.prototype =
+Database.prototype =
 {
 
   // Notifies a callback when the database has loaded (either locally or remotely).
@@ -3684,7 +3688,7 @@ NeuroDatabase.prototype =
         }
       }
 
-      var off = db.on( NeuroDatabase.Events.Loads, onReady );
+      var off = db.on( Database.Events.Loads, onReady );
     }
 
     return invoked;
@@ -3729,7 +3733,7 @@ NeuroDatabase.prototype =
             result = db.buildObjectFromKey( db.buildKeyFromInput( input ) );
           }
 
-          result.$once( NeuroModel.Events.RemoteGets, function()
+          result.$once( Model.Events.RemoteGets, function()
           {
             if ( !grabbed )
             {
@@ -3974,7 +3978,7 @@ NeuroDatabase.prototype =
   updated: function()
   {
     this.sort(); // TODO remove
-    this.trigger( NeuroDatabase.Events.Updated );
+    this.trigger( Database.Events.Updated );
   },
 
   // Sets a revision comparision function for this database. It can be a field
@@ -4168,21 +4172,21 @@ NeuroDatabase.prototype =
 
       if ( conflicted )
       {
-        model.$trigger( NeuroModel.Events.PartialUpdate, [encoded, conflicts] );
+        model.$trigger( Model.Events.PartialUpdate, [encoded, conflicts] );
       }
       else
       {
-        model.$trigger( NeuroModel.Events.FullUpdate, [encoded, updated] );
+        model.$trigger( Model.Events.FullUpdate, [encoded, updated] );
       }
 
-      model.$trigger( NeuroModel.Events.RemoteUpdate, [encoded] );
+      model.$trigger( Model.Events.RemoteUpdate, [encoded] );
 
-      model.$addOperation( NeuroSaveNow );
+      model.$addOperation( SaveNow );
 
       if ( !db.models.has( key ) )
       {
         db.models.put( key, model );
-        db.trigger( NeuroDatabase.Events.ModelAdded, [model, true] );
+        db.trigger( Database.Events.ModelAdded, [model, true] );
       }
     }
     // The model doesn't exist, create it.
@@ -4196,7 +4200,7 @@ NeuroDatabase.prototype =
         model.$local.$status = model.$status;
         model.$saved = model.$local.$saved = model.$toJSON( true );
 
-        model.$addOperation( NeuroSaveNow );
+        model.$addOperation( SaveNow );
       }
       else
       {
@@ -4216,7 +4220,7 @@ NeuroDatabase.prototype =
     if ( !db.models.has( key ) )
     {
       db.models.put( key, model );
-      db.trigger( NeuroDatabase.Events.ModelAdded, [model, remoteData] );
+      db.trigger( Database.Events.ModelAdded, [model, remoteData] );
     }
 
     return model;
@@ -4234,7 +4238,7 @@ NeuroDatabase.prototype =
 
         db.removeKey( model );
 
-        model.$trigger( NeuroModel.Events.Detach );
+        model.$trigger( Model.Events.Detach );
 
         return false;
       }
@@ -4242,9 +4246,9 @@ NeuroDatabase.prototype =
       delete db.all[ key ];
 
       db.models.remove( key );
-      db.trigger( NeuroDatabase.Events.ModelRemoved, [model] );
+      db.trigger( Database.Events.ModelRemoved, [model] );
 
-      model.$trigger( NeuroModel.Events.RemoteAndRemove );
+      model.$trigger( Model.Events.RemoteAndRemove );
 
       Neuro.debug( Neuro.Debugs.REMOTE_REMOVE, db, model );
 
@@ -4270,21 +4274,21 @@ NeuroDatabase.prototype =
         db.removeKey( model );
         db.removeKey( model.$local );
 
-        model.$trigger( NeuroModel.Events.Detach );
+        model.$trigger( Model.Events.Detach );
 
-        model.$addOperation( NeuroSaveNow );
+        model.$addOperation( SaveNow );
 
         return false;
       }
 
-      model.$addOperation( NeuroRemoveNow );
+      model.$addOperation( RemoveNow );
 
       delete db.all[ key ];
 
       db.models.remove( key );
-      db.trigger( NeuroDatabase.Events.ModelRemoved, [model] );
+      db.trigger( Database.Events.ModelRemoved, [model] );
 
-      model.$trigger( NeuroModel.Events.RemoteAndRemove );
+      model.$trigger( Model.Events.RemoteAndRemove );
 
       Neuro.debug( Neuro.Debugs.REMOTE_REMOVE, db, model );
     }
@@ -4329,19 +4333,19 @@ NeuroDatabase.prototype =
     {
       var model = db.loaded[ key ];
 
-      if ( model.$status === NeuroModel.Status.RemovePending )
+      if ( model.$status === Model.Status.RemovePending )
       {
         Neuro.debug( Neuro.Debugs.LOCAL_RESUME_DELETE, db, model );
 
-        model.$addOperation( NeuroRemoveRemote );
+        model.$addOperation( RemoveRemote );
       }
       else
       {
-        if ( model.$status === NeuroModel.Status.SavePending )
+        if ( model.$status === Model.Status.SavePending )
         {
           Neuro.debug( Neuro.Debugs.LOCAL_RESUME_SAVE, db, model );
 
-          model.$addOperation( NeuroSaveRemote );
+          model.$addOperation( SaveRemote );
         }
         else
         {
@@ -4386,7 +4390,7 @@ NeuroDatabase.prototype =
         model.$local = encoded;
         model.$saved = encoded.$saved;
 
-        if ( model.$status !== NeuroModel.Status.Removed )
+        if ( model.$status !== Model.Status.Removed )
         {
           db.loaded[ key ] = model;
           db.all[ key ] = model;
@@ -4396,7 +4400,7 @@ NeuroDatabase.prototype =
       db.initialized = true;
       db.localLoaded = true;
 
-      db.trigger( NeuroDatabase.Events.LocalLoad, [db] );
+      db.trigger( Database.Events.LocalLoad, [db] );
 
       onLoaded( true, db );
     }
@@ -4436,7 +4440,7 @@ NeuroDatabase.prototype =
     else
     {
       db.initialized = true;
-      db.trigger( NeuroDatabase.Events.NoLoad, [db] );
+      db.trigger( Database.Events.NoLoad, [db] );
     }
   },
 
@@ -4510,7 +4514,7 @@ NeuroDatabase.prototype =
       db.initialized = true;
       db.remoteLoaded = true;
 
-      db.trigger( NeuroDatabase.Events.RemoteLoad, [db] );
+      db.trigger( Database.Events.RemoteLoad, [db] );
 
       db.updated();
 
@@ -4542,7 +4546,7 @@ NeuroDatabase.prototype =
         Neuro.debug( Neuro.Debugs.REMOTE_LOAD_ERROR, db, status );
 
         db.initialized = true;
-        db.trigger( NeuroDatabase.Events.NoLoad, [db, response] );
+        db.trigger( Database.Events.NoLoad, [db, response] );
       }
 
       if ( callback )
@@ -4638,20 +4642,20 @@ NeuroDatabase.prototype =
 
     if ( existing )
     {
-      db.trigger( NeuroDatabase.Events.ModelUpdated, [model] );
+      db.trigger( Database.Events.ModelUpdated, [model] );
 
-      model.$trigger( NeuroModel.Events.UpdateAndSave );
+      model.$trigger( Model.Events.UpdateAndSave );
     }
     else
     {
       db.models.put( key, model );
-      db.trigger( NeuroDatabase.Events.ModelAdded, [model] );
+      db.trigger( Database.Events.ModelAdded, [model] );
       db.updated();
 
-      model.$trigger( NeuroModel.Events.CreateAndSave );
+      model.$trigger( Model.Events.CreateAndSave );
     }
 
-    model.$addOperation( NeuroSaveLocal, cascade );
+    model.$addOperation( SaveLocal, cascade );
   },
 
   // Remove the model
@@ -4663,14 +4667,14 @@ NeuroDatabase.prototype =
     this.removeFromModels( model );
 
     // If we're offline and we have a pending save - cancel the pending save.
-    if ( model.$status === NeuroModel.Status.SavePending )
+    if ( model.$status === Model.Status.SavePending )
     {
       Neuro.debug( Neuro.Debugs.REMOVE_CANCEL_SAVE, db, model );
     }
 
-    model.$status = NeuroModel.Status.RemovePending;
+    model.$status = Model.Status.RemovePending;
 
-    model.$addOperation( NeuroRemoveLocal, cascade );
+    model.$addOperation( RemoveLocal, cascade );
   },
 
   removeFromModels: function(model)
@@ -4681,22 +4685,22 @@ NeuroDatabase.prototype =
     if ( db.models.has( key ) )
     {
       db.models.remove( key );
-      db.trigger( NeuroDatabase.Events.ModelRemoved, [model] );
+      db.trigger( Database.Events.ModelRemoved, [model] );
       db.updated();
 
-      model.$trigger( NeuroModel.Events.Removed );
+      model.$trigger( Model.Events.Removed );
     }
   },
 
   refreshModel: function(model, cascade)
   {
-    model.$addOperation( NeuroGetLocal, cascade );
+    model.$addOperation( GetLocal, cascade );
   }
 
 };
 
-eventize( NeuroDatabase.prototype );
-addEventFunction( NeuroDatabase.prototype, 'change', NeuroDatabase.Events.Changes );
+eventize( Database.prototype );
+addEventFunction( Database.prototype, 'change', Database.Events.Changes );
 
 
 /**
@@ -4708,12 +4712,12 @@ addEventFunction( NeuroDatabase.prototype, 'change', NeuroDatabase.Events.Change
  * @param {Neuro.Database} db
  *        The database instance used in model instances.
  */
-function NeuroModel(db)
+function Model(db)
 {
   this.$db = db;
 
   /**
-   * @property {NeuroDatabase} $db
+   * @property {Database} $db
    *           The reference to the database this model is stored in.
    */
 
@@ -4736,7 +4740,7 @@ function NeuroModel(db)
    */
 }
 
-NeuroModel.Events =
+Model.Events =
 {
   Created:              'created',
   Saved:                'saved',
@@ -4781,7 +4785,7 @@ NeuroModel.Events =
   Changes:              'saved remote-update key-update relation-update removed change'
 };
 
-NeuroModel.Status =
+Model.Status =
 {
   Synced:         0,
   SavePending:    1,
@@ -4789,18 +4793,18 @@ NeuroModel.Status =
   Removed:        3
 };
 
-NeuroModel.Blocked =
+Model.Blocked =
 {
   toString: true,
   valueOf: true
 };
 
-NeuroModel.prototype =
+Model.prototype =
 {
 
   $init: function(props, remoteData)
   {
-    this.$status = NeuroModel.Status.Synced;
+    this.$status = Model.Status.Synced;
     this.$operation = null;
     this.$relations = {};
     this.$dependents = {};
@@ -4951,7 +4955,7 @@ NeuroModel.prototype =
     }
     else if ( isString( props ) )
     {
-      if ( NeuroModel.Blocked[ props ] )
+      if ( Model.Blocked[ props ] )
       {
         return;
       }
@@ -4970,7 +4974,7 @@ NeuroModel.prototype =
 
     if ( isValue( props ) )
     {
-      this.$trigger( NeuroModel.Events.Change, [props, value] );
+      this.$trigger( Model.Events.Change, [props, value] );
     }
   },
 
@@ -4991,7 +4995,7 @@ NeuroModel.prototype =
     }
     else if ( isString( props ) )
     {
-      if ( NeuroModel.Blocked[ props ] )
+      if ( Model.Blocked[ props ] )
       {
         return;
       }
@@ -5032,7 +5036,7 @@ NeuroModel.prototype =
           off();
         }
 
-        var off = dependent.$once( NeuroModel.Events.RemoteSaves, onDependentSave );
+        var off = dependent.$once( Model.Events.RemoteSaves, onDependentSave );
 
         return false;
       }
@@ -5106,11 +5110,11 @@ NeuroModel.prototype =
 
       this.$set( setProperties, setValue );
 
-      this.$trigger( NeuroModel.Events.PreSave, [this] );
+      this.$trigger( Model.Events.PreSave, [this] );
 
       this.$db.save( this, cascade );
 
-      this.$trigger( NeuroModel.Events.PostSave, [this] );
+      this.$trigger( Model.Events.PostSave, [this] );
     });
   },
 
@@ -5125,11 +5129,11 @@ NeuroModel.prototype =
 
     return Neuro.transact( cascade, this, 'remove', function(txn)
     {
-      this.$trigger( NeuroModel.Events.PreRemove, [this] );
+      this.$trigger( Model.Events.PreRemove, [this] );
 
       this.$db.remove( this, cascade );
 
-      this.$trigger( NeuroModel.Events.PostRemove, [this] );
+      this.$trigger( Model.Events.PostRemove, [this] );
     });
   },
 
@@ -5272,7 +5276,7 @@ NeuroModel.prototype =
 
   $change: function()
   {
-    this.$trigger( NeuroModel.Events.Change );
+    this.$trigger( Model.Events.Change );
   },
 
   $key: function(quietly)
@@ -5302,17 +5306,17 @@ NeuroModel.prototype =
 
   $isSynced: function()
   {
-    return this.$status === NeuroModel.Status.Synced;
+    return this.$status === Model.Status.Synced;
   },
 
   $isPending: function()
   {
-    return this.$status === NeuroModel.Status.SavePending;
+    return this.$status === Model.Status.SavePending;
   },
 
   $isDeleted: function()
   {
-    return this.$status >= NeuroModel.Status.RemovePending;
+    return this.$status >= Model.Status.RemovePending;
   },
 
   $isSaved: function()
@@ -5376,12 +5380,12 @@ NeuroModel.prototype =
 
 };
 
-eventize( NeuroModel.prototype, true );
-addEventFunction( NeuroModel.prototype, '$change', NeuroModel.Events.Changes, true );
+eventize( Model.prototype, true );
+addEventFunction( Model.prototype, '$change', Model.Events.Changes, true );
 
 
 /**
- * A NeuroMap has the key-to-value benefits of a map and iteration benefits of an
+ * A Map has the key-to-value benefits of a map and iteration benefits of an
  * array. This is especially beneficial when most of the time the contents of
  * the structure need to be iterated and order doesn't matter (since removal
  * performs a swap which breaks insertion order).
@@ -5390,7 +5394,7 @@ addEventFunction( NeuroModel.prototype, '$change', NeuroModel.Events.Changes, tr
  * @memberOf Neuro
  * @alias Map
  */
-function NeuroMap()
+function Map()
 {
   /**
    * An array of the values in this map.
@@ -5411,7 +5415,7 @@ function NeuroMap()
   this.indices = {};
 }
 
-NeuroMap.prototype =
+Map.prototype =
 {
 
   /**
@@ -5531,7 +5535,7 @@ NeuroMap.prototype =
 
   subtract: function(map, dest)
   {
-    var out = dest || new NeuroMap();
+    var out = dest || new Map();
     var n = this.size();
     var values = this.values;
     var keys = this.keys;
@@ -5560,7 +5564,7 @@ NeuroMap.prototype =
    */
   filter: function(callback, dest)
   {
-    var out = dest || new NeuroMap();
+    var out = dest || new Map();
     var n = this.size();
     var values = this.values;
     var keys = this.keys;
@@ -5620,7 +5624,7 @@ NeuroMap.prototype =
    *         negative number should be returned. If the arguments are equivalent
    *         then 0 should be returned, otherwise a positive number should be
    *         returned.
-   * @return {NeuroMap} -
+   * @return {Map} -
    *         The reference to this map.
    */
   sort: function(comparator)
@@ -5700,7 +5704,7 @@ NeuroMap.prototype =
 };
 
 
-function NeuroRequest(context, success, failure)
+function Request(context, success, failure)
 {
   this.context = context;
   this.success = success;
@@ -5709,7 +5713,7 @@ function NeuroRequest(context, success, failure)
   this.callCanceled = 0;
 }
 
-NeuroRequest.prototype =
+Request.prototype =
 {
 
   onSuccess: function()
@@ -5761,7 +5765,7 @@ NeuroRequest.prototype =
  *    The initial set of values in this collection.
  * @see Neuro.collect
  */
-function NeuroCollection(values)
+function Collection(values)
 {
   this.addAll( values );
 }
@@ -5788,7 +5792,7 @@ function NeuroCollection(values)
  *
  * @static
  */
-NeuroCollection.Events =
+Collection.Events =
 {
   /**
    * An event triggered when a single value is added to a collection.
@@ -5908,7 +5912,7 @@ NeuroCollection.Events =
 
 };
 
-extendArray( Array, NeuroCollection,
+extendArray( Array, Collection,
 {
 
   /**
@@ -6004,7 +6008,7 @@ extendArray( Array, NeuroCollection,
     {
       AP.sort.call( this, cmp );
 
-      this.trigger( NeuroCollection.Events.Sort, [this] );
+      this.trigger( Collection.Events.Sort, [this] );
     }
 
     return this;
@@ -6027,7 +6031,7 @@ extendArray( Array, NeuroCollection,
    */
   page: function(pageSize, pageIndex)
   {
-    return new NeuroPage( this, pageSize, pageIndex );
+    return new Page( this, pageSize, pageIndex );
   },
 
   /**
@@ -6054,7 +6058,7 @@ extendArray( Array, NeuroCollection,
   {
     var filter = createWhere( whereProperties, whereValue, whereEquals );
 
-    return new NeuroFilteredCollection( this, filter );
+    return new FilteredCollection( this, filter );
   },
 
   /**
@@ -6267,7 +6271,7 @@ extendArray( Array, NeuroCollection,
   clear: function()
   {
     this.length = 0;
-    this.trigger( NeuroCollection.Events.Cleared, [this] );
+    this.trigger( Collection.Events.Cleared, [this] );
 
     return this;
   },
@@ -6299,7 +6303,7 @@ extendArray( Array, NeuroCollection,
   {
     AP.push.call( this, value );
 
-    this.trigger( NeuroCollection.Events.Add, [this, value] );
+    this.trigger( Collection.Events.Add, [this, value] );
 
     if ( !delaySort )
     {
@@ -6334,7 +6338,7 @@ extendArray( Array, NeuroCollection,
 
     AP.push.apply( this, values );
 
-    this.trigger( NeuroCollection.Events.Adds, [this, values] );
+    this.trigger( Collection.Events.Adds, [this, values] );
 
     this.sort();
 
@@ -6366,7 +6370,7 @@ extendArray( Array, NeuroCollection,
 
     AP.unshift.apply( this, values );
 
-    this.trigger( NeuroCollection.Events.Adds, [this, values] );
+    this.trigger( Collection.Events.Adds, [this, values] );
 
     this.sort();
 
@@ -6401,7 +6405,7 @@ extendArray( Array, NeuroCollection,
     {
       AP.push.apply( this, values );
 
-      this.trigger( NeuroCollection.Events.Adds, [this, values] );
+      this.trigger( Collection.Events.Adds, [this, values] );
 
       if ( !delaySort )
       {
@@ -6440,7 +6444,7 @@ extendArray( Array, NeuroCollection,
   insertAt: function(i, value, delaySort)
   {
     AP.splice.call( this, i, 0, value );
-    this.trigger( NeuroCollection.Events.Add, [this, value] );
+    this.trigger( Collection.Events.Add, [this, value] );
 
     if ( !delaySort )
     {
@@ -6475,7 +6479,7 @@ extendArray( Array, NeuroCollection,
     var removed = AP.pop.apply( this );
     var i = this.length;
 
-    this.trigger( NeuroCollection.Events.Remove, [this, removed, i] );
+    this.trigger( Collection.Events.Remove, [this, removed, i] );
 
     if ( !delaySort )
     {
@@ -6509,7 +6513,7 @@ extendArray( Array, NeuroCollection,
   {
     var removed = AP.shift.apply( this );
 
-    this.trigger( NeuroCollection.Events.Remove, [this, removed, 0] );
+    this.trigger( Collection.Events.Remove, [this, removed, 0] );
 
     if ( !delaySort )
     {
@@ -6552,7 +6556,7 @@ extendArray( Array, NeuroCollection,
       removing = this[ i ];
 
       AP.splice.call( this, i, 1 );
-      this.trigger( NeuroCollection.Events.Remove, [this, removing, i] );
+      this.trigger( Collection.Events.Remove, [this, removing, i] );
 
       if ( !delaySort )
       {
@@ -6647,7 +6651,7 @@ extendArray( Array, NeuroCollection,
         }
       }
 
-      this.trigger( NeuroCollection.Events.Removes, [this, removed] );
+      this.trigger( Collection.Events.Removes, [this, removed] );
 
       if ( !delaySort )
       {
@@ -6705,7 +6709,7 @@ extendArray( Array, NeuroCollection,
       }
     }
 
-    this.trigger( NeuroCollection.Events.Removes, [this, removed] );
+    this.trigger( Collection.Events.Removes, [this, removed] );
 
     if ( !delaySort )
     {
@@ -6748,12 +6752,12 @@ extendArray( Array, NeuroCollection,
 
     if ( deleteCount )
     {
-      this.trigger( NeuroCollection.Events.Removes, [this, removed] );
+      this.trigger( Collection.Events.Removes, [this, removed] );
     }
 
     if ( adding.length )
     {
-      this.trigger( NeuroCollection.Events.Adds, [this, adding] );
+      this.trigger( Collection.Events.Adds, [this, adding] );
     }
 
     this.sort();
@@ -6795,7 +6799,7 @@ extendArray( Array, NeuroCollection,
       }
     }
 
-    this.trigger( NeuroCollection.Events.Updates, [this] );
+    this.trigger( Collection.Events.Updates, [this] );
 
     return this;
   },
@@ -7769,7 +7773,7 @@ extendArray( Array, NeuroCollection,
 
 });
 
-eventize( NeuroCollection.prototype );
+eventize( Collection.prototype );
 
 /**
  * Adds a listener for change events on this collection.
@@ -7784,7 +7788,145 @@ eventize( NeuroCollection.prototype );
  *    A function to call to stop listening for change events.
  * @see Neuro.Collection#event:changes
  */
-addEventFunction( NeuroCollection.prototype, 'change', NeuroCollection.Events.Changes );
+addEventFunction( Collection.prototype, 'change', Collection.Events.Changes );
+
+function Page(collection, pageSize, pageIndex)
+{
+  this.onChanges = bind( this, this.handleChanges );
+  this.pageSize = pageSize;
+  this.pageIndex = pageIndex || 0;
+  this.pageCount = 0;
+  this.setCollection( collection );
+}
+
+Page.Events =
+{
+  Change:       'change',
+  Changes:      'change'
+};
+
+extendArray( Array, Page,
+{
+
+  setPageSize: function(pageSize)
+  {
+    this.pageSize = pageSize;
+    this.handleChanges();
+  },
+
+  setPageIndex: function(pageIndex)
+  {
+    this.goto( pageIndex );
+  },
+
+  setCollection: function(collection)
+  {
+    if ( collection !== this.collection )
+    {
+      if ( this.collection )
+      {
+        this.disconnect();
+      }
+
+      this.collection = collection;
+      this.connect();
+      this.handleChanges( true );
+    }
+  },
+
+  connect: function()
+  {
+    this.collection.on( Collection.Events.Changes, this.onChanges );
+  },
+
+  disconnect: function()
+  {
+    this.collection.off( Collection.Events.Changes, this.onChanges );
+  },
+
+  goto: function(pageIndex)
+  {
+    var actualIndex = Math.max( 0, Math.min( pageIndex, this.pageCount - 1 ) );
+
+    if ( actualIndex !== this.pageIndex )
+    {
+      this.pageIndex = actualIndex;
+      this.update();
+      this.trigger( Page.Events.Change, [ this ] );
+    }
+  },
+
+  next: function()
+  {
+    this.goto( this.pageIndex + 1 );
+  },
+
+  prev: function()
+  {
+    this.goto( this.pageIndex - 1 );
+  },
+
+  jump: function(to)
+  {
+    this.goto( to );
+  },
+
+  first: function()
+  {
+    this.goto( 0 );
+  },
+
+  last: function()
+  {
+    this.goto( this.pageCount - 1 );
+  },
+
+  handleChanges: function(forceApply)
+  {
+    var n = this.collection.length;
+    var pageCount = Math.ceil( n / this.pageSize );
+    var pageIndex = Math.max( 0, Math.min( this.pageIndex, pageCount - 1 ) );
+    var apply = forceApply || this.pageIndex !== pageIndex || this.length !== this.pageSize;
+    var changes = apply || this.pageCount !== pageCount;
+
+    this.pageIndex = pageIndex;
+    this.pageCount = pageCount;
+
+    if ( apply )
+    {
+      this.update();
+    }
+    if ( changes )
+    {
+      this.trigger( Page.Events.Change, [ this ] );
+    }
+  },
+
+  update: function()
+  {
+    var source = this.collection;
+    var n = source.length;
+    var start = this.pageIndex * this.pageSize;
+    var end = Math.min( start + this.pageSize, n );
+    var length = end - start;
+
+    this.length = length;
+
+    for (var i = 0; i < length; i++)
+    {
+      this[ i ] = source[ start++ ];
+    }
+  },
+
+  toArray: function()
+  {
+    return this.slice();
+  }
+
+});
+
+eventize( Page.prototype );
+addEventFunction( Page.prototype, 'change', Page.Events.Changes );
 
 
 /**
@@ -7812,7 +7954,7 @@ addEventFunction( NeuroCollection.prototype, 'change', NeuroCollection.Events.Ch
  *    should exist in this collection.
  * @see Neuro.Collection#filtered
  */
-function NeuroFilteredCollection(base, filter)
+function FilteredCollection(base, filter)
 {
   this.onAdd      = bind( this, this.handleAdd );
   this.onAdds     = bind( this, this.handleAdds );
@@ -7840,7 +7982,7 @@ function NeuroFilteredCollection(base, filter)
   * @member {whereCallback} filter
   */
 
-extendArray( NeuroCollection, NeuroFilteredCollection,
+extendArray( Collection, FilteredCollection,
 {
 
   /**
@@ -7912,13 +8054,13 @@ extendArray( NeuroCollection, NeuroFilteredCollection,
    */
   connect: function()
   {
-    this.base.on( NeuroCollection.Events.Add, this.onAdd );
-    this.base.on( NeuroCollection.Events.Adds, this.onAdds );
-    this.base.on( NeuroCollection.Events.Remove, this.onRemove );
-    this.base.on( NeuroCollection.Events.Removes, this.onRemoves );
-    this.base.on( NeuroCollection.Events.Reset, this.onReset );
-    this.base.on( NeuroCollection.Events.Updates, this.onUpdates );
-    this.base.on( NeuroCollection.Events.Cleared, this.onClear );
+    this.base.on( Collection.Events.Add, this.onAdd );
+    this.base.on( Collection.Events.Adds, this.onAdds );
+    this.base.on( Collection.Events.Remove, this.onRemove );
+    this.base.on( Collection.Events.Removes, this.onRemoves );
+    this.base.on( Collection.Events.Reset, this.onReset );
+    this.base.on( Collection.Events.Updates, this.onUpdates );
+    this.base.on( Collection.Events.Cleared, this.onClear );
 
     return this;
   },
@@ -7933,13 +8075,13 @@ extendArray( NeuroCollection, NeuroFilteredCollection,
    */
   disconnect: function()
   {
-    this.base.off( NeuroCollection.Events.Add, this.onAdd );
-    this.base.off( NeuroCollection.Events.Adds, this.onAdds );
-    this.base.off( NeuroCollection.Events.Remove, this.onRemove );
-    this.base.off( NeuroCollection.Events.Removes, this.onRemoves );
-    this.base.off( NeuroCollection.Events.Reset, this.onReset );
-    this.base.off( NeuroCollection.Events.Updates, this.onUpdates );
-    this.base.off( NeuroCollection.Events.Cleared, this.onClear );
+    this.base.off( Collection.Events.Add, this.onAdd );
+    this.base.off( Collection.Events.Adds, this.onAdds );
+    this.base.off( Collection.Events.Remove, this.onRemove );
+    this.base.off( Collection.Events.Removes, this.onRemoves );
+    this.base.off( Collection.Events.Reset, this.onReset );
+    this.base.off( Collection.Events.Updates, this.onUpdates );
+    this.base.off( Collection.Events.Cleared, this.onClear );
 
     return this;
   },
@@ -7973,7 +8115,7 @@ extendArray( NeuroCollection, NeuroFilteredCollection,
       }
     }
 
-    this.trigger( NeuroCollection.Events.Reset, [this] );
+    this.trigger( Collection.Events.Reset, [this] );
 
     return this;
   },
@@ -8085,8 +8227,8 @@ extendArray( NeuroCollection, NeuroFilteredCollection,
    * Returns an empty clone of this collection.
    *
    * @method
-   * @memberof Neuro.ModelCollection#
-   * @return {Neuro.ModelCollection} -
+   * @memberof Neuro.FilteredCollection#
+   * @return {Neuro.FilteredCollection} -
    *    The reference to a clone collection.
    */
   cloneEmpty: function()
@@ -8116,7 +8258,7 @@ extendArray( NeuroCollection, NeuroFilteredCollection,
  * @see Neuro.Models.boot
  * @see Neuro.Models.collect
  */
-function NeuroModelCollection(database, models, remoteData)
+function ModelCollection(database, models, remoteData)
 {
   this.init( database, models, remoteData );
 }
@@ -8135,7 +8277,7 @@ function NeuroModelCollection(database, models, remoteData)
  * @member {Neuro.Database} database
  */
 
-extendArray( NeuroCollection, NeuroModelCollection,
+extendArray( Collection, ModelCollection,
 {
 
   /**
@@ -8158,7 +8300,7 @@ extendArray( NeuroCollection, NeuroModelCollection,
    */
   init: function(database, models, remoteData)
   {
-    this.map = new NeuroMap();
+    this.map = new Map();
     this.map.values = this;
     this.database = database;
     this.reset( models, remoteData );
@@ -8167,7 +8309,7 @@ extendArray( NeuroCollection, NeuroModelCollection,
   },
 
   /**
-   * Documented in NeuroCollection.js
+   * Documented in Collection.js
    */
   sort: function(comparator, comparatorNullsFirst)
   {
@@ -8177,7 +8319,7 @@ extendArray( NeuroCollection, NeuroModelCollection,
     {
       this.map.sort( cmp );
 
-      this.trigger( NeuroCollection.Events.Sort, [this] );
+      this.trigger( Collection.Events.Sort, [this] );
     }
 
     return this;
@@ -8221,7 +8363,7 @@ extendArray( NeuroCollection, NeuroModelCollection,
   },
 
   /**
-   * Documented in NeuroCollection.js
+   * Documented in Collection.js
    *
    * @see Neuro.ModelCollection#buildKeyFromInput
    */
@@ -8235,7 +8377,7 @@ extendArray( NeuroCollection, NeuroModelCollection,
       var key = a.$key();
       var exists = false;
 
-      if ( models instanceof NeuroModelCollection )
+      if ( models instanceof ModelCollection )
       {
         exists = models.has( key );
       }
@@ -8259,7 +8401,7 @@ extendArray( NeuroCollection, NeuroModelCollection,
   },
 
   /**
-   * Documented in NeuroCollection.js
+   * Documented in Collection.js
    */
   intersect: function(models, out)
   {
@@ -8280,7 +8422,7 @@ extendArray( NeuroCollection, NeuroModelCollection,
   },
 
   /**
-   * Documented in NeuroCollection.js
+   * Documented in Collection.js
    */
   complement: function(models, out)
   {
@@ -8301,7 +8443,7 @@ extendArray( NeuroCollection, NeuroModelCollection,
   },
 
   /**
-   * Documented in NeuroCollection.js
+   * Documented in Collection.js
    */
   clear: function()
   {
@@ -8353,7 +8495,7 @@ extendArray( NeuroCollection, NeuroModelCollection,
       }
     }
 
-    this.trigger( NeuroCollection.Events.Reset, [this] );
+    this.trigger( Collection.Events.Reset, [this] );
     this.sort();
   },
 
@@ -8409,7 +8551,7 @@ extendArray( NeuroCollection, NeuroModelCollection,
   put: function(key, model, delaySort)
   {
     this.map.put( key, model );
-    this.trigger( NeuroCollection.Events.Add, [this, model] );
+    this.trigger( Collection.Events.Add, [this, model] );
 
     if ( !delaySort )
     {
@@ -8439,7 +8581,7 @@ extendArray( NeuroCollection, NeuroModelCollection,
     var model = this.parseModel( input );
 
     this.map.put( model.$key(), model );
-    this.trigger( NeuroCollection.Events.Add, [this, model] );
+    this.trigger( Collection.Events.Add, [this, model] );
 
     if ( !delaySort )
     {
@@ -8473,7 +8615,7 @@ extendArray( NeuroCollection, NeuroModelCollection,
       this.map.put( model.$key(), model );
     }
 
-    this.trigger( NeuroCollection.Events.Adds, [this, values] );
+    this.trigger( Collection.Events.Adds, [this, values] );
     this.sort();
 
     return this.length;
@@ -8523,7 +8665,7 @@ extendArray( NeuroCollection, NeuroModelCollection,
         this.map.put( model.$key(), model );
       }
 
-      this.trigger( NeuroCollection.Events.Adds, [this, models] );
+      this.trigger( Collection.Events.Adds, [this, models] );
 
       if ( !delaySort )
       {
@@ -8567,7 +8709,7 @@ extendArray( NeuroCollection, NeuroModelCollection,
     var removed = this[ i ];
 
     this.map.removeAt( i );
-    this.trigger( NeuroCollection.Events.Remove, [this, removed, i] );
+    this.trigger( Collection.Events.Remove, [this, removed, i] );
 
     if ( !delaySort )
     {
@@ -8602,7 +8744,7 @@ extendArray( NeuroCollection, NeuroModelCollection,
     var removed = this[ 0 ];
 
     this.map.removeAt( 0 );
-    this.trigger( NeuroCollection.Events.Remove, [this, removed, 0] );
+    this.trigger( Collection.Events.Remove, [this, removed, 0] );
 
     if ( !delaySort )
     {
@@ -8638,7 +8780,7 @@ extendArray( NeuroCollection, NeuroModelCollection,
       removing = this[ i ];
 
       this.map.removeAt( i );
-      this.trigger( NeuroCollection.Events.Remove, [this, removing, i] );
+      this.trigger( Collection.Events.Remove, [this, removing, i] );
 
       if ( !delaySort )
       {
@@ -8677,7 +8819,7 @@ extendArray( NeuroCollection, NeuroModelCollection,
     if ( removing )
     {
       this.map.remove( key );
-      this.trigger( NeuroCollection.Events.Remove, [this, removing, input] );
+      this.trigger( Collection.Events.Remove, [this, removing, input] );
 
       if ( !delaySort )
       {
@@ -8720,7 +8862,7 @@ extendArray( NeuroCollection, NeuroModelCollection,
       }
     }
 
-    this.trigger( NeuroCollection.Events.Removes, [this, removed] );
+    this.trigger( Collection.Events.Removes, [this, removed] );
 
     if ( !delaySort )
     {
@@ -8789,7 +8931,7 @@ extendArray( NeuroCollection, NeuroModelCollection,
   {
     this.map.reverse();
 
-    this.trigger( NeuroCollection.Events.Updates, [this] );
+    this.trigger( Collection.Events.Updates, [this] );
 
     return this;
   },
@@ -8836,7 +8978,7 @@ extendArray( NeuroCollection, NeuroModelCollection,
       }
     }
 
-    this.trigger( NeuroCollection.Events.Removes, [this, removed] );
+    this.trigger( Collection.Events.Removes, [this, removed] );
     this.sort();
 
     return removed;
@@ -8878,7 +9020,7 @@ extendArray( NeuroCollection, NeuroModelCollection,
       }
     }
 
-    this.trigger( NeuroCollection.Events.Updates, [this, this] );
+    this.trigger( Collection.Events.Updates, [this, this] );
     this.sort();
 
     return this;
@@ -8929,7 +9071,7 @@ extendArray( NeuroCollection, NeuroModelCollection,
       }
     }
 
-    this.trigger( NeuroCollection.Events.Updates, [this, updated] );
+    this.trigger( Collection.Events.Updates, [this, updated] );
     this.sort();
 
     return updated;
@@ -8945,7 +9087,7 @@ extendArray( NeuroCollection, NeuroModelCollection,
    */
   clone: function()
   {
-    return new NeuroModelCollection( this.database, this, true );
+    return new ModelCollection( this.database, this, true );
   },
 
   /**
@@ -8958,13 +9100,33 @@ extendArray( NeuroCollection, NeuroModelCollection,
    */
   cloneEmpty: function()
   {
-    return new NeuroModelCollection( this.database );
+    return new ModelCollection( this.database );
   }
 
 });
 
 
-function NeuroRelationCollection(database, model, relator, models, remoteData)
+/**
+ * An extension of the {@link Neuro.ModelCollection} class for relationships.
+ *
+ * @constructor
+ * @memberof Neuro
+ * @alias RelationCollection
+ * @extends Neuro.ModelCollection
+ * @param {Neuro.Database} database -
+ *    The database for the models in this collection.
+ * @param {Neuro.Model} model -
+ *    The model instance all models in this collection are related to.
+ * @param {Neuro.Relation} relator -
+ *    The relation instance responsible for relating/unrelating models.
+ * @param {modelInput[]} [models] -
+ *    The initial array of models in this collection.
+ * @param {Boolean} [remoteData=false] -
+ *    If the models array is from a remote source. Remote sources place the
+ *    model directly into the database while local sources aren't stored in the
+ *    database until they're saved.
+ */
+function RelationCollection(database, model, relator, models, remoteData)
 {
   this.model = model;
   this.relator = relator;
@@ -8972,24 +9134,92 @@ function NeuroRelationCollection(database, model, relator, models, remoteData)
   this.init( database, models, remoteData );
 }
 
-extendArray( NeuroModelCollection, NeuroRelationCollection,
+/**
+ * The model instance all models in this collection are related to.
+ *
+ * @memberof Neuro.RelationCollection#
+ * @member {Neuro.Model} model
+ */
+
+ /**
+  * The relation instance responsible for relating/unrelating models.
+  *
+  * @memberof Neuro.RelationCollection#
+  * @member {Neuro.Relation} relator
+  */
+
+extendArray( ModelCollection, RelationCollection,
 {
 
+  /**
+   * Sets the entire set of models which are related. If a model is specified
+   * that doesn't exist in this collection a relationship is added. If a model
+   * in this collection is not specified in the `input` the relationship is
+   * removed. Depending on the relationship, adding and removing relationships
+   * may result in the saving or deleting of models.
+   *
+   * @method
+   * @memberof Neuro.RelationCollection#
+   * @param {modelInput|modelInput[]} [input] -
+   *    The model or array of models to relate. If input isn't specified, all
+   *    models currently related are unrelated.
+   * @return {Neuro.RelationCollection} -
+   *    The reference to this collection.
+   */
   set: function(input)
   {
     this.relator.set( this.model, input );
+
+    return this;
   },
 
+  /**
+   * Relates one or more models to this collection's model. If a model is
+   * specified that is already related then it has no effect.
+   *
+   * @method
+   * @memberof Neuro.RelationCollection#
+   * @param {modelInput|modelInput[]} input -
+   *    The model or array of models to relate.
+   * @return {Neuro.RelationCollection} -
+   *    The reference to this collection.
+   */
   relate: function(input)
   {
     this.relator.relate( this.model, input );
+
+    return this;
   },
 
+  /**
+   * Unrelates one or more models from this collection's model. If a model is
+   * specified that is not related then it has no effect. If no models are
+   * specified then all models in this collection are unrelated.
+   *
+   * @method
+   * @memberof Neuro.RelationCollection#
+   * @param {modelInput|modelInput[]} input -
+   *    The model or array of models to relate.
+   * @return {Neuro.RelationCollection} -
+   *    The reference to this collection.
+   */
   unrelate: function(input)
   {
     this.relator.unrelate( this.model, input );
+
+    return this;
   },
 
+  /**
+   * Determines whether one or more models all exist in this collection.
+   *
+   * @method
+   * @memberof Neuro.RelationCollection#
+   * @param {modelInput|modelInput[]} input -
+   *    The model or array of models to check for existence.
+   * @return {Boolean} -
+   *    True if all models are related - otherwise false.
+   */
   isRelated: function(input)
   {
     return this.relator.isRelated( this.model, input );
@@ -9005,20 +9235,20 @@ extendArray( NeuroModelCollection, NeuroRelationCollection,
    */
   clone: function()
   {
-    return new NeuroRelationCollection( this.database, this.model, this.relator, this, true );
+    return new RelationCollection( this.database, this.model, this.relator, this, true );
   },
 
   /**
    * Returns an empty clone of this collection.
    *
    * @method
-   * @memberof Neuro.ModelCollection#
-   * @return {Neuro.ModelCollection} -
+   * @memberof Neuro.RelationCollection#
+   * @return {Neuro.RelationCollection} -
    *    The reference to a clone collection.
    */
   cloneEmpty: function()
   {
-    return new NeuroRelationCollection( this.database, this.model, this.relator );
+    return new RelationCollection( this.database, this.model, this.relator );
   }
 
 });
@@ -9037,7 +9267,7 @@ extendArray( NeuroModelCollection, NeuroRelationCollection,
  * @return {Neuro.ModelCollection} -
  *    The reference to the given collection.
  */
-function NeuroDiscriminateCollection(collection, discriminator, discriminatorsToModel)
+function DiscriminateCollection(collection, discriminator, discriminatorsToModel)
 {
   collection.discriminator = discriminator;
   collection.discriminatorsToModel = discriminatorsToModel;
@@ -9088,7 +9318,7 @@ function NeuroDiscriminateCollection(collection, discriminator, discriminatorsTo
    */
   collection.parseModel = function(input, remoteData)
   {
-    if ( input instanceof NeuroModel )
+    if ( input instanceof Model )
     {
       return input;
     }
@@ -9109,7 +9339,7 @@ function NeuroDiscriminateCollection(collection, discriminator, discriminatorsTo
    */
   collection.clone = function()
   {
-    return NeuroDiscriminateCollection( clone.apply( this ), discriminator, discriminatorsToModel );
+    return DiscriminateCollection( clone.apply( this ), discriminator, discriminatorsToModel );
   };
 
   /**
@@ -9122,13 +9352,13 @@ function NeuroDiscriminateCollection(collection, discriminator, discriminatorsTo
    */
   collection.cloneEmpty = function()
   {
-    return NeuroDiscriminateCollection( cloneEmpty.apply( this ), discriminator, discriminatorsToModel );
+    return DiscriminateCollection( cloneEmpty.apply( this ), discriminator, discriminatorsToModel );
   };
 
   return collection;
 }
 
-function NeuroQuery(database, whereProperties, whereValue, whereEquals)
+function Query(database, whereProperties, whereValue, whereEquals)
 {
   this.onModelAdd     = bind( this, this.handleModelAdded );
   this.onModelRemoved = bind( this, this.handleModelRemoved );
@@ -9139,7 +9369,7 @@ function NeuroQuery(database, whereProperties, whereValue, whereEquals)
   this.setWhere( whereProperties, whereValue, whereEquals );
 }
 
-extendArray( NeuroModelCollection, NeuroQuery,
+extendArray( ModelCollection, Query,
 {
 
   setWhere: function(whereProperties, whereValue, whereEquals)
@@ -9150,16 +9380,16 @@ extendArray( NeuroModelCollection, NeuroQuery,
 
   connect: function()
   {
-    this.database.on( NeuroDatabase.Events.ModelAdded, this.onModelAdd );
-    this.database.on( NeuroDatabase.Events.ModelRemoved, this.onModelRemoved );
-    this.database.on( NeuroDatabase.Events.ModelUpdated, this.onModelUpdated );
+    this.database.on( Database.Events.ModelAdded, this.onModelAdd );
+    this.database.on( Database.Events.ModelRemoved, this.onModelRemoved );
+    this.database.on( Database.Events.ModelUpdated, this.onModelUpdated );
   },
 
   disconnect: function()
   {
-    this.database.off( NeuroDatabase.Events.ModelAdded, this.onModelAdd );
-    this.database.off( NeuroDatabase.Events.ModelRemoved, this.onModelRemoved );
-    this.database.off( NeuroDatabase.Events.ModelUpdated, this.onModelUpdated );
+    this.database.off( Database.Events.ModelAdded, this.onModelAdd );
+    this.database.off( Database.Events.ModelRemoved, this.onModelRemoved );
+    this.database.off( Database.Events.ModelUpdated, this.onModelUpdated );
   },
 
   sync: function()
@@ -9180,7 +9410,7 @@ extendArray( NeuroModelCollection, NeuroQuery,
       }
     }
 
-    this.trigger( NeuroCollection.Events.Reset, [this] );
+    this.trigger( Collection.Events.Reset, [this] );
   },
 
   handleModelAdded: function(model, remoteData)
@@ -9217,29 +9447,30 @@ extendArray( NeuroModelCollection, NeuroQuery,
   }
 
 });
-function NeuroRemoteQuery(database, query)
+
+function RemoteQuery(database, query)
 {
   this.init( database );
   this.query = query;
-  this.status = NeuroRemoteQuery.Status.Success;
-  this.request = new NeuroRequest( this, this.handleSuccess, this.handleFailure );
+  this.status = RemoteQuery.Status.Success;
+  this.request = new Request( this, this.handleSuccess, this.handleFailure );
 }
 
-NeuroRemoteQuery.Status =
+RemoteQuery.Status =
 {
   Pending:    'pending',
   Success:    'success',
   Failure:    'failure'
 };
 
-NeuroRemoteQuery.Events =
+RemoteQuery.Events =
 {
   Ready:      'ready',
   Success:    'success',
   Failure:    'failure'
 };
 
-extendArray( NeuroQuery, NeuroRemoteQuery,
+extendArray( Query, RemoteQuery,
 {
 
   setQuery: function(query, skipSync, clearPending)
@@ -9256,7 +9487,7 @@ extendArray( NeuroQuery, NeuroRemoteQuery,
 
   sync: function(clearPending)
   {
-    this.status = NeuroRemoteQuery.Status.Pending;
+    this.status = RemoteQuery.Status.Pending;
 
     if ( clearPending )
     {
@@ -9270,9 +9501,9 @@ extendArray( NeuroQuery, NeuroRemoteQuery,
 
   cancel: function()
   {
-    this.off( NeuroRemoteQuery.Events.Ready );
-    this.off( NeuroRemoteQuery.Events.Success );
-    this.off( NeuroRemoteQuery.Events.Failure );
+    this.off( RemoteQuery.Events.Ready );
+    this.off( RemoteQuery.Events.Success );
+    this.off( RemoteQuery.Events.Failure );
 
     this.request.cancel();
 
@@ -9281,9 +9512,9 @@ extendArray( NeuroQuery, NeuroRemoteQuery,
 
   ready: function(callback, context)
   {
-    if ( this.status === NeuroRemoteQuery.Status.Pending )
+    if ( this.status === RemoteQuery.Status.Pending )
     {
-      this.once( NeuroRemoteQuery.Events.Ready, callback, context );
+      this.once( RemoteQuery.Events.Ready, callback, context );
     }
     else
     {
@@ -9295,11 +9526,11 @@ extendArray( NeuroQuery, NeuroRemoteQuery,
 
   success: function(callback, context)
   {
-    if ( this.status === NeuroRemoteQuery.Status.Pending )
+    if ( this.status === RemoteQuery.Status.Pending )
     {
-      this.once( NeuroRemoteQuery.Events.Success, callback, context );
+      this.once( RemoteQuery.Events.Success, callback, context );
     }
-    else if ( this.status === NeuroRemoteQuery.Status.Success )
+    else if ( this.status === RemoteQuery.Status.Success )
     {
       callback.call( context, this );
     }
@@ -9309,11 +9540,11 @@ extendArray( NeuroQuery, NeuroRemoteQuery,
 
   failure: function(callback, context)
   {
-    if ( this.status === NeuroRemoteQuery.Status.Pending )
+    if ( this.status === RemoteQuery.Status.Pending )
     {
-      this.once( NeuroRemoteQuery.Events.Failure, callback, context );
+      this.once( RemoteQuery.Events.Failure, callback, context );
     }
-    else if ( this.status === NeuroRemoteQuery.Status.Failure )
+    else if ( this.status === RemoteQuery.Status.Failure )
     {
       callback.call( context, this );
     }
@@ -9330,66 +9561,66 @@ extendArray( NeuroQuery, NeuroRemoteQuery,
   {
     var models = this.parse.apply( this, arguments );
 
-    this.status = NeuroRemoteQuery.Status.Success;
+    this.status = RemoteQuery.Status.Success;
     this.reset( models, true );
-    this.off( NeuroRemoteQuery.Events.Failure, this.onFailure );
-    this.trigger( NeuroRemoteQuery.Events.Ready, [this, response] );
-    this.trigger( NeuroRemoteQuery.Events.Success, [this, response] );
+    this.off( RemoteQuery.Events.Failure, this.onFailure );
+    this.trigger( RemoteQuery.Events.Ready, [this, response] );
+    this.trigger( RemoteQuery.Events.Success, [this, response] );
   },
 
   handleFailure: function(response, error)
   {
-    this.status = NeuroRemoteQuery.Status.Failure;
-    this.off( NeuroRemoteQuery.Events.Success, this.onSuccess );
-    this.trigger( NeuroRemoteQuery.Events.Ready, [this, response] );
-    this.trigger( NeuroRemoteQuery.Events.Failure, [this, response] );
+    this.status = RemoteQuery.Status.Failure;
+    this.off( RemoteQuery.Events.Success, this.onSuccess );
+    this.trigger( RemoteQuery.Events.Ready, [this, response] );
+    this.trigger( RemoteQuery.Events.Failure, [this, response] );
   }
 
 });
 
 
-function NeuroSearch(database, options)
+function Search(database, options)
 {
   this.$init( database, options );
 }
 
-NeuroSearch.Events =
+Search.Events =
 {
   Ready:      'ready',
   Success:    'success',
   Failure:    'failure'
 };
 
-NeuroSearch.Status =
+Search.Status =
 {
   Pending:    'pending',
   Success:    'success',
   Failure:    'failure'
 };
 
-NeuroSearch.Defaults =
+Search.Defaults =
 {
   $method:     'create'
 };
 
-NeuroSearch.prototype =
+Search.prototype =
 {
 
   $init: function(database, options)
   {
-    applyOptions( this, options, NeuroSearch.Defaults, true );
+    applyOptions( this, options, Search.Defaults, true );
 
     this.$db = database;
-    this.$results = new NeuroModelCollection( database );
-    this.$status = NeuroSearch.Status.Success;
-    this.$request = new NeuroRequest( this, this.$handleSuccess, this.$handleFailure );
+    this.$results = new ModelCollection( database );
+    this.$status = Search.Status.Success;
+    this.$request = new Request( this, this.$handleSuccess, this.$handleFailure );
   },
 
   $run: function()
   {
     var encoded = this.$encode();
 
-    this.$status = NeuroSearch.Status.Pending;
+    this.$status = Search.Status.Pending;
 
     var success = this.$request.onSuccess();
     var failure = this.$request.onFailure();
@@ -9411,9 +9642,9 @@ NeuroSearch.prototype =
 
   $cancel: function()
   {
-    this.$off( NeuroSearch.Events.Ready );
-    this.$off( NeuroSearch.Events.Success );
-    this.$off( NeuroSearch.Events.Failure );
+    this.$off( Search.Events.Ready );
+    this.$off( Search.Events.Success );
+    this.$off( Search.Events.Failure );
 
     this.$request.cancel();
 
@@ -9422,9 +9653,9 @@ NeuroSearch.prototype =
 
   $ready: function(callback, context)
   {
-    if ( this.$status === NeuroSearch.Status.Pending )
+    if ( this.$status === Search.Status.Pending )
     {
-      this.$once( NeuroSearch.Events.Ready, callback, context );
+      this.$once( Search.Events.Ready, callback, context );
     }
     else
     {
@@ -9436,11 +9667,11 @@ NeuroSearch.prototype =
 
   $success: function(callback, context)
   {
-    if ( this.$status === NeuroSearch.Status.Pending )
+    if ( this.$status === Search.Status.Pending )
     {
-      this.$once( NeuroSearch.Events.Success, callback, context );
+      this.$once( Search.Events.Success, callback, context );
     }
-    else if ( this.$status === NeuroSearch.Status.Success )
+    else if ( this.$status === Search.Status.Success )
     {
       callback.call( context, this );
     }
@@ -9450,11 +9681,11 @@ NeuroSearch.prototype =
 
   $failure: function(callback, context)
   {
-    if ( this.$status === NeuroSearch.Status.Pending )
+    if ( this.$status === Search.Status.Pending )
     {
-      this.$once( NeuroSearch.Events.Failure, callback, context );
+      this.$once( Search.Events.Failure, callback, context );
     }
-    else if ( this.$status === NeuroSearch.Status.Failure )
+    else if ( this.$status === Search.Status.Failure )
     {
       callback.call( context, this );
     }
@@ -9466,17 +9697,17 @@ NeuroSearch.prototype =
   {
     var models = this.$decode.apply( this, arguments );
 
-    this.$status = NeuroSearch.Status.Success;
+    this.$status = Search.Status.Success;
     this.$results.reset( models, true );
-    this.$trigger( NeuroSearch.Events.Ready, [this, response] );
-    this.$trigger( NeuroSearch.Events.Success, [this, response] );
+    this.$trigger( Search.Events.Ready, [this, response] );
+    this.$trigger( Search.Events.Success, [this, response] );
   },
 
   $handleFailure: function(response)
   {
-    this.$status = NeuroSearch.Status.Failure;
-    this.$trigger( NeuroSearch.Events.Ready, [this, response] );
-    this.$trigger( NeuroSearch.Events.Failure, [this, response] );
+    this.$status = Search.Status.Failure;
+    this.$trigger( Search.Events.Ready, [this, response] );
+    this.$trigger( Search.Events.Failure, [this, response] );
   },
 
   $encode: function()
@@ -9496,15 +9727,15 @@ NeuroSearch.prototype =
 
 };
 
-eventize( NeuroSearch.prototype, true );
+eventize( Search.prototype, true );
 
 
-function NeuroSearchPaged(database, options)
+function SearchPaged(database, options)
 {
   this.$init( database, options );
 }
 
-extend( NeuroSearch, NeuroSearchPaged,
+extend( Search, SearchPaged,
 {
 
   $goto: function(index, dontRun)
@@ -9643,7 +9874,7 @@ Neuro.transact = function(cascade, model, operation, func)
   }
   else
   {
-    transaction = Neuro.transaction = new NeuroTransaction( cascade, model, operation );
+    transaction = Neuro.transaction = new Transaction( cascade, model, operation );
 
     transaction.add( cascade, model, operation );
 
@@ -9657,10 +9888,10 @@ Neuro.transact = function(cascade, model, operation, func)
 
 Neuro.transactNone = function(cascade, model, operation)
 {
-  return new NeuroTransaction( cascade, model, operation );
+  return new Transaction( cascade, model, operation );
 };
 
-function NeuroTransaction(cascade, model, operation)
+function Transaction(cascade, model, operation)
 {
   this.cascade = cascade;
   this.model = model;
@@ -9670,7 +9901,7 @@ function NeuroTransaction(cascade, model, operation)
   this.operations = 0;
 }
 
-NeuroTransaction.Events =
+Transaction.Events =
 {
   RemoteSuccess:  'remote-success',
   LocalSuccess:   'local-success',
@@ -9680,7 +9911,7 @@ NeuroTransaction.Events =
   Any:            'remote-success local-success offline blocked error'
 };
 
-NeuroTransaction.prototype =
+Transaction.prototype =
 {
   add: function(cascade, model, operation)
   {
@@ -9695,16 +9926,16 @@ NeuroTransaction.prototype =
       if ( cascade & Neuro.Cascade.Rest )
       {
         handled.offs.push(
-          model.$once( NeuroModel.Events.RemoteSave, this.createHandler( false, false, handled ), this ),
-          model.$once( NeuroModel.Events.RemoteSaveFailure, this.createHandler( true, false, handled ), this ),
-          model.$once( NeuroModel.Events.RemoteSaveOffline, this.createHandler( false, true, handled ), this )
+          model.$once( Model.Events.RemoteSave, this.createHandler( false, false, handled ), this ),
+          model.$once( Model.Events.RemoteSaveFailure, this.createHandler( true, false, handled ), this ),
+          model.$once( Model.Events.RemoteSaveOffline, this.createHandler( false, true, handled ), this )
         );
       }
       else if ( cascade & Neuro.Cascade.Local )
       {
         handled.offs.push(
-          model.$once( NeuroModel.Events.LocalSave, this.createHandler( false, false, handled ), this ),
-          model.$once( NeuroModel.Events.LocalSaveFailure, this.createHandler( true, false, handled ), this )
+          model.$once( Model.Events.LocalSave, this.createHandler( false, false, handled ), this ),
+          model.$once( Model.Events.LocalSaveFailure, this.createHandler( true, false, handled ), this )
         );
       }
       break;
@@ -9713,16 +9944,16 @@ NeuroTransaction.prototype =
       if ( cascade & Neuro.Cascade.Rest )
       {
         handled.offs.push(
-          model.$once( NeuroModel.Events.RemoteRemove, this.createHandler( false, false, handled ), this ),
-          model.$once( NeuroModel.Events.RemoteRemoveFailure, this.createHandler( true, false, handled ), this ),
-          model.$once( NeuroModel.Events.RemoteRemoveOffline, this.createHandler( false, true, handled ), this )
+          model.$once( Model.Events.RemoteRemove, this.createHandler( false, false, handled ), this ),
+          model.$once( Model.Events.RemoteRemoveFailure, this.createHandler( true, false, handled ), this ),
+          model.$once( Model.Events.RemoteRemoveOffline, this.createHandler( false, true, handled ), this )
         );
       }
       else if ( cascade & Neuro.Cascade.Local )
       {
         handled.offs.push(
-          model.$once( NeuroModel.Events.LocalRemove, this.createHandler( false, false, handled ), this ),
-          model.$once( NeuroModel.Events.LocalRemoveFailure, this.createHandler( true, false, handled ), this )
+          model.$once( Model.Events.LocalRemove, this.createHandler( false, false, handled ), this ),
+          model.$once( Model.Events.LocalRemoveFailure, this.createHandler( true, false, handled ), this )
         );
       }
       break;
@@ -9749,11 +9980,11 @@ NeuroTransaction.prototype =
 
         if ( offline )
         {
-          this.status = NeuroTransaction.Events.Offline;
+          this.status = Transaction.Events.Offline;
         }
         else if ( !this.status && failure )
         {
-          this.status = NeuroTransaction.Events.Error;
+          this.status = Transaction.Events.Error;
         }
 
         this.completed++;
@@ -9774,15 +10005,15 @@ NeuroTransaction.prototype =
     {
       if ( this.cascade & Neuro.Cascade.Rest )
       {
-        this.status = NeuroTransaction.Events.RemoteSuccess;
+        this.status = Transaction.Events.RemoteSuccess;
       }
       else if ( this.cascade & Neuro.Cascade.Local )
       {
-        this.status = NeuroTransaction.Events.LocalSuccess;
+        this.status = Transaction.Events.LocalSuccess;
       }
       else
       {
-        this.status = NeuroTransaction.Events.Error;
+        this.status = Transaction.Events.Error;
       }
     }
 
@@ -9796,7 +10027,7 @@ NeuroTransaction.prototype =
 
   then: function(callback, context)
   {
-    var ignore = this.once( NeuroTransaction.Events.Any, callback, context );
+    var ignore = this.once( Transaction.Events.Any, callback, context );
 
     if ( this.isFinished() )
     {
@@ -9808,152 +10039,14 @@ NeuroTransaction.prototype =
 
 };
 
-eventize( NeuroTransaction.prototype );
-
-function NeuroPage(collection, pageSize, pageIndex)
-{
-  this.onChanges = bind( this, this.handleChanges );
-  this.pageSize = pageSize;
-  this.pageIndex = pageIndex || 0;
-  this.pageCount = 0;
-  this.setCollection( collection );
-}
-
-NeuroPage.Events =
-{
-  Change:       'change',
-  Changes:      'change'
-};
-
-extendArray( Array, NeuroPage,
-{
-
-  setPageSize: function(pageSize)
-  {
-    this.pageSize = pageSize;
-    this.handleChanges();
-  },
-
-  setPageIndex: function(pageIndex)
-  {
-    this.goto( pageIndex );
-  },
-
-  setCollection: function(collection)
-  {
-    if ( collection !== this.collection )
-    {
-      if ( this.collection )
-      {
-        this.disconnect();
-      }
-
-      this.collection = collection;
-      this.connect();
-      this.handleChanges( true );
-    }
-  },
-
-  connect: function()
-  {
-    this.collection.on( NeuroCollection.Events.Changes, this.onChanges );
-  },
-
-  disconnect: function()
-  {
-    this.collection.off( NeuroCollection.Events.Changes, this.onChanges );
-  },
-
-  goto: function(pageIndex)
-  {
-    var actualIndex = Math.max( 0, Math.min( pageIndex, this.pageCount - 1 ) );
-
-    if ( actualIndex !== this.pageIndex )
-    {
-      this.pageIndex = actualIndex;
-      this.update();
-      this.trigger( NeuroPage.Events.Change, [ this ] );
-    }
-  },
-
-  next: function()
-  {
-    this.goto( this.pageIndex + 1 );
-  },
-
-  prev: function()
-  {
-    this.goto( this.pageIndex - 1 );
-  },
-
-  jump: function(to)
-  {
-    this.goto( to );
-  },
-
-  first: function()
-  {
-    this.goto( 0 );
-  },
-
-  last: function()
-  {
-    this.goto( this.pageCount - 1 );
-  },
-
-  handleChanges: function(forceApply)
-  {
-    var n = this.collection.length;
-    var pageCount = Math.ceil( n / this.pageSize );
-    var pageIndex = Math.max( 0, Math.min( this.pageIndex, pageCount - 1 ) );
-    var apply = forceApply || this.pageIndex !== pageIndex || this.length !== this.pageSize;
-    var changes = apply || this.pageCount !== pageCount;
-
-    this.pageIndex = pageIndex;
-    this.pageCount = pageCount;
-
-    if ( apply )
-    {
-      this.update();
-    }
-    if ( changes )
-    {
-      this.trigger( NeuroPage.Events.Change, [ this ] );
-    }
-  },
-
-  update: function()
-  {
-    var source = this.collection;
-    var n = source.length;
-    var start = this.pageIndex * this.pageSize;
-    var end = Math.min( start + this.pageSize, n );
-    var length = end - start;
-
-    this.length = length;
-
-    for (var i = 0; i < length; i++)
-    {
-      this[ i ] = source[ start++ ];
-    }
-  },
-
-  toArray: function()
-  {
-    return this.slice();
-  }
-
-});
-
-eventize( NeuroPage.prototype );
-addEventFunction( NeuroPage.prototype, 'change', NeuroPage.Events.Changes );
+eventize( Transaction.prototype );
 
 
-function NeuroOperation()
+function Operation()
 {
 }
 
-NeuroOperation.prototype =
+Operation.prototype =
 {
   reset: function(model, cascade)
   {
@@ -10020,7 +10113,7 @@ NeuroOperation.prototype =
 
   run: function(db, model)
   {
-    throw 'NeuroOperation.run Not implemented';
+    throw 'Operation.run Not implemented';
   },
 
   finish: function()
@@ -10079,25 +10172,25 @@ NeuroOperation.prototype =
 
 };
 
-function NeuroGetLocal(model, cascade)
+function GetLocal(model, cascade)
 {
   this.reset( model, cascade );
 }
 
-extend( NeuroOperation, NeuroGetLocal,
+extend( Operation, GetLocal,
 {
 
   cascading: Neuro.Cascade.Local,
 
   interrupts: false,
 
-  type: 'NeuroGetLocal',
+  type: 'GetLocal',
 
   run: function(db, model)
   {
     if ( model.$isDeleted() )
     {
-      model.$trigger( NeuroModel.Events.LocalGetFailure, [model] );
+      model.$trigger( Model.Events.LocalGetFailure, [model] );
 
       this.finish();
     }
@@ -10109,9 +10202,9 @@ extend( NeuroOperation, NeuroGetLocal,
     {
       Neuro.debug( Neuro.Debugs.GET_LOCAL_SKIPPED, model );
 
-      model.$trigger( NeuroModel.Events.LocalGet, [model] );
+      model.$trigger( Model.Events.LocalGet, [model] );
 
-      this.insertNext( NeuroGetRemote ); 
+      this.insertNext( GetRemote );
       this.finish();
     }
   },
@@ -10127,11 +10220,11 @@ extend( NeuroOperation, NeuroGetLocal,
 
     Neuro.debug( Neuro.Debugs.GET_LOCAL, model, encoded );
 
-    model.$trigger( NeuroModel.Events.LocalGet, [model] );
+    model.$trigger( Model.Events.LocalGet, [model] );
 
     if ( this.canCascade( Neuro.Cascade.Rest ) && !model.$isDeleted() )
     {
-      this.insertNext( NeuroGetRemote );
+      this.insertNext( GetRemote );
     }
   },
 
@@ -10141,35 +10234,35 @@ extend( NeuroOperation, NeuroGetLocal,
 
     Neuro.debug( Neuro.Debugs.GET_LOCAL, model, e );
 
-    model.$trigger( NeuroModel.Events.LocalGetFailure, [model] );
+    model.$trigger( Model.Events.LocalGetFailure, [model] );
 
     if ( this.canCascade( Neuro.Cascade.Rest ) && !model.$isDeleted()  )
     {
-      this.insertNext( NeuroGetRemote );
+      this.insertNext( GetRemote );
     }
   }
 
 });
 
-function NeuroGetRemote(model, cascade)
+function GetRemote(model, cascade)
 {
   this.reset( model, cascade );
 }
 
-extend( NeuroOperation, NeuroGetRemote,
+extend( Operation, GetRemote,
 {
 
   cascading: Neuro.Cascade.Rest,
 
   interrupts: false,
 
-  type: 'NeuroGetRemote',
+  type: 'GetRemote',
 
   run: function(db, model)
   {
     if ( model.$isDeleted() )
     {
-      model.$trigger( NeuroModel.Events.RemoteGetFailure, [model] );
+      model.$trigger( Model.Events.RemoteGetFailure, [model] );
 
       this.finish();
     }
@@ -10179,7 +10272,7 @@ extend( NeuroOperation, NeuroGetRemote,
     }
     else
     {
-      model.$trigger( NeuroModel.Events.RemoteGet, [model] );
+      model.$trigger( Model.Events.RemoteGet, [model] );
 
       this.finish();
     }
@@ -10198,7 +10291,7 @@ extend( NeuroOperation, NeuroGetRemote,
 
     Neuro.debug( Neuro.Debugs.GET_REMOTE, model, data );
 
-    model.$trigger( NeuroModel.Events.RemoteGet, [model] );
+    model.$trigger( Model.Events.RemoteGet, [model] );
   },
 
   onFailure: function(response, status)
@@ -10209,29 +10302,29 @@ extend( NeuroOperation, NeuroGetRemote,
 
     if ( status === 0 )
     {
-      model.$trigger( NeuroModel.Events.RemoteGetOffline, [model, response] );
+      model.$trigger( Model.Events.RemoteGetOffline, [model, response] );
     }
     else
     {
-      model.$trigger( NeuroModel.Events.RemoteGetFailure, [model, response] );
+      model.$trigger( Model.Events.RemoteGetFailure, [model, response] );
     }
   }
 
 });
 
-function NeuroRemoveCache(model, cascade)
+function RemoveCache(model, cascade)
 {
   this.reset( model, cascade );
 }
 
-extend( NeuroOperation, NeuroRemoveCache,
+extend( Operation, RemoveCache,
 {
 
   cascading: Neuro.Cascade.None,
 
   interrupts: true,
 
-  type: 'NeuroRemoveCache',
+  type: 'RemoveCache',
 
   run: function(db, model)
   {
@@ -10246,31 +10339,32 @@ extend( NeuroOperation, NeuroRemoveCache,
   }
 
 });
-function NeuroRemoveLocal(model, cascade)
+
+function RemoveLocal(model, cascade)
 {
   this.reset( model, cascade );
 }
 
-extend( NeuroOperation, NeuroRemoveLocal, 
+extend( Operation, RemoveLocal,
 {
 
   cascading: Neuro.Cascade.Local,
 
   interrupts: true,
 
-  type: 'NeuroRemoveLocal',
+  type: 'RemoveLocal',
 
   run: function(db, model)
   {
-    model.$status = NeuroModel.Status.RemovePending;
+    model.$status = Model.Status.RemovePending;
 
     if ( db.cache === Neuro.Cache.None || !model.$local || !this.canCascade() )
     {
       Neuro.debug( Neuro.Debugs.REMOVE_LOCAL_NONE, model );
 
-      model.$trigger( NeuroModel.Events.LocalRemove, [model] );
+      model.$trigger( Model.Events.LocalRemove, [model] );
 
-      this.insertNext( NeuroRemoveRemote );
+      this.insertNext( RemoveRemote );
       this.finish();
     }
     else if ( model.$saved )
@@ -10293,11 +10387,11 @@ extend( NeuroOperation, NeuroRemoveLocal,
 
     Neuro.debug( Neuro.Debugs.REMOVE_LOCAL, model );
 
-    model.$trigger( NeuroModel.Events.LocalRemove, [model] );
+    model.$trigger( Model.Events.LocalRemove, [model] );
 
     if ( model.$saved && this.canCascade( Neuro.Cascade.Remote ) )
     {
-      model.$addOperation( NeuroRemoveRemote, this.cascade );
+      model.$addOperation( RemoveRemote, this.cascade );
     }
   },
 
@@ -10307,34 +10401,35 @@ extend( NeuroOperation, NeuroRemoveLocal,
 
     Neuro.debug( Neuro.Debugs.REMOVE_LOCAL_ERROR, model, e );
 
-    model.$trigger( NeuroModel.Events.LocalRemoveFailure, [model] );
+    model.$trigger( Model.Events.LocalRemoveFailure, [model] );
 
     if ( model.$saved && this.canCascade( Neuro.Cascade.Remote ) )
     {
-      model.$addOperation( NeuroRemoveRemote, this.cascade );
+      model.$addOperation( RemoveRemote, this.cascade );
     }
   }
 
 });
-function NeuroRemoveNow(model, cascade)
+
+function RemoveNow(model, cascade)
 {
   this.reset( model, cascade );
 }
 
-extend( NeuroOperation, NeuroRemoveNow,
+extend( Operation, RemoveNow,
 {
 
   cascading: Neuro.Cascade.Local,
 
   interrupts: true,
 
-  type: 'NeuroRemoveNow',
+  type: 'RemoveNow',
 
   run: function(db, model)
   {
     var key = model.$key();
 
-    model.$status = NeuroModel.Status.RemovePending;
+    model.$status = Model.Status.RemovePending;
 
     db.removeFromModels( model );
 
@@ -10363,7 +10458,7 @@ extend( NeuroOperation, NeuroRemoveNow,
   {
     var model = this.model;
 
-    model.$status = NeuroModel.Status.Removed;
+    model.$status = Model.Status.Removed;
 
     delete model.$local;
     delete model.$saving;
@@ -10372,19 +10467,20 @@ extend( NeuroOperation, NeuroRemoveNow,
   }
 
 });
-function NeuroRemoveRemote(model, cascade)
+
+function RemoveRemote(model, cascade)
 {
   this.reset( model, cascade );
 }
 
-extend( NeuroOperation, NeuroRemoveRemote,
+extend( Operation, RemoveRemote,
 {
 
   cascading: Neuro.Cascade.Remote,
 
   interrupts: true,
 
-  type: 'NeuroRemoveRemote',
+  type: 'RemoveRemote',
 
   run: function(db, model)
   {
@@ -10392,13 +10488,13 @@ extend( NeuroOperation, NeuroRemoveRemote,
     {
       this.liveRemove();
 
-      model.$trigger( NeuroModel.Events.RemoteRemove, [model] );
+      model.$trigger( Model.Events.RemoteRemove, [model] );
 
       this.finish();
     }
     else
     {
-      model.$status = NeuroModel.Status.RemovePending;
+      model.$status = Model.Status.RemovePending;
 
       db.rest.remove( model, this.success(), this.failure() );
     }
@@ -10424,7 +10520,7 @@ extend( NeuroOperation, NeuroRemoveRemote,
     {
       Neuro.debug( Neuro.Debugs.REMOVE_ERROR, model, status, key, response );
 
-      model.$trigger( NeuroModel.Events.RemoteRemoveFailure, [model, response] );
+      model.$trigger( Model.Events.RemoteRemoveFailure, [model, response] );
     }
     else
     {
@@ -10436,11 +10532,11 @@ extend( NeuroOperation, NeuroRemoveRemote,
       {
         Neuro.once( Neuro.Events.Online, this.handleOnline, this );
 
-        model.$trigger( NeuroModel.Events.RemoteRemoveOffline, [model, response] );
+        model.$trigger( Model.Events.RemoteRemoveOffline, [model, response] );
       }
       else
       {
-        model.$trigger( NeuroModel.Events.RemoteRemoveFailure, [model, response] );
+        model.$trigger( Model.Events.RemoteRemoveFailure, [model, response] );
       }
 
       Neuro.debug( Neuro.Debugs.REMOVE_OFFLINE, model, response );
@@ -10456,13 +10552,13 @@ extend( NeuroOperation, NeuroRemoveRemote,
     Neuro.debug( Neuro.Debugs.REMOVE_REMOTE, model, key );
 
     // Successfully removed!
-    model.$status = NeuroModel.Status.Removed;
+    model.$status = Model.Status.Removed;
 
     // Successfully Removed!
-    model.$trigger( NeuroModel.Events.RemoteRemove, [model] );
+    model.$trigger( Model.Events.RemoteRemove, [model] );
 
     // Remove from local storage now
-    this.insertNext( NeuroRemoveNow );
+    this.insertNext( RemoveNow );
 
     // Remove it live!
     this.liveRemove();
@@ -10492,32 +10588,32 @@ extend( NeuroOperation, NeuroRemoveRemote,
 
     Neuro.debug( Neuro.Debugs.REMOVE_RESUME, model );
 
-    model.$addOperation( NeuroRemoveRemote );
+    model.$addOperation( RemoveRemote );
   }
 
 });
 
-function NeuroSaveLocal(model, cascade)
+function SaveLocal(model, cascade)
 {
   this.reset( model, cascade );
 }
 
-extend( NeuroOperation, NeuroSaveLocal,
+extend( Operation, SaveLocal,
 {
 
   cascading: Neuro.Cascade.Local,
 
   interrupts: false,
 
-  type: 'NeuroSaveLocal',
+  type: 'SaveLocal',
 
   run: function(db, model)
   {
     if ( model.$isDeleted() )
     {
       Neuro.debug( Neuro.Debugs.SAVE_LOCAL_DELETED, model );
-    
-      model.$trigger( NeuroModel.Events.LocalSaveFailure, [model] );
+
+      model.$trigger( Model.Events.LocalSaveFailure, [model] );
 
       this.finish();
     }
@@ -10525,13 +10621,13 @@ extend( NeuroOperation, NeuroSaveLocal,
     {
       if ( this.canCascade( Neuro.Cascade.Remote ) )
       {
-        if ( this.tryNext( NeuroSaveRemote ) )
+        if ( this.tryNext( SaveRemote ) )
         {
-          this.markSaving( db, model );  
+          this.markSaving( db, model );
         }
       }
 
-      model.$trigger( NeuroModel.Events.LocalSave, [model] );
+      model.$trigger( Model.Events.LocalSave, [model] );
 
       this.finish();
     }
@@ -10539,7 +10635,7 @@ extend( NeuroOperation, NeuroSaveLocal,
     {
       var key = model.$key();
       var local = model.$toJSON( false );
-      
+
       this.markSaving( db, model );
 
       if ( model.$local )
@@ -10572,21 +10668,21 @@ extend( NeuroOperation, NeuroSaveLocal,
     var saving = db.fullSave ? remote : changes;
     var publish = db.fullPublish ? remote : changes;
 
-    model.$status = NeuroModel.Status.SavePending;
+    model.$status = Model.Status.SavePending;
     model.$saving = saving;
     model.$publish = publish;
   },
 
   clearLocal: function(model)
   {
-    model.$status = NeuroModel.Status.Synced;
+    model.$status = Model.Status.Synced;
 
     model.$local.$status = model.$status;
-    
+
     delete model.$local.$saving;
     delete model.$local.$publish;
 
-    this.insertNext( NeuroSaveNow );
+    this.insertNext( SaveNow );
   },
 
   onSuccess: function(key, encoded, previousValue)
@@ -10597,14 +10693,14 @@ extend( NeuroOperation, NeuroSaveLocal,
 
     if ( this.cascade )
     {
-      this.tryNext( NeuroSaveRemote );
+      this.tryNext( SaveRemote );
     }
     else
     {
       this.clearLocal( model );
     }
 
-    model.$trigger( NeuroModel.Events.LocalSave, [model] );
+    model.$trigger( Model.Events.LocalSave, [model] );
   },
 
   onFailure: function(e)
@@ -10615,31 +10711,31 @@ extend( NeuroOperation, NeuroSaveLocal,
 
     if ( this.cascade )
     {
-      this.tryNext( NeuroSaveRemote );
+      this.tryNext( SaveRemote );
     }
     else
     {
       this.clearLocal( model );
     }
-    
-    model.$trigger( NeuroModel.Events.LocalSaveFailure, [model] );
+
+    model.$trigger( Model.Events.LocalSaveFailure, [model] );
   }
 
 });
 
-function NeuroSaveNow(model, cascade)
+function SaveNow(model, cascade)
 {
   this.reset( model, cascade );
 }
 
-extend( NeuroOperation, NeuroSaveNow,
+extend( Operation, SaveNow,
 {
 
   cascading: Neuro.Cascade.Local,
 
   interrupts: false,
 
-  type: 'NeuroSaveNow',
+  type: 'SaveNow',
 
   run: function(db, model)
   {
@@ -10657,19 +10753,20 @@ extend( NeuroOperation, NeuroSaveNow,
   }
 
 });
-function NeuroSaveRemote(model, cascade)
+
+function SaveRemote(model, cascade)
 {
   this.reset( model, cascade );
 }
 
-extend( NeuroOperation, NeuroSaveRemote,
+extend( Operation, SaveRemote,
 {
 
   cascading: Neuro.Cascade.Remote,
 
   interrupts: false,
 
-  type: 'NeuroSaveRemote',
+  type: 'SaveRemote',
 
   run: function(db, model)
   {
@@ -10677,7 +10774,7 @@ extend( NeuroOperation, NeuroSaveRemote,
     {
       Neuro.debug( Neuro.Debugs.SAVE_REMOTE_DELETED, model );
 
-      this.markSynced( model, true, NeuroModel.Events.RemoteSaveFailure, null );
+      this.markSynced( model, true, Model.Events.RemoteSaveFailure, null );
       this.finish();
     }
     else if ( !model.$isDependentsSaved( this.tryAgain, this ) )
@@ -10687,12 +10784,12 @@ extend( NeuroOperation, NeuroSaveRemote,
     else if ( !db.hasData( model.$saving ) || this.notCascade( Neuro.Cascade.Rest ) )
     {
       this.liveSave();
-      this.markSynced( model, true, NeuroModel.Events.RemoteSave, null );
+      this.markSynced( model, true, Model.Events.RemoteSave, null );
       this.finish();
     }
     else
     {
-      model.$status = NeuroModel.Status.SavePending;
+      model.$status = Model.Status.SavePending;
 
       if ( model.$saved )
       {
@@ -10734,15 +10831,15 @@ extend( NeuroOperation, NeuroSaveRemote,
     {
       Neuro.debug( Neuro.Debugs.SAVE_UPDATE_FAIL, model );
 
-      this.insertNext( NeuroRemoveNow );
+      this.insertNext( RemoveNow );
 
-      model.$trigger( NeuroModel.Events.RemoteSaveFailure, [model, response] );
+      model.$trigger( Model.Events.RemoteSaveFailure, [model, response] );
     }
     else if ( status !== 0 )
     {
       Neuro.debug( Neuro.Debugs.SAVE_ERROR, model, status );
 
-      this.markSynced( model, true, NeuroModel.Events.RemoteSaveFailure, response );
+      this.markSynced( model, true, Model.Events.RemoteSaveFailure, response );
     }
     else
     {
@@ -10754,11 +10851,11 @@ extend( NeuroOperation, NeuroSaveRemote,
       {
         Neuro.once( Neuro.Events.Online, this.handleOnline, this );
 
-        model.$trigger( NeuroModel.Events.RemoteSaveOffline, [model, response] );
+        model.$trigger( Model.Events.RemoteSaveOffline, [model, response] );
       }
       else
       {
-        this.markSynced( model, true, NeuroModel.Events.RemoteSaveFailure, response );
+        this.markSynced( model, true, Model.Events.RemoteSaveFailure, response );
       }
 
       Neuro.debug( Neuro.Debugs.SAVE_OFFLINE, model, response );
@@ -10767,13 +10864,13 @@ extend( NeuroOperation, NeuroSaveRemote,
 
   markSynced: function(model, saveNow, eventType, response)
   {
-    model.$status = NeuroModel.Status.Synced;
+    model.$status = Model.Status.Synced;
 
     this.clearPending( model );
 
     if ( saveNow )
     {
-      this.insertNext( NeuroSaveNow );
+      this.insertNext( SaveNow );
     }
 
     if ( eventType )
@@ -10829,15 +10926,15 @@ extend( NeuroOperation, NeuroSaveRemote,
     }
 
     this.liveSave();
-    this.markSynced( model, false, NeuroModel.Events.RemoteSave, null );
+    this.markSynced( model, false, Model.Events.RemoteSave, null );
 
     if ( db.cache === Neuro.Cache.Pending )
     {
-      this.insertNext( NeuroRemoveCache );
+      this.insertNext( RemoveCache );
     }
     else
     {
-      this.insertNext( NeuroSaveNow );
+      this.insertNext( SaveNow );
     }
   },
 
@@ -10859,9 +10956,9 @@ extend( NeuroOperation, NeuroSaveRemote,
   {
     var model = this.model;
 
-    if ( model.$status === NeuroModel.Status.SavePending )
+    if ( model.$status === Model.Status.SavePending )
     {
-      model.$addOperation( NeuroSaveRemote, this.cascade );
+      model.$addOperation( SaveRemote, this.cascade );
 
       Neuro.debug( Neuro.Debugs.SAVE_RESUME, model );
     }
@@ -10871,20 +10968,20 @@ extend( NeuroOperation, NeuroSaveRemote,
   {
     var model = this.model;
 
-    model.$addOperation( NeuroSaveRemote, this.cascade );
+    model.$addOperation( SaveRemote, this.cascade );
   }
 
 });
 
 
-function NeuroRelation()
+function Relation()
 {
 
 }
 
 Neuro.Relations = {};
 
-NeuroRelation.Defaults =
+Relation.Defaults =
 {
   model:                null,
   lazy:                 false,
@@ -10899,7 +10996,7 @@ NeuroRelation.Defaults =
   discriminatorToModel: {}
 };
 
-NeuroRelation.prototype =
+Relation.prototype =
 {
 
   debugQuery: null,
@@ -10907,7 +11004,7 @@ NeuroRelation.prototype =
 
   getDefaults: function(database, field, options)
   {
-    return NeuroRelation.Defaults;
+    return Relation.Defaults;
   },
 
   /**
@@ -10930,7 +11027,7 @@ NeuroRelation.prototype =
 
     if ( this.discriminated )
     {
-      transfer( NeuroPolymorphic, this );
+      transfer( Polymorphic, this );
     }
 
     this.setReferences( database, field, options );
@@ -10984,7 +11081,7 @@ NeuroRelation.prototype =
    * @param  {Neuro.Model} model [description]
    */
 
-  load: NeuroGate(function(model, initialValue, remoteData)
+  load: Gate(function(model, initialValue, remoteData)
   {
 
   }),
@@ -11051,7 +11148,7 @@ NeuroRelation.prototype =
 
   listenToModelAdded: function(callback)
   {
-    this.model.Database.on( NeuroDatabase.Events.ModelAdded, callback, this );
+    this.model.Database.on( Database.Events.ModelAdded, callback, this );
   },
 
   executeQuery: function(model)
@@ -11082,12 +11179,12 @@ NeuroRelation.prototype =
 
   createRelationCollection: function(model)
   {
-    return new NeuroRelationCollection( this.model.Database, model, this );
+    return new RelationCollection( this.model.Database, model, this );
   },
 
   createCollection: function()
   {
-    return new NeuroModelCollection( this.model.Database );
+    return new ModelCollection( this.model.Database );
   },
 
   parseModel: function(input, remoteData)
@@ -11161,7 +11258,7 @@ NeuroRelation.prototype =
       {
         relation.lastRelated = relation.related;
 
-        model.$trigger( NeuroModel.Events.RelationUpdate, [this, relation] );
+        model.$trigger( Model.Events.RelationUpdate, [this, relation] );
       }
     }
   },
@@ -11249,7 +11346,7 @@ NeuroRelation.prototype =
         target.$save();
       }
 
-      target.$trigger( NeuroModel.Events.KeyUpdate, [target, source, targetFields, sourceFields] );
+      target.$trigger( Model.Events.KeyUpdate, [target, source, targetFields, sourceFields] );
     }
 
     return changes;
@@ -11354,12 +11451,12 @@ NeuroRelation.prototype =
 
 };
 
-function NeuroRelationSingle()
+function RelationSingle()
 {
 }
 
 
-extend( NeuroRelation, NeuroRelationSingle,
+extend( Relation, RelationSingle,
 {
 
   debugInit: null,
@@ -11471,8 +11568,8 @@ extend( NeuroRelation, NeuroRelationSingle,
     {
       Neuro.debug( this.debugClearModel, this, relation );
 
-      if (relation.onSaved) related.$off( NeuroModel.Events.Saved, relation.onSaved );
-      if (relation.onRemoved) related.$off( NeuroModel.Events.Removed, relation.onRemoved );
+      if (relation.onSaved) related.$off( Model.Events.Saved, relation.onSaved );
+      if (relation.onRemoved) related.$off( Model.Events.Removed, relation.onRemoved );
 
       relation.related = null;
       relation.dirty = true;
@@ -11484,8 +11581,8 @@ extend( NeuroRelation, NeuroRelationSingle,
 
   setModel: function(relation, related)
   {
-    if (relation.onSaved) related.$on( NeuroModel.Events.Saved, relation.onSaved, this );
-    if (relation.onRemoved) related.$on( NeuroModel.Events.Removed, relation.onRemoved, this );
+    if (relation.onSaved) related.$on( Model.Events.Saved, relation.onSaved, this );
+    if (relation.onRemoved) related.$on( Model.Events.Removed, relation.onRemoved, this );
 
     relation.related = related;
     relation.dirty = true;
@@ -11561,12 +11658,12 @@ extend( NeuroRelation, NeuroRelationSingle,
 
 });
 
-function NeuroRelationMultiple()
+function RelationMultiple()
 {
 }
 
 
-extend( NeuroRelation, NeuroRelationMultiple,
+extend( Relation, RelationMultiple,
 {
 
   debugAutoSave: null,
@@ -11808,19 +11905,19 @@ extend( NeuroRelation, NeuroRelationMultiple,
 
       related.sort( this.comparator );
 
-      relation.parent.$trigger( NeuroModel.Events.RelationUpdate, [this, relation] );
+      relation.parent.$trigger( Model.Events.RelationUpdate, [this, relation] );
     }
   }
 
 });
 
-function NeuroBelongsTo()
+function BelongsTo()
 {
 }
 
-Neuro.Relations.belongsTo = NeuroBelongsTo;
+Neuro.Relations.belongsTo = BelongsTo;
 
-NeuroBelongsTo.Defaults =
+BelongsTo.Defaults =
 {
   model:                null,
   lazy:                 false,
@@ -11838,7 +11935,7 @@ NeuroBelongsTo.Defaults =
   discriminatorToModel: {}
 };
 
-extend( NeuroRelationSingle, NeuroBelongsTo,
+extend( RelationSingle, BelongsTo,
 {
 
   type: 'belongsTo',
@@ -11854,10 +11951,10 @@ extend( NeuroRelationSingle, NeuroBelongsTo,
 
   getDefaults: function(database, field, options)
   {
-    return NeuroBelongsTo.Defaults;
+    return BelongsTo.Defaults;
   },
 
-  load: NeuroGate(function(model, initialValue, remoteData)
+  load: Gate(function(model, initialValue, remoteData)
   {
     var relation = model.$relations[ this.name ] =
     {
@@ -11886,8 +11983,8 @@ extend( NeuroRelationSingle, NeuroBelongsTo,
       }
     };
 
-    model.$on( NeuroModel.Events.PostRemove, this.postRemove, this );
-    model.$on( NeuroModel.Events.KeyUpdate, this.onKeyUpdate, this );
+    model.$on( Model.Events.PostRemove, this.postRemove, this );
+    model.$on( Model.Events.KeyUpdate, this.onKeyUpdate, this );
 
     if ( isEmpty( initialValue ) )
     {
@@ -11941,13 +12038,13 @@ extend( NeuroRelationSingle, NeuroBelongsTo,
 
 });
 
-function NeuroHasOne()
+function HasOne()
 {
 }
 
-Neuro.Relations.hasOne = NeuroHasOne;
+Neuro.Relations.hasOne = HasOne;
 
-NeuroHasOne.Defaults =
+HasOne.Defaults =
 {
   model:                null,
   lazy:                 false,
@@ -11965,7 +12062,7 @@ NeuroHasOne.Defaults =
   discriminatorToModel: {}
 };
 
-extend( NeuroRelationSingle, NeuroHasOne,
+extend( RelationSingle, HasOne,
 {
 
   type: 'hasOne',
@@ -11981,10 +12078,10 @@ extend( NeuroRelationSingle, NeuroHasOne,
 
   getDefaults: function(database, field, options)
   {
-    return NeuroHasOne.Defaults;
+    return HasOne.Defaults;
   },
 
-  load: NeuroGate(function(model, initialValue, remoteData)
+  load: Gate(function(model, initialValue, remoteData)
   {
     var relation = model.$relations[ this.name ] =
     {
@@ -12003,8 +12100,8 @@ extend( NeuroRelationSingle, NeuroHasOne,
       }
     };
 
-    model.$on( NeuroModel.Events.PreSave, this.preSave, this );
-    model.$on( NeuroModel.Events.PostRemove, this.postRemove, this );
+    model.$on( Model.Events.PreSave, this.preSave, this );
+    model.$on( Model.Events.PostRemove, this.postRemove, this );
 
     if ( isEmpty( initialValue ) )
     {
@@ -12087,7 +12184,7 @@ extend( NeuroRelationSingle, NeuroHasOne,
     {
       Neuro.debug( this.debugClearModel, this, relation );
 
-      related.$off( NeuroModel.Events.Removed, relation.onRemoved );
+      related.$off( Model.Events.Removed, relation.onRemoved );
 
       if ( this.cascade && !related.$isDeleted() )
       {
@@ -12104,13 +12201,13 @@ extend( NeuroRelationSingle, NeuroHasOne,
 
 });
 
-function NeuroHasMany()
+function HasMany()
 {
 }
 
-Neuro.Relations.hasMany = NeuroHasMany;
+Neuro.Relations.hasMany = HasMany;
 
-NeuroHasMany.Defaults =
+HasMany.Defaults =
 {
   model:                null,
   lazy:                 false,
@@ -12130,7 +12227,7 @@ NeuroHasMany.Defaults =
   discriminatorToModel: {}
 };
 
-extend( NeuroRelationMultiple, NeuroHasMany,
+extend( RelationMultiple, HasMany,
 {
 
   type: 'hasMany',
@@ -12143,7 +12240,7 @@ extend( NeuroRelationMultiple, NeuroHasMany,
 
   getDefaults: function(database, field, options)
   {
-    return NeuroHasMany.Defaults;
+    return HasMany.Defaults;
   },
 
   onInitialized: function(database, field, options)
@@ -12156,7 +12253,7 @@ extend( NeuroRelationMultiple, NeuroHasMany,
     this.finishInitialization();
   },
 
-  load: NeuroGate(function(model, initialValue, remoteData)
+  load: Gate(function(model, initialValue, remoteData)
   {
     var relator = this;
     var relation = model.$relations[ this.name ] =
@@ -12198,8 +12295,8 @@ extend( NeuroRelationMultiple, NeuroHasMany,
 
     };
 
-    model.$on( NeuroModel.Events.PostSave, this.postSave, this );
-    model.$on( NeuroModel.Events.PreRemove, this.preRemove, this );
+    model.$on( Model.Events.PostSave, this.postSave, this );
+    model.$on( Model.Events.PreRemove, this.preRemove, this );
 
     // When models are added to the related database, check if it's related to this model
     this.listenToModelAdded( this.handleModelAdded( relation ) );
@@ -12353,8 +12450,8 @@ extend( NeuroRelationMultiple, NeuroHasMany,
 
       target.put( key, related );
 
-      related.$on( NeuroModel.Events.Removed, relation.onRemoved );
-      related.$on( NeuroModel.Events.SavedRemoteUpdate, relation.onSaved );
+      related.$on( Model.Events.Removed, relation.onRemoved );
+      related.$on( Model.Events.SavedRemoteUpdate, relation.onSaved );
 
       related.$dependents[ model.$uid() ] = model;
 
@@ -12389,8 +12486,8 @@ extend( NeuroRelationMultiple, NeuroHasMany,
 
       target.remove( key );
 
-      related.$off( NeuroModel.Events.Removed, relation.onRemoved );
-      related.$off( NeuroModel.Events.SavedRemoteUpdate, relation.onSaved );
+      related.$off( Model.Events.Removed, relation.onRemoved );
+      related.$off( Model.Events.SavedRemoteUpdate, relation.onSaved );
 
       delete related.$dependents[ model.$uid() ];
 
@@ -12427,13 +12524,13 @@ extend( NeuroRelationMultiple, NeuroHasMany,
 
 });
 
-function NeuroHasManyThrough()
+function HasManyThrough()
 {
 }
 
-Neuro.Relations.hasManyThrough = NeuroHasManyThrough;
+Neuro.Relations.hasManyThrough = HasManyThrough;
 
-NeuroHasManyThrough.Defaults =
+HasManyThrough.Defaults =
 {
   model:                null,
   lazy:                 false,
@@ -12456,7 +12553,7 @@ NeuroHasManyThrough.Defaults =
   discriminatorToModel: {}
 };
 
-extend( NeuroRelationMultiple, NeuroHasManyThrough,
+extend( RelationMultiple, HasManyThrough,
 {
 
   type: 'hasManyThrough',
@@ -12469,7 +12566,7 @@ extend( NeuroRelationMultiple, NeuroHasManyThrough,
 
   getDefaults: function(database, field, options)
   {
-    return NeuroHasManyThrough.Defaults;
+    return HasManyThrough.Defaults;
   },
 
   onInitialized: function(database, field, options)
@@ -12503,7 +12600,7 @@ extend( NeuroRelationMultiple, NeuroHasManyThrough,
     this.finishInitialization();
   },
 
-  load: NeuroGate(function(model, initialValue, remoteData)
+  load: Gate(function(model, initialValue, remoteData)
   {
     var that = this;
     var throughDatabase = this.through.Database;
@@ -12514,7 +12611,7 @@ extend( NeuroRelationMultiple, NeuroHasManyThrough,
       isRelated: this.isRelatedFactory( model ),
       pending: {},
       related: this.createRelationCollection( model ),
-      throughs: new NeuroMap(),
+      throughs: new Map(),
       saving: false,
       delaySorting: false,
       delaySaving: false,
@@ -12549,11 +12646,11 @@ extend( NeuroRelationMultiple, NeuroHasManyThrough,
     };
 
     // Populate the model's key if it's missing
-    model.$on( NeuroModel.Events.PostSave, this.postSave, this );
-    model.$on( NeuroModel.Events.PreRemove, this.preRemove, this );
+    model.$on( Model.Events.PostSave, this.postSave, this );
+    model.$on( Model.Events.PreRemove, this.preRemove, this );
 
     // When models are added to the related database, check if it's related to this model
-    throughDatabase.on( NeuroDatabase.Events.ModelAdded, this.handleModelAdded( relation ), this );
+    throughDatabase.on( Database.Events.ModelAdded, this.handleModelAdded( relation ), this );
 
     // If the model's initial value is an array, populate the relation from it!
     if ( isArray( initialValue ) )
@@ -12761,7 +12858,7 @@ extend( NeuroRelationMultiple, NeuroHasManyThrough,
 
       throughs.put( throughKey, through );
 
-      through.$on( NeuroModel.Events.Removed, relation.onThroughRemoved );
+      through.$on( Model.Events.Removed, relation.onThroughRemoved );
 
       through.$dependents[ model.$uid() ] = model;
 
@@ -12791,8 +12888,8 @@ extend( NeuroRelationMultiple, NeuroHasManyThrough,
 
       relateds.put( relatedKey, related );
 
-      related.$on( NeuroModel.Events.Removed, relation.onRemoved );
-      related.$on( NeuroModel.Events.SavedRemoteUpdate, relation.onSaved );
+      related.$on( Model.Events.Removed, relation.onRemoved );
+      related.$on( Model.Events.SavedRemoteUpdate, relation.onSaved );
 
       this.sort( relation );
 
@@ -12859,7 +12956,7 @@ extend( NeuroRelationMultiple, NeuroHasManyThrough,
       var throughs = relation.throughs;
       var throughKey = through.$key();
 
-      through.$off( NeuroModel.Events.Removed, relation.onThroughRemoved );
+      through.$off( Model.Events.Removed, relation.onThroughRemoved );
 
       delete through.$dependents[ model.$uid() ];
 
@@ -12886,8 +12983,8 @@ extend( NeuroRelationMultiple, NeuroHasManyThrough,
 
       relateds.remove( relatedKey );
 
-      related.$off( NeuroModel.Events.Removed, relation.onRemoved );
-      related.$off( NeuroModel.Events.SavedRemoteUpdate, relation.onSaved );
+      related.$off( Model.Events.Removed, relation.onRemoved );
+      related.$off( Model.Events.SavedRemoteUpdate, relation.onSaved );
 
       this.sort( relation );
       this.checkSave( relation );
@@ -12951,13 +13048,13 @@ extend( NeuroRelationMultiple, NeuroHasManyThrough,
 
 });
 
-function NeuroHasRemote()
+function HasRemote()
 {
 }
 
-Neuro.Relations.hasRemote = NeuroHasRemote;
+Neuro.Relations.hasRemote = HasRemote;
 
-NeuroHasRemote.Defaults =
+HasRemote.Defaults =
 {
   model:                undefined,
   lazy:                 false,
@@ -12969,10 +13066,10 @@ NeuroHasRemote.Defaults =
   dynamic:              false,
   comparator:           null,
   comparatorNullsFirst: false,
-  autoRefresh:          false // NeuroModel.Events.RemoteGets
+  autoRefresh:          false // Model.Events.RemoteGets
 };
 
-extend( NeuroRelationMultiple, NeuroHasRemote,
+extend( RelationMultiple, HasRemote,
 {
 
   type: 'hasRemote',
@@ -12983,7 +13080,7 @@ extend( NeuroRelationMultiple, NeuroHasRemote,
 
   getDefaults: function(database, field, options)
   {
-    return NeuroHasRemote.Defaults;
+    return HasRemote.Defaults;
   },
 
   onInitialized: function(database, field, options)
@@ -12995,7 +13092,7 @@ extend( NeuroRelationMultiple, NeuroHasRemote,
     this.finishInitialization();
   },
 
-  load: NeuroGate(function(model, initialValue, remoteData)
+  load: Gate(function(model, initialValue, remoteData)
   {
     var relator = this;
     var relation = model.$relations[ this.name ] =
@@ -13065,8 +13162,8 @@ extend( NeuroRelationMultiple, NeuroHasRemote,
 
       target.put( key, related );
 
-      related.$on( NeuroModel.Events.Removed, relation.onRemoved );
-      related.$on( NeuroModel.Events.SavedRemoteUpdate, relation.onSaved );
+      related.$on( Model.Events.Removed, relation.onRemoved );
+      related.$on( Model.Events.SavedRemoteUpdate, relation.onSaved );
 
       this.sort( relation );
 
@@ -13097,8 +13194,8 @@ extend( NeuroRelationMultiple, NeuroHasRemote,
 
       target.remove( key );
 
-      related.$off( NeuroModel.Events.Removed, relation.onRemoved );
-      related.$off( NeuroModel.Events.SavedRemoteUpdate, relation.onSaved );
+      related.$off( Model.Events.Removed, relation.onRemoved );
+      related.$off( Model.Events.SavedRemoteUpdate, relation.onSaved );
 
       this.sort( relation );
       this.checkSave( relation );
@@ -13110,7 +13207,7 @@ extend( NeuroRelationMultiple, NeuroHasRemote,
 });
 
 
-var NeuroPolymorphic = 
+var Polymorphic =
 {
 
   setReferences: function(database, field, options)
@@ -13179,12 +13276,12 @@ var NeuroPolymorphic =
 
   createRelationCollection: function(model)
   {
-    return NeuroDiscriminateCollection( new NeuroRelationCollection( undefined, model, this ), this.discriminator, this.discriminatorToModel );
+    return DiscriminateCollection( new RelationCollection( undefined, model, this ), this.discriminator, this.discriminatorToModel );
   },
 
   createCollection: function()
   {
-    return NeuroDiscriminateCollection( new NeuroModelCollection(), this.discriminator, this.discriminatorToModel );
+    return DiscriminateCollection( new ModelCollection(), this.discriminator, this.discriminatorToModel );
   },
 
   ready: function(callback)
@@ -13195,7 +13292,7 @@ var NeuroPolymorphic =
     {
       var model = models[ prop ];
 
-      model.Database.ready( callback, this );  
+      model.Database.ready( callback, this );
     }
   },
 
@@ -13207,7 +13304,7 @@ var NeuroPolymorphic =
     {
       var model = models[ prop ];
 
-      model.Database.on( NeuroDatabase.Events.ModelAdded, callback, this );  
+      model.Database.on( Database.Events.ModelAdded, callback, this );
     }
   },
 
@@ -13215,9 +13312,9 @@ var NeuroPolymorphic =
   {
     var queryOption = this.query;
     var query = isString( queryOption ) ? format( queryOption, model ) : queryOption;
-    var remoteQuery = new NeuroRemoteQuery( model.$db, query );
+    var remoteQuery = new RemoteQuery( model.$db, query );
 
-    NeuroDiscriminateCollection( remoteQuery, this.discriminator, this.discriminatorToModel );
+    DiscriminateCollection( remoteQuery, this.discriminator, this.discriminatorToModel );
 
     remoteQuery.sync();
     remoteQuery.ready( this.handleExecuteQuery( model ), this );
@@ -13227,7 +13324,7 @@ var NeuroPolymorphic =
 
   parseModel: function(input, remoteData)
   {
-    if ( input instanceof NeuroModel )
+    if ( input instanceof Model )
     {
       return input;
     }
@@ -13258,7 +13355,7 @@ var NeuroPolymorphic =
     {
       target.$save();
     }
-    
+
     return changes;
   },
 
@@ -13268,7 +13365,7 @@ var NeuroPolymorphic =
 
     var targetField = this.discriminator;
     var targetValue = target[ targetField ];
-    var sourceValue = this.getDiscriminatorForModel( source ); 
+    var sourceValue = this.getDiscriminatorForModel( source );
 
     if ( !equals( targetValue, sourceValue ) )
     {
@@ -13283,7 +13380,7 @@ var NeuroPolymorphic =
         target.$save();
       }
 
-      target.$trigger( NeuroModel.Events.KeyUpdate, [target, source, targetFields, sourceFields] );      
+      target.$trigger( Model.Events.KeyUpdate, [target, source, targetFields, sourceFields] );
     }
 
     return changes;
@@ -13312,7 +13409,7 @@ var NeuroPolymorphic =
         {
           for (var i = 0; i < fields.length; i++)
           {
-            initial[ related.Database.key[ i ] ] = model[ fields[ i ] ];   
+            initial[ related.Database.key[ i ] ] = model[ fields[ i ] ];
           }
         }
 
@@ -13340,7 +13437,7 @@ var NeuroPolymorphic =
     {
       var input = initial[ i ];
 
-      if ( input instanceof NeuroModel )
+      if ( input instanceof Model )
       {
         callback.call( this, input );
       }
@@ -13354,7 +13451,7 @@ var NeuroPolymorphic =
 
           relation.pending[ key ] = true;
 
-          db.grabModel( input, callback, this, remoteData );    
+          db.grabModel( input, callback, this, remoteData );
         }
       }
     }
@@ -13390,11 +13487,12 @@ var NeuroPolymorphic =
 
 };
 
+
 Neuro.shard = function(methods)
 {
   return function createRestSharding(database)
   {
-    var shard = new NeuroShard( database );
+    var shard = new Shard( database );
 
     transfer( methods, shard );
 
@@ -13404,12 +13502,12 @@ Neuro.shard = function(methods)
   };
 };
 
-function NeuroShard(database)
+function Shard(database)
 {
   this.database = database;
 }
 
-NeuroShard.prototype =
+Shard.prototype =
 {
 
   STATUS_FAIL_ALL: 500,
@@ -13703,29 +13801,29 @@ NeuroShard.prototype =
   global.Neuro = Neuro;
 
   /* Classes */
-  global.Neuro.Model = NeuroModel;
-  global.Neuro.Database = NeuroDatabase;
-  global.Neuro.Relation = NeuroRelation;
-  global.Neuro.Operation = NeuroOperation;
-  global.Neuro.Transaction = NeuroTransaction;
-  global.Neuro.Search = NeuroSearch;
-  global.Neuro.SearchPaged = NeuroSearchPaged;
+  global.Neuro.Model = Model;
+  global.Neuro.Database = Database;
+  global.Neuro.Relation = Relation;
+  global.Neuro.Operation = Operation;
+  global.Neuro.Transaction = Transaction;
+  global.Neuro.Search = Search;
+  global.Neuro.SearchPaged = SearchPaged;
 
   /* Collections */
-  global.Neuro.Map = NeuroMap;
-  global.Neuro.Collection = NeuroCollection;
-  global.Neuro.FilteredCollection = NeuroFilteredCollection;
-  global.Neuro.ModelCollection = NeuroModelCollection;
-  global.Neuro.Query = NeuroQuery;
-  global.Neuro.RemoteQuery = NeuroRemoteQuery;
-  global.Neuro.Page = NeuroPage;
+  global.Neuro.Map = Map;
+  global.Neuro.Collection = Collection;
+  global.Neuro.FilteredCollection = FilteredCollection;
+  global.Neuro.ModelCollection = ModelCollection;
+  global.Neuro.Query = Query;
+  global.Neuro.RemoteQuery = RemoteQuery;
+  global.Neuro.Page = Page;
 
   /* Relationships */
-  global.Neuro.HasOne = NeuroHasOne;
-  global.Neuro.BelongsTo = NeuroBelongsTo;
-  global.Neuro.HasMany = NeuroHasMany;
-  global.Neuro.HasManyThrough = NeuroHasManyThrough;
-  global.Neuro.HasRemote = NeuroHasRemote;
+  global.Neuro.HasOne = HasOne;
+  global.Neuro.BelongsTo = BelongsTo;
+  global.Neuro.HasMany = HasMany;
+  global.Neuro.HasManyThrough = HasManyThrough;
+  global.Neuro.HasRemote = HasRemote;
 
   /* Utility Functions */
   global.Neuro.isNeuro = isNeuro;

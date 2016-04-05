@@ -56,7 +56,7 @@ test( 'delete with cache:none should go right to remote', function(assert)
 
   t0.$remove();
 
-  strictEqual( t0.$operation.type, 'NeuroRemoveRemote' );
+  strictEqual( t0.$operation.type, 'RemoveRemote' );
 });
 
 test( 'delete local when it hasn\'t been saved locally', function(assert)

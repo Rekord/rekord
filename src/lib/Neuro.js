@@ -16,10 +16,10 @@ function Neuro(options)
 
   Neuro.trigger( Neuro.Events.Options, [options] );
 
-  var database = new NeuroDatabase( options );
+  var database = new Database( options );
 
   var model = new Function('return function ' + database.className + '(props, remoteData) { this.$init( props, remoteData ) }')();
-  model.prototype = new NeuroModel( database );
+  model.prototype = new Model( database );
 
   database.Model = model;
   model.Database = database;

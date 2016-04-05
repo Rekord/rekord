@@ -180,7 +180,7 @@ function isFunction(x)
  */
 function isNeuro(x)
 {
-  return !!(x && x.Database && isFunction( x ) && x.prototype instanceof NeuroModel);
+  return !!(x && x.Database && isFunction( x ) && x.prototype instanceof Model);
 }
 
 /**
@@ -721,7 +721,7 @@ function collect(a)
 {
   var values = arguments.length > 1 || !isArray(a) ? Array.prototype.slice.call( arguments ) : a;
 
-  return new NeuroCollection( values );
+  return new Collection( values );
 }
 
 function evaluate(x)

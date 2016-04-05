@@ -4,7 +4,7 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
   {
     if ( isArray( input ) )
     {
-      return new NeuroModelCollection( db, input, true );
+      return new ModelCollection( db, input, true );
     }
     else if ( isObject( input ) )
     {

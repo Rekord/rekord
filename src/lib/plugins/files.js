@@ -1,6 +1,6 @@
 Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 {
-  var files = options.files || NeuroDatabase.Defaults.files;
+  var files = options.files || Database.Defaults.files;
 
   if ( !isObject( files ) )
   {
@@ -313,11 +313,11 @@ function FileEncoder(input, model, field, forSaving)
     {
       if ( forSaving && cached.file )
       {
-        model.$once( NeuroModel.Events.RemoteSave, function()
+        model.$once( Model.Events.RemoteSave, function()
         {
           delete cached.file;
 
-          model.$addOperation( NeuroSaveLocal, Neuro.Cascade.Local );
+          model.$addOperation( SaveLocal, Neuro.Cascade.Local );
         });
       }
 

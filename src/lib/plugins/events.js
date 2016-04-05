@@ -1,6 +1,6 @@
 Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 {
-  var events = collapse( options.events, NeuroDatabase.Defaults.events );
+  var events = collapse( options.events, Database.Defaults.events );
 
   if ( !isEmpty( events ) )
   {
@@ -12,8 +12,8 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
       var callback = events[ eventType ];
       var eventName = toCamelCase( eventType );
 
-      var databaseEventString = NeuroDatabase.Events[ eventName ];
-      var modelEventString = NeuroModel.Events[ eventName ];
+      var databaseEventString = Database.Events[ eventName ];
+      var modelEventString = Model.Events[ eventName ];
 
       if ( databaseEventString )
       {

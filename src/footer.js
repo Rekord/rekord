@@ -3,29 +3,29 @@
   global.Neuro = Neuro;
 
   /* Classes */
-  global.Neuro.Model = NeuroModel;
-  global.Neuro.Database = NeuroDatabase;
-  global.Neuro.Relation = NeuroRelation;
-  global.Neuro.Operation = NeuroOperation;
-  global.Neuro.Transaction = NeuroTransaction;
-  global.Neuro.Search = NeuroSearch;
-  global.Neuro.SearchPaged = NeuroSearchPaged;
+  global.Neuro.Model = Model;
+  global.Neuro.Database = Database;
+  global.Neuro.Relation = Relation;
+  global.Neuro.Operation = Operation;
+  global.Neuro.Transaction = Transaction;
+  global.Neuro.Search = Search;
+  global.Neuro.SearchPaged = SearchPaged;
 
   /* Collections */
-  global.Neuro.Map = NeuroMap;
-  global.Neuro.Collection = NeuroCollection;
-  global.Neuro.FilteredCollection = NeuroFilteredCollection;
-  global.Neuro.ModelCollection = NeuroModelCollection;
-  global.Neuro.Query = NeuroQuery;
-  global.Neuro.RemoteQuery = NeuroRemoteQuery;
-  global.Neuro.Page = NeuroPage;
+  global.Neuro.Map = Map;
+  global.Neuro.Collection = Collection;
+  global.Neuro.FilteredCollection = FilteredCollection;
+  global.Neuro.ModelCollection = ModelCollection;
+  global.Neuro.Query = Query;
+  global.Neuro.RemoteQuery = RemoteQuery;
+  global.Neuro.Page = Page;
 
   /* Relationships */
-  global.Neuro.HasOne = NeuroHasOne;
-  global.Neuro.BelongsTo = NeuroBelongsTo;
-  global.Neuro.HasMany = NeuroHasMany;
-  global.Neuro.HasManyThrough = NeuroHasManyThrough;
-  global.Neuro.HasRemote = NeuroHasRemote;
+  global.Neuro.HasOne = HasOne;
+  global.Neuro.BelongsTo = BelongsTo;
+  global.Neuro.HasMany = HasMany;
+  global.Neuro.HasManyThrough = HasManyThrough;
+  global.Neuro.HasRemote = HasRemote;
 
   /* Utility Functions */
   global.Neuro.isNeuro = isNeuro;

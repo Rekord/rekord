@@ -1,6 +1,6 @@
 Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 {
-  var dynamics = collapse( options.dynamic, NeuroDatabase.Defaults.dynamic );
+  var dynamics = collapse( options.dynamic, Database.Defaults.dynamic );
 
   if ( !isEmpty( dynamics ) )
   {
@@ -51,7 +51,7 @@ function addDynamicProperty(modelPrototype, property, definition)
         }
       };
 
-      this.$after( NeuroModel.Events.Changes, handleChange, this );
+      this.$after( Model.Events.Changes, handleChange, this );
     };
   }
 }

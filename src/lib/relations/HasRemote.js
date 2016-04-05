@@ -1,0 +1,157 @@
+function HasRemote()
+{
+}
+
+Neuro.Relations.hasRemote = HasRemote;
+
+HasRemote.Defaults =
+{
+  model:                undefined,
+  lazy:                 false,
+  query:                false,
+  store:                Neuro.Store.None,
+  save:                 Neuro.Save.None,
+  auto:                 false,
+  property:             true,
+  dynamic:              false,
+  comparator:           null,
+  comparatorNullsFirst: false,
+  autoRefresh:          false // Model.Events.RemoteGets
+};
+
+extend( RelationMultiple, HasRemote,
+{
+
+  type: 'hasRemote',
+
+  debugSort:            Neuro.Debugs.HASREMOTE_SORT,
+  debugQuery:           Neuro.Debugs.HASREMOTE_QUERY,
+  debugQueryResults:    Neuro.Debugs.HASREMOTE_QUERY_RESULTS,
+
+  getDefaults: function(database, field, options)
+  {
+    return HasRemote.Defaults;
+  },
+
+  onInitialized: function(database, field, options)
+  {
+    this.comparator = createComparator( this.comparator, this.comparatorNullsFirst );
+
+    Neuro.debug( Neuro.Debugs.HASREMOTE_INIT, this );
+
+    this.finishInitialization();
+  },
+
+  load: Gate(function(model, initialValue, remoteData)
+  {
+    var relator = this;
+    var relation = model.$relations[ this.name ] =
+    {
+      parent: model,
+      pending: {},
+      related: this.createRelationCollection( model ),
+      delaySorting: false,
+      delaySaving: false,
+
+      onRemoved: function() // this = model removed
+      {
+        Neuro.debug( Neuro.Debugs.HASREMOVE_NINJA_REMOVE, relator, model, this, relation );
+
+        relator.removeModel( relation, this, true );
+      },
+
+      onSaved: function() // this = model saved
+      {
+        Neuro.debug( Neuro.Debugs.HASREMOVE_NINJA_SAVE, relator, model, this, relation );
+
+        relator.sort( relation );
+        relator.checkSave( relation );
+      }
+
+    };
+
+    // Populate the model's key if it's missing
+    model.$key();
+
+    // If auto refersh was specified, execute the query on refresh
+    if ( this.autoRefresh )
+    {
+      model.$on( this.autoRefresh, this.onRefresh( relation ), this );
+    }
+
+    // Execute query!
+    relation.query = this.executeQuery( model );
+
+    // We only need to set the property once since the underlying array won't change.
+    this.setProperty( relation );
+  }),
+
+  onRefresh: function(relation)
+  {
+    return function handleRefresh()
+    {
+      relation.query = this.executeQuery( relation.parent );
+    };
+  },
+
+  addModel: function(relation, related, remoteData)
+  {
+    if ( related.$isDeleted() )
+    {
+      return;
+    }
+
+    var model = relation.parent;
+    var target = relation.related;
+    var key = related.$key();
+    var adding = !target.has( key );
+
+    if ( adding )
+    {
+      Neuro.debug( Neuro.Debugs.HASMANY_ADD, this, relation, related );
+
+      target.put( key, related );
+
+      related.$on( Model.Events.Removed, relation.onRemoved );
+      related.$on( Model.Events.SavedRemoteUpdate, relation.onSaved );
+
+      this.sort( relation );
+
+      if ( !remoteData )
+      {
+        this.checkSave( relation );
+      }
+    }
+
+    return adding;
+  },
+
+  removeModel: function(relation, related, remoteData)
+  {
+    if ( !this.canRemoveRelated( related, remoteData ) )
+    {
+      return;
+    }
+
+    var model = relation.parent;
+    var target = relation.related;
+    var pending = relation.pending;
+    var key = related.$key();
+
+    if ( target.has( key ) )
+    {
+      Neuro.debug( Neuro.Debugs.HASMANY_REMOVE, this, relation, related );
+
+      target.remove( key );
+
+      related.$off( Model.Events.Removed, relation.onRemoved );
+      related.$off( Model.Events.SavedRemoteUpdate, relation.onSaved );
+
+      this.sort( relation );
+      this.checkSave( relation );
+    }
+
+    delete pending[ key ];
+  }
+
+});
