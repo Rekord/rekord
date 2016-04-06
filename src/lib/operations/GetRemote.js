@@ -6,7 +6,7 @@ function GetRemote(model, cascade)
 extend( Operation, GetRemote,
 {
 
-  cascading: Neuro.Cascade.Rest,
+  cascading: Rekord.Cascade.Rest,
 
   interrupts: false,
 
@@ -43,7 +43,7 @@ extend( Operation, GetRemote,
       db.putRemoteData( data, model.$key(), model, true );
     }
 
-    Neuro.debug( Neuro.Debugs.GET_REMOTE, model, data );
+    Rekord.debug( Rekord.Debugs.GET_REMOTE, model, data );
 
     model.$trigger( Model.Events.RemoteGet, [model] );
   },
@@ -52,7 +52,7 @@ extend( Operation, GetRemote,
   {
     var model = this.model;
 
-    Neuro.debug( Neuro.Debugs.GET_REMOTE_ERROR, model, response, status );
+    Rekord.debug( Rekord.Debugs.GET_REMOTE_ERROR, model, response, status );
 
     if ( status === 0 )
     {

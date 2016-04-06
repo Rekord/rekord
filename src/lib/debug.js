@@ -1,10 +1,10 @@
 
-Neuro.debug = function(event, source)  /*, data.. */
+Rekord.debug = function(event, source)  /*, data.. */
 {
   // up to the user
 };
 
-Neuro.Debugs = {
+Rekord.Debugs = {
 
   CREATION: 0,                // options
 

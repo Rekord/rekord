@@ -1,5 +1,5 @@
 
-Neuro.shard = function(methods)
+Rekord.shard = function(methods)
 {
   return function createRestSharding(database)
   {

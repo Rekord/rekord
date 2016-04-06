@@ -1,18 +1,18 @@
-# ![Logo](build/neurosync-128.png) Neurosync
+# ![Logo](https://avatars2.githubusercontent.com/u/18293077?v=3&s=100) Rekord
 
-[![Build Status](https://travis-ci.org/ClickerMonkey/neurosync.svg?branch=master)](https://travis-ci.org/ClickerMonkey/neurosync)
-[![devDependency Status](https://david-dm.org/ClickerMonkey/neurosync/dev-status.svg)](https://david-dm.org/ClickerMonkey/neurosync#info=devDependencies)
-[![Dependency Status](https://david-dm.org/ClickerMonkey/neurosync.svg)](https://david-dm.org/ClickerMonkey/neurosync)
+[![Build Status](https://travis-ci.org/Rekord/rekord.svg?branch=master)](https://travis-ci.org/Rekord/rekord)
+[![devDependency Status](https://david-dm.org/Rekord/rekord/dev-status.svg)](https://david-dm.org/Rekord/rekord#info=devDependencies)
+[![Dependency Status](https://david-dm.org/Rekord/rekord.svg)](https://david-dm.org/Rekord/rekord)
 
-Neurosync is a javascript ORM that is offline & real-time capable.
+Rekord is a javascript ORM that is offline & real-time capable.
 
-*ORM you say?* Neurosync doesn't do anything crazy directly with a database - the database to Neurosync is a facade typically backed by a REST API. It's an ORM in the sense that it handles creating, updating, and deleting relational data to any degree you wish.
+*ORM you say?* Rekord doesn't do anything crazy directly with a database - the database to Rekord is a facade typically backed by a REST API. It's an ORM in the sense that it handles creating, updating, and deleting relational data to any degree you wish.
 
 **Installation**
 
-The easiest way to install neurosync is through bower via `bower install neurosync`.
+The easiest way to install rekord is through bower via `bower install rekord`.
 
-**Neurosync's life-cycle is simple:**
+**Rekord's life-cycle is simple:**
 - Save pending changes to local storage
 - Make REST call
 - If REST call succeeds: remove pending changes, mark as saved, publish to real-time API
@@ -24,9 +24,9 @@ The easiest way to install neurosync is through bower via `bower install neurosy
 One minor restriction currently exists - id has to be supplied upon instance creation otherwise a UUID is generated and must be used as the ID of the instance.
 
 **Features**
-- Stores data locally through `Neuro.store` interface (ex: [neurosync-storkjs](https://github.com/ClickerMonkey/neurosync-storkjs))
-- Stores data remotely through `Neuro.rest` interface (ex: [neurosync-angular](https://github.com/ClickerMonkey/neurosync-angular) or [neurosync-jquery](https://github.com/ClickerMonkey/neurosync-jquery))
-- Publishes changes through `Neuro.live` interface (ex: [neurosync-pubsub](https://github.com/ClickerMonkey/neurosync-pubsub))
+- Stores data locally through `Rekord.store` interface (ex: [rekord-storkjs](https://github.com/Rekord/rekord-storkjs))
+- Stores data remotely through `Rekord.rest` interface (ex: [rekord-angular](https://github.com/Rekord/rekord-angular) or [rekord-jquery](https://github.com/Rekord/rekord-jquery))
+- Publishes changes through `Rekord.live` interface (ex: [rekord-pubsub](https://github.com/Rekord/rekord-pubsub))
 - Relationships `hasOne`, `belongsTo`, `hasMany`, `hasManyThrough`, & `hasRemote`
 - Polymorphic relationships for `hasOne`, `belongsTo` & `hasMany`
 - Extend an existing model
@@ -57,19 +57,19 @@ One minor restriction currently exists - id has to be supplied upon instance cre
 - Model collections have the following operations: removeWhere, update, & updateWhere
 
 **Bindings**  
-Bindings are used to implement core pieces of functionality in neurosync - these interfaces allows any library to work with neurosync.
+Bindings are used to implement core pieces of functionality in rekord - these interfaces allows any library to work with rekord.
 
-- [Angular](https://github.com/ClickerMonkey/neurosync-angular) - implements `Neuro.rest`
-- [StorkJS](https://github.com/ClickerMonkey/neurosync-storkjs) - implements `Neuro.store`
-- [PubSub](https://github.com/ClickerMonkey/neurosync-pubsub) - implements `Neuro.live`
-- [Firebase](https://github.com/ClickerMonkey/neurosync-firebase) - implements `Neuro.store`, `Neuro.rest`, & `Neuro.live`
-- [PouchDB](https://github.com/ClickerMonkey/neurosync-pouchdb) - implements `Neuro.store`, `Neuro.rest`, & `Neuro.live`
-- [jQuery](https://github.com/ClickerMonkey/neurosync-jquery) - implements `Neuro.rest`
-- [Debugging](https://github.com/ClickerMonkey/neurosync-debug) - implements `Neuro.debug`
+- [Angular](https://github.com/Rekord/rekord-angular) - implements `Rekord.rest`
+- [StorkJS](https://github.com/Rekord/rekord-storkjs) - implements `Rekord.store`
+- [PubSub](https://github.com/Rekord/rekord-pubsub) - implements `Rekord.live`
+- [Firebase](https://github.com/Rekord/rekord-firebase) - implements `Rekord.store`, `Rekord.rest`, & `Rekord.live`
+- [PouchDB](https://github.com/Rekord/rekord-pouchdb) - implements `Rekord.store`, `Rekord.rest`, & `Rekord.live`
+- [jQuery](https://github.com/Rekord/rekord-jquery) - implements `Rekord.rest`
+- [Debugging](https://github.com/Rekord/rekord-debug) - implements `Rekord.debug`
 
 **Simple Todo Example**
 ```javascript
-var Todo = Neuro({
+var Todo = Rekord({
   name: 'todo',
   api: '/api/1.0/todo/',
   fields: ['name', 'finished_at'],
@@ -87,13 +87,13 @@ var Todo = Neuro({
   }
 });
 
-var t0 = Todo.create({name: 'Download Neurosync'});
+var t0 = Todo.create({name: 'Download Rekord'});
 t0.$isSaved(); // true
 t0.finish( true );
 t0.done; // true
 t0.$remove();
 
-var t1 = new Todo({name: 'Use Neurosync'});
+var t1 = new Todo({name: 'Use Rekord'});
 t1.$isSaved(); // false
 t1.id; // UUID
 t1.$save();
@@ -111,7 +111,7 @@ Todo.collect(t1, t2); // creates a collection of todos
 
 var allRemote = Todo.fetchAll(function(all) {}); // call REST API
 
-var f0 = Todo.find('name', 'Download Neurosync'); // first match
+var f0 = Todo.find('name', 'Download Rekord'); // first match
 var f1 = Todo.find({done: true});
 
 var w0 = Todo.where('done', true); // all done todos
@@ -134,7 +134,7 @@ searchPaged0.$next();
 
 **Less Simple Task List Example**
 ```javascript
-var User = Neuro({
+var User = Rekord({
   name: 'user',
   api: '/api/1.0/user/',
   fields: ['name', 'email'],
@@ -151,7 +151,7 @@ var User = Neuro({
   }
 );
 
-var Task = Neuro({
+var Task = Rekord({
   name: 'task',
   api: '/api/1.0/task/',
   fields: ['task_list_id', 'name', 'done', 'created_by', 'assigned_to'],
@@ -175,7 +175,7 @@ var Task = Neuro({
   }
 });
 
-var TaskList = Neuro({
+var TaskList = Rekord({
   name: 'task_list',
   api: '/api/1.0/task_list/',
   fields: ['name'],
@@ -183,8 +183,8 @@ var TaskList = Neuro({
   hasMany: {
     tasks: {
       model: 'Task'
-      save: Neuro.Save.Model,
-      store: Neuro.Store.Model
+      save: Rekord.Save.Model,
+      store: Rekord.Store.Model
     }
   }
 });
@@ -197,12 +197,12 @@ var l0 = TaskList.create({name: 'List#1', tasks: [
 
 ```
 
-**Neuro Options**
+**Rekord Options**
 
-Defaults can be overridden by changing `Neuro.Database.Defaults`
+Defaults can be overridden by changing `Rekord.Database.Defaults`
 
 ```javascript
-var ModelClass = Neuro({
+var ModelClass = Rekord({
 
   // (string) [required] The name of the type. Equivalent to the table name for a database. This can be used to
   // reference this model by relationships. This is often used by local storage, REST, and live implementations.
@@ -212,8 +212,8 @@ var ModelClass = Neuro({
   /// take the name option and camelcase it.
   className: 'ModelClass',
 
-  // Custom options can be used by Neuro.store, Neuro.rest, and Neuro.live implementations. The AngularJS Neuro.rest
-  // implementation uses an 'api' option. The PubSub Neuro.live implementation uses 'pubsub', 'channel', and 'token'
+  // Custom options can be used by Rekord.store, Rekord.rest, and Rekord.live implementations. The AngularJS Rekord.rest
+  // implementation uses an 'api' option. The PubSub Rekord.live implementation uses 'pubsub', 'channel', and 'token'
   // options.
   customOption: 'some value',
 
@@ -233,7 +233,7 @@ var ModelClass = Neuro({
   ignoredFields: { created_by: true }, // default: {}
 
   // (object) An object with default values when a model is created for the first time. If the value is a function it is
-  // called. If the value is a Neuro (like ModelClass) then new is called on the model. The value given will be copied
+  // called. If the value is a Rekord (like ModelClass) then new is called on the model. The value given will be copied
   // each time to avoid multiple models reference the same object/arrays.
   defaults: { finished_at: Date.now },
 
@@ -250,7 +250,7 @@ var ModelClass = Neuro({
   // converted from Date objects to UNIX timestamps on save.
   timestampsAsDate: true, // default: false
 
-  // (Neuro) This class can optionally extend another class. All fields are copied over, options that aren't specified
+  // (Rekord) This class can optionally extend another class. All fields are copied over, options that aren't specified
   // in this class are copied from the parent (or merged if objects).
   extend: AnotherClass,
 
@@ -275,16 +275,16 @@ var ModelClass = Neuro({
   loadRelations: false, // default: true
 
   // (boolean) Whether all models should be remotely fetched via a REST call as soon as the models are loaded from local
-  // storage (if cache is not set to Neuro.Cache.None).
+  // storage (if cache is not set to Rekord.Cache.None).
   loadRemote: false, // default: true
 
   // (boolean) Whether all models should be remotely fetched after an application is offline, gets back online, and is
   // finished syncing all local changes to REST & real-time interfaces. This option is ignored if loadRemote is false.
   autoRefresh: true, // default: true
 
-  // (string) Determines if models are stored in local storage all the time (Neuro.Cache.All or 'all'), never
-  // (Neuro.Cache.None or 'none'), or only when there are pending values to save/remove (Neuro.Cache.Pending or 'pending').
-  cache: Neuro.Cache.Pending, // default: Neuro.Cache.All
+  // (string) Determines if models are stored in local storage all the time (Rekord.Cache.All or 'all'), never
+  // (Rekord.Cache.None or 'none'), or only when there are pending values to save/remove (Rekord.Cache.Pending or 'pending').
+  cache: Rekord.Cache.Pending, // default: Rekord.Cache.All
 
   // (boolean) Determines whether all fields are sent on saves (true) or only fields that have changed since the last save.
   fullSave: true, // default: false
@@ -404,10 +404,10 @@ var ModelClass = Neuro({
 
 A hasOne relationship is a one-to-one relationship where the parent model **owns** the related model. When saving the related model is saved first - since the parent model has fields which map to the key of the related model. When removing the related model is removed along with the parent model (by default).
 
-Defaults can be overridden by changing `Neuro.HasOne.Defaults`
+Defaults can be overridden by changing `Rekord.HasOne.Defaults`
 
 ```javascript
-var ModelClass = Neuro({
+var ModelClass = Rekord({
 
   // The fields option must contain all local keys referenced in hasOne definitions.
   fields: ['related_id'],
@@ -419,7 +419,7 @@ var ModelClass = Neuro({
     // this property is added to the model.
     related: {
 
-      // (string|Model) The name, className, or reference to a Neuro instance that
+      // (string|Model) The name, className, or reference to a Rekord instance that
       // this model is related to. This is required for non-polymorphic relationships
       // and is ignored for polymorphic relationships.
       model: 'RelatedClass',
@@ -430,11 +430,11 @@ var ModelClass = Neuro({
       // (any)
       query: '/api/1.0/related/{related_id}',
 
-      // (Neuro.Store)
-      store: Neuro.Store.None,
+      // (Rekord.Store)
+      store: Rekord.Store.None,
 
-      // (Neuro.Save)
-      save: Neuro.Save.None,
+      // (Rekord.Save)
+      save: Rekord.Save.None,
 
       // (boolean)
       auto: true,
@@ -448,8 +448,8 @@ var ModelClass = Neuro({
       // (string,string[])
       local: 'related_id',
 
-      // (Neuro.Cascade)
-      cascade: Neuro.Cascade.All,
+      // (Rekord.Cascade)
+      cascade: Rekord.Cascade.All,
 
       // (string)
       discriminator: 'related_type',

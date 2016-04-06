@@ -4,14 +4,14 @@ function Relation()
 
 }
 
-Neuro.Relations = {};
+Rekord.Relations = {};
 
 Relation.Defaults =
 {
   model:                null,
   lazy:                 false,
-  store:                Neuro.Store.None,
-  save:                 Neuro.Save.None,
+  store:                Rekord.Store.None,
+  save:                 Rekord.Save.None,
   auto:                 true,
   property:             true,
   preserve:             true,
@@ -35,7 +35,7 @@ Relation.prototype =
   /**
    * Initializes this relation with the given database, field, and options.
    *
-   * @param  {Neuro.Database} database [description]
+   * @param  {Rekord.Database} database [description]
    * @param  {String} field    [description]
    * @param  {Object} options  [description]
    */
@@ -60,9 +60,9 @@ Relation.prototype =
 
   setReferences: function(database, field, options)
   {
-    if ( !isNeuro( this.model ) )
+    if ( !isRekord( this.model ) )
     {
-      Neuro.get( this.model, this.setModelReference( database, field, options ), this );
+      Rekord.get( this.model, this.setModelReference( database, field, options ), this );
     }
     else
     {
@@ -75,9 +75,9 @@ Relation.prototype =
    */
   setModelReference: function(database, field, options)
   {
-    return function(neuro)
+    return function(rekord)
     {
-      this.model = neuro;
+      this.model = rekord;
 
       this.onInitialized( database, field, options );
     };
@@ -103,7 +103,7 @@ Relation.prototype =
    * to load models/keys. If it contains values that don't exist or aren't
    * actually related
    *
-   * @param  {Neuro.Model} model [description]
+   * @param  {Rekord.Model} model [description]
    */
 
   load: Gate(function(model, initialValue, remoteData)
@@ -182,7 +182,7 @@ Relation.prototype =
     var query = isString( queryOption ) ? format( queryOption, model ) : queryOption;
     var remoteQuery = this.model.query( query );
 
-    Neuro.debug( this.debugQuery, this, model, remoteQuery, queryOption, query );
+    Rekord.debug( this.debugQuery, this, model, remoteQuery, queryOption, query );
 
     remoteQuery.ready( this.handleExecuteQuery( model ), this );
 
@@ -193,7 +193,7 @@ Relation.prototype =
   {
     return function onExecuteQuery(remoteQuery)
     {
-      Neuro.debug( this.debugQueryResults, this, model, remoteQuery );
+      Rekord.debug( this.debugQueryResults, this, model, remoteQuery );
 
       for (var i = 0; i < remoteQuery.length; i++)
       {
@@ -440,10 +440,10 @@ Relation.prototype =
     {
       switch (mode)
       {
-      case Neuro.Save.Model:
+      case Rekord.Save.Model:
         return related.$toJSON( true );
 
-      case Neuro.Store.Model:
+      case Rekord.Store.Model:
         if ( related.$local )
         {
           return related.$local;
@@ -460,12 +460,12 @@ Relation.prototype =
           return local;
         }
 
-      case Neuro.Save.Key:
-      case Neuro.Store.Key:
+      case Rekord.Save.Key:
+      case Rekord.Store.Key:
         return related.$key();
 
-      case Neuro.Save.Keys:
-      case Neuro.Store.Keys:
+      case Rekord.Save.Keys:
+      case Rekord.Store.Keys:
         return related.$keys();
 
       }

@@ -71,12 +71,12 @@ function Database(options)
 
   for (var relationType in options)
   {
-    if ( !(relationType in Neuro.Relations) )
+    if ( !(relationType in Rekord.Relations) )
     {
       continue;
     }
 
-    var RelationClass = Neuro.Relations[ relationType ];
+    var RelationClass = Rekord.Relations[ relationType ];
 
     if ( !(RelationClass.prototype instanceof Relation ) )
     {
@@ -140,17 +140,17 @@ function defaultSummarize(model)
 
 function defaultCreateRest(database)
 {
-  return Neuro.rest( database );
+  return Rekord.rest( database );
 }
 
 function defaultCreateStore(database)
 {
-  return Neuro.store( database );
+  return Rekord.store( database );
 }
 
 function defaultCreateLive( database )
 {
-  return Neuro.live( database );
+  return Rekord.live( database );
 }
 
 function defaultResolveModel( response )
@@ -191,7 +191,7 @@ Database.Defaults =
   loadRelations:        true,
   loadRemote:           true,
   autoRefresh:          true,
-  cache:                Neuro.Cache.All,
+  cache:                Rekord.Cache.All,
   fullSave:             false,
   fullPublish:          false,
   encodings:            {},
@@ -325,8 +325,8 @@ Database.prototype =
   // Returns false if the input doesn't resolve to a model at the moment
   // Returns null if the input doesn't resolve to a model and all models have been remotely loaded
   //
-  // parseModel( Neuro )
-  // parseModel( Neuro.Model )
+  // parseModel( Rekord )
+  // parseModel( Rekord.Model )
   // parseModel( 'uuid' )
   // parseModel( ['uuid'] )
   // parseModel( modelInstance )
@@ -343,7 +343,7 @@ Database.prototype =
       return hasRemote ? null : false;
     }
 
-    if ( isNeuro( input ) )
+    if ( isRekord( input ) )
     {
       input = new input();
     }
@@ -651,7 +651,7 @@ Database.prototype =
 
       if ( revisionRejected )
       {
-        Neuro.debug( Neuro.Debugs.SAVE_OLD_REVISION, db, model, encoded );
+        Rekord.debug( Rekord.Debugs.SAVE_OLD_REVISION, db, model, encoded );
 
         return model;
       }
@@ -748,7 +748,7 @@ Database.prototype =
     {
       model = db.createModel( decoded, true );
 
-      if ( db.cache === Neuro.Cache.All )
+      if ( db.cache === Rekord.Cache.All )
       {
         model.$local = model.$toJSON( false );
         model.$local.$status = model.$status;
@@ -804,7 +804,7 @@ Database.prototype =
 
       model.$trigger( Model.Events.RemoteAndRemove );
 
-      Neuro.debug( Neuro.Debugs.REMOTE_REMOVE, db, model );
+      Rekord.debug( Rekord.Debugs.REMOTE_REMOVE, db, model );
 
       return true;
     }
@@ -844,7 +844,7 @@ Database.prototype =
 
       model.$trigger( Model.Events.RemoteAndRemove );
 
-      Neuro.debug( Neuro.Debugs.REMOTE_REMOVE, db, model );
+      Rekord.debug( Rekord.Debugs.REMOTE_REMOVE, db, model );
     }
     else
     {
@@ -852,7 +852,7 @@ Database.prototype =
       {
         if (removedValue)
         {
-          Neuro.debug( Neuro.Debugs.REMOTE_REMOVE, db, removedValue );
+          Rekord.debug( Rekord.Debugs.REMOTE_REMOVE, db, removedValue );
         }
       });
 
@@ -869,7 +869,7 @@ Database.prototype =
     var db = this;
     var model = db.all[ key ];
 
-    if ( db.cache === Neuro.Cache.All )
+    if ( db.cache === Rekord.Cache.All )
     {
       return db.destroyLocalCachedModel( model, key );
     }
@@ -889,7 +889,7 @@ Database.prototype =
 
       if ( model.$status === Model.Status.RemovePending )
       {
-        Neuro.debug( Neuro.Debugs.LOCAL_RESUME_DELETE, db, model );
+        Rekord.debug( Rekord.Debugs.LOCAL_RESUME_DELETE, db, model );
 
         model.$addOperation( RemoveRemote );
       }
@@ -897,13 +897,13 @@ Database.prototype =
       {
         if ( model.$status === Model.Status.SavePending )
         {
-          Neuro.debug( Neuro.Debugs.LOCAL_RESUME_SAVE, db, model );
+          Rekord.debug( Rekord.Debugs.LOCAL_RESUME_SAVE, db, model );
 
           model.$addOperation( SaveRemote );
         }
         else
         {
-          Neuro.debug( Neuro.Debugs.LOCAL_LOAD_SAVED, db, model );
+          Rekord.debug( Rekord.Debugs.LOCAL_LOAD_SAVED, db, model );
         }
 
         db.models.put( key, model, true );
@@ -932,7 +932,7 @@ Database.prototype =
 
     function onLocalLoad(records, keys)
     {
-      Neuro.debug( Neuro.Debugs.LOCAL_LOAD, db, records );
+      Rekord.debug( Rekord.Debugs.LOCAL_LOAD, db, records );
 
       for (var i = 0; i < records.length; i++)
       {
@@ -968,10 +968,10 @@ Database.prototype =
 
     if ( db.loadRemote && db.autoRefresh )
     {
-      Neuro.after( Neuro.Events.Online, db.onOnline, db );
+      Rekord.after( Rekord.Events.Online, db.onOnline, db );
     }
 
-    if ( db.cache === Neuro.Cache.None )
+    if ( db.cache === Rekord.Cache.None )
     {
       db.loadNone();
 
@@ -1017,7 +1017,7 @@ Database.prototype =
       db.afterOnline = false;
       db.firstRefresh = false;
 
-      Neuro.debug( Neuro.Debugs.AUTO_REFRESH, db );
+      Rekord.debug( Rekord.Debugs.AUTO_REFRESH, db );
 
       db.refresh();
     }
@@ -1058,7 +1058,7 @@ Database.prototype =
 
           if ( old.$saved )
           {
-            Neuro.debug( Neuro.Debugs.REMOTE_LOAD_REMOVE, db, k );
+            Rekord.debug( Rekord.Debugs.REMOTE_LOAD_REMOVE, db, k );
 
             db.destroyLocalModel( k );
           }
@@ -1072,7 +1072,7 @@ Database.prototype =
 
       db.updated();
 
-      Neuro.debug( Neuro.Debugs.REMOTE_LOAD, db, models );
+      Rekord.debug( Rekord.Debugs.REMOTE_LOAD, db, models );
 
       if ( callback )
       {
@@ -1084,20 +1084,20 @@ Database.prototype =
     {
       if ( status === 0 )
       {
-        Neuro.checkNetworkStatus();
+        Rekord.checkNetworkStatus();
 
-        if ( !Neuro.online )
+        if ( !Rekord.online )
         {
           db.pendingRefresh = true;
 
-          Neuro.once( Neuro.Events.Online, db.onRefreshOnline, db );
+          Rekord.once( Rekord.Events.Online, db.onRefreshOnline, db );
         }
 
-        Neuro.debug( Neuro.Debugs.REMOTE_LOAD_OFFLINE, db );
+        Rekord.debug( Rekord.Debugs.REMOTE_LOAD_OFFLINE, db );
       }
       else
       {
-        Neuro.debug( Neuro.Debugs.REMOTE_LOAD_ERROR, db, status );
+        Rekord.debug( Rekord.Debugs.REMOTE_LOAD_ERROR, db, status );
 
         db.initialized = true;
         db.trigger( Database.Events.NoLoad, [db, response] );
@@ -1116,7 +1116,7 @@ Database.prototype =
   {
     var db = this;
 
-    Neuro.debug( Neuro.Debugs.REMOTE_LOAD_RESUME, db );
+    Rekord.debug( Rekord.Debugs.REMOTE_LOAD_RESUME, db );
 
     if ( db.pendingRefresh )
     {
@@ -1155,7 +1155,7 @@ Database.prototype =
     this.putRemoteData( encoded, key );
     this.updated();
 
-    Neuro.debug( Neuro.Debugs.REALTIME_SAVE, this, encoded, key );
+    Rekord.debug( Rekord.Debugs.REALTIME_SAVE, this, encoded, key );
   },
 
   liveRemove: function(key)
@@ -1165,7 +1165,7 @@ Database.prototype =
       this.updated();
     }
 
-    Neuro.debug( Neuro.Debugs.REALTIME_REMOVE, this, key );
+    Rekord.debug( Rekord.Debugs.REALTIME_REMOVE, this, key );
   },
 
   // Return an instance of the model with the data as initial values
@@ -1186,7 +1186,7 @@ Database.prototype =
 
     if ( model.$isDeleted() )
     {
-      Neuro.debug( Neuro.Debugs.SAVE_DELETED, db, model );
+      Rekord.debug( Rekord.Debugs.SAVE_DELETED, db, model );
 
       return;
     }
@@ -1223,7 +1223,7 @@ Database.prototype =
     // If we're offline and we have a pending save - cancel the pending save.
     if ( model.$status === Model.Status.SavePending )
     {
-      Neuro.debug( Neuro.Debugs.REMOVE_CANCEL_SAVE, db, model );
+      Rekord.debug( Rekord.Debugs.REMOVE_CANCEL_SAVE, db, model );
     }
 
     model.$status = Model.Status.RemovePending;

@@ -22,7 +22,7 @@ extend( Relation, RelationSingle,
       this.local = this.local || ( relatedDatabase.name + '_' + relatedDatabase.key );
     }
 
-    Neuro.debug( this.debugInit, this );
+    Rekord.debug( this.debugInit, this );
 
     this.finishInitialization();
   },
@@ -113,7 +113,7 @@ extend( Relation, RelationSingle,
 
     if ( related )
     {
-      Neuro.debug( this.debugClearModel, this, relation );
+      Rekord.debug( this.debugClearModel, this, relation );
 
       if (relation.onSaved) related.$off( Model.Events.Saved, relation.onSaved );
       if (relation.onRemoved) related.$off( Model.Events.Removed, relation.onRemoved );
@@ -137,7 +137,7 @@ extend( Relation, RelationSingle,
 
     relation.parent.$dependents[ related.$uid() ] = related;
 
-    Neuro.debug( this.debugSetModel, this, relation );
+    Rekord.debug( this.debugSetModel, this, relation );
   },
 
   handleModel: function(relation, remoteData)
@@ -146,7 +146,7 @@ extend( Relation, RelationSingle,
     {
       var model = relation.parent;
 
-      Neuro.debug( this.debugLoaded, this, model, relation, related );
+      Rekord.debug( this.debugLoaded, this, model, relation, related );
 
       if ( relation.loaded === false )
       {
@@ -188,7 +188,7 @@ extend( Relation, RelationSingle,
   {
     var local = this.local;
 
-    Neuro.debug( this.debugClearKey, this, model, local );
+    Rekord.debug( this.debugClearKey, this, model, local );
 
     this.clearFields( model, local, remoteData );
   },
@@ -198,7 +198,7 @@ extend( Relation, RelationSingle,
     var local = this.local;
     var foreign = related.$db.key;
 
-    Neuro.debug( this.debugUpdateKey, this, model, local, related, foreign );
+    Rekord.debug( this.debugUpdateKey, this, model, local, related, foreign );
 
     this.updateFields( model, local, related, foreign, remoteData );
   }

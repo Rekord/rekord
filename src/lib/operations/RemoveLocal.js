@@ -6,7 +6,7 @@ function RemoveLocal(model, cascade)
 extend( Operation, RemoveLocal,
 {
 
-  cascading: Neuro.Cascade.Local,
+  cascading: Rekord.Cascade.Local,
 
   interrupts: true,
 
@@ -16,9 +16,9 @@ extend( Operation, RemoveLocal,
   {
     model.$status = Model.Status.RemovePending;
 
-    if ( db.cache === Neuro.Cache.None || !model.$local || !this.canCascade() )
+    if ( db.cache === Rekord.Cache.None || !model.$local || !this.canCascade() )
     {
-      Neuro.debug( Neuro.Debugs.REMOVE_LOCAL_NONE, model );
+      Rekord.debug( Rekord.Debugs.REMOVE_LOCAL_NONE, model );
 
       model.$trigger( Model.Events.LocalRemove, [model] );
 
@@ -33,7 +33,7 @@ extend( Operation, RemoveLocal,
     }
     else
     {
-      Neuro.debug( Neuro.Debugs.REMOVE_LOCAL_UNSAVED, model );
+      Rekord.debug( Rekord.Debugs.REMOVE_LOCAL_UNSAVED, model );
 
       db.store.remove( model.$key(), this.success(), this.failure() );
     }
@@ -43,11 +43,11 @@ extend( Operation, RemoveLocal,
   {
     var model = this.model;
 
-    Neuro.debug( Neuro.Debugs.REMOVE_LOCAL, model );
+    Rekord.debug( Rekord.Debugs.REMOVE_LOCAL, model );
 
     model.$trigger( Model.Events.LocalRemove, [model] );
 
-    if ( model.$saved && this.canCascade( Neuro.Cascade.Remote ) )
+    if ( model.$saved && this.canCascade( Rekord.Cascade.Remote ) )
     {
       model.$addOperation( RemoveRemote, this.cascade );
     }
@@ -57,11 +57,11 @@ extend( Operation, RemoveLocal,
   {
     var model = this.model;
 
-    Neuro.debug( Neuro.Debugs.REMOVE_LOCAL_ERROR, model, e );
+    Rekord.debug( Rekord.Debugs.REMOVE_LOCAL_ERROR, model, e );
 
     model.$trigger( Model.Events.LocalRemoveFailure, [model] );
 
-    if ( model.$saved && this.canCascade( Neuro.Cascade.Remote ) )
+    if ( model.$saved && this.canCascade( Rekord.Cascade.Remote ) )
     {
       model.$addOperation( RemoveRemote, this.cascade );
     }

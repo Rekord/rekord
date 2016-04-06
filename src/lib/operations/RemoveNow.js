@@ -6,7 +6,7 @@ function RemoveNow(model, cascade)
 extend( Operation, RemoveNow,
 {
 
-  cascading: Neuro.Cascade.Local,
+  cascading: Rekord.Cascade.Local,
 
   interrupts: true,
 
@@ -20,7 +20,7 @@ extend( Operation, RemoveNow,
 
     db.removeFromModels( model );
 
-    if ( db.cache === Neuro.Cache.None || !this.canCascade() )
+    if ( db.cache === Rekord.Cache.None || !this.canCascade() )
     {
       this.finishRemove();
       this.finish();

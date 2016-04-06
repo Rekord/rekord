@@ -6,7 +6,7 @@ function SaveLocal(model, cascade)
 extend( Operation, SaveLocal,
 {
 
-  cascading: Neuro.Cascade.Local,
+  cascading: Rekord.Cascade.Local,
 
   interrupts: false,
 
@@ -16,15 +16,15 @@ extend( Operation, SaveLocal,
   {
     if ( model.$isDeleted() )
     {
-      Neuro.debug( Neuro.Debugs.SAVE_LOCAL_DELETED, model );
+      Rekord.debug( Rekord.Debugs.SAVE_LOCAL_DELETED, model );
 
       model.$trigger( Model.Events.LocalSaveFailure, [model] );
 
       this.finish();
     }
-    else if ( db.cache === Neuro.Cache.None || !this.canCascade() )
+    else if ( db.cache === Rekord.Cache.None || !this.canCascade() )
     {
-      if ( this.canCascade( Neuro.Cascade.Remote ) )
+      if ( this.canCascade( Rekord.Cascade.Remote ) )
       {
         if ( this.tryNext( SaveRemote ) )
         {
@@ -94,7 +94,7 @@ extend( Operation, SaveLocal,
   {
     var model = this.model;
 
-    Neuro.debug( Neuro.Debugs.SAVE_LOCAL, model );
+    Rekord.debug( Rekord.Debugs.SAVE_LOCAL, model );
 
     if ( this.cascade )
     {
@@ -112,7 +112,7 @@ extend( Operation, SaveLocal,
   {
     var model = this.model;
 
-    Neuro.debug( Neuro.Debugs.SAVE_LOCAL_ERROR, model, e );
+    Rekord.debug( Rekord.Debugs.SAVE_LOCAL_ERROR, model, e );
 
     if ( this.cascade )
     {

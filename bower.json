@@ -1,12 +1,12 @@
 {
-  "name": "neurosync",
+  "name": "rekord",
   "version": "1.2.0",
-  "homepage": "https://github.com/ClickerMonkey/neurosync",
+  "homepage": "https://github.com/Rekord/rekord",
   "authors": [
     "Philip Diffenderfer <pdiffenderfer@gmail.com>"
   ],
   "description": "JavaScript client-side ORM with offline & real-time capabilities.",
-  "main": "build/neurosync.js",
+  "main": "build/rekord.js",
   "keywords": [
     "javascript",
     "orm",

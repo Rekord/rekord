@@ -6,7 +6,7 @@
  * performs a swap which breaks insertion order).
  *
  * @constructor
- * @memberof Neuro
+ * @memberof Rekord
  */
 function Map()
 {
@@ -35,7 +35,7 @@ Map.prototype =
   /**
    * Resets the map by initializing the values, keys, and indexes.
    *
-   * @return {Neuro.Map} -
+   * @return {Rekord.Map} -
    *         The reference to this map.
    */
   reset: function()
@@ -52,7 +52,7 @@ Map.prototype =
    *
    * @param {String} key
    * @param {V} value
-   * @return {Neuro.Map} -
+   * @return {Rekord.Map} -
    *         The reference to this map.
    */
   put: function(key, value)
@@ -86,7 +86,7 @@ Map.prototype =
    * Removes the value by a given key
    *
    * @param {String} key
-   * @return {Neuro.Map} -
+   * @return {Rekord.Map} -
    *         The reference to this map.
    */
   remove: function(key)
@@ -105,7 +105,7 @@ Map.prototype =
    * Removes the value & key at the given index.
    *
    * @param {Number} index
-   * @return {Neuro.Map} -
+   * @return {Rekord.Map} -
    *         The reference to this map.
    */
   removeAt: function(index)
@@ -173,8 +173,8 @@ Map.prototype =
    * truthy value then the key and value are placed in the destination map.
    *
    * @param  {Function} callback [description]
-   * @param  {Neuro.Map} [dest]     [description]
-   * @return {Neuro.Map}            [description]
+   * @param  {Rekord.Map} [dest]     [description]
+   * @return {Rekord.Map}            [description]
    */
   filter: function(callback, dest)
   {
@@ -200,7 +200,7 @@ Map.prototype =
   /**
    * Reverses the order of the underlying values & keys.
    *
-   * @return {Neuro.Map} -
+   * @return {Rekord.Map} -
    *         The referense to this map.
    */
   reverse: function()
@@ -300,7 +300,7 @@ Map.prototype =
   /**
    * Rebuilds the index based on the keys.
    *
-   * @return {Neuro.Map} -
+   * @return {Rekord.Map} -
    *         The reference to this map.
    */
   rebuildIndex: function()

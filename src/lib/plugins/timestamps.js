@@ -1,4 +1,4 @@
-Neuro.on( Neuro.Events.Plugins, function(model, db, options)
+Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 {
   var time = options.timestamps || Database.Defaults.timestamps;
   var timeAsDate = options.timestampsAsDate || Database.Defaults.timestampsAsDate;

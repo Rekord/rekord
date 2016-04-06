@@ -8,8 +8,8 @@
  *    The value to test.
  * @return {Boolean} -
  *    Whether or not the value passed the test.
- * @see Neuro.createWhere
- * @see Neuro.saveWhere
+ * @see Rekord.createWhere
+ * @see Rekord.saveWhere
  */
 
 /**
@@ -23,9 +23,9 @@
  *    The second value to test.
  * @return {Boolean} -
  *    Whether or not the two values are considered equivalent.
- * @see Neuro.equals
- * @see Neuro.equalsStrict
- * @see Neuro.equalsCompare
+ * @see Rekord.equals
+ * @see Rekord.equalsStrict
+ * @see Rekord.equalsCompare
  */
 
 /**
@@ -47,8 +47,8 @@
  *    0 if the two values are considered equal, a negative value if `a` is
  *    considered less than `b`, and a positive value if `a` is considered
  *    greater than `b`.
- * @see Neuro.compare
- * @see Neuro.compareNumbers
+ * @see Rekord.compare
+ * @see Rekord.compareNumbers
  */
 
 /**
@@ -60,7 +60,7 @@
  *    The model to use to resolve a value.
  * @return {Any} -
  *    The resolved value.
- * @see Neuro.createPropertyResolver
+ * @see Rekord.createPropertyResolver
  */
 
  /**
@@ -121,14 +121,14 @@
  * Determines whether the given variable is defined.
  *
  * ```javascript
- * Neuro.isDefined(); // false
- * Neuro.isDefined(0); // true
- * Neuro.isDefined(true); // true
- * Neuro.isDefined(void 0); // false
- * Neuro.isDefined(undefined); // false
+ * Rekord.isDefined(); // false
+ * Rekord.isDefined(0); // true
+ * Rekord.isDefined(true); // true
+ * Rekord.isDefined(void 0); // false
+ * Rekord.isDefined(undefined); // false
  * ```
  *
- * @memberof Neuro
+ * @memberof Rekord
  * @param {Any} x
  *    The variable to test.
  * @return {Boolean} -
@@ -143,12 +143,12 @@ function isDefined(x)
  * Determines whether the given variable is a function.
  *
  * ```javascript
- * Neuro.isFunction(); // false
- * Neuro.isFunction(parseInt); // true
- * Neuro.isFunction(2); // false
+ * Rekord.isFunction(); // false
+ * Rekord.isFunction(parseInt); // true
+ * Rekord.isFunction(2); // false
  * ```
  *
- * @memberof Neuro
+ * @memberof Rekord
  * @param {Any} x
  *    The variable to test.
  * @return {Boolean} -
@@ -160,25 +160,25 @@ function isFunction(x)
 }
 
 /**
- * Determines whether the given variable is a Neuro object. A Neuro object is a
- * constructor for a model and also has a Database variable. A Neuro object is
- * strictly created by the Neuro function.
+ * Determines whether the given variable is a Rekord object. A Rekord object is a
+ * constructor for a model and also has a Database variable. A Rekord object is
+ * strictly created by the Rekord function.
  *
  * ```javascript
- * var Task = Neuro({
+ * var Task = Rekord({
  *   name: 'task',
  *   fields: ['name', 'done', 'finished_at', 'created_at', 'assigned_to']
  * });
- * Neuro.isNeuro( Task ); // true
+ * Rekord.isRekord( Task ); // true
  * ```
  *
- * @memberof Neuro
+ * @memberof Rekord
  * @param {Any} x
  *    The variable to test.
  * @return {Boolean} -
- *    True if the variable is a Neuro object, otherwise false.
+ *    True if the variable is a Rekord object, otherwise false.
  */
-function isNeuro(x)
+function isRekord(x)
 {
   return !!(x && x.Database && isFunction( x ) && x.prototype instanceof Model);
 }
@@ -187,12 +187,12 @@ function isNeuro(x)
  * Determines whether the given variable is a string.
  *
  * ```javascript
- * Neuro.isString(); // false
- * Neuro.isString('x'): // true
- * Neuro.isString(1); // false
+ * Rekord.isString(); // false
+ * Rekord.isString('x'): // true
+ * Rekord.isString(1); // false
  * ```
  *
- * @memberof Neuro
+ * @memberof Rekord
  * @param {Any} x
  *    The variable to test.
  * @return {Boolean} -
@@ -208,14 +208,14 @@ function isString(x)
  * not valid numbers.
  *
  * ```javascript
- * Neuro.isNumber(); // false
- * Neuro.isNumber('x'): // false
- * Neuro.isNumber(1); // true
- * Neuro.isNumber(NaN); // false
- * Neuro.isNumber(Infinity); // true
+ * Rekord.isNumber(); // false
+ * Rekord.isNumber('x'): // false
+ * Rekord.isNumber(1); // true
+ * Rekord.isNumber(NaN); // false
+ * Rekord.isNumber(Infinity); // true
  * ```
  *
- * @memberof Neuro
+ * @memberof Rekord
  * @param {Any} x
  *    The variable to test.
  * @return {Boolean} -
@@ -230,13 +230,13 @@ function isNumber(x)
  * Determines whether the given variable is a boolean value.
  *
  * ```javascript
- * Neuro.isBoolean(); // false
- * Neuro.isBoolean('x'): // false
- * Neuro.isBoolean(1); // false
- * Neuro.isBoolean(true); // true
+ * Rekord.isBoolean(); // false
+ * Rekord.isBoolean('x'): // false
+ * Rekord.isBoolean(1); // false
+ * Rekord.isBoolean(true); // true
  * ```
  *
- * @memberof Neuro
+ * @memberof Rekord
  * @param {Any} x
  *    The variable to test.
  * @return {Boolean} -
@@ -251,14 +251,14 @@ function isBoolean(x)
  * Determines whether the given variable is an instance of Date.
  *
  * ```javascript
- * Neuro.isDate(); // false
- * Neuro.isDate('x'): // false
- * Neuro.isDate(1); // false
- * Neuro.isDate(true); // false
- * Neuro.isDate(new Date()); // true
+ * Rekord.isDate(); // false
+ * Rekord.isDate('x'): // false
+ * Rekord.isDate(1); // false
+ * Rekord.isDate(true); // false
+ * Rekord.isDate(new Date()); // true
  * ```
  *
- * @memberof Neuro
+ * @memberof Rekord
  * @param {Any} x
  *    The variable to test.
  * @return {Boolean} -
@@ -273,14 +273,14 @@ function isDate(x)
  * Determines whether the given variable is an instance of RegExp.
  *
  * ```javascript
- * Neuro.isRegExp(); // false
- * Neuro.isRegExp('x'): // false
- * Neuro.isRegExp(1); // false
- * Neuro.isRegExp(true); // false
- * Neuro.isRegExp(/[xyz]/); // true
+ * Rekord.isRegExp(); // false
+ * Rekord.isRegExp('x'): // false
+ * Rekord.isRegExp(1); // false
+ * Rekord.isRegExp(true); // false
+ * Rekord.isRegExp(/[xyz]/); // true
  * ```
  *
- * @memberof Neuro
+ * @memberof Rekord
  * @param {Any} x
  *    The variable to test.
  * @return {Boolean} -
@@ -295,14 +295,14 @@ function isRegExp(x)
  * Determines whether the given variable is an instance of Array.
  *
  * ```javascript
- * Neuro.isArray(); // false
- * Neuro.isArray('x'): // false
- * Neuro.isArray(1); // false
- * Neuro.isArray([]); // true
- * Neuro.isArray(Neuro.collect(1, 2, 3)); // true
+ * Rekord.isArray(); // false
+ * Rekord.isArray('x'): // false
+ * Rekord.isArray(1); // false
+ * Rekord.isArray([]); // true
+ * Rekord.isArray(Rekord.collect(1, 2, 3)); // true
  * ```
  *
- * @memberof Neuro
+ * @memberof Rekord
  * @param {Any} x
  *    The variable to test.
  * @return {Boolean} -
@@ -318,15 +318,15 @@ function isArray(x)
  * Arrays are considered objects.
  *
  * ```javascript
- * Neuro.isObject(); // false
- * Neuro.isObject('x'): // false
- * Neuro.isObject(1); // false
- * Neuro.isObject([]); // true
- * Neuro.isObject({}); // true
- * Neuro.isObject(null); // false
+ * Rekord.isObject(); // false
+ * Rekord.isObject('x'): // false
+ * Rekord.isObject(1); // false
+ * Rekord.isObject([]); // true
+ * Rekord.isObject({}); // true
+ * Rekord.isObject(null); // false
  * ```
  *
- * @memberof Neuro
+ * @memberof Rekord
  * @param {Any} x
  *    The variable to test.
  * @return {Boolean} -
@@ -344,11 +344,11 @@ function isObject(x)
  * in an error.
  *
  * ```javascript
- * Neuro.toArray([1, 2, 3]); // [1, 2, 3]
- * Neuro.toArray('1,2,3', ','); // ['1', '2', '3']
+ * Rekord.toArray([1, 2, 3]); // [1, 2, 3]
+ * Rekord.toArray('1,2,3', ','); // ['1', '2', '3']
  * ```
  *
- * @memberof Neuro
+ * @memberof Rekord
  * @param {String|String[]} x
  *    The variable to convert to an Array.
  * @param {String} [delimiter]
@@ -365,17 +365,17 @@ function toArray(x, delimiter)
  * Determines whether the given variable is not null and is not undefined.
  *
  * ```javascript
- * Neuro.isValue(); // false
- * Neuro.isValue('x'): // true
- * Neuro.isValue(1); // true
- * Neuro.isValue([]); // true
- * Neuro.isValue({}); // true
- * Neuro.isValue(null); // false
- * Neuro.isValue(void 0); // false
- * Neuro.isValue(undefined); // false
+ * Rekord.isValue(); // false
+ * Rekord.isValue('x'): // true
+ * Rekord.isValue(1); // true
+ * Rekord.isValue([]); // true
+ * Rekord.isValue({}); // true
+ * Rekord.isValue(null); // false
+ * Rekord.isValue(void 0); // false
+ * Rekord.isValue(undefined); // false
  * ```
  *
- * @memberof Neuro
+ * @memberof Rekord
  * @param {Any}  x
  *    The variable to test.
  * @return {Boolean} -
@@ -392,13 +392,13 @@ function isValue(x)
  * is returned.
  *
  * ```javascript
- * Neuro.indexOf([1, 2, 3], 1); // 0
- * Neuro.indexOf([1, 2, 3], 4); // false
- * Neuro.indexOf([1, 2, 2], 2); // 1
+ * Rekord.indexOf([1, 2, 3], 1); // 0
+ * Rekord.indexOf([1, 2, 3], 4); // false
+ * Rekord.indexOf([1, 2, 2], 2); // 1
  * ```
  *
  *
- * @memberof Neuro
+ * @memberof Rekord
  * @param {Array} arr
  *    The array to search through.
  * @param {Any} x
@@ -429,7 +429,7 @@ function indexOf(arr, x, comparator)
 /**
  * A function that doesn't perform any operations.
  *
- * @memberof Neuro
+ * @memberof Rekord
  */
 function noop()
 {
@@ -443,14 +443,14 @@ function noop()
  *
  * ```javascript
  * var context = {};
- * var func = Neuro.bind( context, function(x) {
+ * var func = Rekord.bind( context, function(x) {
  *   this.y = x * 2;
  * });
  * func( 4 );
  * context.y; // 8
  * ```
  *
- * @memberof Neuro
+ * @memberof Rekord
  * @param {Object} context
  *    The value of `this` for the given function.
  * @param {Function}
@@ -469,7 +469,7 @@ function bind(context, func)
 /**
  * Generates a UUID using the random number method.
  *
- * @memberof Neuro
+ * @memberof Rekord
  * @return {String} -
  *    The generated UUID.
  */
@@ -487,7 +487,7 @@ function S4()
  * Determines whether the properties on one object equals the properties on
  * another object.
  *
- * @memberof Neuro
+ * @memberof Rekord
  * @param {Object} test -
  *    The object to test for matching.
  * @param {String|String[]} testFields -
@@ -505,7 +505,7 @@ function S4()
  */
 function propsMatch(test, testFields, expected, expectedFields, equals)
 {
-  var equality = equals || Neuro.equals;
+  var equality = equals || Rekord.equals;
 
   if ( isString( testFields ) ) // && isString( expectedFields )
   {
@@ -700,21 +700,21 @@ function toCamelCase(name)
 toCamelCase.REGEX = /(^.|_.)/g;
 
 /**
- * Returns an instance of {@link Neuro.Collection} with the initial values
+ * Returns an instance of {@link Rekord.Collection} with the initial values
  * passed as arguments to this function.
  *
  * ```javascript
- * Neuro.collect(1, 2, 3, 4);
- * Neuro.collect([1, 2, 3, 4]); // same as above
- * Neuro.collect();
- * Neuro.collect([]); // same as above
+ * Rekord.collect(1, 2, 3, 4);
+ * Rekord.collect([1, 2, 3, 4]); // same as above
+ * Rekord.collect();
+ * Rekord.collect([]); // same as above
  * ```
  *
- * @memberof Neuro
+ * @memberof Rekord
  * @param {Any[]|...Any} a
  *    The initial values in the collection. You can pass an array of values
  *    or any number of arguments.
- * @return {Neuro.Collection} -
+ * @return {Rekord.Collection} -
  *    A newly created instance containing the given values.
  */
 function collect(a)
@@ -731,7 +731,7 @@ function evaluate(x)
     return x;
   }
 
-  if ( isNeuro( x ) )
+  if ( isRekord( x ) )
   {
     return new x();
   }
@@ -1058,11 +1058,11 @@ function isSorted(comparator, array)
   return true;
 }
 
-Neuro.Comparators = {};
+Rekord.Comparators = {};
 
 function saveComparator(name, comparator, nullsFirst)
 {
-  return Neuro.Comparators[ name ] = createComparator( comparator, nullsFirst );
+  return Rekord.Comparators[ name ] = createComparator( comparator, nullsFirst );
 }
 
 function addComparator(second, comparator, nullsFirst)
@@ -1085,7 +1085,7 @@ function addComparator(second, comparator, nullsFirst)
 /**
  * Creates a function which compares two values.
  *
- * @memberof Neuro
+ * @memberof Rekord
  * @param {comparatorInput} comparator
  *    The input which creates a comparison function.
  * @param {Boolean} [nullsFirst=false] -
@@ -1100,9 +1100,9 @@ function createComparator(comparator, nullsFirst)
   }
   else if ( isString( comparator ) )
   {
-    if ( comparator in Neuro.Comparators )
+    if ( comparator in Rekord.Comparators )
     {
-      return Neuro.Comparators[ comparator ];
+      return Rekord.Comparators[ comparator ];
     }
 
     if ( comparator.charAt(0) === '-' )
@@ -1170,20 +1170,20 @@ function createComparator(comparator, nullsFirst)
   return null;
 }
 
-Neuro.NumberResolvers = {};
+Rekord.NumberResolvers = {};
 
 function saveNumberResolver(name, numbers)
 {
-  return Neuro.NumberResolvers[ name ] = createNumberResolver( numbers );
+  return Rekord.NumberResolvers[ name ] = createNumberResolver( numbers );
 }
 
 function createNumberResolver(numbers)
 {
   var resolver = createPropertyResolver( numbers );
 
-  if ( isString( numbers ) && numbers in Neuro.NumberResolvers )
+  if ( isString( numbers ) && numbers in Rekord.NumberResolvers )
   {
-    return Neuro.NumberResolvers[ numbers ];
+    return Rekord.NumberResolvers[ numbers ];
   }
 
   return function resolveNumber(model)
@@ -1192,11 +1192,11 @@ function createNumberResolver(numbers)
   };
 }
 
-Neuro.PropertyResolvers = {};
+Rekord.PropertyResolvers = {};
 
 function savePropertyResolver(name, properties, delim)
 {
-  return Neuro.PropertyResolvers[ name ] = createPropertyResolver( properties, delim );
+  return Rekord.PropertyResolvers[ name ] = createPropertyResolver( properties, delim );
 }
 
 /**
@@ -1214,7 +1214,7 @@ function savePropertyResolver(name, properties, delim)
  * createPropertyResolver( {age:null, user:'first'})( x ) // '6,jack'
  * ```
  *
- * @memberof Neuro
+ * @memberof Rekord
  * @param {propertyResolverInput} [properties] -
  *    The expression which converts one value into another.
  * @param {String} [delim=','] -
@@ -1230,9 +1230,9 @@ function createPropertyResolver(properties, delim)
   }
   else if ( isString( properties ) )
   {
-    if ( properties in Neuro.PropertyResolvers )
+    if ( properties in Rekord.PropertyResolvers )
     {
-      return Neuro.PropertyResolvers[ properties ];
+      return Rekord.PropertyResolvers[ properties ];
     }
 
     if ( properties.indexOf('{') !== -1 )
@@ -1301,10 +1301,10 @@ function createPropertyResolver(properties, delim)
  *
  * @type {Object}
  */
-Neuro.Wheres = {};
+Rekord.Wheres = {};
 
 /**
- * Saves a function created with {@link Neuro.createWhere} to a cache of
+ * Saves a function created with {@link Rekord.createWhere} to a cache of
  * filter functions which can be created more quickly in subsequent calls. It's
  * advised to make use of saved where's even in simpler scenarios for several
  * reasons:
@@ -1314,24 +1314,24 @@ Neuro.Wheres = {};
  * - It's slightly more efficient (time & memory) to cache filter functions
  *
  * ```javascript
- * Neuro.saveWhere('whereName', 'field', true);
- * Neuro.createWhere('whereName'); // returns the same function except quicker
+ * Rekord.saveWhere('whereName', 'field', true);
+ * Rekord.createWhere('whereName'); // returns the same function except quicker
  * ```
  *
- * @memberof Neuro
+ * @memberof Rekord
  * @param {String} name -
  *    The name of the filter function to save for later use.
  * @param {String|Object|Array|whereCallback} [properties] -
- *    See {@link Neuro.createWhere}
+ *    See {@link Rekord.createWhere}
  * @param {Any} [value] -
- *    See {@link Neuro.createWhere}
- * @param {equalityCallback} [equals=Neuro.equalsStrict] -
- *    See {@link Neuro.createWhere}
- * @see Neuro.createWhere
+ *    See {@link Rekord.createWhere}
+ * @param {equalityCallback} [equals=Rekord.equalsStrict] -
+ *    See {@link Rekord.createWhere}
+ * @see Rekord.createWhere
  */
 function saveWhere(name, properties, values, equals)
 {
-  return Neuro.Wheres[ name ] = createWhere( properties, values, equals );
+  return Rekord.Wheres[ name ] = createWhere( properties, values, equals );
 }
 
 /**
@@ -1339,28 +1339,28 @@ function saveWhere(name, properties, values, equals)
  * This is also known as a filter function.
  *
  * ```javascript
- * Neuro.createWhere('field', true);  // when an object has property where field=true
- * Neuro.createWhere('field'); // when an object has the property named field
- * Neuro.createWhere(function(){}); // a function can be given which is immediately returned
- * Neuro.createWhere(['field', function(){}, ['field', true]]); // when an object meets all of the above criteria
- * Neuro.createWhere({foo: 1, bar: 2}); // when an object has foo=1 and bar=2
- * Neuro.createWhere('field', true, myEquals); // A custom comparison function can be given.
- * Neuro.createWhere(); // always returns true
+ * Rekord.createWhere('field', true);  // when an object has property where field=true
+ * Rekord.createWhere('field'); // when an object has the property named field
+ * Rekord.createWhere(function(){}); // a function can be given which is immediately returned
+ * Rekord.createWhere(['field', function(){}, ['field', true]]); // when an object meets all of the above criteria
+ * Rekord.createWhere({foo: 1, bar: 2}); // when an object has foo=1 and bar=2
+ * Rekord.createWhere('field', true, myEquals); // A custom comparison function can be given.
+ * Rekord.createWhere(); // always returns true
  * ```
  *
- * @memberof Neuro
+ * @memberof Rekord
  * @param {whereInput} [properties] -
  *    The first expression used to generate a filter function.
  * @param {Any} [value] -
  *    When the first argument is a string this argument will be treated as a
  *    value to compare to the value of the named property on the object passed
  *    through the filter function.
- * @param {equalityCallback} [equals=Neuro.equalsStrict] -
+ * @param {equalityCallback} [equals=Rekord.equalsStrict] -
  *    An alternative function can be used to compare to values.
  * @return {whereCallback} -
  *    A function which takes a value (typically an object) and returns a true
  *    or false value.
- * @see Neuro.saveWhere
+ * @see Rekord.saveWhere
  */
 function createWhere(properties, value, equals)
 {
@@ -1411,9 +1411,9 @@ function createWhere(properties, value, equals)
   }
   else if ( isString( properties ) )
   {
-    if ( properties in Neuro.Wheres )
+    if ( properties in Rekord.Wheres )
     {
-      return Neuro.Wheres[ properties ];
+      return Rekord.Wheres[ properties ];
     }
 
     var resolver = createPropertyResolver( properties );
@@ -1442,11 +1442,11 @@ function createWhere(properties, value, equals)
   }
 }
 
-Neuro.Havings = {};
+Rekord.Havings = {};
 
 function saveHaving(name, having)
 {
-  return Neuro.Havings[ name ] = createHaving( having );
+  return Rekord.Havings[ name ] = createHaving( having );
 }
 
 function createHaving(having)
@@ -1457,9 +1457,9 @@ function createHaving(having)
   }
   else if ( isString( having ) )
   {
-    if ( having in Neuro.Havings )
+    if ( having in Rekord.Havings )
     {
-      return Neuro.Havings[ having ];
+      return Rekord.Havings[ having ];
     }
 
     return function hasValue(model)

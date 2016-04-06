@@ -50,17 +50,17 @@ var Polymorphic =
     {
       var discriminator = discriminators[ name ];
 
-      Neuro.get( name, this.setDiscriminated( discriminator, handleLoaded ), this );
+      Rekord.get( name, this.setDiscriminated( discriminator, handleLoaded ), this );
     }
   },
 
   setDiscriminated: function(discriminator, onLoad)
   {
-    return function(neuro)
+    return function(rekord)
     {
-      this.discriminators[ neuro.Database.name ] = discriminator;
-      this.discriminators[ neuro.Database.className ] = discriminator;
-      this.discriminatorToModel[ discriminator ] = neuro;
+      this.discriminators[ rekord.Database.name ] = discriminator;
+      this.discriminators[ rekord.Database.className ] = discriminator;
+      this.discriminatorToModel[ discriminator ] = rekord;
 
       onLoad.apply( this );
     };

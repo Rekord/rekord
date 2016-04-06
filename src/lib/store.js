@@ -7,7 +7,7 @@
  * @return {Object} -
  *         An object with put, remove, and all functions.
  */
-Neuro.store = function(database)
+Rekord.store = function(database)
 {
   return {
 

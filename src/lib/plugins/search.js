@@ -1,4 +1,4 @@
-Neuro.on( Neuro.Events.Plugins, function(model, db, options)
+Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 {
   model.search = function(options)
   {

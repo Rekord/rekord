@@ -1,8 +1,8 @@
-Neuro.on( Neuro.Events.Plugins, function(model, db, options)
+Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 {
   var extend = options.extend || Database.Defaults.extend;
 
-  if ( !isNeuro( extend ) )
+  if ( !isRekord( extend ) )
   {
     return;
   }
@@ -102,8 +102,8 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
     db.relationNames.push( name );
   }
 
-  db.rest   = Neuro.rest( db );
-  db.store  = Neuro.store( db );
-  db.live   = Neuro.live( db );
+  db.rest   = Rekord.rest( db );
+  db.store  = Rekord.store( db );
+  db.live   = Rekord.live( db );
 
 });

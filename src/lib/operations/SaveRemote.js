@@ -6,7 +6,7 @@ function SaveRemote(model, cascade)
 extend( Operation, SaveRemote,
 {
 
-  cascading: Neuro.Cascade.Remote,
+  cascading: Rekord.Cascade.Remote,
 
   interrupts: false,
 
@@ -16,7 +16,7 @@ extend( Operation, SaveRemote,
   {
     if ( model.$isDeleted() )
     {
-      Neuro.debug( Neuro.Debugs.SAVE_REMOTE_DELETED, model );
+      Rekord.debug( Rekord.Debugs.SAVE_REMOTE_DELETED, model );
 
       this.markSynced( model, true, Model.Events.RemoteSaveFailure, null );
       this.finish();
@@ -25,7 +25,7 @@ extend( Operation, SaveRemote,
     {
       this.finish();
     }
-    else if ( !db.hasData( model.$saving ) || this.notCascade( Neuro.Cascade.Rest ) )
+    else if ( !db.hasData( model.$saving ) || this.notCascade( Rekord.Cascade.Rest ) )
     {
       this.liveSave();
       this.markSynced( model, true, Model.Events.RemoteSave, null );
@@ -52,7 +52,7 @@ extend( Operation, SaveRemote,
     var data = db.resolveModel( response );
     var model = this.model;
 
-    Neuro.debug( Neuro.Debugs.SAVE_REMOTE, model );
+    Rekord.debug( Rekord.Debugs.SAVE_REMOTE, model );
 
     this.handleData( data );
   },
@@ -67,13 +67,13 @@ extend( Operation, SaveRemote,
     // A non-zero status means a real problem occurred
     if ( status === 409 ) // 409 Conflict
     {
-      Neuro.debug( Neuro.Debugs.SAVE_CONFLICT, model, data );
+      Rekord.debug( Rekord.Debugs.SAVE_CONFLICT, model, data );
 
       this.handleData( data );
     }
     else if ( status === 410 || status === 404 ) // 410 Gone, 404 Not Found
     {
-      Neuro.debug( Neuro.Debugs.SAVE_UPDATE_FAIL, model );
+      Rekord.debug( Rekord.Debugs.SAVE_UPDATE_FAIL, model );
 
       this.insertNext( RemoveNow );
 
@@ -81,19 +81,19 @@ extend( Operation, SaveRemote,
     }
     else if ( status !== 0 )
     {
-      Neuro.debug( Neuro.Debugs.SAVE_ERROR, model, status );
+      Rekord.debug( Rekord.Debugs.SAVE_ERROR, model, status );
 
       this.markSynced( model, true, Model.Events.RemoteSaveFailure, response );
     }
     else
     {
       // Check the network status right now
-      Neuro.checkNetworkStatus();
+      Rekord.checkNetworkStatus();
 
       // If not online for sure, try saving once online again
-      if (!Neuro.online)
+      if (!Rekord.online)
       {
-        Neuro.once( Neuro.Events.Online, this.handleOnline, this );
+        Rekord.once( Rekord.Events.Online, this.handleOnline, this );
 
         model.$trigger( Model.Events.RemoteSaveOffline, [model, response] );
       }
@@ -102,7 +102,7 @@ extend( Operation, SaveRemote,
         this.markSynced( model, true, Model.Events.RemoteSaveFailure, response );
       }
 
-      Neuro.debug( Neuro.Debugs.SAVE_OFFLINE, model, response );
+      Rekord.debug( Rekord.Debugs.SAVE_OFFLINE, model, response );
     }
   },
 
@@ -146,12 +146,12 @@ extend( Operation, SaveRemote,
     // Check deleted one more time before updating model.
     if ( model.$isDeleted() )
     {
-      Neuro.debug( Neuro.Debugs.SAVE_REMOTE_DELETED, model, data );
+      Rekord.debug( Rekord.Debugs.SAVE_REMOTE_DELETED, model, data );
 
       return this.clearPending( model );
     }
 
-    Neuro.debug( Neuro.Debugs.SAVE_VALUES, model, saving );
+    Rekord.debug( Rekord.Debugs.SAVE_VALUES, model, saving );
 
     // If the model hasn't been saved before - create the record where the
     // local and model point to the same object.
@@ -172,7 +172,7 @@ extend( Operation, SaveRemote,
     this.liveSave();
     this.markSynced( model, false, Model.Events.RemoteSave, null );
 
-    if ( db.cache === Neuro.Cache.Pending )
+    if ( db.cache === Rekord.Cache.Pending )
     {
       this.insertNext( RemoveCache );
     }
@@ -187,10 +187,10 @@ extend( Operation, SaveRemote,
     var db = this.db;
     var model = this.model;
 
-    if ( this.canCascade( Neuro.Cascade.Live ) && db.hasData( model.$publish ) )
+    if ( this.canCascade( Rekord.Cascade.Live ) && db.hasData( model.$publish ) )
     {
       // Publish saved data to everyone else
-      Neuro.debug( Neuro.Debugs.SAVE_PUBLISH, model, model.$publish );
+      Rekord.debug( Rekord.Debugs.SAVE_PUBLISH, model, model.$publish );
 
       db.live.save( model, model.$publish );
     }
@@ -204,7 +204,7 @@ extend( Operation, SaveRemote,
     {
       model.$addOperation( SaveRemote, this.cascade );
 
-      Neuro.debug( Neuro.Debugs.SAVE_RESUME, model );
+      Rekord.debug( Rekord.Debugs.SAVE_RESUME, model );
     }
   },
 

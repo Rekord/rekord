@@ -8,14 +8,14 @@ var qunit = require('gulp-qunit');
 var shell = require('gulp-shell');
 
 var build = {
-  filename: 'neurosync.js',
-  minified: 'neurosync.min.js',
+  filename: 'rekord.js',
+  minified: 'rekord.min.js',
   output: './build/',
   include: [
     './src/header.js',
     './src/lib/functions.js',
     './src/lib/eventize.js',
-    './src/lib/Neuro.js',
+    './src/lib/Rekord.js',
     './src/lib/plugins/*.js',
     './src/lib/debug.js',
     './src/lib/rest.js',

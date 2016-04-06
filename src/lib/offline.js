@@ -1,58 +1,58 @@
 
 // Initial online
-Neuro.online = window.navigator.onLine !== false;
+Rekord.online = window.navigator.onLine !== false;
 
-Neuro.forceOffline = false;
+Rekord.forceOffline = false;
 
 // Set network status to online and notify all listeners
-Neuro.setOnline = function()
+Rekord.setOnline = function()
 {
-  Neuro.online = true;
-  Neuro.debug( Neuro.Debugs.ONLINE );
-  Neuro.trigger( Neuro.Events.Online );
+  Rekord.online = true;
+  Rekord.debug( Rekord.Debugs.ONLINE );
+  Rekord.trigger( Rekord.Events.Online );
 };
 
 // Set network status to offline and notify all listeners
-Neuro.setOffline = function()
+Rekord.setOffline = function()
 {
-  Neuro.online = false;
-  Neuro.debug( Neuro.Debugs.OFFLINE );
-  Neuro.trigger( Neuro.Events.Offline );
+  Rekord.online = false;
+  Rekord.debug( Rekord.Debugs.OFFLINE );
+  Rekord.trigger( Rekord.Events.Offline );
 };
 
 // This must be called manually - this will try to use built in support for 
 // online/offline detection instead of solely using status codes of 0.
-Neuro.listenToNetworkStatus = function()
+Rekord.listenToNetworkStatus = function()
 {
   if (window.addEventListener) 
   {
-    window.addEventListener( Neuro.Events.Online, Neuro.setOnline, false );
-    window.addEventListener( Neuro.Events.Offline, Neuro.setOffline, false );
+    window.addEventListener( Rekord.Events.Online, Rekord.setOnline, false );
+    window.addEventListener( Rekord.Events.Offline, Rekord.setOffline, false );
   } 
   else 
   {
-    document.body.ononline = Neuro.setOnline;
-    document.body.onoffline = Neuro.setOffline;
+    document.body.ononline = Rekord.setOnline;
+    document.body.onoffline = Rekord.setOffline;
   }
 };
 
 // Check to see if the network status has changed.
-Neuro.checkNetworkStatus = function()
+Rekord.checkNetworkStatus = function()
 {
   var online = window.navigator.onLine;
 
-  if ( Neuro.forceOffline ) 
+  if ( Rekord.forceOffline ) 
   {
     online = false;
   }
 
-  if (online === true && Neuro.online === false) 
+  if (online === true && Rekord.online === false) 
   {
-    Neuro.setOnline();
+    Rekord.setOnline();
   }
 
-  else if (online === false && Neuro.online === true) 
+  else if (online === false && Rekord.online === true) 
   {
-    Neuro.setOffline();
+    Rekord.setOffline();
   }
 };

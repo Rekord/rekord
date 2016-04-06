@@ -1,7 +1,7 @@
 
-// Neuro.rest = function(options, success(data), failure(data, status))
+// Rekord.rest = function(options, success(data), failure(data, status))
 
-Neuro.rest = function(database)
+Rekord.rest = function(database)
 {
   
   return {

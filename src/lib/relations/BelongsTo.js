@@ -2,21 +2,21 @@ function BelongsTo()
 {
 }
 
-Neuro.Relations.belongsTo = BelongsTo;
+Rekord.Relations.belongsTo = BelongsTo;
 
 BelongsTo.Defaults =
 {
   model:                null,
   lazy:                 false,
   query:                false,
-  store:                Neuro.Store.None,
-  save:                 Neuro.Save.None,
+  store:                Rekord.Store.None,
+  save:                 Rekord.Save.None,
   auto:                 true,
   property:             true,
   preserve:             true,
   dynamic:              false,
   local:                null,
-  cascade:              Neuro.Cascade.Local,
+  cascade:              Rekord.Cascade.Local,
   discriminator:        'discriminator',
   discriminators:       {},
   discriminatorToModel: {}
@@ -27,14 +27,14 @@ extend( RelationSingle, BelongsTo,
 
   type: 'belongsTo',
 
-  debugInit:          Neuro.Debugs.BELONGSTO_INIT,
-  debugClearModel:    Neuro.Debugs.BELONGSTO_CLEAR_MODEL,
-  debugSetModel:      Neuro.Debugs.BELONGSTO_SET_MODEL,
-  debugLoaded:        Neuro.Debugs.BELONGSTO_LOADED,
-  debugClearKey:      Neuro.Debugs.BELONGSTO_CLEAR_KEY,
-  debugUpdateKey:     Neuro.Debugs.BELONGSTO_UPDATE_KEY,
-  debugQuery:         Neuro.Debugs.BELONGSTO_QUERY,
-  debugQueryResults:  Neuro.Debugs.BELONGSTO_QUERY_RESULTS,
+  debugInit:          Rekord.Debugs.BELONGSTO_INIT,
+  debugClearModel:    Rekord.Debugs.BELONGSTO_CLEAR_MODEL,
+  debugSetModel:      Rekord.Debugs.BELONGSTO_SET_MODEL,
+  debugLoaded:        Rekord.Debugs.BELONGSTO_LOADED,
+  debugClearKey:      Rekord.Debugs.BELONGSTO_CLEAR_KEY,
+  debugUpdateKey:     Rekord.Debugs.BELONGSTO_UPDATE_KEY,
+  debugQuery:         Rekord.Debugs.BELONGSTO_QUERY,
+  debugQueryResults:  Rekord.Debugs.BELONGSTO_QUERY_RESULTS,
 
   getDefaults: function(database, field, options)
   {
@@ -52,7 +52,7 @@ extend( RelationSingle, BelongsTo,
 
       onRemoved: function()
       {
-        Neuro.debug( Neuro.Debugs.BELONGSTO_NINJA_REMOVE, this, model, relation );
+        Rekord.debug( Rekord.Debugs.BELONGSTO_NINJA_REMOVE, this, model, relation );
 
         model.$remove( this.cascade );
         this.clearRelated( relation );
@@ -60,7 +60,7 @@ extend( RelationSingle, BelongsTo,
 
       onSaved: function()
       {
-        Neuro.debug( Neuro.Debugs.BELONGSTO_NINJA_SAVE, this, model, relation );
+        Rekord.debug( Rekord.Debugs.BELONGSTO_NINJA_SAVE, this, model, relation );
 
         if ( !relation.isRelated( relation.related ) )
         {
@@ -79,13 +79,13 @@ extend( RelationSingle, BelongsTo,
 
       if ( initialValue )
       {
-        Neuro.debug( Neuro.Debugs.BELONGSTO_INITIAL_PULLED, this, model, initialValue );
+        Rekord.debug( Rekord.Debugs.BELONGSTO_INITIAL_PULLED, this, model, initialValue );
       }
     }
 
     if ( !isEmpty( initialValue ) )
     {
-      Neuro.debug( Neuro.Debugs.BELONGSTO_INITIAL, this, model, initialValue );
+      Rekord.debug( Rekord.Debugs.BELONGSTO_INITIAL, this, model, initialValue );
 
       this.grabModel( initialValue, this.handleModel( relation, remoteData ), remoteData );
     }
@@ -101,7 +101,7 @@ extend( RelationSingle, BelongsTo,
 
     if ( relation )
     {
-      Neuro.debug( Neuro.Debugs.BELONGSTO_POSTREMOVE, this, model, relation );
+      Rekord.debug( Rekord.Debugs.BELONGSTO_POSTREMOVE, this, model, relation );
 
       this.clearModel( relation );
       this.setProperty( relation );

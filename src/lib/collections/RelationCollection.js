@@ -1,15 +1,15 @@
 
 /**
- * An extension of the {@link Neuro.ModelCollection} class for relationships.
+ * An extension of the {@link Rekord.ModelCollection} class for relationships.
  *
  * @constructor
- * @memberof Neuro
- * @extends Neuro.ModelCollection
- * @param {Neuro.Database} database -
+ * @memberof Rekord
+ * @extends Rekord.ModelCollection
+ * @param {Rekord.Database} database -
  *    The database for the models in this collection.
- * @param {Neuro.Model} model -
+ * @param {Rekord.Model} model -
  *    The model instance all models in this collection are related to.
- * @param {Neuro.Relation} relator -
+ * @param {Rekord.Relation} relator -
  *    The relation instance responsible for relating/unrelating models.
  * @param {modelInput[]} [models] -
  *    The initial array of models in this collection.
@@ -29,15 +29,15 @@ function RelationCollection(database, model, relator, models, remoteData)
 /**
  * The model instance all models in this collection are related to.
  *
- * @memberof Neuro.RelationCollection#
- * @member {Neuro.Model} model
+ * @memberof Rekord.RelationCollection#
+ * @member {Rekord.Model} model
  */
 
  /**
   * The relation instance responsible for relating/unrelating models.
   *
-  * @memberof Neuro.RelationCollection#
-  * @member {Neuro.Relation} relator
+  * @memberof Rekord.RelationCollection#
+  * @member {Rekord.Relation} relator
   */
 
 extendArray( ModelCollection, RelationCollection,
@@ -51,11 +51,11 @@ extendArray( ModelCollection, RelationCollection,
    * may result in the saving or deleting of models.
    *
    * @method
-   * @memberof Neuro.RelationCollection#
+   * @memberof Rekord.RelationCollection#
    * @param {modelInput|modelInput[]} [input] -
    *    The model or array of models to relate. If input isn't specified, all
    *    models currently related are unrelated.
-   * @return {Neuro.RelationCollection} -
+   * @return {Rekord.RelationCollection} -
    *    The reference to this collection.
    */
   set: function(input)
@@ -70,10 +70,10 @@ extendArray( ModelCollection, RelationCollection,
    * specified that is already related then it has no effect.
    *
    * @method
-   * @memberof Neuro.RelationCollection#
+   * @memberof Rekord.RelationCollection#
    * @param {modelInput|modelInput[]} input -
    *    The model or array of models to relate.
-   * @return {Neuro.RelationCollection} -
+   * @return {Rekord.RelationCollection} -
    *    The reference to this collection.
    */
   relate: function(input)
@@ -89,10 +89,10 @@ extendArray( ModelCollection, RelationCollection,
    * specified then all models in this collection are unrelated.
    *
    * @method
-   * @memberof Neuro.RelationCollection#
+   * @memberof Rekord.RelationCollection#
    * @param {modelInput|modelInput[]} input -
    *    The model or array of models to relate.
-   * @return {Neuro.RelationCollection} -
+   * @return {Rekord.RelationCollection} -
    *    The reference to this collection.
    */
   unrelate: function(input)
@@ -106,7 +106,7 @@ extendArray( ModelCollection, RelationCollection,
    * Determines whether one or more models all exist in this collection.
    *
    * @method
-   * @memberof Neuro.RelationCollection#
+   * @memberof Rekord.RelationCollection#
    * @param {modelInput|modelInput[]} input -
    *    The model or array of models to check for existence.
    * @return {Boolean} -
@@ -121,8 +121,8 @@ extendArray( ModelCollection, RelationCollection,
    * Returns a clone of this collection.
    *
    * @method
-   * @memberof Neuro.RelationCollection#
-   * @return {Neuro.RelationCollection} -
+   * @memberof Rekord.RelationCollection#
+   * @return {Rekord.RelationCollection} -
    *    The reference to a clone collection.
    */
   clone: function()
@@ -134,8 +134,8 @@ extendArray( ModelCollection, RelationCollection,
    * Returns an empty clone of this collection.
    *
    * @method
-   * @memberof Neuro.RelationCollection#
-   * @return {Neuro.RelationCollection} -
+   * @memberof Rekord.RelationCollection#
+   * @return {Rekord.RelationCollection} -
    *    The reference to a clone collection.
    */
   cloneEmpty: function()

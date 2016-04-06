@@ -1,12 +1,12 @@
 
 /**
- * An extension of the {@link Neuro.Collection} class for {@link Neuro.Model}
+ * An extension of the {@link Rekord.Collection} class for {@link Rekord.Model}
  * instances.
  *
  * @constructor
- * @memberof Neuro
- * @extends Neuro.Collection
- * @param {Neuro.Database} database -
+ * @memberof Rekord
+ * @extends Rekord.Collection
+ * @param {Rekord.Database} database -
  *    The database for the models in this collection.
  * @param {modelInput[]} [models] -
  *    The initial array of models in this collection.
@@ -14,8 +14,8 @@
  *    If the models array is from a remote source. Remote sources place the
  *    model directly into the database while local sources aren't stored in the
  *    database until they're saved.
- * @see Neuro.Models.boot
- * @see Neuro.Models.collect
+ * @see Rekord.Models.boot
+ * @see Rekord.Models.collect
  */
 function ModelCollection(database, models, remoteData)
 {
@@ -25,15 +25,15 @@ function ModelCollection(database, models, remoteData)
 /**
  * The map of models which keeps an index (by model key) of the models.
  *
- * @memberof Neuro.ModelCollection#
- * @member {Neuro.Map} map
+ * @memberof Rekord.ModelCollection#
+ * @member {Rekord.Map} map
  */
 
 /**
  * The database for the models in this collection.
  *
- * @memberof Neuro.ModelCollection#
- * @member {Neuro.Database} database
+ * @memberof Rekord.ModelCollection#
+ * @member {Rekord.Database} database
  */
 
 extendArray( Collection, ModelCollection,
@@ -44,8 +44,8 @@ extendArray( Collection, ModelCollection,
    * of models, and whether the initial set of models is from a remote source.
    *
    * @method
-   * @memberof Neuro.ModelCollection#
-   * @param {Neuro.Database} database -
+   * @memberof Rekord.ModelCollection#
+   * @param {Rekord.Database} database -
    *    The database for the models in this collection.
    * @param {modelInput[]} [models] -
    *    The initial array of models in this collection.
@@ -53,9 +53,9 @@ extendArray( Collection, ModelCollection,
    *    If the models array is from a remote source. Remote sources place the
    *    model directly into the database while local sources aren't stored in the
    *    database until they're saved.
-   * @return {Neuro.ModelCollection} -
+   * @return {Rekord.ModelCollection} -
    *    The reference to this collection.
-   * @emits Neuro.ModelCollection#reset
+   * @emits Rekord.ModelCollection#reset
    */
   init: function(database, models, remoteData)
   {
@@ -89,7 +89,7 @@ extendArray( Collection, ModelCollection,
    * and generates the key which uniquely identifies a model.
    *
    * @method
-   * @memberof Neuro.ModelCollection#
+   * @memberof Rekord.ModelCollection#
    * @param {modelInput} input -
    *    The input to convert to a key.
    * @return {modelKey} -
@@ -106,14 +106,14 @@ extendArray( Collection, ModelCollection,
    * model can be created on the spot.
    *
    * @method
-   * @memberof Neuro.ModelCollection#
+   * @memberof Rekord.ModelCollection#
    * @param {modelInput} input -
    *    The input to convert to a model instance.
    * @param {Boolean} [remoteData=false] -
    *    If the model is from a remote source. Remote sources place the model
    *    directly into the database while local sources aren't stored in the
    *    database until they're saved.
-   * @return {Neuro.Model} -
+   * @return {Rekord.Model} -
    *    A model instance parsed from the input.
    */
   parseModel: function(input, remoteData)
@@ -124,7 +124,7 @@ extendArray( Collection, ModelCollection,
   /**
    * Documented in Collection.js
    *
-   * @see Neuro.ModelCollection#buildKeyFromInput
+   * @see Rekord.ModelCollection#buildKeyFromInput
    */
   subtract: function(models, out)
   {
@@ -213,17 +213,17 @@ extendArray( Collection, ModelCollection,
    * Resets the models in this collection with a new collection of models.
    *
    * @method
-   * @memberof Neuro.ModelCollection#
+   * @memberof Rekord.ModelCollection#
    * @param {modelInput[]} [models] -
    *    The initial array of models in this collection.
    * @param {Boolean} [remoteData=false] -
    *    If the models array is from a remote source. Remote sources place the
    *    model directly into the database while local sources aren't stored in the
    *    database until they're saved.
-   * @return {Neuro.ModelCollection} -
+   * @return {Rekord.ModelCollection} -
    *    The reference to this collection.
-   * @see Neuro.ModelCollection#parseModel
-   * @emits Neuro.ModelCollection#reset
+   * @see Rekord.ModelCollection#parseModel
+   * @emits Rekord.ModelCollection#reset
    */
   reset: function(models, remoteData)
   {
@@ -262,7 +262,7 @@ extendArray( Collection, ModelCollection,
    * Returns whether this collection contains a model with the given key.
    *
    * @method
-   * @memberof Neuro.ModelCollection#
+   * @memberof Rekord.ModelCollection#
    * @param {modelKey} key -
    *    The key of the model to check for existence.
    * @return {Boolean} -
@@ -278,10 +278,10 @@ extendArray( Collection, ModelCollection,
    * Returns the model in this collection with the given key.
    *
    * @method
-   * @memberof Neuro.ModelCollection#
+   * @memberof Rekord.ModelCollection#
    * @param {modelKey} key -
    *    The key of the model to return.
-   * @return {Neuro.Model} -
+   * @return {Rekord.Model} -
    *    The model instance for the given key, or undefined if a model wasn't
    *    found.
    */
@@ -294,18 +294,18 @@ extendArray( Collection, ModelCollection,
    * Places a model in this collection providing a key to use.
    *
    * @method
-   * @memberof Neuro.ModelCollection#
+   * @memberof Rekord.ModelCollection#
    * @param {modelKey} key -
    *    The key of the model.
-   * @param {Neuro.Model} model -
+   * @param {Rekord.Model} model -
    *    The model instance to place in the collection.
    * @param {Boolean} [delaySort=false] -
    *    Whether automatic sorting should be delayed until the user manually
-   *    calls {@link Neuro.ModelCollection#sort sort}.
-   * @return {Neuro.ModelCollection} -
+   *    calls {@link Rekord.ModelCollection#sort sort}.
+   * @return {Rekord.ModelCollection} -
    *    The reference to this collection.
-   * @emits Neuro.ModelCollection#add
-   * @emits Neuro.ModelCollection#sort
+   * @emits Rekord.ModelCollection#add
+   * @emits Rekord.ModelCollection#sort
    */
   put: function(key, model, delaySort)
   {
@@ -324,16 +324,16 @@ extendArray( Collection, ModelCollection,
    * value.
    *
    * @method
-   * @memberof Neuro.ModelCollection#
+   * @memberof Rekord.ModelCollection#
    * @param {modelInput} input -
    *    The model to add to this collection.
    * @param {Boolean} [delaySort=false] -
    *    Whether automatic sorting should be delayed until the user manually
-   *    calls {@link Neuro.ModelCollection#sort sort}.
-   * @return {Neuro.ModelCollection} -
+   *    calls {@link Rekord.ModelCollection#sort sort}.
+   * @return {Rekord.ModelCollection} -
    *    The reference to this collection.
-   * @emits Neuro.ModelCollection#add
-   * @emits Neuro.ModelCollection#sort
+   * @emits Rekord.ModelCollection#add
+   * @emits Rekord.ModelCollection#sort
    */
   add: function(input, delaySort)
   {
@@ -355,13 +355,13 @@ extendArray( Collection, ModelCollection,
    * collection if a comparator is set on this collection.
    *
    * @method
-   * @memberof Neuro.ModelCollection#
+   * @memberof Rekord.ModelCollection#
    * @param {...modelInput} value -
    *    The models to add to this collection.
    * @return {Number} -
    *    The new length of this collection.
-   * @emits Neuro.ModelCollection#add
-   * @emits Neuro.ModelCollection#sort
+   * @emits Rekord.ModelCollection#add
+   * @emits Rekord.ModelCollection#sort
    */
   push: function()
   {
@@ -382,14 +382,14 @@ extendArray( Collection, ModelCollection,
 
   /**
    * @method
-   * @memberof Neuro.ModelCollection#
-   * @see Neuro.ModelCollection#push
+   * @memberof Rekord.ModelCollection#
+   * @see Rekord.ModelCollection#push
    * @param {...modelInput} value -
    *    The values to add to this collection.
    * @return {Number} -
    *    The new length of this collection.
-   * @emits Neuro.ModelCollection#adds
-   * @emits Neuro.ModelCollection#sort
+   * @emits Rekord.ModelCollection#adds
+   * @emits Rekord.ModelCollection#sort
    */
   unshift: function()
   {
@@ -402,16 +402,16 @@ extendArray( Collection, ModelCollection,
    * not specified or a true value.
    *
    * @method
-   * @memberof Neuro.ModelCollection#
+   * @memberof Rekord.ModelCollection#
    * @param {modelInput[]} models -
    *    The models to add to this collection.
    * @param {Boolean} [delaySort=false] -
    *    Whether automatic sorting should be delayed until the user manually
-   *    calls {@link Neuro.ModelCollection#sort sort}.
-   * @return {Neuro.ModelCollection} -
+   *    calls {@link Rekord.ModelCollection#sort sort}.
+   * @return {Rekord.ModelCollection} -
    *    The reference to this collection.
-   * @emits Neuro.ModelCollection#adds
-   * @emits Neuro.ModelCollection#sort
+   * @emits Rekord.ModelCollection#adds
+   * @emits Rekord.ModelCollection#sort
    */
   addAll: function(models, delaySort)
   {
@@ -435,12 +435,12 @@ extendArray( Collection, ModelCollection,
 
   /**
    * @method
-   * @memberof Neuro.ModelCollection#
-   * @see Neuro.ModelCollection#add
-   * @return {Neuro.ModelCollection} -
+   * @memberof Rekord.ModelCollection#
+   * @see Rekord.ModelCollection#add
+   * @return {Rekord.ModelCollection} -
    *    The reference to this collection.
-   * @emits Neuro.ModelCollection#add
-   * @emits Neuro.ModelCollection#sort
+   * @emits Rekord.ModelCollection#add
+   * @emits Rekord.ModelCollection#sort
    */
   insertAt: function(i, value, delaySort)
   {
@@ -453,14 +453,14 @@ extendArray( Collection, ModelCollection,
    * no specified or a true value.
    *
    * @method
-   * @memberof Neuro.ModelCollection#
+   * @memberof Rekord.ModelCollection#
    * @param {Boolean} [delaySort=false] -
    *    Whether automatic sorting should be delayed until the user manually
-   *    calls {@link Neuro.ModelCollection#sort sort}.
-   * @return {Neuro.Model} -
+   *    calls {@link Rekord.ModelCollection#sort sort}.
+   * @return {Rekord.Model} -
    *    The model removed from the end of the collection.
-   * @emits Neuro.ModelCollection#remove
-   * @emits Neuro.ModelCollection#sort
+   * @emits Rekord.ModelCollection#remove
+   * @emits Rekord.ModelCollection#sort
    */
   pop: function(delaySort)
   {
@@ -484,19 +484,19 @@ extendArray( Collection, ModelCollection,
    * no specified or a true value.
    *
    * ```javascript
-   * var c = Neuro.collect(1, 2, 3, 4);
+   * var c = Rekord.collect(1, 2, 3, 4);
    * c.shift(); // 1
    * ```
    *
    * @method
-   * @memberof Neuro.ModelCollection#
+   * @memberof Rekord.ModelCollection#
    * @param {Boolean} [delaySort=false] -
    *    Whether automatic sorting should be delayed until the user manually
-   *    calls {@link Neuro.ModelCollection#sort sort}.
-   * @return {Neuro.Model} -
+   *    calls {@link Rekord.ModelCollection#sort sort}.
+   * @return {Rekord.Model} -
    *    The model removed from the beginning of the collection.
-   * @emits Neuro.ModelCollection#remove
-   * @emits Neuro.ModelCollection#sort
+   * @emits Rekord.ModelCollection#remove
+   * @emits Rekord.ModelCollection#sort
    */
   shift: function(delaySort)
   {
@@ -519,16 +519,16 @@ extendArray( Collection, ModelCollection,
    * not specified or a true value.
    *
    * @method
-   * @memberof Neuro.ModelCollection#
+   * @memberof Rekord.ModelCollection#
    * @param {Number} i -
    *    The index of the model to remove.
    * @param {Boolean} [delaySort=false] -
    *    Whether automatic sorting should be delayed until the user manually
-   *    calls {@link Neuro.ModelCollection#sort sort}.
-   * @return {Neuro.Model} -
+   *    calls {@link Rekord.ModelCollection#sort sort}.
+   * @return {Rekord.Model} -
    *    The model removed, or undefined if the index was invalid.
-   * @emits Neuro.ModelCollection#remove
-   * @emits Neuro.ModelCollection#sort
+   * @emits Rekord.ModelCollection#remove
+   * @emits Rekord.ModelCollection#sort
    */
   removeAt: function(i, delaySort)
   {
@@ -556,19 +556,19 @@ extendArray( Collection, ModelCollection,
    * specified or a true value.
    *
    * @method
-   * @memberof Neuro.ModelCollection#
+   * @memberof Rekord.ModelCollection#
    * @param {modelInput} input -
    *    The model to remove from this collection if it exists.
    * @param {Boolean} [delaySort=false] -
    *    Whether automatic sorting should be delayed until the user manually
-   *    calls {@link Neuro.ModelCollection#sort sort}.
-   * @param {equalityCallback} [equals=Neuro.equalsStrict] -
+   *    calls {@link Rekord.ModelCollection#sort sort}.
+   * @param {equalityCallback} [equals=Rekord.equalsStrict] -
    *    The function which determines whether one of the elements that exist in
    *    this collection are equivalent to the given value.
-   * @return {Neuro.Model} -
+   * @return {Rekord.Model} -
    *    The element removed from this collection.
-   * @emits Neuro.ModelCollection#remove
-   * @emits Neuro.ModelCollection#sort
+   * @emits Rekord.ModelCollection#remove
+   * @emits Rekord.ModelCollection#sort
    */
   remove: function(input, delaySort)
   {
@@ -593,16 +593,16 @@ extendArray( Collection, ModelCollection,
    * a true value.
    *
    * @method
-   * @memberof Neuro.ModelCollection#
+   * @memberof Rekord.ModelCollection#
    * @param {modelInput[]} inputs -
    *    The models to remove from this collection if they exist.
    * @param {Boolean} [delaySort=false] -
    *    Whether automatic sorting should be delayed until the user manually
-   *    calls {@link Neuro.ModelCollection#sort sort}.
-   * @return {Neuro.Model[]} -
+   *    calls {@link Rekord.ModelCollection#sort sort}.
+   * @return {Rekord.Model[]} -
    *    The models removed from this collection.
-   * @emits Neuro.ModelCollection#removes
-   * @emits Neuro.ModelCollection#sort
+   * @emits Rekord.ModelCollection#removes
+   * @emits Rekord.ModelCollection#sort
    */
   removeAll: function(inputs, delaySort)
   {
@@ -636,7 +636,7 @@ extendArray( Collection, ModelCollection,
    * if the model doesn't exist in this collection.
    *
    * @method
-   * @memberof Neuro.ModelCollection#
+   * @memberof Rekord.ModelCollection#
    * @param {modelInput} input -
    *    The model to search for.
    * @return {Number} -
@@ -655,8 +655,8 @@ extendArray( Collection, ModelCollection,
    * this collection.
    *
    * @method
-   * @memberof Neuro.ModelCollection#
-   * @return {Neuro.ModelCollection} -
+   * @memberof Rekord.ModelCollection#
+   * @return {Rekord.ModelCollection} -
    *    The reference to this collection.
    */
   rebuild: function()
@@ -668,7 +668,7 @@ extendArray( Collection, ModelCollection,
    * Returns the array of keys that correspond to the models in this collection.
    *
    * @method
-   * @memberof Neuro.ModelCollection#
+   * @memberof Rekord.ModelCollection#
    * @return {modelKey[]} -
    *    The array of model keys.
    */
@@ -681,10 +681,10 @@ extendArray( Collection, ModelCollection,
    * Reverses the order of models in this collection.
    *
    * @method
-   * @memberof Neuro.ModelCollection#
-   * @return {Neuro.ModelCollection} -
+   * @memberof Rekord.ModelCollection#
+   * @return {Rekord.ModelCollection} -
    *    The reference to this collection.
-   * @emits Neuro.ModelCollection#updates
+   * @emits Rekord.ModelCollection#updates
    */
   reverse: function()
   {
@@ -697,23 +697,23 @@ extendArray( Collection, ModelCollection,
 
   /**
    * Removes the models from this collection where the given expression is true.
-   * The first argument, if `true`, can call {@link Neuro.Model#$remove} on each
+   * The first argument, if `true`, can call {@link Rekord.Model#$remove} on each
    * model removed from this colleciton.
    *
    * @method
-   * @memberof Neuro.ModelCollection#
+   * @memberof Rekord.ModelCollection#
    * @param {Boolean} [callRemove=false] -
-   *    Whether {@link Neuro.Model#$remove} should be called on each removed model.
+   *    Whether {@link Rekord.Model#$remove} should be called on each removed model.
    * @param {whereInput} [whereProperties] -
-   *    See {@link Neuro.createWhere}
+   *    See {@link Rekord.createWhere}
    * @param {Any} [whereValue] -
-   *    See {@link Neuro.createWhere}
+   *    See {@link Rekord.createWhere}
    * @param {equalityCallback} [whereEquals] -
-   *    See {@link Neuro.createWhere}
-   * @return {Neuro.Model[]} -
+   *    See {@link Rekord.createWhere}
+   * @return {Rekord.Model[]} -
    *    An array of models removed from this collection.
-   * @emits Neuro.ModelCollection#removes
-   * @emits Neuro.ModelCollection#sort
+   * @emits Rekord.ModelCollection#removes
+   * @emits Rekord.ModelCollection#sort
    */
   removeWhere: function(callRemove, whereProperties, whereValue, whereEquals)
   {
@@ -746,10 +746,10 @@ extendArray( Collection, ModelCollection,
   /**
    * Updates the given property(s) in all models in this collection with the
    * given value. If `avoidSave` is not a truthy value then
-   * {@link Neuro.Model#$save} is called on every model in this collection.
+   * {@link Rekord.Model#$save} is called on every model in this collection.
    *
    * @method
-   * @memberof Neuro.ModelCollection#
+   * @memberof Rekord.ModelCollection#
    * @param {String|Object} props -
    *    The property or properties to update.
    * @param {Any} [value] -
@@ -759,11 +759,11 @@ extendArray( Collection, ModelCollection,
    *    model directly into the database while local sources aren't stored in the
    *    database until they're saved.
    * @param {Boolean} [avoidSave=false] -
-   *    True for NOT calling {@link Neuro.Model#$save}, otherwise false.
-   * @return {Neuro.ModelCollection} -
+   *    True for NOT calling {@link Rekord.Model#$save}, otherwise false.
+   * @return {Rekord.ModelCollection} -
    *    The reference to this collection.
-   * @emits Neuro.ModelCollection#updates
-   * @emits Neuro.ModelCollection#sort
+   * @emits Rekord.ModelCollection#updates
+   * @emits Rekord.ModelCollection#sort
    */
   update: function(props, value, remoteData, avoidSave)
   {
@@ -788,10 +788,10 @@ extendArray( Collection, ModelCollection,
   /**
    * Updates the given property(s) in models in this collection which pass the
    * `where` function with the given value. If `avoidSave` is not a truthy value
-   * then {@link Neuro.Model#$save} is called on every model in this collection.
+   * then {@link Rekord.Model#$save} is called on every model in this collection.
    *
    * @method
-   * @memberof Neuro.ModelCollection#
+   * @memberof Rekord.ModelCollection#
    * @param {whereCallback} where -
    *    The function which determines whether a model should be updated.
    * @param {String|Object} props -
@@ -803,11 +803,11 @@ extendArray( Collection, ModelCollection,
    *    model directly into the database while local sources aren't stored in the
    *    database until they're saved.
    * @param {Boolean} [avoidSave=false] -
-   *    True for NOT calling {@link Neuro.Model#$save}, otherwise false.
-   * @return {Neuro.Model[]} -
+   *    True for NOT calling {@link Rekord.Model#$save}, otherwise false.
+   * @return {Rekord.Model[]} -
    *    An array of models updated.
-   * @emits Neuro.ModelCollection#updates
-   * @emits Neuro.ModelCollection#sort
+   * @emits Rekord.ModelCollection#updates
+   * @emits Rekord.ModelCollection#sort
    */
   updateWhere: function(where, props, value, remoteData, avoidSave)
   {
@@ -840,8 +840,8 @@ extendArray( Collection, ModelCollection,
    * Returns a clone of this collection.
    *
    * @method
-   * @memberof Neuro.ModelCollection#
-   * @return {Neuro.ModelCollection} -
+   * @memberof Rekord.ModelCollection#
+   * @return {Rekord.ModelCollection} -
    *    The reference to a clone collection.
    */
   clone: function()
@@ -853,8 +853,8 @@ extendArray( Collection, ModelCollection,
    * Returns an empty clone of this collection.
    *
    * @method
-   * @memberof Neuro.ModelCollection#
-   * @return {Neuro.ModelCollection} -
+   * @memberof Rekord.ModelCollection#
+   * @return {Rekord.ModelCollection} -
    *    The reference to a clone collection.
    */
   cloneEmpty: function()

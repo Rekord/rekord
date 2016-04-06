@@ -3,7 +3,7 @@
     "include": [
       "src/lib/functions.js",
       "src/lib/eventize.js",
-      "src/lib/Neuro.js",
+      "src/lib/Rekord.js",
       "src/lib/debug.js",
       "src/lib/rest.js",
       "src/lib/store.js",
@@ -49,7 +49,7 @@
     ]
   },
   "templates": {
-    "applicationName": "Neurosync",
+    "applicationName": "Rekord",
     "linenums": true,
     "cleverLinks": true,
     "default": {
@@ -57,7 +57,7 @@
     }
   },
   "opts": {
-    "destination": "../neurosync-docs/docs/",
+    "destination": "../rekord-docs/docs/",
     "recurse": "true",
     "template": "./node_modules/jaguarjs-jsdoc",
     "readme": "./README.md",

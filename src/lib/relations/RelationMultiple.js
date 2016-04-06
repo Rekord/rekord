@@ -16,7 +16,7 @@ extend( Relation, RelationMultiple,
     {
       var relation = model.$relations[ this.name ];
 
-      Neuro.debug( this.debugQueryResults, this, model, remoteQuery );
+      Rekord.debug( this.debugQueryResults, this, model, remoteQuery );
 
       this.bulk( relation, function()
       {
@@ -208,9 +208,9 @@ extend( Relation, RelationMultiple,
   {
     if ( !relation.delaySaving && !remoteData && relation.parent.$exists() )
     {
-      if ( this.store === Neuro.Store.Model || this.save === Neuro.Save.Model )
+      if ( this.store === Rekord.Store.Model || this.save === Rekord.Save.Model )
       {
-        Neuro.debug( this.debugAutoSave, this, relation );
+        Rekord.debug( this.debugAutoSave, this, relation );
 
         relation.parent.$save();
       }
@@ -226,7 +226,7 @@ extend( Relation, RelationMultiple,
 
       if ( key in pending )
       {
-        Neuro.debug( this.debugInitialGrabbed, this, relation, related );
+        Rekord.debug( this.debugInitialGrabbed, this, relation, related );
 
         this.addModel( relation, related, remoteData );
 
@@ -241,7 +241,7 @@ extend( Relation, RelationMultiple,
 
     if ( !relation.delaySorting )
     {
-      Neuro.debug( this.debugSort, this, relation );
+      Rekord.debug( this.debugSort, this, relation );
 
       related.sort( this.comparator );
 

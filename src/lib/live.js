@@ -11,7 +11,7 @@
  * @return {function} -
  *         The function which sends operations.
  */
-Neuro.live = function(database)
+Rekord.live = function(database)
 {
   return {
 

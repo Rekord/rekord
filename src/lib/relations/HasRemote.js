@@ -2,15 +2,15 @@ function HasRemote()
 {
 }
 
-Neuro.Relations.hasRemote = HasRemote;
+Rekord.Relations.hasRemote = HasRemote;
 
 HasRemote.Defaults =
 {
   model:                undefined,
   lazy:                 false,
   query:                false,
-  store:                Neuro.Store.None,
-  save:                 Neuro.Save.None,
+  store:                Rekord.Store.None,
+  save:                 Rekord.Save.None,
   auto:                 false,
   property:             true,
   dynamic:              false,
@@ -24,9 +24,9 @@ extend( RelationMultiple, HasRemote,
 
   type: 'hasRemote',
 
-  debugSort:            Neuro.Debugs.HASREMOTE_SORT,
-  debugQuery:           Neuro.Debugs.HASREMOTE_QUERY,
-  debugQueryResults:    Neuro.Debugs.HASREMOTE_QUERY_RESULTS,
+  debugSort:            Rekord.Debugs.HASREMOTE_SORT,
+  debugQuery:           Rekord.Debugs.HASREMOTE_QUERY,
+  debugQueryResults:    Rekord.Debugs.HASREMOTE_QUERY_RESULTS,
 
   getDefaults: function(database, field, options)
   {
@@ -37,7 +37,7 @@ extend( RelationMultiple, HasRemote,
   {
     this.comparator = createComparator( this.comparator, this.comparatorNullsFirst );
 
-    Neuro.debug( Neuro.Debugs.HASREMOTE_INIT, this );
+    Rekord.debug( Rekord.Debugs.HASREMOTE_INIT, this );
 
     this.finishInitialization();
   },
@@ -55,14 +55,14 @@ extend( RelationMultiple, HasRemote,
 
       onRemoved: function() // this = model removed
       {
-        Neuro.debug( Neuro.Debugs.HASREMOVE_NINJA_REMOVE, relator, model, this, relation );
+        Rekord.debug( Rekord.Debugs.HASREMOVE_NINJA_REMOVE, relator, model, this, relation );
 
         relator.removeModel( relation, this, true );
       },
 
       onSaved: function() // this = model saved
       {
-        Neuro.debug( Neuro.Debugs.HASREMOVE_NINJA_SAVE, relator, model, this, relation );
+        Rekord.debug( Rekord.Debugs.HASREMOVE_NINJA_SAVE, relator, model, this, relation );
 
         relator.sort( relation );
         relator.checkSave( relation );
@@ -108,7 +108,7 @@ extend( RelationMultiple, HasRemote,
 
     if ( adding )
     {
-      Neuro.debug( Neuro.Debugs.HASMANY_ADD, this, relation, related );
+      Rekord.debug( Rekord.Debugs.HASMANY_ADD, this, relation, related );
 
       target.put( key, related );
 
@@ -140,7 +140,7 @@ extend( RelationMultiple, HasRemote,
 
     if ( target.has( key ) )
     {
-      Neuro.debug( Neuro.Debugs.HASMANY_REMOVE, this, relation, related );
+      Rekord.debug( Rekord.Debugs.HASMANY_REMOVE, this, relation, related );
 
       target.remove( key );
 

@@ -1,4 +1,4 @@
-Neuro.on( Neuro.Events.Plugins, function(model, db, options)
+Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 {
   var files = options.files || Database.Defaults.files;
 
@@ -9,7 +9,7 @@ Neuro.on( Neuro.Events.Plugins, function(model, db, options)
 
   if ( !isFilesSupported() )
   {
-    Neuro.trigger( Neuro.Events.FilesNotSupported );
+    Rekord.trigger( Rekord.Events.FilesNotSupported );
 
     return;
   }
@@ -44,23 +44,23 @@ files: {
 }
 **/
 
-Neuro.fileProcessors = {};
+Rekord.fileProcessors = {};
 
-Neuro.Events.FilesNotSupported = 'files-not-supported';
-Neuro.Events.FileTooLarge = 'file-too-large';
-Neuro.Events.FileWrongType = 'file-wrong-type';
-Neuro.Events.FileOffline = 'file-offline';
+Rekord.Events.FilesNotSupported = 'files-not-supported';
+Rekord.Events.FileTooLarge = 'file-too-large';
+Rekord.Events.FileWrongType = 'file-wrong-type';
+Rekord.Events.FileOffline = 'file-offline';
 
 // {
 //  fileToValue(file, model, field, callback),
 //  valueToUser(value, model, field, callback)
 // }
-Neuro.addFileProcessor = function(name, methods)
+Rekord.addFileProcessor = function(name, methods)
 {
-  Neuro.fileProcessors[ name ] = methods;
+  Rekord.fileProcessors[ name ] = methods;
 };
 
-Neuro.fileProperties =
+Rekord.fileProperties =
 [
   'lastModifiedDate', 'name', 'size', 'type'
 ];
@@ -153,11 +153,11 @@ function setFilesValue(processor, value, model, property, options)
 
 function fileReader(method, converter, options)
 {
-  var processor = Neuro.fileProcessors[ options.processor ];
+  var processor = Rekord.fileProcessors[ options.processor ];
 
   if ( !(method in global.FileReader.prototype) )
   {
-    Neuro.trigger( Neuro.Events.FilesNotSupported );
+    Rekord.trigger( Rekord.Events.FilesNotSupported );
   }
 
   return function(input, model, property)
@@ -200,7 +200,7 @@ function fileReader(method, converter, options)
           result = value;
       };
 
-      Neuro.trigger( Neuro.Events.FileOffline, [input, model, property, setter] );
+      Rekord.trigger( Rekord.Events.FileOffline, [input, model, property, setter] );
 
       return result;
     }
@@ -232,7 +232,7 @@ var FileDecodings =
     return function(input, model, property)
     {
       var file = toFile( input );
-      var processor = Neuro.fileProcessors[ options.processor ];
+      var processor = Rekord.fileProcessors[ options.processor ];
 
       if ( !processor )
       {
@@ -243,14 +243,14 @@ var FileDecodings =
       {
         if ( isNumber( options.capacity ) && isNumber( file.size ) && file.size > options.capacity )
         {
-          Neuro.trigger( Neuro.Events.FileTooLarge, [file, model, property] );
+          Rekord.trigger( Rekord.Events.FileTooLarge, [file, model, property] );
 
           return undefined;
         }
 
         if ( isArray( options.types ) && isString( file.type ) && indexOf( options.types, file.type ) === false )
         {
-          Neuro.trigger( Neuro.Events.FileWrongType, [file, model, property] );
+          Rekord.trigger( Rekord.Events.FileWrongType, [file, model, property] );
 
           return undefined;
         }
@@ -277,7 +277,7 @@ var FileDecodings =
       }
       else if ( isObject( input ) && input.FILE )
       {
-        Neuro.trigger( Neuro.Events.FileOffline, [input, model, property] );
+        Rekord.trigger( Rekord.Events.FileOffline, [input, model, property] );
       }
       else
       {
@@ -302,7 +302,7 @@ function FileEncoder(input, model, field, forSaving)
 
     if ( !forSaving && cached.file )
     {
-      var props = grab( cached.file, Neuro.fileProperties, false );
+      var props = grab( cached.file, Rekord.fileProperties, false );
 
       props.FILE = true;
 
@@ -317,7 +317,7 @@ function FileEncoder(input, model, field, forSaving)
         {
           delete cached.file;
 
-          model.$addOperation( SaveLocal, Neuro.Cascade.Local );
+          model.$addOperation( SaveLocal, Rekord.Cascade.Local );
         });
       }
 

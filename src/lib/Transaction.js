@@ -1,9 +1,9 @@
 
-Neuro.transaction = null;
+Rekord.transaction = null;
 
-Neuro.transact = function(cascade, model, operation, func)
+Rekord.transact = function(cascade, model, operation, func)
 {
-  var transaction = Neuro.transaction;
+  var transaction = Rekord.transaction;
 
   if ( transaction )
   {
@@ -15,19 +15,19 @@ Neuro.transact = function(cascade, model, operation, func)
   }
   else
   {
-    transaction = Neuro.transaction = new Transaction( cascade, model, operation );
+    transaction = Rekord.transaction = new Transaction( cascade, model, operation );
 
     transaction.add( cascade, model, operation );
 
     func.call( model, transaction );
 
-    Neuro.transaction = null;
+    Rekord.transaction = null;
 
     return transaction;
   }
 };
 
-Neuro.transactNone = function(cascade, model, operation)
+Rekord.transactNone = function(cascade, model, operation)
 {
   return new Transaction( cascade, model, operation );
 };
@@ -64,7 +64,7 @@ Transaction.prototype =
     switch (operation)
     {
     case 'save':
-      if ( cascade & Neuro.Cascade.Rest )
+      if ( cascade & Rekord.Cascade.Rest )
       {
         handled.offs.push(
           model.$once( Model.Events.RemoteSave, this.createHandler( false, false, handled ), this ),
@@ -72,7 +72,7 @@ Transaction.prototype =
           model.$once( Model.Events.RemoteSaveOffline, this.createHandler( false, true, handled ), this )
         );
       }
-      else if ( cascade & Neuro.Cascade.Local )
+      else if ( cascade & Rekord.Cascade.Local )
       {
         handled.offs.push(
           model.$once( Model.Events.LocalSave, this.createHandler( false, false, handled ), this ),
@@ -82,7 +82,7 @@ Transaction.prototype =
       break;
 
     case 'remove':
-      if ( cascade & Neuro.Cascade.Rest )
+      if ( cascade & Rekord.Cascade.Rest )
       {
         handled.offs.push(
           model.$once( Model.Events.RemoteRemove, this.createHandler( false, false, handled ), this ),
@@ -90,7 +90,7 @@ Transaction.prototype =
           model.$once( Model.Events.RemoteRemoveOffline, this.createHandler( false, true, handled ), this )
         );
       }
-      else if ( cascade & Neuro.Cascade.Local )
+      else if ( cascade & Rekord.Cascade.Local )
       {
         handled.offs.push(
           model.$once( Model.Events.LocalRemove, this.createHandler( false, false, handled ), this ),
@@ -144,11 +144,11 @@ Transaction.prototype =
 
     if ( !this.status )
     {
-      if ( this.cascade & Neuro.Cascade.Rest )
+      if ( this.cascade & Rekord.Cascade.Rest )
       {
         this.status = Transaction.Events.RemoteSuccess;
       }
-      else if ( this.cascade & Neuro.Cascade.Local )
+      else if ( this.cascade & Rekord.Cascade.Local )
       {
         this.status = Transaction.Events.LocalSuccess;
       }

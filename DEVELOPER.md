@@ -1,6 +1,6 @@
-# Building and Testing Neurosync
+# Building and Testing Rekord
 
-This document describes how to set up your development environment to build and test Neurosync. It also explains the basic mechanics of using `git`, `node`, and `npm`.
+This document describes how to set up your development environment to build and test Rekord. It also explains the basic mechanics of using `git`, `node`, and `npm`.
 
 * [Prerequisite Software](#prerequisite-software)
 * [Getting the Sources](#getting-the-sources)
@@ -10,12 +10,12 @@ This document describes how to set up your development environment to build and 
 * [Running Examples](#running-examples)
 * [Project Information](#project-information)
 
-See the [contribution guidelines](https://github.com/ClickerMonkey/neurosync/blob/master/CONTRIBUTING.md)
-if you'd like to contribute to Neurosync.
+See the [contribution guidelines](https://github.com/Rekord/rekord/blob/master/CONTRIBUTING.md)
+if you'd like to contribute to Rekord.
 
 ## Prerequisite Software
 
-Before you can build and test Neurosync, you must install and configure the
+Before you can build and test Rekord, you must install and configure the
 following products on your development machine:
 
 * [Git](http://git-scm.com) and/or the **GitHub app** (for [Mac](http://mac.github.com) or
@@ -28,38 +28,38 @@ following products on your development machine:
 
 ## Getting the Sources
 
-Fork and clone the Neurosync repository:
+Fork and clone the Rekord repository:
 
 1. Login to your GitHub account or create one by following the instructions given
    [here](https://github.com/signup/free).
-2. [Fork](http://help.github.com/forking) the [main Neurosync
-   repository](https://github.com/ClickerMonkey/neurosync).
-3. Clone your fork of the Neurosync repository and define an `upstream` remote pointing back to
-   the Neurosync repository that you forked in the first place.
+2. [Fork](http://help.github.com/forking) the [main Rekord
+   repository](https://github.com/Rekord/rekord).
+3. Clone your fork of the Rekord repository and define an `upstream` remote pointing back to
+   the Rekord repository that you forked in the first place.
 
 ```shell
 # Clone your GitHub repository:
-git clone git@github.com:<github username>/neurosync.git
+git clone git@github.com:<github username>/rekord.git
 
-# Go to the Neurosync directory:
-cd neurosync
+# Go to the Rekord directory:
+cd rekord
 
-# Add the main Neurosync repository as an upstream remote to your repository:
-git remote add upstream https://github.com/ClickerMonkey/neurosync.git
+# Add the main Rekord repository as an upstream remote to your repository:
+git remote add upstream https://github.com/Rekord/rekord.git
 ```
 
 ## Installing NPM Modules
 
-Next, install the JavaScript modules needed to build and test Neurosync:
+Next, install the JavaScript modules needed to build and test Rekord:
 
 ```shell
-# Install Neurosync project dependencies (package.json)
+# Install Rekord project dependencies (package.json)
 npm install
 ```
 
 ## Build commands
 
-To build Neurosync and prepare tests, run:
+To build Rekord and prepare tests, run:
 
 ```shell
 gulp build
@@ -86,7 +86,7 @@ gulp test
 
 ### Starting Servers
 
-The examples come ready with a simple REST API back-end and a real-time server. To run these servers execute the following commands (assuming you're current directory is neurosync):
+The examples come ready with a simple REST API back-end and a real-time server. To run these servers execute the following commands (assuming you're current directory is rekord):
 
 ```shell
 cd examples/pubsub
@@ -111,7 +111,7 @@ You can point your browser to the following example files:
 
 ### Folder structure
 
-* `src/*`: contains all Neurosync source files.
+* `src/*`: contains all Rekord source files.
 * `build/*`: build files are placed here.
 * `examples/*`: example applications exist here.
 * `test/*`: unit tests exist here.

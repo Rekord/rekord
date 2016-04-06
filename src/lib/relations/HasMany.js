@@ -2,23 +2,23 @@ function HasMany()
 {
 }
 
-Neuro.Relations.hasMany = HasMany;
+Rekord.Relations.hasMany = HasMany;
 
 HasMany.Defaults =
 {
   model:                null,
   lazy:                 false,
   query:                false,
-  store:                Neuro.Store.None,
-  save:                 Neuro.Save.None,
+  store:                Rekord.Store.None,
+  save:                 Rekord.Save.None,
   auto:                 true,
   property:             true,
   dynamic:              false,
   foreign:              null,
   comparator:           null,
   comparatorNullsFirst: false,
-  cascadeRemove:        Neuro.Cascade.Local,
-  cascadeSave:          Neuro.Cascade.None,
+  cascadeRemove:        Rekord.Cascade.Local,
+  cascadeSave:          Rekord.Cascade.None,
   discriminator:        'discriminator',
   discriminators:       {},
   discriminatorToModel: {}
@@ -29,11 +29,11 @@ extend( RelationMultiple, HasMany,
 
   type: 'hasMany',
 
-  debugAutoSave:        Neuro.Debugs.HASMANY_AUTO_SAVE,
-  debugInitialGrabbed:  Neuro.Debugs.HASMANY_INITIAL_GRABBED,
-  debugSort:            Neuro.Debugs.HASMANY_SORT,
-  debugQuery:           Neuro.Debugs.HASMANY_QUERY,
-  debugQueryResults:    Neuro.Debugs.HASMANY_QUERY_RESULTS,
+  debugAutoSave:        Rekord.Debugs.HASMANY_AUTO_SAVE,
+  debugInitialGrabbed:  Rekord.Debugs.HASMANY_INITIAL_GRABBED,
+  debugSort:            Rekord.Debugs.HASMANY_SORT,
+  debugQuery:           Rekord.Debugs.HASMANY_QUERY,
+  debugQueryResults:    Rekord.Debugs.HASMANY_QUERY_RESULTS,
 
   getDefaults: function(database, field, options)
   {
@@ -45,7 +45,7 @@ extend( RelationMultiple, HasMany,
     this.foreign = this.foreign || ( database.name + '_' + database.key );
     this.comparator = createComparator( this.comparator, this.comparatorNullsFirst );
 
-    Neuro.debug( Neuro.Debugs.HASMANY_INIT, this );
+    Rekord.debug( Rekord.Debugs.HASMANY_INIT, this );
 
     this.finishInitialization();
   },
@@ -65,7 +65,7 @@ extend( RelationMultiple, HasMany,
 
       onRemoved: function() // this = model removed
       {
-        Neuro.debug( Neuro.Debugs.HASMANY_NINJA_REMOVE, relator, model, this, relation );
+        Rekord.debug( Rekord.Debugs.HASMANY_NINJA_REMOVE, relator, model, this, relation );
 
         relator.removeModel( relation, this, true );
       },
@@ -77,7 +77,7 @@ extend( RelationMultiple, HasMany,
           return;
         }
 
-        Neuro.debug( Neuro.Debugs.HASMANY_NINJA_SAVE, relator, model, this, relation );
+        Rekord.debug( Rekord.Debugs.HASMANY_NINJA_SAVE, relator, model, this, relation );
 
         if ( !relation.isRelated( this ) )
         {
@@ -101,7 +101,7 @@ extend( RelationMultiple, HasMany,
     // If the model's initial value is an array, populate the relation from it!
     if ( isArray( initialValue ) )
     {
-      Neuro.debug( Neuro.Debugs.HASMANY_INITIAL, this, model, relation, initialValue );
+      Rekord.debug( Rekord.Debugs.HASMANY_INITIAL, this, model, relation, initialValue );
 
       this.grabModels( relation, initialValue, this.handleModel( relation, remoteData ), remoteData );
     }
@@ -111,7 +111,7 @@ extend( RelationMultiple, HasMany,
     }
     else
     {
-      Neuro.debug( Neuro.Debugs.HASMANY_INITIAL_PULLED, this, model, relation );
+      Rekord.debug( Rekord.Debugs.HASMANY_INITIAL_PULLED, this, model, relation );
 
       this.ready( this.handleLazyLoad( relation ) );
     }
@@ -147,7 +147,7 @@ extend( RelationMultiple, HasMany,
 
     if ( relation && this.cascadeSave )
     {
-      Neuro.debug( Neuro.Debugs.HASMANY_POSTSAVE, this, model, relation );
+      Rekord.debug( Rekord.Debugs.HASMANY_POSTSAVE, this, model, relation );
 
       relation.saving = true;
       relation.delaySaving = true;
@@ -175,7 +175,7 @@ extend( RelationMultiple, HasMany,
 
     if ( relation && this.cascadeRemove )
     {
-      Neuro.debug( Neuro.Debugs.HASMANY_PREREMOVE, this, model, relation );
+      Rekord.debug( Rekord.Debugs.HASMANY_PREREMOVE, this, model, relation );
 
       this.bulk( relation, function()
       {
@@ -197,7 +197,7 @@ extend( RelationMultiple, HasMany,
     {
       if ( relation.isRelated( related ) )
       {
-        Neuro.debug( Neuro.Debugs.HASMANY_NINJA_ADD, this, relation, related );
+        Rekord.debug( Rekord.Debugs.HASMANY_NINJA_ADD, this, relation, related );
 
         this.addModel( relation, related, remoteData );
       }
@@ -210,7 +210,7 @@ extend( RelationMultiple, HasMany,
     {
       var related = relatedDatabase.filter( relation.isRelated );
 
-      Neuro.debug( Neuro.Debugs.HASMANY_LAZY_LOAD, this, relation, related );
+      Rekord.debug( Rekord.Debugs.HASMANY_LAZY_LOAD, this, relation, related );
 
       if ( related.length )
       {
@@ -243,7 +243,7 @@ extend( RelationMultiple, HasMany,
 
     if ( adding )
     {
-      Neuro.debug( Neuro.Debugs.HASMANY_ADD, this, relation, related );
+      Rekord.debug( Rekord.Debugs.HASMANY_ADD, this, relation, related );
 
       target.put( key, related );
 
@@ -279,7 +279,7 @@ extend( RelationMultiple, HasMany,
 
     if ( target.has( key ) )
     {
-      Neuro.debug( Neuro.Debugs.HASMANY_REMOVE, this, relation, related );
+      Rekord.debug( Rekord.Debugs.HASMANY_REMOVE, this, relation, related );
 
       target.remove( key );
 

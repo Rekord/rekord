@@ -2,21 +2,21 @@ function HasOne()
 {
 }
 
-Neuro.Relations.hasOne = HasOne;
+Rekord.Relations.hasOne = HasOne;
 
 HasOne.Defaults =
 {
   model:                null,
   lazy:                 false,
   query:                false,
-  store:                Neuro.Store.None,
-  save:                 Neuro.Save.None,
+  store:                Rekord.Store.None,
+  save:                 Rekord.Save.None,
   auto:                 true,
   property:             true,
   preserve:             true,
   dynamic:              false,
   local:                null,
-  cascade:              Neuro.Cascade.All,
+  cascade:              Rekord.Cascade.All,
   discriminator:        'discriminator',
   discriminators:       {},
   discriminatorToModel: {}
@@ -27,14 +27,14 @@ extend( RelationSingle, HasOne,
 
   type: 'hasOne',
 
-  debugInit:          Neuro.Debugs.HASONE_INIT,
-  debugClearModel:    Neuro.Debugs.HASONE_CLEAR_MODEL,
-  debugSetModel:      Neuro.Debugs.HASONE_SET_MODEL,
-  debugLoaded:        Neuro.Debugs.HASONE_LOADED,
-  debugClearKey:      Neuro.Debugs.HASONE_CLEAR_KEY,
-  debugUpdateKey:     Neuro.Debugs.HASONE_UPDATE_KEY,
-  debugQuery:         Neuro.Debugs.HASONE_QUERY,
-  debugQueryResults:  Neuro.Debugs.HASONE_QUERY_RESULTS,
+  debugInit:          Rekord.Debugs.HASONE_INIT,
+  debugClearModel:    Rekord.Debugs.HASONE_CLEAR_MODEL,
+  debugSetModel:      Rekord.Debugs.HASONE_SET_MODEL,
+  debugLoaded:        Rekord.Debugs.HASONE_LOADED,
+  debugClearKey:      Rekord.Debugs.HASONE_CLEAR_KEY,
+  debugUpdateKey:     Rekord.Debugs.HASONE_UPDATE_KEY,
+  debugQuery:         Rekord.Debugs.HASONE_QUERY,
+  debugQueryResults:  Rekord.Debugs.HASONE_QUERY_RESULTS,
 
   getDefaults: function(database, field, options)
   {
@@ -54,7 +54,7 @@ extend( RelationSingle, HasOne,
 
       onRemoved: function()
       {
-        Neuro.debug( Neuro.Debugs.HASONE_NINJA_REMOVE, this, model, relation );
+        Rekord.debug( Rekord.Debugs.HASONE_NINJA_REMOVE, this, model, relation );
 
         this.clearRelated( relation );
       }
@@ -69,13 +69,13 @@ extend( RelationSingle, HasOne,
 
       if ( initialValue )
       {
-        Neuro.debug( Neuro.Debugs.HASONE_INITIAL_PULLED, this, model, initialValue );
+        Rekord.debug( Rekord.Debugs.HASONE_INITIAL_PULLED, this, model, initialValue );
       }
     }
 
     if ( !isEmpty( initialValue ) )
     {
-      Neuro.debug( Neuro.Debugs.HASONE_INITIAL, this, model, initialValue );
+      Rekord.debug( Rekord.Debugs.HASONE_INITIAL, this, model, initialValue );
 
       this.grabModel( initialValue, this.handleModel( relation ), remoteData );
     }
@@ -109,7 +109,7 @@ extend( RelationSingle, HasOne,
 
       if ( relation.dirty || related.$hasChanges() )
       {
-        Neuro.debug( Neuro.Debugs.HASONE_PRESAVE, this, model, relation );
+        Rekord.debug( Rekord.Debugs.HASONE_PRESAVE, this, model, relation );
 
         relation.saving = true;
 
@@ -129,7 +129,7 @@ extend( RelationSingle, HasOne,
     {
       if ( this.cascade )
       {
-        Neuro.debug( Neuro.Debugs.HASONE_POSTREMOVE, this, model, relation );
+        Rekord.debug( Rekord.Debugs.HASONE_POSTREMOVE, this, model, relation );
 
         this.clearModel( relation );
       }
@@ -142,7 +142,7 @@ extend( RelationSingle, HasOne,
 
     if ( related )
     {
-      Neuro.debug( this.debugClearModel, this, relation );
+      Rekord.debug( this.debugClearModel, this, relation );
 
       related.$off( Model.Events.Removed, relation.onRemoved );
 

@@ -1,101 +1,101 @@
 
   /* Top-Level Function */
-  global.Neuro = Neuro;
+  global.Rekord = Rekord;
 
   /* Classes */
-  global.Neuro.Model = Model;
-  global.Neuro.Database = Database;
-  global.Neuro.Relation = Relation;
-  global.Neuro.Operation = Operation;
-  global.Neuro.Transaction = Transaction;
-  global.Neuro.Search = Search;
-  global.Neuro.SearchPaged = SearchPaged;
+  global.Rekord.Model = Model;
+  global.Rekord.Database = Database;
+  global.Rekord.Relation = Relation;
+  global.Rekord.Operation = Operation;
+  global.Rekord.Transaction = Transaction;
+  global.Rekord.Search = Search;
+  global.Rekord.SearchPaged = SearchPaged;
 
   /* Collections */
-  global.Neuro.Map = Map;
-  global.Neuro.Collection = Collection;
-  global.Neuro.FilteredCollection = FilteredCollection;
-  global.Neuro.ModelCollection = ModelCollection;
-  global.Neuro.Query = Query;
-  global.Neuro.RemoteQuery = RemoteQuery;
-  global.Neuro.Page = Page;
+  global.Rekord.Map = Map;
+  global.Rekord.Collection = Collection;
+  global.Rekord.FilteredCollection = FilteredCollection;
+  global.Rekord.ModelCollection = ModelCollection;
+  global.Rekord.Query = Query;
+  global.Rekord.RemoteQuery = RemoteQuery;
+  global.Rekord.Page = Page;
 
   /* Relationships */
-  global.Neuro.HasOne = HasOne;
-  global.Neuro.BelongsTo = BelongsTo;
-  global.Neuro.HasMany = HasMany;
-  global.Neuro.HasManyThrough = HasManyThrough;
-  global.Neuro.HasRemote = HasRemote;
+  global.Rekord.HasOne = HasOne;
+  global.Rekord.BelongsTo = BelongsTo;
+  global.Rekord.HasMany = HasMany;
+  global.Rekord.HasManyThrough = HasManyThrough;
+  global.Rekord.HasRemote = HasRemote;
 
   /* Utility Functions */
-  global.Neuro.isNeuro = isNeuro;
-  global.Neuro.isDefined = isDefined;
-  global.Neuro.isFunction = isFunction;
-  global.Neuro.isString = isString;
-  global.Neuro.isNumber = isNumber;
-  global.Neuro.isBoolean = isBoolean;
-  global.Neuro.isDate = isDate;
-  global.Neuro.isRegExp = isRegExp;
-  global.Neuro.isArray = isArray;
-  global.Neuro.isObject = isObject;
-  global.Neuro.isValue = isValue;
+  global.Rekord.isRekord = isRekord;
+  global.Rekord.isDefined = isDefined;
+  global.Rekord.isFunction = isFunction;
+  global.Rekord.isString = isString;
+  global.Rekord.isNumber = isNumber;
+  global.Rekord.isBoolean = isBoolean;
+  global.Rekord.isDate = isDate;
+  global.Rekord.isRegExp = isRegExp;
+  global.Rekord.isArray = isArray;
+  global.Rekord.isObject = isObject;
+  global.Rekord.isValue = isValue;
 
-  global.Neuro.uuid = uuid;
-  global.Neuro.indexOf = indexOf;
-  global.Neuro.propsMatch = propsMatch;
-  global.Neuro.hasFields = hasFields;
-  global.Neuro.toArray = toArray;
+  global.Rekord.uuid = uuid;
+  global.Rekord.indexOf = indexOf;
+  global.Rekord.propsMatch = propsMatch;
+  global.Rekord.hasFields = hasFields;
+  global.Rekord.toArray = toArray;
 
-  global.Neuro.eventize = eventize;
+  global.Rekord.eventize = eventize;
 
-  global.Neuro.extend = extend;
-  global.Neuro.extendArray = extendArray;
-  global.Neuro.copyConstructor = copyConstructor;
-  global.Neuro.factory = factory;
+  global.Rekord.extend = extend;
+  global.Rekord.extendArray = extendArray;
+  global.Rekord.copyConstructor = copyConstructor;
+  global.Rekord.factory = factory;
 
-  global.Neuro.transfer = transfer;
-  global.Neuro.collapse = collapse;
-  global.Neuro.swap = swap;
-  global.Neuro.grab = grab;
-  global.Neuro.pull = pull;
-  global.Neuro.copy = copy;
-  global.Neuro.noop = noop;
-  global.Neuro.bind = bind;
-  global.Neuro.diff = diff;
-  global.Neuro.sizeof = sizeof;
-  global.Neuro.isEmpty = isEmpty;
-  global.Neuro.collect = collect;
-  global.Neuro.applyOptions = applyOptions;
-  global.Neuro.toCamelCase = toCamelCase;
-  global.Neuro.evaluate = evaluate;
+  global.Rekord.transfer = transfer;
+  global.Rekord.collapse = collapse;
+  global.Rekord.swap = swap;
+  global.Rekord.grab = grab;
+  global.Rekord.pull = pull;
+  global.Rekord.copy = copy;
+  global.Rekord.noop = noop;
+  global.Rekord.bind = bind;
+  global.Rekord.diff = diff;
+  global.Rekord.sizeof = sizeof;
+  global.Rekord.isEmpty = isEmpty;
+  global.Rekord.collect = collect;
+  global.Rekord.applyOptions = applyOptions;
+  global.Rekord.toCamelCase = toCamelCase;
+  global.Rekord.evaluate = evaluate;
 
-  global.Neuro.clean = clean;
-  global.Neuro.cleanFunctions = cleanFunctions;
+  global.Rekord.clean = clean;
+  global.Rekord.cleanFunctions = cleanFunctions;
 
-  global.Neuro.compare = compare;
-  global.Neuro.equals = equals;
-  global.Neuro.equalsStrict = equalsStrict;
-  global.Neuro.equalsCompare = equalsCompare;
+  global.Rekord.compare = compare;
+  global.Rekord.equals = equals;
+  global.Rekord.equalsStrict = equalsStrict;
+  global.Rekord.equalsCompare = equalsCompare;
 
-  global.Neuro.isSorted = isSorted;
-  global.Neuro.saveComparator = saveComparator;
-  global.Neuro.createComparator = createComparator;
-  global.Neuro.addComparator = addComparator;
+  global.Rekord.isSorted = isSorted;
+  global.Rekord.saveComparator = saveComparator;
+  global.Rekord.createComparator = createComparator;
+  global.Rekord.addComparator = addComparator;
 
-  global.Neuro.saveWhere = saveWhere;
-  global.Neuro.createWhere = createWhere;
+  global.Rekord.saveWhere = saveWhere;
+  global.Rekord.createWhere = createWhere;
 
-  global.Neuro.savePropertyResolver = savePropertyResolver;
-  global.Neuro.createPropertyResolver = createPropertyResolver;
+  global.Rekord.savePropertyResolver = savePropertyResolver;
+  global.Rekord.createPropertyResolver = createPropertyResolver;
 
-  global.Neuro.saveNumberResolver = saveNumberResolver;
-  global.Neuro.createNumberResolver = createNumberResolver;
+  global.Rekord.saveNumberResolver = saveNumberResolver;
+  global.Rekord.createNumberResolver = createNumberResolver;
 
-  global.Neuro.saveHaving = saveHaving;
-  global.Neuro.createHaving = createHaving;
+  global.Rekord.saveHaving = saveHaving;
+  global.Rekord.createHaving = createHaving;
 
-  global.Neuro.parse = parse;
-  global.Neuro.format = format;
-  global.Neuro.createFormatter = createFormatter;
+  global.Rekord.parse = parse;
+  global.Rekord.format = format;
+  global.Rekord.createFormatter = createFormatter;
 
 })(this);

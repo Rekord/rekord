@@ -1,6 +1,6 @@
-# Contributing to Neurosync
+# Contributing to Rekord
 
-We would love for you to contribute to Neurosync and help make it even better than it is
+We would love for you to contribute to Rekord and help make it even better than it is
 today! As a contributor, here are the guidelines we would like you to follow:
 
  - [Question or Problem?](#question)
@@ -12,8 +12,8 @@ today! As a contributor, here are the guidelines we would like you to follow:
 
 ## <a name="question"></a> Got a Question or Problem?
 
-If you have questions about how to *use* Neurosync, please direct them to the [Google Group][neurosync-js]
-discussion list or [StackOverflow][stackoverflow]. Please note that Neurosync is still in early development, and the core team's capacity to answer usage questions is limited.
+If you have questions about how to *use* Rekord, please direct them to the [Google Group][rekord-js]
+discussion list or [StackOverflow][stackoverflow]. Please note that Rekord is still in early development, and the core team's capacity to answer usage questions is limited.
 
 ## <a name="issue"></a> Found an Issue?
 If you find a bug in the source code or a mistake in the documentation, you can help us by
@@ -42,7 +42,7 @@ features, by not reporting duplicate issues.  Providing the following informatio
 chances of your issue being dealt with quickly:
 
 * **Overview of the Issue** - if an error is being thrown a non-minified stack trace helps
-* **Neurosync Version** - what version of Neurosync is affected (e.g. 1.1.14)
+* **Rekord Version** - what version of Rekord is affected (e.g. 1.1.14)
 * **Motivation for or Use Case** - explain what are you trying to do and why the current behavior is a bug for you
 * **Browsers and Operating System** - is this a problem with all browsers?
 * **Reproduce the Error** - provide a live example (using [Plunker][plunker],
@@ -51,12 +51,12 @@ chances of your issue being dealt with quickly:
 * **Suggest a Fix** - if you can't fix the bug yourself, perhaps you can point to what might be
   causing the problem (line of code or commit)
 
-You can file new issues by providing the above information [here](https://github.com/ClickerMonkey/neurosync/issues/new).
+You can file new issues by providing the above information [here](https://github.com/Rekord/rekord/issues/new).
 
 ### <a name="submit-pr"></a> Submitting a Pull Request (PR)
 Before you submit your Pull Request (PR) consider the following guidelines:
 
-* Search [GitHub](https://github.com/ClickerMonkey/neurosync/pulls) for an open or closed PR
+* Search [GitHub](https://github.com/Rekord/rekord/pulls) for an open or closed PR
   that relates to your submission. You don't want to duplicate effort.
 * Make your changes in a new git branch:
 
@@ -66,7 +66,7 @@ Before you submit your Pull Request (PR) consider the following guidelines:
 
 * Create your patch, **including appropriate test cases**.
 * Follow our [Coding Rules](#rules).
-* Run the full Neurosync test suite, as described in the [developer documentation][dev-doc],
+* Run the full Rekord test suite, as described in the [developer documentation][dev-doc],
   and ensure that all tests pass.
 * Commit your changes using a descriptive commit message that follows our
   [commit message conventions](#commit). Adherence to these conventions
@@ -83,10 +83,10 @@ Before you submit your Pull Request (PR) consider the following guidelines:
     git push origin my-fix-branch
     ```
 
-* In GitHub, send a pull request to `neurosync:master`.
+* In GitHub, send a pull request to `rekord:master`.
 * If we suggest changes then:
   * Make the required updates.
-  * Re-run the Neurosync test suites for JS to ensure tests are still passing.
+  * Re-run the Rekord test suites for JS to ensure tests are still passing.
   * Rebase your branch and force push to your GitHub repository (this will update your Pull Request):
 
     ```shell
@@ -130,10 +130,10 @@ To ensure consistency throughout the source code, keep these rules in mind as yo
 * All features or bug fixes **must be tested** by one or more specs (unit-tests).
 * All public API methods **must be documented**. (Details TBC).
 
-[neurosync-js]: https://groups.google.com/forum/#!forum/neurosync-js
-[dev-doc]: https://github.com/ClickerMonkey/neurosync/blob/master/DEVELOPER.md
-[github]: https://github.com/ClickerMonkey/neurosync
+[rekord-js]: https://groups.google.com/forum/#!forum/rekord-js
+[dev-doc]: https://github.com/Rekord/rekord/blob/master/DEVELOPER.md
+[github]: https://github.com/Rekord/rekord
 [jsfiddle]: http://jsfiddle.net/
 [plunker]: http://plnkr.co/edit
 [runnable]: http://runnable.com/
-[stackoverflow]: http://stackoverflow.com/questions/tagged/neurosync
+[stackoverflow]: http://stackoverflow.com/questions/tagged/rekord

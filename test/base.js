@@ -1,7 +1,7 @@
 
 // Configuration
 
-Neuro.autoload = true;
+Rekord.autoload = true;
 
 // Extra Assertions
 
@@ -15,9 +15,9 @@ function isType(value, type, message)
   strictEqual( typeof value, type, message );
 }
 
-function hasModel(neuro, key, model, message)
+function hasModel(rekord, key, model, message)
 {
-  strictEqual( neuro.get( key ), model, message );
+  strictEqual( rekord.get( key ), model, message );
 }
 
 function currentTime()
@@ -109,7 +109,7 @@ function TestFile(name, size, type, contents)
 
 function TestFileReader()
 {
-  this.onload = Neuro.noop;
+  this.onload = Rekord.noop;
 }
 
 TestFileReader.prototype =
@@ -169,38 +169,38 @@ window.FileReader = TestFileReader;
 
 function offline()
 {
-  Neuro.setOffline();
-  Neuro.forceOffline = true;
+  Rekord.setOffline();
+  Rekord.forceOffline = true;
 }
 
 function online()
 {
-  Neuro.forceOffline = false;
-  Neuro.setOnline();
+  Rekord.forceOffline = false;
+  Rekord.setOnline();
 }
 
 function noline()
 {
-  Neuro.off( 'online offline' );
+  Rekord.off( 'online offline' );
   online();
 }
 
 function restart()
 {
-  Neuro.cache = {};
+  Rekord.cache = {};
   noline();
   online();
 }
 
-// Neuro.store."database name".(put|remove|all)
+// Rekord.store."database name".(put|remove|all)
 
-Neuro.store = function(database)
+Rekord.store = function(database)
 {
-  var store = Neuro.store[ database.name ];
+  var store = Rekord.store[ database.name ];
 
   if ( !store )
   {
-    store = Neuro.store[ database.name ] = new TestStore();
+    store = Rekord.store[ database.name ] = new TestStore();
   }
 
   return store;
@@ -208,7 +208,7 @@ Neuro.store = function(database)
 
 function TestStore()
 {
-  this.map = new Neuro.Map();
+  this.map = new Rekord.Map();
   this.valid = true;
   this.delay = 0;
   this.lastKey = this.lastRecord = null;
@@ -300,15 +300,15 @@ TestStore.prototype =
 };
 
 
-// Neuro.live."database name".(save|remove)
+// Rekord.live."database name".(save|remove)
 
-Neuro.live = function(database)
+Rekord.live = function(database)
 {
-  var live = Neuro.live[ database.name ];
+  var live = Rekord.live[ database.name ];
 
   if ( !live )
   {
-    live = Neuro.live[ database.name ] = new TestLive( database );
+    live = Rekord.live[ database.name ] = new TestLive( database );
   }
 
   return live;
@@ -362,15 +362,15 @@ TestLive.prototype =
   }
 };
 
-// Neuro.rest."database name".(all|create|update|remove)
+// Rekord.rest."database name".(all|create|update|remove)
 
-Neuro.rest = function(database)
+Rekord.rest = function(database)
 {
-  var rest = Neuro.rest[ database.name ];
+  var rest = Rekord.rest[ database.name ];
 
   if ( !rest )
   {
-    rest = Neuro.rest[ database.name ] = new TestRest();
+    rest = Rekord.rest[ database.name ] = new TestRest();
   }
 
   return rest;
@@ -378,8 +378,8 @@ Neuro.rest = function(database)
 
 function TestRest()
 {
-  this.map = new Neuro.Map();
-  this.queries = new Neuro.Map();
+  this.map = new Rekord.Map();
+  this.queries = new Rekord.Map();
   this.status = 200;
   this.returnValue = false;
   this.delay = 0;
@@ -407,7 +407,7 @@ TestRest.prototype =
   },
   finish: function(success, failure, returnValue)
   {
-    var offline = !Neuro.online || Neuro.forceOffline;
+    var offline = !Rekord.online || Rekord.forceOffline;
     var status = offline ? 0 : this.status;
     var successful = status >= 200 && status < 300;
     var returnedValue = this.returnValue || returnValue;
@@ -464,7 +464,7 @@ TestRest.prototype =
     function onUpdate()
     {
       var existing = map.get( model.$key() );
-      Neuro.transfer( encoded, existing );
+      Rekord.transfer( encoded, existing );
       success.apply( this, arguments );
     }
 

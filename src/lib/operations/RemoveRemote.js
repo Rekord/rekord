@@ -6,7 +6,7 @@ function RemoveRemote(model, cascade)
 extend( Operation, RemoveRemote,
 {
 
-  cascading: Neuro.Cascade.Remote,
+  cascading: Rekord.Cascade.Remote,
 
   interrupts: true,
 
@@ -14,7 +14,7 @@ extend( Operation, RemoveRemote,
 
   run: function(db, model)
   {
-    if ( this.notCascade( Neuro.Cascade.Rest ) )
+    if ( this.notCascade( Rekord.Cascade.Rest ) )
     {
       this.liveRemove();
 
@@ -42,25 +42,25 @@ extend( Operation, RemoveRemote,
 
     if ( status === 404 || status === 410 )
     {
-      Neuro.debug( Neuro.Debugs.REMOVE_MISSING, model, key );
+      Rekord.debug( Rekord.Debugs.REMOVE_MISSING, model, key );
 
       this.finishRemove();
     }
     else if ( status !== 0 )
     {
-      Neuro.debug( Neuro.Debugs.REMOVE_ERROR, model, status, key, response );
+      Rekord.debug( Rekord.Debugs.REMOVE_ERROR, model, status, key, response );
 
       model.$trigger( Model.Events.RemoteRemoveFailure, [model, response] );
     }
     else
     {
       // Looks like we're offline!
-      Neuro.checkNetworkStatus();
+      Rekord.checkNetworkStatus();
 
       // If we are offline, wait until we're online again to resume the delete
-      if (!Neuro.online)
+      if (!Rekord.online)
       {
-        Neuro.once( Neuro.Events.Online, this.handleOnline, this );
+        Rekord.once( Rekord.Events.Online, this.handleOnline, this );
 
         model.$trigger( Model.Events.RemoteRemoveOffline, [model, response] );
       }
@@ -69,7 +69,7 @@ extend( Operation, RemoveRemote,
         model.$trigger( Model.Events.RemoteRemoveFailure, [model, response] );
       }
 
-      Neuro.debug( Neuro.Debugs.REMOVE_OFFLINE, model, response );
+      Rekord.debug( Rekord.Debugs.REMOVE_OFFLINE, model, response );
     }
   },
 
@@ -79,7 +79,7 @@ extend( Operation, RemoveRemote,
     var model = this.model;
     var key = model.$key();
 
-    Neuro.debug( Neuro.Debugs.REMOVE_REMOTE, model, key );
+    Rekord.debug( Rekord.Debugs.REMOVE_REMOTE, model, key );
 
     // Successfully removed!
     model.$status = Model.Status.Removed;
@@ -99,14 +99,14 @@ extend( Operation, RemoveRemote,
 
   liveRemove: function()
   {
-    if ( this.canCascade( Neuro.Cascade.Live ) )
+    if ( this.canCascade( Rekord.Cascade.Live ) )
     {
       var db = this.db;
       var model = this.model;
       var key = model.$key();
 
       // Publish REMOVE
-      Neuro.debug( Neuro.Debugs.REMOVE_PUBLISH, model, key );
+      Rekord.debug( Rekord.Debugs.REMOVE_PUBLISH, model, key );
 
       db.live.remove( model );
     }
@@ -116,7 +116,7 @@ extend( Operation, RemoveRemote,
   {
     var model = this.model;
 
-    Neuro.debug( Neuro.Debugs.REMOVE_RESUME, model );
+    Rekord.debug( Rekord.Debugs.REMOVE_RESUME, model );
 
     model.$addOperation( RemoveRemote );
   }

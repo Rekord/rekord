@@ -6,7 +6,7 @@ function SaveNow(model, cascade)
 extend( Operation, SaveNow,
 {
 
-  cascading: Neuro.Cascade.Local,
+  cascading: Rekord.Cascade.Local,
 
   interrupts: false,
 
@@ -17,7 +17,7 @@ extend( Operation, SaveNow,
     var key = model.$key();
     var local = model.$local;
 
-    if ( db.cache === Neuro.Cache.All && key && local && this.canCascade() )
+    if ( db.cache === Rekord.Cache.All && key && local && this.canCascade() )
     {
       db.store.put( key, local, this.success(), this.failure() );
     }

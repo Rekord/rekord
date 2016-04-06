@@ -3,13 +3,13 @@
  * Overrides functions in the given model collection to turn it into a collection
  * which contains models with a discriminator field.
  *
- * @param {Neuro.ModelCollection} collection -
+ * @param {Rekord.ModelCollection} collection -
  *    The collection instance with discriminated models.
  * @param {String} discriminator -
  *    The name of the field which contains the discriminator.
  * @param {Object} discriminatorsToModel -
- *    A map of discriminators to the Neuro instances.
- * @return {Neuro.ModelCollection} -
+ *    A map of discriminators to the Rekord instances.
+ * @return {Rekord.ModelCollection} -
  *    The reference to the given collection.
  */
 function DiscriminateCollection(collection, discriminator, discriminatorsToModel)
@@ -26,7 +26,7 @@ function DiscriminateCollection(collection, discriminator, discriminatorsToModel
   /**
    * Builds a key from input. Discriminated collections only accept objects as
    * input - otherwise there's no way to determine the discriminator. If the
-   * discriminator on the input doesn't map to a Neuro instance OR the input
+   * discriminator on the input doesn't map to a Rekord instance OR the input
    * is not an object the input will be returned instead of a model instance.
    *
    * @param {modelInput} input -
@@ -58,7 +58,7 @@ function DiscriminateCollection(collection, discriminator, discriminatorsToModel
    *    The input to parse to a model instance.
    * @param {Boolean} [remoteData=false] -
    *    Whether or not the input is coming from a remote source.
-   * @return {Neuro.Model} -
+   * @return {Rekord.Model} -
    *    The model instance parsed or null if none was found.
    */
   collection.parseModel = function(input, remoteData)
@@ -78,8 +78,8 @@ function DiscriminateCollection(collection, discriminator, discriminatorsToModel
    * Returns a clone of this collection.
    *
    * @method
-   * @memberof Neuro.Collection#
-   * @return {Neuro.Collection} -
+   * @memberof Rekord.Collection#
+   * @return {Rekord.Collection} -
    *    The reference to a clone collection.
    */
   collection.clone = function()
@@ -91,8 +91,8 @@ function DiscriminateCollection(collection, discriminator, discriminatorsToModel
    * Returns an empty clone of this collection.
    *
    * @method
-   * @memberof Neuro.Collection#
-   * @return {Neuro.Collection} -
+   * @memberof Rekord.Collection#
+   * @return {Rekord.Collection} -
    *    The reference to a clone collection.
    */
   collection.cloneEmpty = function()

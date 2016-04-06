@@ -3,8 +3,8 @@
  * An instance
  *
  * @constructor
- * @memberof Neuro
- * @param {Neuro.Database} db
+ * @memberof Rekord
+ * @param {Rekord.Database} db
  *        The database instance used in model instances.
  */
 function Model(db)
@@ -390,16 +390,16 @@ Model.prototype =
     var cascade =
       (arguments.length === 3 ? cascade :
         (arguments.length === 2 && isObject( setProperties ) && isNumber( setValue ) ? setValue :
-          (arguments.length === 1 && isNumber( setProperties ) ?  setProperties : Neuro.Cascade.All ) ) );
+          (arguments.length === 1 && isNumber( setProperties ) ?  setProperties : Rekord.Cascade.All ) ) );
 
     if ( this.$isDeleted() )
     {
-      Neuro.debug( Neuro.Debugs.SAVE_DELETED, this.$db, this );
+      Rekord.debug( Rekord.Debugs.SAVE_DELETED, this.$db, this );
 
-      return Neuro.transactNone( cascade, this, 'save' );
+      return Rekord.transactNone( cascade, this, 'save' );
     }
 
-    return Neuro.transact( cascade, this, 'save', function(txn)
+    return Rekord.transact( cascade, this, 'save', function(txn)
     {
       this.$db.addReference( this );
 
@@ -415,14 +415,14 @@ Model.prototype =
 
   $remove: function(cascade)
   {
-    var cascade = isNumber( cascade ) ? cascade : Neuro.Cascade.All;
+    var cascade = isNumber( cascade ) ? cascade : Rekord.Cascade.All;
 
     if ( !this.$exists() )
     {
-      return Neuro.transactNone( cascade, this, 'remove' );
+      return Rekord.transactNone( cascade, this, 'remove' );
     }
 
-    return Neuro.transact( cascade, this, 'remove', function(txn)
+    return Rekord.transact( cascade, this, 'remove', function(txn)
     {
       this.$trigger( Model.Events.PreRemove, [this] );
 

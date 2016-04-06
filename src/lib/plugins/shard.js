@@ -1,4 +1,4 @@
-Neuro.on( Neuro.Events.Options, function(options)
+Rekord.on( Rekord.Events.Options, function(options)
 {
   var shard = options.shard || Database.Defaults.shard;
 
@@ -7,5 +7,5 @@ Neuro.on( Neuro.Events.Options, function(options)
     return;
   }
 
-  options.createRest = Neuro.shard( shard );
+  options.createRest = Rekord.shard( shard );
 });

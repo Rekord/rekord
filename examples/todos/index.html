@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Neurosync Todo Example</title>
+    <title>Rekord Todo Example</title>
   </head>
   <body ng-app="todos">
 
@@ -26,19 +26,19 @@
     <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.5.0-beta.1/angular.js"></script>
     <script src="https://cdn.socket.io/socket.io-1.3.7.js"></script>
-    <script src="http://rawgit.com/ClickerMonkey/storkjs/master/build/stork.min.js"></script>
+    <script src="http://rawgit.com/Rekord/storkjs/master/build/stork.min.js"></script>
     <script src="../pubsub/pubsub-client.js"></script>
 
-    <script src="../../build/neurosync.js"></script>
-    <script src="http://rawgit.com/ClickerMonkey/neurosync-pubsub/master/build/neurosync-pubsub.min.js"></script>
-    <script src="http://rawgit.com/ClickerMonkey/neurosync-storkjs/master/build/neurosync-stork.min.js"></script>
-    <script src="http://rawgit.com/ClickerMonkey/neurosync-angular/master/build/neurosync-angular.min.js"></script>
-    <script src="http://rawgit.com/ClickerMonkey/neurosync-debug/master/build/neurosync-debug.min.js"></script>
+    <script src="../../build/rekord.js"></script>
+    <script src="http://rawgit.com/Rekord/rekord-pubsub/master/build/rekord-pubsub.min.js"></script>
+    <script src="http://rawgit.com/Rekord/rekord-storkjs/master/build/rekord-stork.min.js"></script>
+    <script src="http://rawgit.com/Rekord/rekord-angular/master/build/rekord-angular.min.js"></script>
+    <script src="http://rawgit.com/Rekord/rekord-debug/master/build/rekord-debug.min.js"></script>
 
     <!-- Todo Application -->
     <script>
 
-      angular.module('todos', ['neurosync'])
+      angular.module('todos', ['rekord'])
 
         .config(function($logProvider)
         {
@@ -51,7 +51,7 @@
 
         .run(function(PUBSUB, RESTBASE)
         {
-          var Todo = Neuro({
+          var Todo = Rekord({
             name: 'todos',
             api: RESTBASE + 'todos/',
             pubsub: PUBSUB,
@@ -70,7 +70,7 @@
 
           window.Todo = Todo;
 
-          Neuro.load();
+          Rekord.load();
         })
 
         .directive('todo', function()
@@ -112,16 +112,16 @@
 
         .controller('TodoController', function($scope)
         {
-          NeuroBind( $scope, Todo );
+          RekordBind( $scope, Todo );
 
           this.todos = Todo.all();
 
           this.isOnline = function() {
-            return !Neuro.forceOffline;
+            return !Rekord.forceOffline;
           };
           this.setOnline = function(online) {
-            Neuro.forceOffline = !online;
-            Neuro.checkNetworkStatus();
+            Rekord.forceOffline = !online;
+            Rekord.checkNetworkStatus();
           };
 
           this.newTodo = function() {

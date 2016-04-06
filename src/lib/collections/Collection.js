@@ -1,20 +1,20 @@
 
 /**
  * An extension of the Array class adding many useful functions and events. This
- * is the base collection class in Neurosync.
+ * is the base collection class in Rekord.
  *
- * A collection of any type can be created via {@link Neuro.collect}.
+ * A collection of any type can be created via {@link Rekord.collect}.
  *
  * ```
- * var nc = new Neuro.Collection([1, 2, 3, 4]);
+ * var nc = new Rekord.Collection([1, 2, 3, 4]);
  * ```
  *
  * @constructor
- * @memberof Neuro
+ * @memberof Rekord
  * @extends Array
  * @param {Array} [values] 0
  *    The initial set of values in this collection.
- * @see Neuro.collect
+ * @see Rekord.collect
  */
 function Collection(values)
 {
@@ -24,22 +24,22 @@ function Collection(values)
 /**
 * A comparator to keep the collection sorted with.
 *
-* @memberof Neuro.Collection#
+* @memberof Rekord.Collection#
 * @member {comparisonCallback} [comparator]
 */
 
 /**
  * The events a collection can emit.
  *
- * {@link Neuro.Collection#event:add Add}
- * {@link Neuro.Collection#event:adds Adds}
- * {@link Neuro.Collection#event:sort Sort}
- * {@link Neuro.Collection#event:remove Remove}
- * {@link Neuro.Collection#event:removes Removes}
- * {@link Neuro.Collection#event:updates Updates}
- * {@link Neuro.Collection#event:reset Reset}
- * {@link Neuro.Collection#event:cleared Cleared}
- * {@link Neuro.Collection#event:changes Changes}
+ * {@link Rekord.Collection#event:add Add}
+ * {@link Rekord.Collection#event:adds Adds}
+ * {@link Rekord.Collection#event:sort Sort}
+ * {@link Rekord.Collection#event:remove Remove}
+ * {@link Rekord.Collection#event:removes Removes}
+ * {@link Rekord.Collection#event:updates Updates}
+ * {@link Rekord.Collection#event:reset Reset}
+ * {@link Rekord.Collection#event:cleared Cleared}
+ * {@link Rekord.Collection#event:changes Changes}
  *
  * @static
  */
@@ -48,28 +48,28 @@ Collection.Events =
   /**
    * An event triggered when a single value is added to a collection.
    *
-   * @event Neuro.Collection#add
-   * @argument {Neuro.Collection} collection -
+   * @event Rekord.Collection#add
+   * @argument {Rekord.Collection} collection -
    *    The collection that triggered the event.
    * @argument {T} value -
    *    The value added.
-   * @see Neuro.Collection#add
-   * @see Neuro.Collection#insertAt
-   * @see Neuro.ModelCollection#add
-   * @see Neuro.ModelCollection#push
+   * @see Rekord.Collection#add
+   * @see Rekord.Collection#insertAt
+   * @see Rekord.ModelCollection#add
+   * @see Rekord.ModelCollection#push
    */
   Add:            'add',
 
   /**
    * An event triggered when multiple values are added to a collection.
    *
-   * @event Neuro.Collection#adds
-   * @argument {Neuro.Collection} collection -
+   * @event Rekord.Collection#adds
+   * @argument {Rekord.Collection} collection -
    *    The collection that triggered the event.
    * @argument {T[]} value -
    *    The values added.
-   * @see Neuro.Collection#addAll
-   * @see Neuro.ModelCollection#addAll
+   * @see Rekord.Collection#addAll
+   * @see Rekord.ModelCollection#addAll
    */
   Adds:           'adds',
 
@@ -77,53 +77,53 @@ Collection.Events =
    * An event triggered when a collection is sorted. This may automatically
    * be triggered by any method that modifies the collection.
    *
-   * @event Neuro.Collection#sort
-   * @argument {Neuro.Collection} collection -
+   * @event Rekord.Collection#sort
+   * @argument {Rekord.Collection} collection -
    *    The collection that triggered the event.
-   * @see Neuro.Collection#sort
-   * @see Neuro.ModelCollection#sort
+   * @see Rekord.Collection#sort
+   * @see Rekord.ModelCollection#sort
    */
   Sort:           'sort',
 
   /**
    * An event triggered when a collection has an element removed at a given index.
    *
-   * @event Neuro.Collection#remove
-   * @argument {Neuro.Collection} collection -
+   * @event Rekord.Collection#remove
+   * @argument {Rekord.Collection} collection -
    *    The collection that triggered the event.
    * @argument {Any} removing -
    *    The element that was removed.
    * @argument {Number} index -
    *    The index where the element was removed at.
-   * @see Neuro.Collection#remove
-   * @see Neuro.Collection#removeAt
-   * @see Neuro.ModelCollection#remove
+   * @see Rekord.Collection#remove
+   * @see Rekord.Collection#removeAt
+   * @see Rekord.ModelCollection#remove
    */
   Remove:         'remove',
 
   /**
    * An event triggered when a collection has multiple elements removed.
    *
-   * @event Neuro.Collection#removes
-   * @argument {Neuro.Collection} collection -
+   * @event Rekord.Collection#removes
+   * @argument {Rekord.Collection} collection -
    *    The collection that triggered the event.
    * @argument {Any[]} removed -
    *    The array of elements removed from the collection.
-   * @see Neuro.Collection#removeAll
-   * @see Neuro.Collection#removeWhere
+   * @see Rekord.Collection#removeAll
+   * @see Rekord.Collection#removeWhere
    */
   Removes:        'removes',
 
   /**
    * An event triggered when a collection has elements modified.
    *
-   * @event Neuro.Collection#updates
-   * @argument {Neuro.Collection} collection -
+   * @event Rekord.Collection#updates
+   * @argument {Rekord.Collection} collection -
    *    The collection that triggered the event.
    * @argument {Array} updated -
    *    The array of elements modified.
-   * @see Neuro.ModelCollection#update
-   * @see Neuro.ModelCollection#updateWhere
+   * @see Rekord.ModelCollection#update
+   * @see Rekord.ModelCollection#updateWhere
    */
   Updates:        'updates',
 
@@ -131,32 +131,32 @@ Collection.Events =
    * An event triggered when a collection's elements are entirely replaced by
    * a new set of elements.
    *
-   * @event Neuro.Collection#reset
-   * @argument {Neuro.Collection} collection -
+   * @event Rekord.Collection#reset
+   * @argument {Rekord.Collection} collection -
    *    The collection that triggered the event.
    * @argument {Array} updated -
    *    The array of elements modified.
-   * @see Neuro.FilteredCollection#sync
-   * @see Neuro.ModelCollection#reset
-   * @see Neuro.Query#sync
+   * @see Rekord.FilteredCollection#sync
+   * @see Rekord.ModelCollection#reset
+   * @see Rekord.Query#sync
    */
   Reset:          'reset',
 
   /**
    * An event triggered when a collection is cleared of all elements.
    *
-   * @event Neuro.Collection#cleared
-   * @argument {Neuro.Collection} collection -
+   * @event Rekord.Collection#cleared
+   * @argument {Rekord.Collection} collection -
    *    The collection that triggered the event.
-   * @see Neuro.Collection#clear
+   * @see Rekord.Collection#clear
    */
   Cleared:        'cleared',
 
   /**
    * All events triggered by a collection when the contents of the collection changes.
    *
-   * @event Neuro.Collection#changes
-   * @argument {Neuro.Collection} collection -
+   * @event Rekord.Collection#changes
+   * @argument {Rekord.Collection} collection -
    *    The collection that triggered the event.
    */
   Changes:        'add adds sort remove removes updates reset cleared'
@@ -170,15 +170,15 @@ extendArray( Array, Collection,
    * Sets the comparator for this collection and performs a sort.
    *
    * @method
-   * @memberof Neuro.Collection#
+   * @memberof Rekord.Collection#
    * @param {ComparatorInput} comparator -
    *    The comparator input to convert to a comparison function.
    * @param {Boolean} [nullsFirst=false] -
    *    When a comparison is done involving a null/undefined value this can
    *    determine which is ordered before the other.
-   * @emits Neuro.Collection#sort
-   * @see Neuro.createComparator
-   * @return {Neuro.Collection}
+   * @emits Rekord.Collection#sort
+   * @see Rekord.createComparator
+   * @return {Rekord.Collection}
    */
   setComparator: function(comparator, nullsFirst)
   {
@@ -194,15 +194,15 @@ extendArray( Array, Collection,
    * comparator exists on this collection then it's set to the given comparator.
    *
    * @method
-   * @memberof Neuro.Collection#
+   * @memberof Rekord.Collection#
    * @param {ComparatorInput} comparator -
    *    The comparator input to convert to a comparison function.
    * @param {Boolean} [nullsFirst=false] -
    *    When a comparison is done involving a null/undefined value this can
    *    determine which is ordered before the other.
-   * @emits Neuro.Collection#sort
-   * @see Neuro.createComparator
-   * @return {Neuro.Collection}
+   * @emits Rekord.Collection#sort
+   * @see Rekord.createComparator
+   * @return {Rekord.Collection}
    */
   addComparator: function(comparator, nullsFirst)
   {
@@ -217,13 +217,13 @@ extendArray( Array, Collection,
    * comparator of the collection unless a comparator is given
    *
    * @method
-   * @memberof Neuro.Collection#
+   * @memberof Rekord.Collection#
    * @param {ComparatorInput} [comparator] -
    *    The comparator input to convert to a comparison function.
    * @param {Boolean} [nullsFirst=false] -
    *    When a comparison is done involving a null/undefined value this can
    *    determine which is ordered before the other.
-   * @see Neuro.createComparator
+   * @see Rekord.createComparator
    * @return {Boolean}
    */
   isSorted: function(comparator, nullsFirst)
@@ -240,16 +240,16 @@ extendArray( Array, Collection,
    * a sort if the collection has a comparator.
    *
    * @method
-   * @memberof Neuro.Collection#
+   * @memberof Rekord.Collection#
    * @param {ComparatorInput} [comparator] -
    *    The comparator input to convert to a comparison function.
    * @param {Boolean} [nullsFirst=false] -
    *    When a comparison is done involving a null/undefined value this can
    *    determine which is ordered before the other.
-   * @return {Neuro.Collection} -
+   * @return {Rekord.Collection} -
    *    The reference to this collection.
-   * @emits Neuro.Collection#sort
-   * @see Neuro.createComparator
+   * @emits Rekord.Collection#sort
+   * @see Rekord.createComparator
    */
   sort: function(comparator, nullsFirst)
   {
@@ -271,13 +271,13 @@ extendArray( Array, Collection,
    * page size is required, and a starting page index can be specified.
    *
    * @method
-   * @memberof Neuro.Collection#
+   * @memberof Rekord.Collection#
    * @param {Number} pageSize -
    *    The maximum number of elements allowed in the page at once.
    * @param {Number} [pageIndex=0]
    *    The starting page offset. This isn't an element offset, but the element
    *    offset can be calculated by multiplying the page index by the page size.
-   * @return {Neuro.Page} -
+   * @return {Rekord.Page} -
    *    The newly created Page.
    */
   page: function(pageSize, pageIndex)
@@ -291,19 +291,19 @@ extendArray( Array, Collection,
    * element is added or removed to this collection it may be added or removed
    * from the filtered collection if it fits the filter function. The filter
    * function is created by passing the arguments of this function to
-   * {@link Neuro.createWhere}.
+   * {@link Rekord.createWhere}.
    *
    * @method
-   * @memberof Neuro.Collection#
+   * @memberof Rekord.Collection#
    * @param {whereInput} [whereProperties] -
-   *    See {@link Neuro.createWhere}
+   *    See {@link Rekord.createWhere}
    * @param {Any} [whereValue] -
-   *    See {@link Neuro.createWhere}
+   *    See {@link Rekord.createWhere}
    * @param {equalityCallback} [whereEquals] -
-   *    See {@link Neuro.createWhere}
-   * @return {Neuro.Collection} -
+   *    See {@link Rekord.createWhere}
+   * @return {Rekord.Collection} -
    *    The newly created live filtered view of this collection.
-   * @see Neuro.createWhere
+   * @see Rekord.createWhere
    */
   filtered: function(whereProperties, whereValue, whereEquals)
   {
@@ -314,29 +314,29 @@ extendArray( Array, Collection,
 
   /**
    * Creates a copy of this collection with elements that match the supplied
-   * parameters. The parameters are passed to the {@link Neuro.createWhere}
+   * parameters. The parameters are passed to the {@link Rekord.createWhere}
    * to generate a function which tests each element of this collection for
    * inclusion in the newly created collection.
    *
    * ```javascript
    * var isEven = function() { return x % 2 == 0; };
-   * var c = Neuro.collect(1, 2, 3, 4, 5);
+   * var c = Rekord.collect(1, 2, 3, 4, 5);
    * var w = c.where(isEven); // [2, 4]
    * ```
    *
    * @method
-   * @memberof Neuro.Collection#
+   * @memberof Rekord.Collection#
    * @param {whereInput} [whereProperties] -
-   *    See {@link Neuro.createWhere}
+   *    See {@link Rekord.createWhere}
    * @param {Any} [whereValue] -
-   *    See {@link Neuro.createWhere}
+   *    See {@link Rekord.createWhere}
    * @param {equalityCallback} [whereEquals] -
-   *    See {@link Neuro.createWhere}
+   *    See {@link Rekord.createWhere}
    * @param {Array} [out=this.cloneEmpty()] -
    *    The array to place the elements that match.
-   * @return {Neuro.Collection} -
+   * @return {Rekord.Collection} -
    *    The copy of this collection ran through a filtering function.
-   * @see Neuro.createWhere
+   * @see Rekord.createWhere
    */
   where: function(whereProperties, whereValue, whereEquals, out)
   {
@@ -361,20 +361,20 @@ extendArray( Array, Collection,
    * not exist in the given collection.
    *
    * ```javascript
-   * var a = Neuro.collect(1, 2, 3, 4);
-   * var b = Neuro.collect(1, 3, 5);
+   * var a = Rekord.collect(1, 2, 3, 4);
+   * var b = Rekord.collect(1, 3, 5);
    * var c = a.subtract( b ); // [2, 4]
    * ```
    *
    * @method
-   * @memberof Neuro.Collection#
+   * @memberof Rekord.Collection#
    * @param {Array} collection -
    *    The array of elements that shouldn't exist in the resulting collection.
    * @param {Array} [out=this.cloneEmpty()] -
    *    The array to place the elements that exist in this collection but not in
    *    the given collection. If this is not given - a collection of this type
    *    will be created.
-   * @param {equalityCallback} [equals=Neuro.equalsStrict] -
+   * @param {equalityCallback} [equals=Rekord.equalsStrict] -
    *    The function which determines whether one of the elements that exist in
    *    this collection are equivalent to an element that exists in the given
    *    collection.
@@ -411,20 +411,20 @@ extendArray( Array, Collection,
    * and the given collection.
    *
    * ```javascript
-   * var a = Neuro.collect(1, 2, 3, 4);
-   * var b = Neuro.collect(1, 3, 5);
+   * var a = Rekord.collect(1, 2, 3, 4);
+   * var b = Rekord.collect(1, 3, 5);
    * var c = a.intersect( b ); // [1, 3]
    * ```
    *
    * @method
-   * @memberof Neuro.Collection#
+   * @memberof Rekord.Collection#
    * @param {Array} collection -
    *    The collection of elements to intersect with this collection.
    * @param {Array} [out=this.cloneEmpty()] -
    *    The array to place the elements that exist in both this collection and
    *    the given collection. If this is not given - a collection of this type
    *    will be created.
-   * @param {equalityCallback} [equals=Neuro.equalsStrict] -
+   * @param {equalityCallback} [equals=Rekord.equalsStrict] -
    *    The function which determines whether one of the elements that exist in
    *    this collection are equivalent to an element that exists in the given
    *    collection.
@@ -460,20 +460,20 @@ extendArray( Array, Collection,
    * not in this collection.
    *
    * ```javascript
-   * var a = Neuro.collect(1, 2, 3, 4);
-   * var b = Neuro.collect(1, 3, 5);
+   * var a = Rekord.collect(1, 2, 3, 4);
+   * var b = Rekord.collect(1, 3, 5);
    * var c = a.complement( b ); // [5]
    * ```
    *
    * @method
-   * @memberof Neuro.Collection#
+   * @memberof Rekord.Collection#
    * @param {Array} collection -
    *    The array of elements that could exist in the resulting collection.
    * @param {Array} [out=this.cloneEmpty()] -
    *    The array to place the elements that exist in given collection but not
    *    in this collection. If this is not given - a collection of this type
    *    will be created.
-   * @param {equalityCallback} [equals=Neuro.equalsStrict] -
+   * @param {equalityCallback} [equals=Rekord.equalsStrict] -
    *    The function which determines whether one of the elements that exist in
    *    this collection are equivalent to an element that exists in the given
    *    collection.
@@ -509,15 +509,15 @@ extendArray( Array, Collection,
    * Clears all elements from this collection.
    *
    * ```javascript
-   * var a = Neuro.collect(1, 2, 3, 4);
+   * var a = Rekord.collect(1, 2, 3, 4);
    * a.clear(); // []
    * ```
    *
    * @method
-   * @memberof Neuro.Collection#
-   * @return {Neuro.Collection} -
+   * @memberof Rekord.Collection#
+   * @return {Rekord.Collection} -
    *    The reference to this collection.
-   * @emits Neuro.Collection#sort
+   * @emits Rekord.Collection#sort
    */
   clear: function()
   {
@@ -534,21 +534,21 @@ extendArray( Array, Collection,
    * a true value.
    *
    * ```javascript
-   * var a = Neuro.collect(1, 2, 3, 4);
+   * var a = Rekord.collect(1, 2, 3, 4);
    * a.add( 5 ); // [1, 2, 3, 4, 5]
    * ```
    *
    * @method
-   * @memberof Neuro.Collection#
+   * @memberof Rekord.Collection#
    * @param {Any} value -
    *    The value to add to this collection.
    * @param {Boolean} [delaySort=false] -
    *    Whether automatic sorting should be delayed until the user manually
-   *    calls {@link Neuro.Collection#sort sort}.
-   * @return {Neuro.Collection} -
+   *    calls {@link Rekord.Collection#sort sort}.
+   * @return {Rekord.Collection} -
    *    The reference to this collection.
-   * @emits Neuro.Collection#add
-   * @emits Neuro.Collection#sort
+   * @emits Rekord.Collection#add
+   * @emits Rekord.Collection#sort
    */
   add: function(value, delaySort)
   {
@@ -569,19 +569,19 @@ extendArray( Array, Collection,
    * collection if a comparator is set on this collection.
    *
    * ```javascript
-   * var a = Neuro.collect(1, 2, 3, 4);
+   * var a = Rekord.collect(1, 2, 3, 4);
    * a.push( 5, 6, 7 ); // 7
    * a // [1, 2, 3, 4, 5, 6, 7]
    * ```
    *
    * @method
-   * @memberof Neuro.Collection#
+   * @memberof Rekord.Collection#
    * @param {...Any} value -
    *    The values to add to this collection.
    * @return {Number} -
    *    The new length of this collection.
-   * @emits Neuro.Collection#add
-   * @emits Neuro.Collection#sort
+   * @emits Rekord.Collection#add
+   * @emits Rekord.Collection#sort
    */
   push: function()
   {
@@ -601,19 +601,19 @@ extendArray( Array, Collection,
    * collection if a comparator is set on this collection.
    *
    * ```javascript
-   * var a = Neuro.collect(1, 2, 3, 4);
+   * var a = Rekord.collect(1, 2, 3, 4);
    * a.unshift( 5, 6, 7 ); // 7
    * a // [5, 6, 7, 1, 2, 3, 4]
    * ```
    *
    * @method
-   * @memberof Neuro.Collection#
+   * @memberof Rekord.Collection#
    * @param {...Any} value -
    *    The values to add to this collection.
    * @return {Number} -
    *    The new length of this collection.
-   * @emits Neuro.Collection#adds
-   * @emits Neuro.Collection#sort
+   * @emits Rekord.Collection#adds
+   * @emits Rekord.Collection#sort
    */
   unshift: function()
   {
@@ -634,21 +634,21 @@ extendArray( Array, Collection,
    * not specified or a true value.
    *
    * ```javascript
-   * var a = Neuro.collect(1, 2, 3, 4);
+   * var a = Rekord.collect(1, 2, 3, 4);
    * a.addAll( [5, 6] ); // [1, 2, 3, 4, 5, 6]
    * ```
    *
    * @method
-   * @memberof Neuro.Collection#
+   * @memberof Rekord.Collection#
    * @param {Any[]} values -
    *    The values to add to this collection.
    * @param {Boolean} [delaySort=false] -
    *    Whether automatic sorting should be delayed until the user manually
-   *    calls {@link Neuro.Collection#sort sort}.
-   * @return {Neuro.Collection} -
+   *    calls {@link Rekord.Collection#sort sort}.
+   * @return {Rekord.Collection} -
    *    The reference to this collection.
-   * @emits Neuro.Collection#adds
-   * @emits Neuro.Collection#sort
+   * @emits Rekord.Collection#adds
+   * @emits Rekord.Collection#sort
    */
   addAll: function(values, delaySort)
   {
@@ -673,24 +673,24 @@ extendArray( Array, Collection,
    * specified or a true value.
    *
    * ```javascript
-   * var c = Neuro.collect(1, 2, 3, 4);
+   * var c = Rekord.collect(1, 2, 3, 4);
    * c.insertAt( 0, 0 ); // [0, 1, 2, 3, 4]
    * c.insertAt( 2, 1.5 ); // [0, 1, 1.5, 2, 3, 4]
    * ```
    *
    * @method
-   * @memberof Neuro.Collection#
+   * @memberof Rekord.Collection#
    * @param {Number} i -
    *    The index to insert the element at.
    * @param {Any} value -
    *    The value to insert into the collection.
    * @param {Boolean} [delaySort=false] -
    *    Whether automatic sorting should be delayed until the user manually
-   *    calls {@link Neuro.Collection#sort sort}.
-   * @return {Neuro.Collection} -
+   *    calls {@link Rekord.Collection#sort sort}.
+   * @return {Rekord.Collection} -
    *    The reference to this collection.
-   * @emits Neuro.Collection#add
-   * @emits Neuro.Collection#sort
+   * @emits Rekord.Collection#add
+   * @emits Rekord.Collection#sort
    */
   insertAt: function(i, value, delaySort)
   {
@@ -711,19 +711,19 @@ extendArray( Array, Collection,
    * no specified or a true value.
    *
    * ```javascript
-   * var c = Neuro.collect(1, 2, 3, 4);
+   * var c = Rekord.collect(1, 2, 3, 4);
    * c.pop(); // 4
    * ```
    *
    * @method
-   * @memberof Neuro.Collection#
+   * @memberof Rekord.Collection#
    * @param {Boolean} [delaySort=false] -
    *    Whether automatic sorting should be delayed until the user manually
-   *    calls {@link Neuro.Collection#sort sort}.
+   *    calls {@link Rekord.Collection#sort sort}.
    * @return {Any} -
    *    The element removed from the end of the collection.
-   * @emits Neuro.Collection#remove
-   * @emits Neuro.Collection#sort
+   * @emits Rekord.Collection#remove
+   * @emits Rekord.Collection#sort
    */
   pop: function(delaySort)
   {
@@ -746,19 +746,19 @@ extendArray( Array, Collection,
    * no specified or a true value.
    *
    * ```javascript
-   * var c = Neuro.collect(1, 2, 3, 4);
+   * var c = Rekord.collect(1, 2, 3, 4);
    * c.shift(); // 1
    * ```
    *
    * @method
-   * @memberof Neuro.Collection#
+   * @memberof Rekord.Collection#
    * @param {Boolean} [delaySort=false] -
    *    Whether automatic sorting should be delayed until the user manually
-   *    calls {@link Neuro.Collection#sort sort}.
+   *    calls {@link Rekord.Collection#sort sort}.
    * @return {Any} -
    *    The element removed from the beginning of the collection.
-   * @emits Neuro.Collection#remove
-   * @emits Neuro.Collection#sort
+   * @emits Rekord.Collection#remove
+   * @emits Rekord.Collection#sort
    */
   shift: function(delaySort)
   {
@@ -780,23 +780,23 @@ extendArray( Array, Collection,
    * not specified or a true value.
    *
    * ```javascript
-   * var c = Neuro.collect(1, 2, 3, 4);
+   * var c = Rekord.collect(1, 2, 3, 4);
    * c.removeAt( 1 ); // 2
    * c.removeAt( 5 ); // undefined
    * c // [1, 3, 4]
    * ```
    *
    * @method
-   * @memberof Neuro.Collection#
+   * @memberof Rekord.Collection#
    * @param {Number} i -
    *    The index of the element to remove.
    * @param {Boolean} [delaySort=false] -
    *    Whether automatic sorting should be delayed until the user manually
-   *    calls {@link Neuro.Collection#sort sort}.
+   *    calls {@link Rekord.Collection#sort sort}.
    * @return {Any} -
    *    The element removed, or undefined if the index was invalid.
-   * @emits Neuro.Collection#remove
-   * @emits Neuro.Collection#sort
+   * @emits Rekord.Collection#remove
+   * @emits Rekord.Collection#sort
    */
   removeAt: function(i, delaySort)
   {
@@ -824,26 +824,26 @@ extendArray( Array, Collection,
    * specified or a true value.
    *
    * ```javascript
-   * var c = Neuro.collect(1, 2, 3, 4);
+   * var c = Rekord.collect(1, 2, 3, 4);
    * c.remove( 1 ); // 1
    * c.remove( 5 ); // undefined
    * c // [2, 3, 4]
    * ```
    *
    * @method
-   * @memberof Neuro.Collection#
+   * @memberof Rekord.Collection#
    * @param {Any} value -
    *    The value to remove from this collection if it exists.
    * @param {Boolean} [delaySort=false] -
    *    Whether automatic sorting should be delayed until the user manually
-   *    calls {@link Neuro.Collection#sort sort}.
-   * @param {equalityCallback} [equals=Neuro.equalsStrict] -
+   *    calls {@link Rekord.Collection#sort sort}.
+   * @param {equalityCallback} [equals=Rekord.equalsStrict] -
    *    The function which determines whether one of the elements that exist in
    *    this collection are equivalent to the given value.
    * @return {Any} -
    *    The element removed from this collection.
-   * @emits Neuro.Collection#remove
-   * @emits Neuro.Collection#sort
+   * @emits Rekord.Collection#remove
+   * @emits Rekord.Collection#sort
    */
   remove: function(value, delaySort, equals)
   {
@@ -864,25 +864,25 @@ extendArray( Array, Collection,
    * a true value.
    *
    * ```javascript
-   * var c = Neuro.collect(1, 2, 3, 4);
+   * var c = Rekord.collect(1, 2, 3, 4);
    * c.removeAll( [1, 5] ); // [1]
    * c // [2, 3, 4]
    * ```
    *
    * @method
-   * @memberof Neuro.Collection#
+   * @memberof Rekord.Collection#
    * @param {Any[]} values -
    *    The values to remove from this collection if they exist.
    * @param {Boolean} [delaySort=false] -
    *    Whether automatic sorting should be delayed until the user manually
-   *    calls {@link Neuro.Collection#sort sort}.
-   * @param {equalityCallback} [equals=Neuro.equalsStrict] -
+   *    calls {@link Rekord.Collection#sort sort}.
+   * @param {equalityCallback} [equals=Rekord.equalsStrict] -
    *    The function which determines whether one of the elements that exist in
    *    this collection are equivalent to any of the given values.
    * @return {Any[]} -
    *    The elements removed from this collection.
-   * @emits Neuro.Collection#removes
-   * @emits Neuro.Collection#sort
+   * @emits Rekord.Collection#removes
+   * @emits Rekord.Collection#sort
    */
   removeAll: function(values, delaySort, equals)
   {
@@ -915,34 +915,34 @@ extendArray( Array, Collection,
 
   /**
    * Removes elements from this collection that meet the specified criteria. The
-   * given criteria are passed to {@link Neuro.createWhere} to create a filter
+   * given criteria are passed to {@link Rekord.createWhere} to create a filter
    * function. All elements removed are returned
    *
    * ```javascript
    * var isEven = function(x) { return x % 2 === 0; };
-   * var c = Neuro.collect(1, 2, 3, 4);
+   * var c = Rekord.collect(1, 2, 3, 4);
    * c.removeWhere( isEven ); // [2, 4];
    * c // [1, 3]
    * ```
    *
    * @method
-   * @memberof Neuro.Collection#
+   * @memberof Rekord.Collection#
    * @param {whereInput} [whereProperties] -
-   *    See {@link Neuro.createWhere}
+   *    See {@link Rekord.createWhere}
    * @param {Any} [whereValue] -
-   *    See {@link Neuro.createWhere}
+   *    See {@link Rekord.createWhere}
    * @param {equalityCallback} [whereEquals] -
-   *    See {@link Neuro.createWhere}
+   *    See {@link Rekord.createWhere}
    * @param {Array} [out=this.cloneEmpty()] -
    *    The array to place the elements that match.
    * @param {Boolean} [delaySort=false] -
    *    Whether automatic sorting should be delayed until the user manually
-   *    calls {@link Neuro.Collection#sort sort}.
-   * @return {Neuro.Collection} -
+   *    calls {@link Rekord.Collection#sort sort}.
+   * @return {Rekord.Collection} -
    *    The reference to this collection.
-   * @emits Neuro.Collection#removes
-   * @emits Neuro.Collection#sort
-   * @see Neuro.createWhere
+   * @emits Rekord.Collection#removes
+   * @emits Rekord.Collection#sort
+   * @see Rekord.createWhere
    */
   removeWhere: function(whereProperties, whereValue, whereEquals, out, delaySort)
   {
@@ -975,7 +975,7 @@ extendArray( Array, Collection,
    * if a comparator is set on this collection.
    *
    * @method
-   * @memberof Neuro.Collection#
+   * @memberof Rekord.Collection#
    * @param {Number} start -
    *    Index at which to start changing the array (with origin 0). If greater
    *    than the length of the array, actual starting index will be set to the
@@ -992,9 +992,9 @@ extendArray( Array, Collection,
    *    don't specify any elements, splice() will only remove elements from the array.
    * @return {Any[]} -
    *    The array of deleted elements.
-   * @emits Neuro.Collection#removes
-   * @emits Neuro.Collection#adds
-   * @emits Neuro.Collection#sort
+   * @emits Rekord.Collection#removes
+   * @emits Rekord.Collection#adds
+   * @emits Rekord.Collection#sort
    */
   splice: function(start, deleteCount)
   {
@@ -1020,15 +1020,15 @@ extendArray( Array, Collection,
    * Reverses the order of elements in this collection.
    *
    * ```javascript
-   * var c = Neuro.collect(1, 2, 3, 4);
+   * var c = Rekord.collect(1, 2, 3, 4);
    * c.reverse(); // [4, 3, 2, 1]
    * ```
    *
    * @method
-   * @memberof Neuro.Collection#
-   * @return {Neuro.Collection} -
+   * @memberof Rekord.Collection#
+   * @return {Rekord.Collection} -
    *    The reference to this collection.
-   * @emits Neuro.Collection#updates
+   * @emits Rekord.Collection#updates
    */
   reverse: function()
   {
@@ -1060,23 +1060,23 @@ extendArray( Array, Collection,
    * if the element doesn't exist in this collection.
    *
    * ```javascript
-   * var c = Neuro.collect(1, 2, 3, 4);
+   * var c = Rekord.collect(1, 2, 3, 4);
    * c.indexOf( 1 ); // 0
    * c.indexOf( 2 ); // 1
    * c.indexOf( 5 ); // -1
    * ```
    *
    * @method
-   * @memberof Neuro.Collection#
+   * @memberof Rekord.Collection#
    * @param {Any} value -
    *    The value to search for.
-   * @param {equalityCallback} [equals=Neuro.equalsStrict] -
+   * @param {equalityCallback} [equals=Rekord.equalsStrict] -
    *    The function which determines whether one of the elements that exist in
    *    this collection are equivalent to the given value.
    * @return {Number} -
    *    The index of the element in this collection or -1 if it was not found.
-   * @see Neuro.equals
-   * @see Neuro.equalsStrict
+   * @see Rekord.equals
+   * @see Rekord.equalsStrict
    */
   indexOf: function(value, equals)
   {
@@ -1097,13 +1097,13 @@ extendArray( Array, Collection,
    * Returns the element with the minimum value given a comparator.
    *
    * ```javascript
-   * var c = Neuro.collect({age: 4}, {age: 5}, {age: 6}, {age: 3});
+   * var c = Rekord.collect({age: 4}, {age: 5}, {age: 6}, {age: 3});
    * c.minModel('age'); // {age: 3}
    * c.minModel('-age'); // {age: 6}
    * ```
    *
    * @method
-   * @memberof Neuro.Collection#
+   * @memberof Rekord.Collection#
    * @param {comparatorInput} comparator -
    *    The comparator which calculates the minimum model.
    * @param {Any} [startingValue]
@@ -1112,7 +1112,7 @@ extendArray( Array, Collection,
    *    finds a more minimal value. If it doesn't - this is the value returned.
    * @return {Any} -
    *    The minimum element in the collection given the comparator function.
-   * @see Neuro.createComparator
+   * @see Rekord.createComparator
    */
   minModel: function(comparator, startingValue)
   {
@@ -1134,13 +1134,13 @@ extendArray( Array, Collection,
    * Returns the element with the maximum value given a comparator.
    *
    * ```javascript
-   * var c = Neuro.collect({age: 4}, {age: 5}, {age: 6}, {age: 3});
+   * var c = Rekord.collect({age: 4}, {age: 5}, {age: 6}, {age: 3});
    * c.maxModel('age'); // {age: 6}
    * c.maxModel('-age'); // {age: 3}
    * ```
    *
    * @method
-   * @memberof Neuro.Collection#
+   * @memberof Rekord.Collection#
    * @param {comparatorInput} comparator -
    *    The comparator which calculates the maximum model.
    * @param {Any} [startingValue] -
@@ -1149,7 +1149,7 @@ extendArray( Array, Collection,
    *    finds a more maximal value. If it doesn't - this is the value returned.
    * @return {Any} -
    *    The maximum element in the collection given the comparator function.
-   * @see Neuro.createComparator
+   * @see Rekord.createComparator
    */
   maxModel: function(comparator, startingValue)
   {
@@ -1172,12 +1172,12 @@ extendArray( Array, Collection,
    * elements this collection.
    *
    * ```javascript
-   * var c = Neuro.collect({age: 6}, {age: 5}, {notage: 5});
+   * var c = Rekord.collect({age: 6}, {age: 5}, {notage: 5});
    * c.min('age');  // 5
    * ```
    *
    * @method
-   * @memberof Neuro.Collection#
+   * @memberof Rekord.Collection#
    * @param {propertyResolverInput} [properties] -
    *    The expression which takes an element in this container and resolves a
    *    value that can be compared to the current minimum.
@@ -1189,8 +1189,8 @@ extendArray( Array, Collection,
    *    finds a more minimal value. If it doesn't - this is the value returned.
    * @return {Any} -
    *    The minimum value found.
-   * @see Neuro.createPropertyResolver
-   * @see Neuro.compare
+   * @see Rekord.createPropertyResolver
+   * @see Rekord.compare
    */
   min: function(properties, delim, startingValue)
   {
@@ -1215,12 +1215,12 @@ extendArray( Array, Collection,
    * elements this collection.
    *
    * ```javascript
-   * var c = Neuro.collect({age: 6}, {age: 5}, {notage: 5});
+   * var c = Rekord.collect({age: 6}, {age: 5}, {notage: 5});
    * c.max('age');  // 6
    * ```
    *
    * @method
-   * @memberof Neuro.Collection#
+   * @memberof Rekord.Collection#
    * @param {propertyResolverInput} [properties] -
    *    The expression which takes an element in this container and resolves a
    *    value that can be compared to the current maximum.
@@ -1232,8 +1232,8 @@ extendArray( Array, Collection,
    *    finds a more maximal value. If it doesn't - this is the value returned.
    * @return {Any} -
    *    The maximum value found.
-   * @see Neuro.createPropertyResolver
-   * @see Neuro.compare
+   * @see Rekord.createPropertyResolver
+   * @see Rekord.compare
    */
   max: function(properties, delim, startingValue)
   {
@@ -1257,13 +1257,13 @@ extendArray( Array, Collection,
    * Returns the first element where the given expression is true.
    *
    * ```javascript
-   * var c = Neuro.collect([{x: 5}, {y: 6}, {y: 6, age: 8}, {z: 7}]);
+   * var c = Rekord.collect([{x: 5}, {y: 6}, {y: 6, age: 8}, {z: 7}]);
    * c.firstWhere('y', 6); // {x: 6}
    * c.firstWhere(); // {x: 5}
    * ```
    *
    * @method
-   * @memberof Neuro.Collection#
+   * @memberof Rekord.Collection#
    * @param {whereInput} [whereProperties] -
    *    The expression used to create a function to test the elements in this
    *    collection.
@@ -1271,11 +1271,11 @@ extendArray( Array, Collection,
    *    When the first argument is a string this argument will be treated as a
    *    value to compare to the value of the named property on the object passed
    *    through the filter function.
-   * @param {equalityCallback} [whereEquals=Neuro.equalsStrict] -
+   * @param {equalityCallback} [whereEquals=Rekord.equalsStrict] -
    *    An alternative function can be used to compare to values.
    * @return {Any} -
    *    The first element in this collection that matches the given expression.
-   * @see Neuro.createWhere
+   * @see Rekord.createWhere
    */
   firstWhere: function(whereProperties, whereValue, whereEquals)
   {
@@ -1300,20 +1300,20 @@ extendArray( Array, Collection,
    * then undefined will be returned.
    *
    * ```javascript
-   * var c = Neuro.collect([{x: 5}, {y: 6}, {y: 4}, {z: 7}]);
+   * var c = Rekord.collect([{x: 5}, {y: 6}, {y: 4}, {z: 7}]);
    * c.first('y'); // 6
    * c.first(); // {x: 5}
    * ```
    *
    * @method
-   * @memberof Neuro.Collection#
+   * @memberof Rekord.Collection#
    * @param {propertyResolverInput} [properties] -
    *    The expression which converts one value into another.
    * @param {String} [delim=','] -
    *    A delimiter to use to join multiple properties into a string.
    * @return {Any} -
-   * @see Neuro.createPropertyResolver
-   * @see Neuro.isValue
+   * @see Rekord.createPropertyResolver
+   * @see Rekord.isValue
    */
   first: function(properties, delim)
   {
@@ -1334,13 +1334,13 @@ extendArray( Array, Collection,
    * Returns the last element where the given expression is true.
    *
    * ```javascript
-   * var c = Neuro.collect([{x: 5}, {y: 6}, {y: 6, age: 8}, {z: 7}]);
+   * var c = Rekord.collect([{x: 5}, {y: 6}, {y: 6, age: 8}, {z: 7}]);
    * c.lastWhere('y', 6); // {x: 6, age: 8}
    * c.lastWhere(); // {z: 7}
    * ```
    *
    * @method
-   * @memberof Neuro.Collection#
+   * @memberof Rekord.Collection#
    * @param {whereInput} [properties] -
    *    The expression used to create a function to test the elements in this
    *    collection.
@@ -1348,11 +1348,11 @@ extendArray( Array, Collection,
    *    When the first argument is a string this argument will be treated as a
    *    value to compare to the value of the named property on the object passed
    *    through the filter function.
-   * @param {equalityCallback} [equals=Neuro.equalsStrict] -
+   * @param {equalityCallback} [equals=Rekord.equalsStrict] -
    *    An alternative function can be used to compare to values.
    * @return {Any} -
    *    The last element in this collection that matches the given expression.
-   * @see Neuro.createWhere
+   * @see Rekord.createWhere
    */
   lastWhere: function(properties, value, equals)
   {
@@ -1377,20 +1377,20 @@ extendArray( Array, Collection,
     * then undefined will be returned.
     *
     * ```javascript
-    * var c = Neuro.collect([{x: 5}, {y: 6}, {y: 4}, {z: 7}]);
+    * var c = Rekord.collect([{x: 5}, {y: 6}, {y: 4}, {z: 7}]);
     * c.last('y'); // 4
     * c.last(); // {z: 7}
     * ```
     *
     * @method
-    * @memberof Neuro.Collection#
+    * @memberof Rekord.Collection#
     * @param {propertyResolverInput} [properties] -
     *    The expression which converts one value into another.
     * @param {String} [delim=','] -
     *    A delimiter to use to join multiple properties into a string.
     * @return {Any} -
-    * @see Neuro.createPropertyResolver
-    * @see Neuro.isValue
+    * @see Rekord.createPropertyResolver
+    * @see Rekord.isValue
     */
   last: function(properties, delim)
   {
@@ -1415,7 +1415,7 @@ extendArray( Array, Collection,
    * and the returned value is returned by this function.
    *
    * @method
-   * @memberof Neuro.Collection#
+   * @memberof Rekord.Collection#
    * @param {Function} resolver -
    *    The function which takes an element in this collection and returns a
    *    value based on that element.
@@ -1450,19 +1450,19 @@ extendArray( Array, Collection,
    * the result.
    *
    * ```javascript
-   * var c = Neuro.collect([2, 3, 4]);
+   * var c = Rekord.collect([2, 3, 4]);
    * c.sum(); // 9
-   * var d = Neuro.collect([{age: 5}, {age: 4}, {age: 2}]);
+   * var d = Rekord.collect([{age: 5}, {age: 4}, {age: 2}]);
    * d.sum('age'); // 11
    * ```
    *
    * @method
-   * @memberof Neuro.Collection#
+   * @memberof Rekord.Collection#
    * @param {propertyResolverInput} [numbers]
    *    The expression which converts an element in this collection to a number.
    * @return {Number} -
    *    The sum of all valid numbers found in this collection.
-   * @see Neuro.createNumberResolver
+   * @see Rekord.createNumberResolver
    */
   sum: function(numbers)
   {
@@ -1487,19 +1487,19 @@ extendArray( Array, Collection,
    * returns the result.
    *
    * ```javascript
-   * var c = Neuro.collect([2, 3, 4]);
+   * var c = Rekord.collect([2, 3, 4]);
    * c.avg(); // 3
-   * var d = Neuro.collect([{age: 5}, {age: 4}, {age: 2}]);
+   * var d = Rekord.collect([{age: 5}, {age: 4}, {age: 2}]);
    * d.avg('age'); // 3.66666
    * ```
    *
    * @method
-   * @memberof Neuro.Collection#
+   * @memberof Rekord.Collection#
    * @param {propertyResolverInput} [numbers]
    *    The expression which converts an element in this collection to a number.
    * @return {Number} -
    *    The average of all valid numbers found in this collection.
-   * @see Neuro.createNumberResolver
+   * @see Rekord.createNumberResolver
    */
   avg: function(numbers)
   {
@@ -1523,17 +1523,17 @@ extendArray( Array, Collection,
 
   /**
    * Counts the number of elements in this collection that past the test
-   * function generated by {@link Neuro.createWhere}.
+   * function generated by {@link Rekord.createWhere}.
    *
    * ```javascript
-   * var c = Neuro.collect([{name: 't1', done: 1}, {name: 't2', done: 0}, {name: 't3', done: 1}, {name: 't4'}]);
+   * var c = Rekord.collect([{name: 't1', done: 1}, {name: 't2', done: 0}, {name: 't3', done: 1}, {name: 't4'}]);
    * c.countWhere('done'); // 3
    * c.countWhere('done', 0); // 1
    * c.countWhere('done', 1); // 2
    * ```
    *
    * @method
-   * @memberof Neuro.Collection#
+   * @memberof Rekord.Collection#
    * @param {whereInput} [properties] -
    *    The expression used to create a function to test the elements in this
    *    collection.
@@ -1541,11 +1541,11 @@ extendArray( Array, Collection,
    *    When the first argument is a string this argument will be treated as a
    *    value to compare to the value of the named property on the object passed
    *    through the filter function.
-   * @param {equalityCallback} [equals=Neuro.equalsStrict] -
+   * @param {equalityCallback} [equals=Rekord.equalsStrict] -
    *    An alternative function can be used to compare to values.
    * @return {Number} -
    *    The number of elements in the collection that passed the test.
-   * @see Neuro.createWhere
+   * @see Rekord.createWhere
    */
   countWhere: function(properties, value, equals)
   {
@@ -1570,20 +1570,20 @@ extendArray( Array, Collection,
    * given property expression.
    *
    * ```javascript
-   * var c = Neuro.collect([{age: 2}, {age: 3}, {taco: 4}]);
+   * var c = Rekord.collect([{age: 2}, {age: 3}, {taco: 4}]);
    * c.count('age'); // 2
    * c.count('taco'); // 1
    * c.count(); // 3
    * ```
    *
    * @method
-   * @memberof Neuro.Collection#
+   * @memberof Rekord.Collection#
    * @param {propertyResolverInput} [properties] -
    *    The expression which converts one value into another.
    * @return {Number} -
    *    The number of elements that had values for the property expression.
-   * @see Neuro.createPropertyResolver
-   * @see Neuro.isValue
+   * @see Rekord.createPropertyResolver
+   * @see Rekord.isValue
    */
   count: function(properties)
   {
@@ -1615,7 +1615,7 @@ extendArray( Array, Collection,
    * property of the object is determined by the key expression.
    *
    * ```javascript
-   * var c = Neuro.collect([{age: 2, nm: 'T'}, {age: 4, nm: 'R'}, {age: 5, nm: 'G'}]);
+   * var c = Rekord.collect([{age: 2, nm: 'T'}, {age: 4, nm: 'R'}, {age: 5, nm: 'G'}]);
    * c.pluck(); // c
    * c.pluck('age'); // [2, 4, 5]
    * c.pluck('age', 'nm'); // {T: e, R: 4, G: 5}
@@ -1624,7 +1624,7 @@ extendArray( Array, Collection,
    * ```
    *
    * @method
-   * @memberof Neuro.Collection#
+   * @memberof Rekord.Collection#
    * @param {propertyResolverInput} [values] -
    *    The expression which converts an element into a value to pluck.
    * @param {propertyResolverInput} [keys] -
@@ -1635,7 +1635,7 @@ extendArray( Array, Collection,
    *    A delimiter to use to join multiple key properties into a string.
    * @return {Array|Object} -
    *    The plucked values.
-   * @see Neuro.createPropertyResolver
+   * @see Rekord.createPropertyResolver
    */
   pluck: function(values, keys, valuesDelim, keysDelim)
   {
@@ -1678,13 +1678,13 @@ extendArray( Array, Collection,
    * it's index to the given function. An optional function context can be given.
    *
    * @method
-   * @memberof Neuro.Collection#
+   * @memberof Rekord.Collection#
    * @param {Function} callback -
    *    The function to invoke for each element of this collection passing the
    *    element and the index where it exists.
    * @param {Object} [context] -
    *    The context to the callback function.
-   * @return {Neuro.Collection} -
+   * @return {Rekord.Collection} -
    *    The reference to this collection.
    */
   each: function(callback, context)
@@ -1715,12 +1715,12 @@ extendArray( Array, Collection,
    * var reduceIt = function(curr, elem) {
    *  return curr + ( elem[0] * elem[1] );
    * };
-   * var c = Neuro.collect([[2, 1], [3, 2], [5, 6]]);
+   * var c = Rekord.collect([[2, 1], [3, 2], [5, 6]]);
    * c.reduce( reduceIt, 0 ); // 38
    * ```
    *
    * @method
-   * @memberof Neuro.Collection#
+   * @memberof Rekord.Collection#
    * @param {Function} reducer -
    *    A function which accepts the current reduced value and an element and
    *    returns the new reduced value.
@@ -1743,7 +1743,7 @@ extendArray( Array, Collection,
    * Returns a random element in this collection.
    *
    * @method
-   * @memberof Neuro.Collection#
+   * @memberof Rekord.Collection#
    * @return {Any} -
    *    The randomly chosen element from this collection.
    */
@@ -1759,12 +1759,12 @@ extendArray( Array, Collection,
    * A destination array can be used to avoid re-allocating arrays.
    *
    * ```javascript
-   * var c = Neuro.collect([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+   * var c = Rekord.collect([1, 2, 3, 4, 5, 6, 7, 8, 9]);
    * c.chunk(4); // [[1, 2, 3, 4], [5, 6, 7, 8], [9]]
    * ```
    *
    * @method
-   * @memberof Neuro.Collection#
+   * @memberof Rekord.Collection#
    * @param {Number} chunkSize -
    *    The maximum number of elements that can exist in a chunk.
    * @param {Array} [out] -
@@ -1808,7 +1808,7 @@ extendArray( Array, Collection,
    * given criteria.
    *
    * ```javascript
-   * var c = Neuro.collect([{age: 2}, {age: 6}]);
+   * var c = Rekord.collect([{age: 2}, {age: 6}]);
    * c.contains('age', 2); // true
    * c.contains('age', 3); // false
    * c.contains('age'); // true
@@ -1816,7 +1816,7 @@ extendArray( Array, Collection,
    * ```
    *
    * @method
-   * @memberof Neuro.Collection#
+   * @memberof Rekord.Collection#
    * @param {whereInput} [properties] -
    *    The expression used to create a function to test the elements in this
    *    collection.
@@ -1824,11 +1824,11 @@ extendArray( Array, Collection,
    *    When the first argument is a string this argument will be treated as a
    *    value to compare to the value of the named property on the object passed
    *    through the filter function.
-   * @param {equalityCallback} [equals=Neuro.equalsStrict] -
+   * @param {equalityCallback} [equals=Rekord.equalsStrict] -
    *    An alternative function can be used to compare to values.
    * @return {Boolean} -
    *    True if any of the elements passed the test function, otherwise false.
-   * @see Neuro.createWhere
+   * @see Rekord.createWhere
    */
   contains: function(properties, value, equals)
   {
@@ -1852,7 +1852,7 @@ extendArray( Array, Collection,
    * use as the value to group by.
    *
    * ```javascript
-   * var c = Neuro.collect([
+   * var c = Rekord.collect([
    *  { name: 'Tom', age: 6, group: 'X' },
    *  { name: 'Jon', age: 7, group: 'X' },
    *  { name: 'Rob', age: 8, group: 'X' },
@@ -1884,7 +1884,7 @@ extendArray( Array, Collection,
    * ```
    *
    * @method
-   * @memberof Neuro.Collection#
+   * @memberof Rekord.Collection#
    * @param {Object} grouping -
    *    An object specifying how elements in this collection are to be grouped
    *    and what properties from the elements should be aggregated in the
@@ -1897,7 +1897,7 @@ extendArray( Array, Collection,
    *      - `comparatorNullsFirst`: Whether nulls should be sorted to the top.
    *      - `track`: Whether all elements in the group should exist in a collection in the `$group` property of each grouping.
    *      - `count`: Whether the number of elements in the group should be placed in the `$count` property of each grouping.
-   * @return {Neuro.Collection} -
+   * @return {Rekord.Collection} -
    *    A collection of groupings.
    */
   group: function(grouping)
@@ -1987,7 +1987,7 @@ extendArray( Array, Collection,
    * Returns a copy of this collection as a plain Array.
    *
    * @method
-   * @memberof Neuro.Collection#
+   * @memberof Rekord.Collection#
    * @return {Array} -
    *    The copy of this collection as a plain array.
    */
@@ -2000,8 +2000,8 @@ extendArray( Array, Collection,
    * Returns a clone of this collection.
    *
    * @method
-   * @memberof Neuro.Collection#
-   * @return {Neuro.Collection} -
+   * @memberof Rekord.Collection#
+   * @return {Rekord.Collection} -
    *    The reference to a clone collection.
    */
   clone: function()
@@ -2013,8 +2013,8 @@ extendArray( Array, Collection,
    * Returns an empty clone of this collection.
    *
    * @method
-   * @memberof Neuro.Collection#
-   * @return {Neuro.Collection} -
+   * @memberof Rekord.Collection#
+   * @return {Rekord.Collection} -
    *    The reference to a clone collection.
    */
   cloneEmpty: function()
@@ -2030,13 +2030,13 @@ eventize( Collection.prototype );
  * Adds a listener for change events on this collection.
  *
  * @method change
- * @memberof Neuro.Collection#
+ * @memberof Rekord.Collection#
  * @param {Function} callback -
  *    A function to call every time a change occurs in this collection.
  * @param {Object} [context] -
  *    The desired context (this) for the given callback function.
  * @return {Function} -
  *    A function to call to stop listening for change events.
- * @see Neuro.Collection#event:changes
+ * @see Rekord.Collection#event:changes
  */
 addEventFunction( Collection.prototype, 'change', Collection.Events.Changes );
