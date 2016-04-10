@@ -223,7 +223,8 @@ Database.prototype =
 
       invoked = true;
     }
-    else
+
+    if ( !db.initialized || persistent )
     {
       function onReady()
       {

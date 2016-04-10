@@ -1,11 +1,52 @@
 
+/**
+ * Options you can pass to {@link Rekord.SearchPaged} or
+ * {@link Rekord.Model.searchPaged}.
+ *
+ * @typedef {Object} searchPageOptions
+ * @property {String} [$method='create'] -
+ *    The function that's invoked on the {@link Rekord.rest} service
+ * @property {Function} [$encode] -
+ *    A function which converts the search into an object to pass to the
+ *    specified methods.
+ * @property {Function} [$decode] -
+ *    A function which takes the data returned from the server and updates
+ *    this search with the results and paging information.
+ * @property {Function} [$decodeResults] -
+ *    A function which takes the data returned from the server and returns the
+ *    array of models which are to be placed in the
+ *    {@link Rekord.Search#$results} property.
+ * @property {Function} [$updatePageSize] -
+ *    A function which takes the data returned from the server and sets an
+ *    updated page size of the search.
+ * @property {Function} [$updatePageIndex] -
+ *    A function which takes the data returned from the server and sets an
+ *    updated page index of the search.
+ * @property {Function} [$updateTotal] -
+ *    A function which takes the data returned from the server and sets an
+ *    updated total of the search.
+ */
+
 function SearchPaged(database, options)
 {
   this.$init( database, options );
 }
 
+SearchPaged.Defaults =
+{
+  $method:      'create',
+  page_size:   10,
+  page_index:  0,
+  total:       0
+};
+
 extend( Search, SearchPaged,
 {
+
+  $getDefaults: function()
+  {
+    return SearchPaged.Defaults;
+  },
 
   $goto: function(index, dontRun)
   {

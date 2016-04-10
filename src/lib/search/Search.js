@@ -1,4 +1,19 @@
 
+/**
+ * Options you can pass to {@link Rekord.Search} or {@link Rekord.Model.search}.
+ *
+ * @typedef {Object} searchOptions
+ * @property {String} [$method='create'] -
+ *    The function that's invoked on the {@link Rekord.rest} service
+ * @property {Function} [$encode] -
+ *    A function which converts the search into an object to pass to the
+ *    specified methods.
+ * @property {Function} [$decode] -
+ *    A function which takes the data returned from the server and returns
+ *    The array of models which are to be placed in the
+ *    {@link Rekord.Search#$results} property.
+ */
+
 function Search(database, options)
 {
   this.$init( database, options );
@@ -26,6 +41,11 @@ Search.Defaults =
 Search.prototype =
 {
 
+  $getDefaults: function()
+  {
+    return Search.Defaults;
+  },
+
   $init: function(database, options)
   {
     applyOptions( this, options, Search.Defaults, true );
@@ -34,6 +54,11 @@ Search.prototype =
     this.$results = new ModelCollection( database );
     this.$status = Search.Status.Success;
     this.$request = new Request( this, this.$handleSuccess, this.$handleFailure );
+  },
+
+  $set: function(props)
+  {
+    return transfer( props, this );
   },
 
   $run: function()
@@ -58,6 +83,8 @@ Search.prototype =
       default:
         throw 'Invalid search method: ' + this.$method;
     }
+
+    return this;
   },
 
   $cancel: function()

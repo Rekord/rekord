@@ -2056,6 +2056,24 @@ Rekord.Save =
 
 Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 {
+
+  /**
+   * Returns the reference to the collection which contains all saved models.
+   *
+   * ```javascript
+   * var Task = Rekord({
+   *   fields: ['name', 'done']
+   * });
+   * var t0 = Task.create({name: 't0', done: true}); // saves
+   * var t1 = new Task({name: 't1'});
+   * Task.all(); // [t0]
+   * ```
+   *
+   * @method all
+   * @memberof Rekord.Model
+   * @return {Rekord.ModelCollection} -
+   *    The reference to the collection of models.
+   */
   model.all = function()
   {
     return db.models;
@@ -2064,6 +2082,34 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 
 Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 {
+
+  /**
+   * Returns an instance of a model or model collection with remote data (from
+   * the server). If the model(s) exist locally then the values passed in will
+   * overwrite the current values of the models. This is typically used to
+   * bootstrap data from the server in your webpage.
+   *
+   * ```javascript
+   * var User = Rekord({
+   *   fields: ['name', 'email']
+   * });
+   * var currentUser = User.boot({
+   *   id: 1234,
+   *   name: 'Administrator',
+   *   email: 'rekordjs@gmail.com'
+   * });
+   * var friends = User.boot([
+   *   { id: 'c1', name: 'Cat 1', email: 'cat1@gmail.com' },
+   *   { id: 'c2', name: 'Cat 2', email: 'cat2@gmail.com' }
+   * ]);
+   * ```
+   *
+   * @method boot
+   * @memberof Rekord.Model
+   * @param {modelInput[]|Object}
+   * @return {Rekord.ModelCollection|Rekord.Model} -
+   *    The collection or model bootstrapped.
+   */
   model.boot = function( input )
   {
     if ( isArray( input ) )
@@ -2081,10 +2127,33 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 
 Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 {
+
+  /**
+   * Creates a collection of models.
+   *
+   * ```javascript
+   * var Task = Rekord({
+   *   fields: ['name']
+   * });
+   * var t0 = Task.create({id: 34, name: 't0'});
+   * var t1 = new Task({name: 't1'});
+   * var t2 = {name: 't2'};
+   *
+   * var c = Task.collect( 34, t1, t2 ); // or Task.collect( [34, t1, t2] )
+   * c; // [t0, t1, t2]
+   * ```
+   *
+   * @method collect
+   * @memberof Rekord.Model
+   * @param {modelInput[]|...modelInput} models -
+   *    The array of models to to return as a collection.
+   * @return {Rekord.ModelCollection} -
+   *    The collection created.
+   */
   model.collect = function(a)
   {
     var models = arguments.length > 1 || !isArray(a) ?
-      Array.prototype.slice.call( arguments ) : a;
+      AP.slice.call( arguments ) : a;
 
     return new ModelCollection( db, models );
   };
@@ -2092,6 +2161,29 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 
 Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 {
+
+  /**
+   * Creates a model instance, saves it, and returns it.
+   *
+   * ```javascript
+   * var Task = Rekord({
+   *  fields: ['name'],
+   *  defaults: {
+   *    name: 'New Task'
+   *  }
+   * });
+   * var t0 = Task.create({id: 34, name: 't0'});
+   * var t1 = Task.create({name: 't1'}); // id generated with uuid
+   * var t2 = Task.create(); // name populated with default 'New Task'
+   * ```
+   *
+   * @method create
+   * @memberof Rekord.Model
+   * @param {Object} [props] -
+   *    The initial values for the new model - if any.
+   * @return {Rekord.Model} -
+   *    The saved model instance.
+   */
   model.create = function( props )
   {
     var instance = isObject( props ) ?
@@ -2393,6 +2485,34 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 
 Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 {
+
+  /**
+   * Gets the local model matching the given input (or creates one) and loads
+   * it from the remote source ({@link Rekord.rest}). If `callback` is specified
+   * then it is invoked with the instance once it's loaded.
+   *
+   * ```javascript
+   * var Task = Rekord({
+   *  fields: ['name']
+   * });
+   * var t0 = Task.fetch( 34, function(task) {
+   *   task; // {id: 34 name: 'Remotely Loaded'}
+   * });
+   * t0; // {id: 34} until remotely loaded
+   * ```
+   *
+   * @method fetch
+   * @memberof Rekord.Model
+   * @param {modelInput} input -
+   *    The model input used to determine the key and load the model.
+   * @param {Function} [callback] -
+   *    The function to invoke passing the reference of the model once it's
+   *    successfully remotely loaded.
+   * @param {Object} [context] -
+   *    The context (this) for the callback.
+   * @return {Rekord.Model} -
+   *    The model instance.
+   */
   model.fetch = function( input, callback, context )
   {
     var key = db.buildKeyFromInput( input );
@@ -2426,6 +2546,32 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 
 Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 {
+
+  /**
+   * Returns the collection of all local models and tries to reload them (and
+   * any additional models returned) from a remote source ({@link Rekord.rest}).
+   * If `callback` is specified then it is invoked with the collections all
+   * models once it's loaded.
+   *
+   * ```javascript
+   * var Task = Rekord({
+   *  fields: ['name']
+   * });
+   * var tasks0 = Task.fetchAll( function(tasks1) {
+   *   tasks0 // tasks1
+   * });
+   * ```
+   *
+   * @method fetchAll
+   * @memberof Rekord.Model
+   * @param {Function} [callback] -
+   *    The function to invoke passing the reference of the model collection
+   *    when it's successfully remotely loaded.
+   * @param {Object} [context] -
+   *    The context (this) for the callback.
+   * @return {Rekord.ModelCollection} -
+   *    The collection of all models of this type.
+   */
   model.fetchAll = function(callback, context)
   {
     db.refresh( callback, context );
@@ -2433,6 +2579,7 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
     return db.models;
   };
 });
+
 Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 {
   var files = options.files || Database.Defaults.files;
@@ -2772,6 +2919,39 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 });
 Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 {
+
+  /**
+   * Returns the model instance identified with the given input. This includes
+   * saved and unsaved models. If a `callback` is given the model will be passed
+   * to the function. The `callback` method is useful for waiting for Rekord
+   * to finish initializing (which includes loading models from local storage
+   * followed by remote storage if configured) and returning a model instance.
+   * If Rekord has finished initializing and the model doesn't exist locally
+   * then it is fetched from the remoute source using {@link Rekord.rest}.
+   *
+   * ```javascript
+   * var Task = Rekord({
+   *  fields: ['name']
+   * });
+   * var t0 = Task.get( 34 ); // only looks at models currently loaded
+   * var t1 = Task.get( 23, function(model) {
+   *   model; // local or remotely loaded if it didn't exist locally - could be null if it doesn't exist at all
+   * })
+   * ```
+   *
+   * @method get
+   * @memberof Rekord.Model
+   * @param {modelInput} input -
+   *    The model input used to determine the key and load the model.
+   * @param {Function} [callback] -
+   *    The function to invoke passing the reference of the model when it's
+   *    successfully found.
+   * @param {Object} [context] -
+   *    The context (this) for the callback.
+   * @return {Rekord.Model} -
+   *    The model instance if `callback` is not given - or undefined if the
+   *    input doesn't resolve to a model or `callback` is given.
+   */
   model.get = function( input, callback, context )
   {
     if ( isFunction( callback ) )
@@ -2780,19 +2960,47 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
     }
     else
     {
-      var key = db.buildKeyFromInput( input );
-
-      return db.get( key );
+      return db.get( input );
     }
   };
 });
+
 Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 {
+
+  /**
+   * Gets the model instance identified with the given input and passes it to the
+   * `callback` function. If Rekord is not finished initializing this function
+   * will wait until it is and check for the model. If it still doesn't exist
+   * locally it is loaded from a remote source using {@link Rekord.rest}. If the
+   * model doesn't exist at all a null value will be returned to the function.
+   *
+   * ```javascript
+   * var Task = Rekord({
+   *  fields: ['name']
+   * });
+   * var t1 = Task.grab( 23, function(model) {
+   *   model; // local or remotely loaded if it didn't exist locally - could be null if it doesn't exist at all
+   * })
+   * ```
+   *
+   * @method grab
+   * @memberof Rekord.Model
+   * @param {modelInput} input -
+   *    The model input used to determine the key and load the model.
+   * @param {Function} callback -
+   *    The function to invoke passing the reference of the model when it's
+   *    successfully found.
+   * @param {Object} [context] -
+   *    The context (this) for the callback.
+   * @return {Rekord.Model} -
+   *    The model instance of it exists locally at the moment, or undefined
+   *    if the model hasn't been loaded yet.
+   */
   model.grab = function( input, callback, context )
   {
     var callbackContext = context || this;
-    var key = db.buildKeyFromInput( input );
-    var instance = db.get( key );
+    var instance = db.get( input );
 
     if ( instance )
     {
@@ -2816,8 +3024,34 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
     return instance;
   };
 });
+
 Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 {
+
+  /**
+   * Gets all model instances currently loaded, locally loaded, or remotely
+   * loaded and passes it to the `callback` function.
+   *
+   * ```javascript
+   * var Task = Rekord({
+   *  fields: ['name']
+   * });
+   * var tasks = Task.grabAll( function(models) {
+   *   models; // local or remotely loaded if it didn't exist locally.
+   * })
+   * ```
+   *
+   * @method grabAll
+   * @memberof Rekord.Model
+   * @param {Function} callback -
+   *    The function to invoke passing the reference of the model collection
+   *    when it's loaded.
+   * @param {Object} [context] -
+   *    The context (this) for the callback.
+   * @return {Rekord.Model} -
+   *    The model collection of it exists locally at the moment, or undefined
+   *    if models haven't been loaded yet.
+   */
   model.grabAll = function( callback, context )
   {
     var callbackContext = context || this;
@@ -2848,6 +3082,7 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
     return models;
   };
 });
+
 Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 {
   var methods = collapse( options.methods, Database.Defaults.methods );
@@ -2875,6 +3110,37 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 
 Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 {
+
+  /**
+   * Invokes a function when Rekord has loaded. It's considered loaded when
+   * it's loaded locally, remotely, or neither (depending on the options
+   * passed to the database). The `callback` can also be invoked `persistent`ly
+   * on any load event - which includes {@link Rekord.Database#refresh}.
+   *
+   * ```javascript
+   * var Task = Rekord({
+   *  fields: ['name']
+   * });
+   * Task.ready( function(db) {
+   *  // Tasks have been loaded, lets do something about it!
+   * });
+   * ```
+   *
+   * @method ready
+   * @memberof Rekord.Model
+   * @param {Function} callback -
+   *    The function to invoke passing the reference of the database when it's
+   *    loaded.
+   * @param {Object} [context] -
+   *    The context (this) for the callback.
+   * @param {Boolean} [persistent=false] -
+   *    Whether the `callback` function should be invoked multiple times.
+   *    Depending on the state of initializing, the callback can be invoked when
+   *    models are loaded locally (if the `cache` is not equal to `None`),
+   *    models are loaded remotely (if `loadRemote` is true), and every time
+   *    {@link Rekord.Database#refresh} is called manually OR if `autoRefresh`
+   *    is specified as true and the application changes from offline to online.
+   */
   model.ready = function( callback, context, persistent )
   {
     db.ready( callback, context, persistent );
@@ -2883,6 +3149,29 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 
 Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 {
+
+  /**
+   * Refreshs the model database from the remote source by calling
+   * {@link Rekord.Database#refresh}. A `callback` can be passed to be invoked
+   * when the model database has refreshed (or failed to refresh) where all
+   * models that have been loaded will be passed as the first argument.
+   *
+   * ```javascript
+   * var Task = Rekord({
+   *  fields: ['name']
+   * });
+   * Task.refresh( function(models) {
+   *  models; // The collection of models loaded remotely (or current models if it failed to load them remotely.
+   * });
+   * ```
+   *
+   * @method refresh
+   * @memberof Rekord.Model
+   * @param {Function} callback -
+   *    The function to invoke passing the reference model collection.
+   * @param {Object} [context] -
+   *    The context (this) for the callback.
+   */
   model.refresh = function( callback, context )
   {
     return db.refresh( callback, context );
@@ -2891,6 +3180,34 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 
 Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 {
+
+  /**
+   * Creates a new search for model instances. A search is an object with
+   * properties that are passed to a configurable {@link Rekord.rest} function
+   * which expect an array of models to be returned from the remote call that
+   * match the search parameters.
+   *
+   * ```javascript
+   * var Task = Rekord({
+   *  fields: ['name', 'done']
+   * });
+   * var search = Task.search();
+   * search.name = 'like this';
+   * search.done = true;
+   * search.anyProperty = [1, 3, 4];
+   * search.$run();
+   * search.$success( function(search) {
+   *   search.$results; // collection of returned results
+   * });
+   * ```
+   *
+   * @method search
+   * @memberof Rekord.Model
+   * @param {searchOptions} [options] -
+   *    Options for the search.
+   * @return {Rekord.Search} -
+   *    A new search for models.
+   */
   model.search = function(options)
   {
     return new Search( db, options );
@@ -2899,6 +3216,42 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 
 Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 {
+
+  /**
+   * Creates a new search with pagination for model instances. A paginated
+   * search is an object with properties that are passed to a configurable
+   * {@link Rekord.rest} function which expect an array of models to be returned
+   * as well as paging information from the remote call. Special properties are
+   * passed to the server (`page_index`, `page_size`) which dictate which
+   * chunk of data should be returned. A special `total` property is expected to
+   * be returned with `results` which tells the search how many records would've
+   * been returned without the pagination.
+   *
+   * ```javascript
+   * var Task = Rekord({
+   *  fields: ['name', 'done']
+   * });
+   * var search = Task.searchPaged();
+   * search.name = 'like this';
+   * search.done = true;
+   * search.anyProperty = [1, 3, 4];
+   * search.$run();
+   * search.$success( function(search) {
+   *   search.$results; // collection of returned results
+   *   search.total; // number of results that would've been returned without pagination
+   *   search.page_index; // the zero-based page index
+   *   search.page_size; // the number of results to be returned
+   * });
+   * search.$next(); // increase page_index, get the next page
+   * ```
+   *
+   * @method searchPaged
+   * @memberof Rekord.Model
+   * @param {searchPageOptions} [options] -
+   *    Options for the search.
+   * @return {Rekord.SearchPaged} -
+   *    A new paginated search for models.
+   */
   model.searchPaged = function(options)
   {
     return new SearchPaged( db, options );
@@ -3038,8 +3391,10 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 
 Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 {
+
   model.where = function(whereProperties, whereValue, whereEquals)
   {
+    // return db.models.filtered( whereProperties, whereValue, whereEquals );
     return new Query( db, whereProperties, whereValue, whereEquals );
   };
 });
@@ -3674,7 +4029,8 @@ Database.prototype =
 
       invoked = true;
     }
-    else
+
+    if ( !db.initialized || persistent )
     {
       function onReady()
       {
@@ -9578,6 +9934,21 @@ extendArray( Query, RemoteQuery,
 });
 
 
+/**
+ * Options you can pass to {@link Rekord.Search} or {@link Rekord.Model.search}.
+ *
+ * @typedef {Object} searchOptions
+ * @property {String} [$method='create'] -
+ *    The function that's invoked on the {@link Rekord.rest} service
+ * @property {Function} [$encode] -
+ *    A function which converts the search into an object to pass to the
+ *    specified methods.
+ * @property {Function} [$decode] -
+ *    A function which takes the data returned from the server and returns
+ *    The array of models which are to be placed in the
+ *    {@link Rekord.Search#$results} property.
+ */
+
 function Search(database, options)
 {
   this.$init( database, options );
@@ -9605,6 +9976,11 @@ Search.Defaults =
 Search.prototype =
 {
 
+  $getDefaults: function()
+  {
+    return Search.Defaults;
+  },
+
   $init: function(database, options)
   {
     applyOptions( this, options, Search.Defaults, true );
@@ -9613,6 +9989,11 @@ Search.prototype =
     this.$results = new ModelCollection( database );
     this.$status = Search.Status.Success;
     this.$request = new Request( this, this.$handleSuccess, this.$handleFailure );
+  },
+
+  $set: function(props)
+  {
+    return transfer( props, this );
   },
 
   $run: function()
@@ -9637,6 +10018,8 @@ Search.prototype =
       default:
         throw 'Invalid search method: ' + this.$method;
     }
+
+    return this;
   },
 
   $cancel: function()
@@ -9729,13 +10112,54 @@ Search.prototype =
 eventize( Search.prototype, true );
 
 
+/**
+ * Options you can pass to {@link Rekord.SearchPaged} or
+ * {@link Rekord.Model.searchPaged}.
+ *
+ * @typedef {Object} searchPageOptions
+ * @property {String} [$method='create'] -
+ *    The function that's invoked on the {@link Rekord.rest} service
+ * @property {Function} [$encode] -
+ *    A function which converts the search into an object to pass to the
+ *    specified methods.
+ * @property {Function} [$decode] -
+ *    A function which takes the data returned from the server and updates
+ *    this search with the results and paging information.
+ * @property {Function} [$decodeResults] -
+ *    A function which takes the data returned from the server and returns the
+ *    array of models which are to be placed in the
+ *    {@link Rekord.Search#$results} property.
+ * @property {Function} [$updatePageSize] -
+ *    A function which takes the data returned from the server and sets an
+ *    updated page size of the search.
+ * @property {Function} [$updatePageIndex] -
+ *    A function which takes the data returned from the server and sets an
+ *    updated page index of the search.
+ * @property {Function} [$updateTotal] -
+ *    A function which takes the data returned from the server and sets an
+ *    updated total of the search.
+ */
+
 function SearchPaged(database, options)
 {
   this.$init( database, options );
 }
 
+SearchPaged.Defaults =
+{
+  $method:      'create',
+  page_size:   10,
+  page_index:  0,
+  total:       0
+};
+
 extend( Search, SearchPaged,
 {
+
+  $getDefaults: function()
+  {
+    return SearchPaged.Defaults;
+  },
 
   $goto: function(index, dontRun)
   {
