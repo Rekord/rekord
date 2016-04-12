@@ -3,7 +3,7 @@
 
 Rekord.rest = function(database)
 {
-  
+
   return {
 
     // success ( data[] )
@@ -43,7 +43,7 @@ Rekord.rest = function(database)
 
     // success ( data[] )
     // failure ( data[], status )
-    query: function( query, success, failure )
+    query: function( url, query, success, failure )
     {
       success( [] );
     }

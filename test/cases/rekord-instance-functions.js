@@ -266,7 +266,7 @@ test( 'boot complex', function(assert)
         local: 'assignee_id'
       },
       list: {
-        model: ListName, 
+        model: ListName,
         local: 'list_id'
       }
     }
@@ -306,7 +306,7 @@ test( 'boot complex', function(assert)
         name: 'This Issue',
         done: false,
         assignee_id: 2
-      }, 
+      },
       // list will be automatically populated
       {
         id: 4,
@@ -366,7 +366,7 @@ test( 'where', function(assert)
   var t2 = Todo.create({name: 't2', done: false});
   var t3 = Todo.create({name: 't3', done: true});
 
-  var done = Todo.where('done', true);
+  var done = Todo.filtered('done', true);
 
   done.setComparator( 'name' );
 
@@ -403,10 +403,10 @@ test( 'where', function(assert)
   strictEqual( done[2], t5 );
 });
 
-test( 'query success', function(assert)
+test( 'search success', function(assert)
 {
   var timer = assert.timer();
-  var prefix = 'Rekord_query_success_';
+  var prefix = 'Rekord_search_success_';
 
   expect( 4 );
 
@@ -426,39 +426,39 @@ test( 'query success', function(assert)
 
   remote.delay = 1;
 
-  var q = Todo.query( 'http://rekord.io' );
+  var q = Todo.search( 'http://rekord.io' ).$run();
 
   expect( 4 );
 
-  strictEqual( q.length, 0 );
+  strictEqual( q.$results.length, 0 );
 
-  q.ready(function()
+  q.$ready(function()
   {
-    strictEqual( q.length, 3, 'query ready and models loaded' );
+    strictEqual( q.$results.length, 3, 'query ready and models loaded' );
   });
 
-  q.success(function()
+  q.$success(function()
   {
-    strictEqual( q.length, 3, 'query success and models loaded' );
+    strictEqual( q.$results.length, 3, 'query success and models loaded' );
   });
 
-  q.failure(function()
+  q.$failure(function()
   {
     ok();
   });
 
   wait( 2, function()
   {
-    strictEqual( q.length, 3, 'times up, data loaded' );
+    strictEqual( q.$results.length, 3, 'times up, data loaded' );
   });
 
   timer.run();
 });
 
-test( 'query failure', function(assert)
+test( 'search failure', function(assert)
 {
   var timer = assert.timer();
-  var prefix = 'Rekord_query_failure_';
+  var prefix = 'Rekord_search_failure_';
 
   expect( 4 );
 
@@ -479,40 +479,40 @@ test( 'query failure', function(assert)
   remote.delay = 1;
   remote.status = 300;
 
-  var q = Todo.query( 'http://rekord.io' );
+  var q = Todo.search( 'http://rekord.io' ).$run();
 
   expect( 4 );
 
-  strictEqual( q.length, 0, 'initial length zero' );
+  strictEqual( q.$results.length, 0, 'initial length zero' );
 
-  q.ready(function()
+  q.$ready(function()
   {
-    strictEqual( q.length, 0, 'ready but empty' );
+    strictEqual( q.$results.length, 0, 'ready but empty' );
   });
 
-  q.success(function()
+  q.$success(function()
   {
     ok();
   });
 
-  q.failure(function()
+  q.$failure(function()
   {
-    strictEqual( q.length, 0, 'failure notified' );
+    strictEqual( q.$results.length, 0, 'failure notified' );
   });
 
   wait( 2, function()
   {
-    strictEqual( q.length, 0, 'times up, no data' );
+    strictEqual( q.$results.length, 0, 'times up, no data' );
   });
 
   timer.run();
 });
 
-test( 'query single', function(assert)
+test( 'search single', function(assert)
 {
   var timer = assert.timer();
   var done = assert.async();
-  var prefix = 'Rekord_query_single_';
+  var prefix = 'Rekord_search_single_';
 
   expect( 4 );
 
@@ -528,28 +528,28 @@ test( 'query single', function(assert)
 
   remote.delay = 1;
 
-  var q = Todo.query( 'http://rekord.io' );
+  var q = Todo.search( 'http://rekord.io' ).$run();
 
-  strictEqual( q.length, 0 );
+  strictEqual( q.$results.length, 0 );
 
-  q.ready(function()
+  q.$ready(function()
   {
-    strictEqual( q.length, 1, 'query ready and models loaded' );
+    strictEqual( q.$results.length, 1, 'query ready and models loaded' );
   });
 
-  q.success(function()
+  q.$success(function()
   {
-    strictEqual( q.length, 1, 'query success and models loaded' );
+    strictEqual( q.$results.length, 1, 'query success and models loaded' );
   });
 
-  q.failure(function()
+  q.$failure(function()
   {
     ok();
   });
 
   wait( 2, function()
   {
-    strictEqual( q.length, 1, 'times up, data loaded' );
+    strictEqual( q.$results.length, 1, 'times up, data loaded' );
 
     done();
   });
@@ -568,7 +568,7 @@ test( 'ready', function(assert)
 
   expect(1);
 
-  Todo.ready(function(db) 
+  Todo.ready(function(db)
   {
     strictEqual( db, Todo.Database );
   });
@@ -602,15 +602,3 @@ test( 'fetchAll', function(assert)
 
   timer.run();
 });
-
-
-
-
-
-
-
-
-
-
-
-

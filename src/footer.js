@@ -16,8 +16,7 @@
   global.Rekord.Collection = Collection;
   global.Rekord.FilteredCollection = FilteredCollection;
   global.Rekord.ModelCollection = ModelCollection;
-  global.Rekord.Query = Query;
-  global.Rekord.RemoteQuery = RemoteQuery;
+  global.Rekord.FilteredModelCollection = FilteredModelCollection;
   global.Rekord.Page = Page;
 
   /* Relationships */

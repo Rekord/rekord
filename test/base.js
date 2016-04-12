@@ -489,9 +489,10 @@ TestRest.prototype =
     this.lastOperation = 'all';
     this.finishDelayed( success, failure, this.map.values );
   },
-  query: function(query, success, failure)
+  query: function(url, data, success, failure)
   {
     this.lastOperation = 'query';
-    this.finishDelayed( success, failure, this.queries.get( query ) );
+    this.lastRecord = data;
+    this.finishDelayed( success, failure, this.queries.get( url ) );
   }
 };

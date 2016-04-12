@@ -3095,21 +3095,6 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 
 Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 {
-  model.query = function(query)
-  {
-    var q = new RemoteQuery( db, query );
-
-    if ( isValue( query ) )
-    {
-      q.sync();
-    }
-
-    return q;
-  };
-});
-
-Rekord.on( Rekord.Events.Plugins, function(model, db, options)
-{
 
   /**
    * Invokes a function when Rekord has loaded. It's considered loaded when
@@ -3191,7 +3176,7 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
    * var Task = Rekord({
    *  fields: ['name', 'done']
    * });
-   * var search = Task.search();
+   * var search = Task.search('/api/task/search');
    * search.name = 'like this';
    * search.done = true;
    * search.anyProperty = [1, 3, 4];
@@ -3203,14 +3188,16 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
    *
    * @method search
    * @memberof Rekord.Model
+   * @param {String} url -
+   *    A URL to send the search data to.
    * @param {searchOptions} [options] -
    *    Options for the search.
    * @return {Rekord.Search} -
    *    A new search for models.
    */
-  model.search = function(options)
+  model.search = function(url, options)
   {
-    return new Search( db, options );
+    return new Search( db, url, options );
   };
 });
 
@@ -3231,7 +3218,7 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
    * var Task = Rekord({
    *  fields: ['name', 'done']
    * });
-   * var search = Task.searchPaged();
+   * var search = Task.searchPaged('/api/task/searchPaged');
    * search.name = 'like this';
    * search.done = true;
    * search.anyProperty = [1, 3, 4];
@@ -3247,14 +3234,16 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
    *
    * @method searchPaged
    * @memberof Rekord.Model
+   * @param {String} url -
+   *    A URL to send the search data to.
    * @param {searchPageOptions} [options] -
    *    Options for the search.
    * @return {Rekord.SearchPaged} -
    *    A new paginated search for models.
    */
-  model.searchPaged = function(options)
+  model.searchPaged = function(url, options)
   {
-    return new SearchPaged( db, options );
+    return new SearchPaged( db, url, options );
   };
 });
 
@@ -3392,10 +3381,9 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 {
 
-  model.where = function(whereProperties, whereValue, whereEquals)
+  model.filtered = function(whereProperties, whereValue, whereEquals)
   {
-    // return db.models.filtered( whereProperties, whereValue, whereEquals );
-    return new Query( db, whereProperties, whereValue, whereEquals );
+    return db.models.filtered( whereProperties, whereValue, whereEquals );
   };
 });
 
@@ -3555,7 +3543,7 @@ Rekord.Debugs = {
 
 Rekord.rest = function(database)
 {
-  
+
   return {
 
     // success ( data[] )
@@ -3595,7 +3583,7 @@ Rekord.rest = function(database)
 
     // success ( data[] )
     // failure ( data[], status )
-    query: function( query, success, failure )
+    query: function( url, query, success, failure )
     {
       success( [] );
     }
@@ -3603,6 +3591,7 @@ Rekord.rest = function(database)
   };
 
 };
+
 /**
  * A factory function for returning an object capable of storing objects for
  * retrieval later by the application.
@@ -6245,7 +6234,6 @@ Collection.Events =
    *    The array of elements modified.
    * @see Rekord.FilteredCollection#sync
    * @see Rekord.ModelCollection#reset
-   * @see Rekord.Query#sync
    */
   Reset:          'reset',
 
@@ -6368,6 +6356,36 @@ extendArray( Array, Collection,
 
       this.trigger( Collection.Events.Sort, [this] );
     }
+
+    return this;
+  },
+
+  /**
+   * Resets the values in this collection with a new collection of values.
+   *
+   * @method
+   * @memberof Rekord.Collection#
+   * @param {Any[]} [values] -
+   *    The new array of values in this collection.
+   * @return {Rekord.Collection} -
+   *    The reference to this collection.
+   * @emits Rekord.Collection#reset
+   */
+  reset: function(values)
+  {
+    this.length = 0;
+
+    if ( isArray( values ) )
+    {
+      AP.push.apply( this, values );
+    }
+    else if ( isObject( models ) )
+    {
+      AP.push.call( this, values );
+    }
+
+    this.trigger( Collection.Events.Reset, [this] );
+    this.sort();
 
     return this;
   },
@@ -8220,8 +8238,7 @@ var Filtering = {
   {
     var base = this.base;
     var filter = this.filter;
-
-    this.length = 0;
+    var matches = [];
 
     for (var i = 0; i < base.length; i++)
     {
@@ -8229,13 +8246,11 @@ var Filtering = {
 
       if ( filter( value ) )
       {
-        this.push( value );
+        matches.push( value );
       }
     }
 
-    this.trigger( Collection.Events.Reset, [this] );
-
-    return this;
+    return this.reset( matches );
   },
 
   handleAdd: function(collection, value)
@@ -9558,7 +9573,12 @@ extendArray( ModelCollection, FilteredModelCollection,
    * @method
    * @memberof Rekord.FilteredModelCollection#
    */
-  bind: Filtering.bind,
+  bind: function()
+  {
+    Filtering.bind.apply( this );
+
+    this.onModelUpdated = bind( this, this.handleModelUpdate );
+  },
 
   /**
    * Initializes the filtered collection by setting the base collection and the
@@ -9577,9 +9597,16 @@ extendArray( ModelCollection, FilteredModelCollection,
    */
   init: function(base, filter)
   {
+    if ( this.base )
+    {
+      this.base.database.off( Database.Events.ModelUpdated, this.onModelUpdated );
+    }
+
     ModelCollection.prototype.init.call( this, base.database );
 
     Filtering.init.call( this, base, filter );
+
+    base.database.on( Database.Events.ModelUpdated, this.onModelUpdated );
 
     return this;
   },
@@ -9636,6 +9663,24 @@ extendArray( ModelCollection, FilteredModelCollection,
    * @emits Rekord.Collection#reset
    */
   sync: Filtering.sync,
+
+  /**
+   * Handles the ModelUpdated event from the database.
+   */
+  handleModelUpdate: function(model)
+  {
+    var exists = this.has( model.$key() );
+    var matches = this.filter( model );
+
+    if ( exists && !matches )
+    {
+      this.remove( model );
+    }
+    if ( !exists && matches )
+    {
+      this.add( model );
+    }
+  },
 
   /**
    * Returns a clone of this collection.
@@ -9911,233 +9956,11 @@ function DiscriminateCollection(collection, discriminator, discriminatorsToModel
   return collection;
 }
 
-function Query(database, whereProperties, whereValue, whereEquals)
-{
-  this.onModelAdd     = bind( this, this.handleModelAdded );
-  this.onModelRemoved = bind( this, this.handleModelRemoved );
-  this.onModelUpdated = bind( this, this.handleModelUpdated );
-
-  this.init( database );
-  this.connect();
-  this.setWhere( whereProperties, whereValue, whereEquals );
-}
-
-extendArray( ModelCollection, Query,
-{
-
-  setWhere: function(whereProperties, whereValue, whereEquals)
-  {
-    this.where = createWhere( whereProperties, whereValue, whereEquals );
-    this.sync();
-  },
-
-  connect: function()
-  {
-    this.database.on( Database.Events.ModelAdded, this.onModelAdd );
-    this.database.on( Database.Events.ModelRemoved, this.onModelRemoved );
-    this.database.on( Database.Events.ModelUpdated, this.onModelUpdated );
-  },
-
-  disconnect: function()
-  {
-    this.database.off( Database.Events.ModelAdded, this.onModelAdd );
-    this.database.off( Database.Events.ModelRemoved, this.onModelRemoved );
-    this.database.off( Database.Events.ModelUpdated, this.onModelUpdated );
-  },
-
-  sync: function()
-  {
-    var where = this.where;
-    var map = this.map;
-    var models = this.database.models;
-
-    map.reset();
-
-    for (var i = 0; i < models.length; i++)
-    {
-      var model = models[ i ];
-
-      if ( where( model ) )
-      {
-        map.put( model.$key(), model );
-      }
-    }
-
-    this.trigger( Collection.Events.Reset, [this] );
-  },
-
-  handleModelAdded: function(model, remoteData)
-  {
-    if ( this.where( model ) )
-    {
-      this.add( model );
-    }
-  },
-
-  handleModelRemoved: function(model)
-  {
-    this.remove( model );
-  },
-
-  handleModelUpdated: function(model, remoteData)
-  {
-    var key = model.$key();
-
-    if ( this.map.has( key ) )
-    {
-      if ( !this.where( model ) )
-      {
-        this.remove( model );
-      }
-    }
-    else
-    {
-      if ( this.where( model ) )
-      {
-        this.add( model );
-      }
-    }
-  }
-
-});
-
-function RemoteQuery(database, query)
-{
-  this.init( database );
-  this.query = query;
-  this.status = RemoteQuery.Status.Success;
-  this.request = new Request( this, this.handleSuccess, this.handleFailure );
-}
-
-RemoteQuery.Status =
-{
-  Pending:    'pending',
-  Success:    'success',
-  Failure:    'failure'
-};
-
-RemoteQuery.Events =
-{
-  Ready:      'ready',
-  Success:    'success',
-  Failure:    'failure'
-};
-
-extendArray( Query, RemoteQuery,
-{
-
-  setQuery: function(query, skipSync, clearPending)
-  {
-    this.query = query;
-
-    if ( !skipSync )
-    {
-      this.sync( clearPending );
-    }
-
-    return this;
-  },
-
-  sync: function(clearPending)
-  {
-    this.status = RemoteQuery.Status.Pending;
-
-    if ( clearPending )
-    {
-      this.cancel();
-    }
-
-    this.database.rest.query( this.query, this.request.onSuccess(), this.request.onFailure() );
-
-    return this;
-  },
-
-  cancel: function()
-  {
-    this.off( RemoteQuery.Events.Ready );
-    this.off( RemoteQuery.Events.Success );
-    this.off( RemoteQuery.Events.Failure );
-
-    this.request.cancel();
-
-    return this;
-  },
-
-  ready: function(callback, context)
-  {
-    if ( this.status === RemoteQuery.Status.Pending )
-    {
-      this.once( RemoteQuery.Events.Ready, callback, context );
-    }
-    else
-    {
-      callback.call( context, this );
-    }
-
-    return this;
-  },
-
-  success: function(callback, context)
-  {
-    if ( this.status === RemoteQuery.Status.Pending )
-    {
-      this.once( RemoteQuery.Events.Success, callback, context );
-    }
-    else if ( this.status === RemoteQuery.Status.Success )
-    {
-      callback.call( context, this );
-    }
-
-    return this;
-  },
-
-  failure: function(callback, context)
-  {
-    if ( this.status === RemoteQuery.Status.Pending )
-    {
-      this.once( RemoteQuery.Events.Failure, callback, context );
-    }
-    else if ( this.status === RemoteQuery.Status.Failure )
-    {
-      callback.call( context, this );
-    }
-
-    return this;
-  },
-
-  parse: function(models)
-  {
-    return models;
-  },
-
-  handleSuccess: function(response)
-  {
-    var models = this.parse.apply( this, arguments );
-
-    this.status = RemoteQuery.Status.Success;
-    this.reset( models, true );
-    this.off( RemoteQuery.Events.Failure, this.onFailure );
-    this.trigger( RemoteQuery.Events.Ready, [this, response] );
-    this.trigger( RemoteQuery.Events.Success, [this, response] );
-  },
-
-  handleFailure: function(response, error)
-  {
-    this.status = RemoteQuery.Status.Failure;
-    this.off( RemoteQuery.Events.Success, this.onSuccess );
-    this.trigger( RemoteQuery.Events.Ready, [this, response] );
-    this.trigger( RemoteQuery.Events.Failure, [this, response] );
-  }
-
-});
-
 
 /**
  * Options you can pass to {@link Rekord.Search} or {@link Rekord.Model.search}.
  *
  * @typedef {Object} searchOptions
- * @property {String} [$method='create'] -
- *    The function that's invoked on the {@link Rekord.rest} service
  * @property {Function} [$encode] -
  *    A function which converts the search into an object to pass to the
  *    specified methods.
@@ -10147,9 +9970,9 @@ extendArray( Query, RemoteQuery,
  *    {@link Rekord.Search#$results} property.
  */
 
-function Search(database, options)
+function Search(database, url, options)
 {
-  this.$init( database, options );
+  this.$init( database, url, options );
 }
 
 Search.Events =
@@ -10168,7 +9991,6 @@ Search.Status =
 
 Search.Defaults =
 {
-  $method:     'create'
 };
 
 Search.prototype =
@@ -10179,11 +10001,12 @@ Search.prototype =
     return Search.Defaults;
   },
 
-  $init: function(database, options)
+  $init: function(database, url, options)
   {
     applyOptions( this, options, Search.Defaults, true );
 
     this.$db = database;
+    this.$url = url;
     this.$results = new ModelCollection( database );
     this.$status = Search.Status.Success;
     this.$request = new Request( this, this.$handleSuccess, this.$handleFailure );
@@ -10197,25 +10020,11 @@ Search.prototype =
   $run: function()
   {
     var encoded = this.$encode();
-
-    this.$status = Search.Status.Pending;
-
     var success = this.$request.onSuccess();
     var failure = this.$request.onFailure();
 
-    switch (this.$method) {
-      case 'create':
-        this.$db.rest.create( this, encoded, success, failure );
-        break;
-      case 'update':
-        this.$db.rest.update( this, encoded, success, failure );
-        break;
-      case 'query':
-        this.$db.rest.query( encoded, success, failure );
-        break;
-      default:
-        throw 'Invalid search method: ' + this.$method;
-    }
+    this.$status = Search.Status.Pending;
+    this.$db.rest.query( this.$url, encoded, success, failure );
 
     return this;
   },
@@ -10315,8 +10124,13 @@ eventize( Search.prototype, true );
  * {@link Rekord.Model.searchPaged}.
  *
  * @typedef {Object} searchPageOptions
- * @property {String} [$method='create'] -
- *    The function that's invoked on the {@link Rekord.rest} service
+ * @property {Number} [page_size=10] -
+ *    The size of the pages.
+ * @property {Number} [page_index=0] -
+ *    The index of the search page.
+ * @property {Number} [total=0] -
+ *    The total number of models that exist in the search without pagination
+ *    - this is expected to be provided by the remote search response.
  * @property {Function} [$encode] -
  *    A function which converts the search into an object to pass to the
  *    specified methods.
@@ -10338,14 +10152,13 @@ eventize( Search.prototype, true );
  *    updated total of the search.
  */
 
-function SearchPaged(database, options)
+function SearchPaged(database, url, options)
 {
-  this.$init( database, options );
+  this.$init( database, url, options );
 }
 
 SearchPaged.Defaults =
 {
-  $method:      'create',
   page_size:   10,
   page_index:  0,
   total:       0
@@ -11775,25 +11588,35 @@ Relation.prototype =
   executeQuery: function(model)
   {
     var queryOption = this.query;
+    var queryOptions = this.queryOptions;
+    var queryData = this.queryData;
     var query = isString( queryOption ) ? format( queryOption, model ) : queryOption;
-    var remoteQuery = this.model.query( query );
+    var search = this.model.search( query, queryOptions );
 
-    Rekord.debug( this.debugQuery, this, model, remoteQuery, queryOption, query );
+    if ( isObject( queryData ) )
+    {
+      transfer( queryData, search );
+    }
 
-    remoteQuery.ready( this.handleExecuteQuery( model ), this );
+    Rekord.debug( this.debugQuery, this, model, search, queryOption, query, queryData );
 
-    return remoteQuery;
+    search.$run();
+    search.$ready( this.handleExecuteQuery( model ), this );
+
+    return search;
   },
 
   handleExecuteQuery: function(model)
   {
-    return function onExecuteQuery(remoteQuery)
+    return function onExecuteQuery(search)
     {
-      Rekord.debug( this.debugQueryResults, this, model, remoteQuery );
+      var results = search.$results;
 
-      for (var i = 0; i < remoteQuery.length; i++)
+      Rekord.debug( this.debugQueryResults, this, model, search );
+
+      for (var i = 0; i < results.length; i++)
       {
-        this.relate( model, remoteQuery[ i ], true );
+        this.relate( model, results[ i ], true );
       }
     };
   },
@@ -12293,17 +12116,18 @@ extend( Relation, RelationMultiple,
 
   handleExecuteQuery: function(model)
   {
-    return function onExecuteQuery(remoteQuery)
+    return function onExecuteQuery(search)
     {
       var relation = model.$relations[ this.name ];
+      var results = search.$results;
 
-      Rekord.debug( this.debugQueryResults, this, model, remoteQuery );
+      Rekord.debug( this.debugQueryResults, this, model, search );
 
       this.bulk( relation, function()
       {
-        for (var i = 0; i < remoteQuery.length; i++)
+        for (var i = 0; i < results.length; i++)
         {
-          this.addModel( relation, remoteQuery[ i ], true );
+          this.addModel( relation, results[ i ], true );
         }
       });
 
@@ -13932,15 +13756,22 @@ var Polymorphic =
   executeQuery: function(model)
   {
     var queryOption = this.query;
+    var queryOptions = this.queryOptions;
+    var queryData = this.queryData;
     var query = isString( queryOption ) ? format( queryOption, model ) : queryOption;
-    var remoteQuery = new RemoteQuery( model.$db, query );
+    var search = model.search( query, queryOptions );
 
-    DiscriminateCollection( remoteQuery, this.discriminator, this.discriminatorToModel );
+    if ( isObject( queryData ) )
+    {
+      transfer( queryData, search );
+    }
 
-    remoteQuery.sync();
-    remoteQuery.ready( this.handleExecuteQuery( model ), this );
+    DiscriminateCollection( search, this.discriminator, this.discriminatorToModel );
 
-    return remoteQuery;
+    search.$run();
+    search.$ready( this.handleExecuteQuery( model ), this );
+
+    return search;
   },
 
   parseModel: function(input, remoteData)
@@ -14162,7 +13993,7 @@ Shard.prototype =
     return single ? [ single ] : this.getShards( forRead );
   },
 
-  getShardsForQuery: function(query)
+  getShardsForQuery: function(url, query)
   {
     return this.getShards();
   },
@@ -14327,14 +14158,14 @@ Shard.prototype =
     this.multiplex( shards, this.ATOMIC_REMOVE, invoke, onSuccess, noop, onComplete );
   },
 
-  query: function( query, success, failure )
+  query: function( url, query, success, failure )
   {
-    var shards = this.getShardsForQuery( query );
+    var shards = this.getShardsForQuery( url, query );
     var results = [];
 
     function invoke(shard, onShardSuccess, onShardFailure)
     {
-      shard.query( query, onShardSuccess, onShardFailure );
+      shard.query( url, query, onShardSuccess, onShardFailure );
     }
     function onSuccess(models)
     {
@@ -14435,8 +14266,7 @@ Shard.prototype =
   global.Rekord.Collection = Collection;
   global.Rekord.FilteredCollection = FilteredCollection;
   global.Rekord.ModelCollection = ModelCollection;
-  global.Rekord.Query = Query;
-  global.Rekord.RemoteQuery = RemoteQuery;
+  global.Rekord.FilteredModelCollection = FilteredModelCollection;
   global.Rekord.Page = Page;
 
   /* Relationships */

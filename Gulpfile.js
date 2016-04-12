@@ -35,8 +35,6 @@ var build = {
     './src/lib/collections/FilteredModelCollection.js',
     './src/lib/collections/RelationCollection.js',
     './src/lib/collections/DiscriminateCollection.js',
-    './src/lib/query/Query.js',
-    './src/lib/query/RemoteQuery.js',
     './src/lib/search/Search.js',
     './src/lib/search/SearchPaged.js',
     './src/lib/Transaction.js',

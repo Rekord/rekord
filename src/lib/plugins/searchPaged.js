@@ -15,7 +15,7 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
    * var Task = Rekord({
    *  fields: ['name', 'done']
    * });
-   * var search = Task.searchPaged();
+   * var search = Task.searchPaged('/api/task/searchPaged');
    * search.name = 'like this';
    * search.done = true;
    * search.anyProperty = [1, 3, 4];
@@ -31,13 +31,15 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
    *
    * @method searchPaged
    * @memberof Rekord.Model
+   * @param {String} url -
+   *    A URL to send the search data to.
    * @param {searchPageOptions} [options] -
    *    Options for the search.
    * @return {Rekord.SearchPaged} -
    *    A new paginated search for models.
    */
-  model.searchPaged = function(options)
+  model.searchPaged = function(url, options)
   {
-    return new SearchPaged( db, options );
+    return new SearchPaged( db, url, options );
   };
 });

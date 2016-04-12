@@ -55,7 +55,12 @@ extendArray( ModelCollection, FilteredModelCollection,
    * @method
    * @memberof Rekord.FilteredModelCollection#
    */
-  bind: Filtering.bind,
+  bind: function()
+  {
+    Filtering.bind.apply( this );
+
+    this.onModelUpdated = bind( this, this.handleModelUpdate );
+  },
 
   /**
    * Initializes the filtered collection by setting the base collection and the
@@ -74,9 +79,16 @@ extendArray( ModelCollection, FilteredModelCollection,
    */
   init: function(base, filter)
   {
+    if ( this.base )
+    {
+      this.base.database.off( Database.Events.ModelUpdated, this.onModelUpdated );
+    }
+
     ModelCollection.prototype.init.call( this, base.database );
 
     Filtering.init.call( this, base, filter );
+
+    base.database.on( Database.Events.ModelUpdated, this.onModelUpdated );
 
     return this;
   },
@@ -133,6 +145,24 @@ extendArray( ModelCollection, FilteredModelCollection,
    * @emits Rekord.Collection#reset
    */
   sync: Filtering.sync,
+
+  /**
+   * Handles the ModelUpdated event from the database.
+   */
+  handleModelUpdate: function(model)
+  {
+    var exists = this.has( model.$key() );
+    var matches = this.filter( model );
+
+    if ( exists && !matches )
+    {
+      this.remove( model );
+    }
+    if ( !exists && matches )
+    {
+      this.add( model );
+    }
+  },
 
   /**
    * Returns a clone of this collection.

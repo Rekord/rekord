@@ -235,11 +235,11 @@ test( 'chunk', function(assert)
 
 });
 
-test( 'where', function(assert)
+test( 'filtered', function(assert)
 {
   var c = createRekordCollection();
 
-  deepEqual( c.where('age', 28).slice(), [
+  deepEqual( c.filtered('age', 28).slice(), [
     c[2], c[4]
   ]);
 });

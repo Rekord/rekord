@@ -11,7 +11,7 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
    * var Task = Rekord({
    *  fields: ['name', 'done']
    * });
-   * var search = Task.search();
+   * var search = Task.search('/api/task/search');
    * search.name = 'like this';
    * search.done = true;
    * search.anyProperty = [1, 3, 4];
@@ -23,13 +23,15 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
    *
    * @method search
    * @memberof Rekord.Model
+   * @param {String} url -
+   *    A URL to send the search data to.
    * @param {searchOptions} [options] -
    *    Options for the search.
    * @return {Rekord.Search} -
    *    A new search for models.
    */
-  model.search = function(options)
+  model.search = function(url, options)
   {
-    return new Search( db, options );
+    return new Search( db, url, options );
   };
 });

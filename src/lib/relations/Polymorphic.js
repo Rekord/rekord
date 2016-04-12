@@ -103,15 +103,22 @@ var Polymorphic =
   executeQuery: function(model)
   {
     var queryOption = this.query;
+    var queryOptions = this.queryOptions;
+    var queryData = this.queryData;
     var query = isString( queryOption ) ? format( queryOption, model ) : queryOption;
-    var remoteQuery = new RemoteQuery( model.$db, query );
+    var search = model.search( query, queryOptions );
 
-    DiscriminateCollection( remoteQuery, this.discriminator, this.discriminatorToModel );
+    if ( isObject( queryData ) )
+    {
+      transfer( queryData, search );
+    }
 
-    remoteQuery.sync();
-    remoteQuery.ready( this.handleExecuteQuery( model ), this );
+    DiscriminateCollection( search, this.discriminator, this.discriminatorToModel );
 
-    return remoteQuery;
+    search.$run();
+    search.$ready( this.handleExecuteQuery( model ), this );
+
+    return search;
   },
 
   parseModel: function(input, remoteData)

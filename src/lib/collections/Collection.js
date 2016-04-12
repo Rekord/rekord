@@ -138,7 +138,6 @@ Collection.Events =
    *    The array of elements modified.
    * @see Rekord.FilteredCollection#sync
    * @see Rekord.ModelCollection#reset
-   * @see Rekord.Query#sync
    */
   Reset:          'reset',
 
@@ -261,6 +260,36 @@ extendArray( Array, Collection,
 
       this.trigger( Collection.Events.Sort, [this] );
     }
+
+    return this;
+  },
+
+  /**
+   * Resets the values in this collection with a new collection of values.
+   *
+   * @method
+   * @memberof Rekord.Collection#
+   * @param {Any[]} [values] -
+   *    The new array of values in this collection.
+   * @return {Rekord.Collection} -
+   *    The reference to this collection.
+   * @emits Rekord.Collection#reset
+   */
+  reset: function(values)
+  {
+    this.length = 0;
+
+    if ( isArray( values ) )
+    {
+      AP.push.apply( this, values );
+    }
+    else if ( isObject( models ) )
+    {
+      AP.push.call( this, values );
+    }
+
+    this.trigger( Collection.Events.Reset, [this] );
+    this.sort();
 
     return this;
   },

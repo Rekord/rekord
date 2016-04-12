@@ -12,17 +12,18 @@ extend( Relation, RelationMultiple,
 
   handleExecuteQuery: function(model)
   {
-    return function onExecuteQuery(remoteQuery)
+    return function onExecuteQuery(search)
     {
       var relation = model.$relations[ this.name ];
+      var results = search.$results;
 
-      Rekord.debug( this.debugQueryResults, this, model, remoteQuery );
+      Rekord.debug( this.debugQueryResults, this, model, search );
 
       this.bulk( relation, function()
       {
-        for (var i = 0; i < remoteQuery.length; i++)
+        for (var i = 0; i < results.length; i++)
         {
-          this.addModel( relation, remoteQuery[ i ], true );
+          this.addModel( relation, results[ i ], true );
         }
       });
 

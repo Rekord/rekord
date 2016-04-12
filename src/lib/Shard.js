@@ -52,7 +52,7 @@ Shard.prototype =
     return single ? [ single ] : this.getShards( forRead );
   },
 
-  getShardsForQuery: function(query)
+  getShardsForQuery: function(url, query)
   {
     return this.getShards();
   },
@@ -217,14 +217,14 @@ Shard.prototype =
     this.multiplex( shards, this.ATOMIC_REMOVE, invoke, onSuccess, noop, onComplete );
   },
 
-  query: function( query, success, failure )
+  query: function( url, query, success, failure )
   {
-    var shards = this.getShardsForQuery( query );
+    var shards = this.getShardsForQuery( url, query );
     var results = [];
 
     function invoke(shard, onShardSuccess, onShardFailure)
     {
-      shard.query( query, onShardSuccess, onShardFailure );
+      shard.query( url, query, onShardSuccess, onShardFailure );
     }
     function onSuccess(models)
     {

@@ -31,7 +31,7 @@ One minor restriction currently exists - id has to be supplied upon instance cre
 - Polymorphic relationships for `hasOne`, `belongsTo` & `hasMany`
 - Extend an existing model
 - Horizontal scaling with sharding
-- Look at a subset of models with `model.where( properties to match or custom function )`
+- Look at a subset of models with `model.filtered( properties to match or custom function )`
 - Query REST API with `model.query( URL or HTTP options )`
 - Fetch a single model from the REST API with `model.fetch( key )`
 - Load bootstrapped data with `model.boot( model or array of models )`
@@ -114,8 +114,8 @@ var allRemote = Todo.fetchAll(function(all) {}); // call REST API
 var f0 = Todo.find('name', 'Download Rekord'); // first match
 var f1 = Todo.find({done: true});
 
-var w0 = Todo.where('done', true); // all done todos
-var w1 = Todo.where({finished_at: null});
+var w0 = Todo.filtered('done', true); // all done todos
+var w1 = Todo.filtered({finished_at: null});
 
 var g0 = Todo.get(34); // get cached version
 

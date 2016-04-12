@@ -70,8 +70,7 @@ var Filtering = {
   {
     var base = this.base;
     var filter = this.filter;
-
-    this.length = 0;
+    var matches = [];
 
     for (var i = 0; i < base.length; i++)
     {
@@ -79,13 +78,11 @@ var Filtering = {
 
       if ( filter( value ) )
       {
-        this.push( value );
+        matches.push( value );
       }
     }
 
-    this.trigger( Collection.Events.Reset, [this] );
-
-    return this;
+    return this.reset( matches );
   },
 
   handleAdd: function(collection, value)

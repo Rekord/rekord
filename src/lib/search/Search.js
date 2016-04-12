@@ -3,8 +3,6 @@
  * Options you can pass to {@link Rekord.Search} or {@link Rekord.Model.search}.
  *
  * @typedef {Object} searchOptions
- * @property {String} [$method='create'] -
- *    The function that's invoked on the {@link Rekord.rest} service
  * @property {Function} [$encode] -
  *    A function which converts the search into an object to pass to the
  *    specified methods.
@@ -14,9 +12,9 @@
  *    {@link Rekord.Search#$results} property.
  */
 
-function Search(database, options)
+function Search(database, url, options)
 {
-  this.$init( database, options );
+  this.$init( database, url, options );
 }
 
 Search.Events =
@@ -35,7 +33,6 @@ Search.Status =
 
 Search.Defaults =
 {
-  $method:     'create'
 };
 
 Search.prototype =
@@ -46,11 +43,12 @@ Search.prototype =
     return Search.Defaults;
   },
 
-  $init: function(database, options)
+  $init: function(database, url, options)
   {
     applyOptions( this, options, Search.Defaults, true );
 
     this.$db = database;
+    this.$url = url;
     this.$results = new ModelCollection( database );
     this.$status = Search.Status.Success;
     this.$request = new Request( this, this.$handleSuccess, this.$handleFailure );
@@ -64,25 +62,11 @@ Search.prototype =
   $run: function()
   {
     var encoded = this.$encode();
-
-    this.$status = Search.Status.Pending;
-
     var success = this.$request.onSuccess();
     var failure = this.$request.onFailure();
 
-    switch (this.$method) {
-      case 'create':
-        this.$db.rest.create( this, encoded, success, failure );
-        break;
-      case 'update':
-        this.$db.rest.update( this, encoded, success, failure );
-        break;
-      case 'query':
-        this.$db.rest.query( encoded, success, failure );
-        break;
-      default:
-        throw 'Invalid search method: ' + this.$method;
-    }
+    this.$status = Search.Status.Pending;
+    this.$db.rest.query( this.$url, encoded, success, failure );
 
     return this;
   },

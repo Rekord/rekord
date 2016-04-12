@@ -21,14 +21,13 @@ test( '$next', function(assert)
 
   strictEqual( Task.all().length, 0 );
 
-  var search = Task.searchPaged({
+  var search = Task.searchPaged('/api/something', {
     page_index: 0,
     page_size: 2
   });
   search.name = 'names';
   search.$run();
 
-  deepEqual( rest.lastModel, search );
   deepEqual( rest.lastRecord, {name: 'names', page_index: 0, page_size: 2} );
 
   strictEqual( search.$results.length, 2 );
@@ -49,7 +48,6 @@ test( '$next', function(assert)
 
   search.$next();
 
-  deepEqual( rest.lastModel, search );
   deepEqual( rest.lastRecord, {name: 'names', page_index: 1, page_size: 2, total: 5} );
 
   strictEqual( search.$results.length, 2 );
@@ -61,7 +59,6 @@ test( '$next', function(assert)
 
   search.$next();
 
-  deepEqual( rest.lastModel, search );
   deepEqual( rest.lastRecord, {name: 'names', page_index: 2, page_size: 2, total: 5} );
 
   strictEqual( search.$results.length, 1 );

@@ -343,7 +343,7 @@ test( 'save model', function(assert)
 
   deepEqual( local.lastRecord, {
     id: l0.id, name: l0.name,
-    $saved: {id: l0.id, name: l0.name, 
+    $saved: {id: l0.id, name: l0.name,
       tasks: [ t0.$saved, t1.$saved, t2.$saved ]
     }, $status: 0
   });
@@ -394,7 +394,7 @@ test( 'save key', function(assert)
 
   deepEqual( local.lastRecord, {
     id: l0.id, name: l0.name,
-    $saved: {id: l0.id, name: l0.name, 
+    $saved: {id: l0.id, name: l0.name,
       tasks: [ t0.id, t1.id, t2.id ]
     }, $status: 0
   });
@@ -611,7 +611,7 @@ test( 'lazy false', function(assert)
       }
     }
   });
-  
+
   var t0 = Task.create({name: 't0'});
   var t1 = Task.create({name: 't1'});
 
@@ -645,7 +645,7 @@ test( 'autoRefresh', function(assert)
       }
     }
   });
-  
+
   var t0 = Task.create({name: 't0'});
   var t1 = Task.create({name: 't1'});
   var t2 = Task.create({name: 't2'});
@@ -662,5 +662,5 @@ test( 'autoRefresh', function(assert)
 
   deepEqual( l0.tasks.toArray(), [t0, t1, t2] );
 
-  isInstance( l0.$relations.tasks.query, Rekord.RemoteQuery, 'query exists' );
+  isInstance( l0.$relations.tasks.query, Rekord.Search, 'query exists' );
 });

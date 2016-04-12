@@ -714,13 +714,13 @@ test( 'query default', function(assert)
     shard: sharder
   });
 
-  var done = Task.query( '/done' );
-  done.setComparator('name');
+  var done = Task.search( '/done' ).$run();
+  done.$results.setComparator('name');
 
-  strictEqual( done.length, 3 );
-  strictEqual( done[0].name, 't3' );
-  strictEqual( done[1].name, 't4' );
-  strictEqual( done[2].name, 't6' );
+  strictEqual( done.$results.length, 3 );
+  strictEqual( done.$results[0].name, 't3' );
+  strictEqual( done.$results[1].name, 't4' );
+  strictEqual( done.$results[2].name, 't6' );
 });
 
 test( 'query specific', function(assert)
@@ -753,12 +753,12 @@ test( 'query specific', function(assert)
     shard: sharder
   });
 
-  var done = Task.query( '/done' );
-  done.setComparator('name');
+  var done = Task.search( '/done' ).$run();
+  done.$results.setComparator('name');
 
-  strictEqual( done.length, 2 );
-  strictEqual( done[0].name, 't3' );
-  strictEqual( done[1].name, 't6' );
+  strictEqual( done.$results.length, 2 );
+  strictEqual( done.$results[0].name, 't3' );
+  strictEqual( done.$results[1].name, 't6' );
 });
 
 test( 'query failure atomic', function(assert)
@@ -790,10 +790,10 @@ test( 'query failure atomic', function(assert)
     shard: sharder
   });
 
-  var done = Task.query( '/done' );
-  done.setComparator('name');
+  var done = Task.search( '/done' ).$run();
+  done.$results.setComparator('name');
 
-  strictEqual( done.length, 0 );
+  strictEqual( done.$results.length, 0 );
 });
 
 test( 'query failure not atomic', function(assert)
@@ -825,11 +825,11 @@ test( 'query failure not atomic', function(assert)
     shard: sharder
   });
 
-  var done = Task.query( '/done' );
-  done.setComparator('name');
+  var done = Task.search( '/done' ).$run();
+  done.$results.setComparator('name');
 
-  strictEqual( done.length, 1 );
-  strictEqual( done[0].name, 't4' );
+  strictEqual( done.$results.length, 1 );
+  strictEqual( done.$results[0].name, 't4' );
 });
 
 test( 'save multiple (M-N relationships)', function(assert)

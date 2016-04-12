@@ -4,8 +4,13 @@
  * {@link Rekord.Model.searchPaged}.
  *
  * @typedef {Object} searchPageOptions
- * @property {String} [$method='create'] -
- *    The function that's invoked on the {@link Rekord.rest} service
+ * @property {Number} [page_size=10] -
+ *    The size of the pages.
+ * @property {Number} [page_index=0] -
+ *    The index of the search page.
+ * @property {Number} [total=0] -
+ *    The total number of models that exist in the search without pagination
+ *    - this is expected to be provided by the remote search response.
  * @property {Function} [$encode] -
  *    A function which converts the search into an object to pass to the
  *    specified methods.
@@ -27,14 +32,13 @@
  *    updated total of the search.
  */
 
-function SearchPaged(database, options)
+function SearchPaged(database, url, options)
 {
-  this.$init( database, options );
+  this.$init( database, url, options );
 }
 
 SearchPaged.Defaults =
 {
-  $method:      'create',
   page_size:   10,
   page_index:  0,
   total:       0

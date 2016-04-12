@@ -367,7 +367,7 @@ test( 'save model', function(assert)
 
   deepEqual( local.lastRecord, {
     id: l0.id, name: l0.name,
-    $saved: {id: l0.id, name: l0.name, 
+    $saved: {id: l0.id, name: l0.name,
       tasks: [ t0.$saved, t1.$saved, t2.$saved ]
     }, $status: 0
   });
@@ -422,7 +422,7 @@ test( 'save key', function(assert)
 
   deepEqual( local.lastRecord, {
     id: l0.id, name: l0.name,
-    $saved: {id: l0.id, name: l0.name, 
+    $saved: {id: l0.id, name: l0.name,
       tasks: [ t0.id, t1.id, t2.id ]
     }, $status: 0
   });
@@ -807,7 +807,7 @@ test( 'comparatorNullsFirst', function(assert)
 });
 
 test( 'cascadeRemove none', function(assert)
-{ 
+{
   var prefix = 'hasMany_cascadeRemove_none_';
 
   var Task = Rekord({
@@ -862,7 +862,7 @@ test( 'cascadeRemove none', function(assert)
 });
 
 test( 'cascadeRemove local', function(assert)
-{ 
+{
   var prefix = 'hasMany_cascadeRemove_local_';
 
   var Task = Rekord({
@@ -917,7 +917,7 @@ test( 'cascadeRemove local', function(assert)
 });
 
 test( 'cascadeRemove rest', function(assert)
-{ 
+{
   var prefix = 'hasMany_cascadeRemove_rest_';
 
   var Task = Rekord({
@@ -972,7 +972,7 @@ test( 'cascadeRemove rest', function(assert)
 });
 
 test( 'cascadeRemove nolive', function(assert)
-{ 
+{
   var prefix = 'hasMany_cascadeRemove_nolive_';
 
   var Task = Rekord({
@@ -1027,7 +1027,7 @@ test( 'cascadeRemove nolive', function(assert)
 });
 
 test( 'cascadeRemove live', function(assert)
-{ 
+{
   var prefix = 'hasMany_cascadeRemove_live_';
 
   var Task = Rekord({
@@ -1082,7 +1082,7 @@ test( 'cascadeRemove live', function(assert)
 });
 
 test( 'cascadeRemove norest', function(assert)
-{ 
+{
   var prefix = 'hasMany_cascadeRemove_norest_';
 
   var Task = Rekord({
@@ -1137,7 +1137,7 @@ test( 'cascadeRemove norest', function(assert)
 });
 
 test( 'cascadeRemove remote', function(assert)
-{ 
+{
   var prefix = 'hasMany_cascadeRemove_remote_';
 
   var Task = Rekord({
@@ -1192,7 +1192,7 @@ test( 'cascadeRemove remote', function(assert)
 });
 
 test( 'cascadeRemove all', function(assert)
-{ 
+{
   var prefix = 'hasMany_cascadeRemove_all_';
 
   var Task = Rekord({
@@ -1725,5 +1725,5 @@ test( 'query', function(assert)
   strictEqual( l0.tasks[1].name, 't1' );
   strictEqual( l0.tasks[1].task_list_id, l0.id );
 
-  isInstance( l0.$relations.tasks.query, Rekord.RemoteQuery, 'query exists' );
+  isInstance( l0.$relations.tasks.query, Rekord.Search, 'query exists' );
 });

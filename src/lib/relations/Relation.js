@@ -179,25 +179,35 @@ Relation.prototype =
   executeQuery: function(model)
   {
     var queryOption = this.query;
+    var queryOptions = this.queryOptions;
+    var queryData = this.queryData;
     var query = isString( queryOption ) ? format( queryOption, model ) : queryOption;
-    var remoteQuery = this.model.query( query );
+    var search = this.model.search( query, queryOptions );
 
-    Rekord.debug( this.debugQuery, this, model, remoteQuery, queryOption, query );
+    if ( isObject( queryData ) )
+    {
+      transfer( queryData, search );
+    }
 
-    remoteQuery.ready( this.handleExecuteQuery( model ), this );
+    Rekord.debug( this.debugQuery, this, model, search, queryOption, query, queryData );
 
-    return remoteQuery;
+    search.$run();
+    search.$ready( this.handleExecuteQuery( model ), this );
+
+    return search;
   },
 
   handleExecuteQuery: function(model)
   {
-    return function onExecuteQuery(remoteQuery)
+    return function onExecuteQuery(search)
     {
-      Rekord.debug( this.debugQueryResults, this, model, remoteQuery );
+      var results = search.$results;
 
-      for (var i = 0; i < remoteQuery.length; i++)
+      Rekord.debug( this.debugQueryResults, this, model, search );
+
+      for (var i = 0; i < results.length; i++)
       {
-        this.relate( model, remoteQuery[ i ], true );
+        this.relate( model, results[ i ], true );
       }
     };
   },

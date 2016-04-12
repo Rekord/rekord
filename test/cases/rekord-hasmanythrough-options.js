@@ -547,7 +547,7 @@ test( 'comparatorNullsFirst', function(assert)
 });
 
 test( 'cascadeRemove none', function(assert)
-{ 
+{
   var prefix = 'hasManyThrough_cascadeRemove_none_';
 
   var options = {
@@ -633,7 +633,7 @@ test( 'cascadeRemove none', function(assert)
 });
 
 test( 'cascadeRemove local', function(assert)
-{ 
+{
   var prefix = 'hasManyThrough_cascadeRemove_local_';
 
   var options = {
@@ -683,7 +683,7 @@ test( 'cascadeRemove local', function(assert)
   strictEqual( local.lastKey, ug0.$key(), 'local' );
 
   // onThroughRemoved
-  
+
   rest.lastModel = null;
   local.lastKey = null;
   live.lastMessage = null;
@@ -719,7 +719,7 @@ test( 'cascadeRemove local', function(assert)
 });
 
 test( 'cascadeRemove rest', function(assert)
-{ 
+{
   var prefix = 'hasManyThrough_cascadeRemove_rest_';
 
   var options = {
@@ -769,7 +769,7 @@ test( 'cascadeRemove rest', function(assert)
   strictEqual( local.lastKey, null, 'no local' );
 
   // onThroughRemoved
-  
+
   rest.lastModel = null;
   local.lastKey = null;
   live.lastMessage = null;
@@ -805,7 +805,7 @@ test( 'cascadeRemove rest', function(assert)
 });
 
 test( 'cascadeRemove nolive', function(assert)
-{ 
+{
   var prefix = 'hasManyThrough_cascadeRemove_nolive_';
 
   var options = {
@@ -855,7 +855,7 @@ test( 'cascadeRemove nolive', function(assert)
   strictEqual( local.lastKey, ug0.$key(), 'local' );
 
   // onThroughRemoved
-  
+
   rest.lastModel = null;
   local.lastKey = null;
   live.lastMessage = null;
@@ -891,7 +891,7 @@ test( 'cascadeRemove nolive', function(assert)
 });
 
 test( 'cascadeRemove live', function(assert)
-{ 
+{
   var prefix = 'hasManyThrough_cascadeRemove_live_';
 
   var options = {
@@ -941,7 +941,7 @@ test( 'cascadeRemove live', function(assert)
   strictEqual( local.lastKey, null, 'no local' );
 
   // onThroughRemoved
-  
+
   rest.lastModel = null;
   local.lastKey = null;
   live.lastMessage = null;
@@ -977,7 +977,7 @@ test( 'cascadeRemove live', function(assert)
 });
 
 test( 'cascadeRemove norest', function(assert)
-{ 
+{
   var prefix = 'hasManyThrough_cascadeRemove_norest_';
 
   var options = {
@@ -1027,7 +1027,7 @@ test( 'cascadeRemove norest', function(assert)
   strictEqual( local.lastKey, ug0.$key(), 'local' );
 
   // onThroughRemoved
-  
+
   rest.lastModel = null;
   local.lastKey = null;
   live.lastMessage = null;
@@ -1063,7 +1063,7 @@ test( 'cascadeRemove norest', function(assert)
 });
 
 test( 'cascadeRemove remote', function(assert)
-{ 
+{
   var prefix = 'hasManyThrough_cascadeRemove_remote_';
 
   var options = {
@@ -1113,7 +1113,7 @@ test( 'cascadeRemove remote', function(assert)
   strictEqual( local.lastKey, null, 'no local' );
 
   // onThroughRemoved
-  
+
   rest.lastModel = null;
   local.lastKey = null;
   live.lastMessage = null;
@@ -1149,7 +1149,7 @@ test( 'cascadeRemove remote', function(assert)
 });
 
 test( 'cascadeRemove all', function(assert)
-{ 
+{
   var prefix = 'hasManyThrough_cascadeRemove_all_';
 
   var options = {
@@ -1199,7 +1199,7 @@ test( 'cascadeRemove all', function(assert)
   strictEqual( local.lastKey, ug0.$key(), 'local' );
 
   // onThroughRemoved
-  
+
   rest.lastModel = null;
   local.lastKey = null;
   live.lastMessage = null;
@@ -1947,5 +1947,5 @@ test( 'query', function(assert)
   notStrictEqual( ug0, void 0 );
   notStrictEqual( ug1, void 0 );
 
-  isInstance( u0.$relations.groups.query, Rekord.RemoteQuery, 'query exists' );
+  isInstance( u0.$relations.groups.query, Rekord.Search, 'query exists' );
 });

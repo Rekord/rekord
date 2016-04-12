@@ -1069,7 +1069,7 @@ test( 'query', function(assert)
   strictEqual( t0.creator.id, 6 );
   strictEqual( t0.creator.name, 'u0' );
 
-  isInstance( t0.$relations.creator.query, Rekord.RemoteQuery, 'query exists' );
+  isInstance( t0.$relations.creator.query, Rekord.Search, 'query exists' );
 });
 
 test( 'preserve true', function(assert)

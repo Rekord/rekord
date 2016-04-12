@@ -22,7 +22,6 @@ test( '$run default', function(assert)
   search.name = 'names';
   search.$run();
 
-  deepEqual( rest.lastModel, search );
   deepEqual( rest.lastRecord, {name: 'names'} );
 
   strictEqual( search.$results.length, 2 );
