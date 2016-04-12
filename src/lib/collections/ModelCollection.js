@@ -122,6 +122,33 @@ extendArray( Collection, ModelCollection,
   },
 
   /**
+   * Creates a sub view of this collection known as a filtered collection. The
+   * resulting collection changes when this collection changes. Any time an
+   * element is added or removed to this collection it may be added or removed
+   * from the filtered collection if it fits the filter function. The filter
+   * function is created by passing the arguments of this function to
+   * {@link Rekord.createWhere}.
+   *
+   * @method
+   * @memberof Rekord.ModelCollection#
+   * @param {whereInput} [whereProperties] -
+   *    See {@link Rekord.createWhere}
+   * @param {Any} [whereValue] -
+   *    See {@link Rekord.createWhere}
+   * @param {equalityCallback} [whereEquals] -
+   *    See {@link Rekord.createWhere}
+   * @return {Rekord.FilteredModelCollection} -
+   *    The newly created live filtered view of this collection.
+   * @see Rekord.createWhere
+   */
+  filtered: function(whereProperties, whereValue, whereEquals)
+  {
+    var filter = createWhere( whereProperties, whereValue, whereEquals );
+
+    return new FilteredModelCollection( this, filter );
+  },
+
+  /**
    * Documented in Collection.js
    *
    * @see Rekord.ModelCollection#buildKeyFromInput

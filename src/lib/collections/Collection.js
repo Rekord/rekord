@@ -301,7 +301,7 @@ extendArray( Array, Collection,
    *    See {@link Rekord.createWhere}
    * @param {equalityCallback} [whereEquals] -
    *    See {@link Rekord.createWhere}
-   * @return {Rekord.Collection} -
+   * @return {Rekord.FilteredCollection} -
    *    The newly created live filtered view of this collection.
    * @see Rekord.createWhere
    */
