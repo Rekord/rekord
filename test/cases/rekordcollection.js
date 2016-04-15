@@ -457,6 +457,35 @@ test( 'page', function(assert)
 
 });
 
+test( 'page more', function(assert)
+{
+  var c = Rekord.collect(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
+  var p = c.page( 4 );
+
+  deepEqual( p.toArray(), [1, 2, 3, 4] );
+
+  p.more();
+
+  deepEqual( p.toArray(), [1, 2, 3, 4, 5, 6, 7, 8] );
+
+  p.more(2);
+
+  deepEqual( p.toArray(), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15] );
+
+  p.more();
+
+  deepEqual( p.toArray(), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15] );
+
+  p.next();
+
+  deepEqual( p.toArray(), [5, 6, 7, 8] );
+
+  c.clear();
+
+  strictEqual( p.length, 0 );
+  deepEqual( p.toArray(), [] );
+});
+
 test( 'change', function(assert)
 {
   var c = Rekord.collect();

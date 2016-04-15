@@ -8454,11 +8454,28 @@ extendArray( Array, Page,
     var end = Math.min( start + this.pageSize, n );
     var length = end - start;
 
-    this.length = length;
+    this.length = 0;
 
     for (var i = 0; i < length; i++)
     {
-      this[ i ] = source[ start++ ];
+      this.push( source[ start++ ] );
+    }
+  },
+
+  more: function(pages)
+  {
+    var source = this.collection;
+    var limit = source.length;
+    var pageCount = pages || 1;
+    var offset = this.pageIndex * this.pageSize;
+    var start = offset + this.length;
+    var adding = this.pageSize * pageCount;
+    var desiredEnd = start + adding;
+    var actualEnd = Math.min( limit, desiredEnd );
+
+    while (start < actualEnd)
+    {
+      this.push( source[ start++ ] );
     }
   },
 
@@ -8982,14 +8999,18 @@ extendArray( Collection, ModelCollection,
    * @param {Boolean} [delaySort=false] -
    *    Whether automatic sorting should be delayed until the user manually
    *    calls {@link Rekord.ModelCollection#sort sort}.
+   * @param {Boolean} [remoteData=false] -
+   *    If the model is from a remote source. Remote sources place the model
+   *    directly into the database while local sources aren't stored in the
+   *    database until they're saved.
    * @return {Rekord.ModelCollection} -
    *    The reference to this collection.
    * @emits Rekord.ModelCollection#add
    * @emits Rekord.ModelCollection#sort
    */
-  add: function(input, delaySort)
+  add: function(input, delaySort, remoteData)
   {
-    var model = this.parseModel( input );
+    var model = this.parseModel( input, remoteData );
 
     this.map.put( model.$key(), model );
     this.trigger( Collection.Events.Add, [this, model] );
@@ -9060,18 +9081,22 @@ extendArray( Collection, ModelCollection,
    * @param {Boolean} [delaySort=false] -
    *    Whether automatic sorting should be delayed until the user manually
    *    calls {@link Rekord.ModelCollection#sort sort}.
+   * @param {Boolean} [remoteData=false] -
+   *    If the model is from a remote source. Remote sources place the model
+   *    directly into the database while local sources aren't stored in the
+   *    database until they're saved.
    * @return {Rekord.ModelCollection} -
    *    The reference to this collection.
    * @emits Rekord.ModelCollection#adds
    * @emits Rekord.ModelCollection#sort
    */
-  addAll: function(models, delaySort)
+  addAll: function(models, delaySort, remoteData)
   {
     if ( isArray( models ) )
     {
       for (var i = 0; i < models.length; i++)
       {
-        var model = this.parseModel( models[ i ] );
+        var model = this.parseModel( models[ i ], remoteData );
 
         this.map.put( model.$key(), model );
       }
@@ -10003,8 +10028,9 @@ Search.prototype =
 
   $init: function(database, url, options)
   {
-    applyOptions( this, options, Search.Defaults, true );
+    applyOptions( this, options, this.$getDefaults(), true );
 
+    this.$append = false;
     this.$db = database;
     this.$url = url;
     this.$results = new ModelCollection( database );
@@ -10087,7 +10113,16 @@ Search.prototype =
     var models = this.$decode.apply( this, arguments );
 
     this.$status = Search.Status.Success;
-    this.$results.reset( models, true );
+
+    if ( this.$append )
+    {
+      this.$results.addAll( models, false, true );
+    }
+    else
+    {
+      this.$results.reset( models, true );
+    }
+
     this.$trigger( Search.Events.Ready, [this, response] );
     this.$trigger( Search.Events.Success, [this, response] );
   },
@@ -10184,11 +10219,32 @@ extend( Search, SearchPaged,
 
       if ( !dontRun )
       {
+        this.$append = false;
         this.$run();
       }
     }
 
     return this;
+  },
+
+  $more: function()
+  {
+    var next = this.$getPageIndex() + 1;
+
+    if ( next < this.$getPageCount() )
+    {
+      this.$setPageIndex( next );
+      this.$once( Search.Events.Ready, this.$onMoreEnd );
+      this.$append = true;
+      this.$run();
+    }
+
+    return this;
+  },
+
+  $onMoreEnd: function()
+  {
+    this.$append = false;
   },
 
   $first: function(dontRun)

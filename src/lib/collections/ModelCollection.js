@@ -357,14 +357,18 @@ extendArray( Collection, ModelCollection,
    * @param {Boolean} [delaySort=false] -
    *    Whether automatic sorting should be delayed until the user manually
    *    calls {@link Rekord.ModelCollection#sort sort}.
+   * @param {Boolean} [remoteData=false] -
+   *    If the model is from a remote source. Remote sources place the model
+   *    directly into the database while local sources aren't stored in the
+   *    database until they're saved.
    * @return {Rekord.ModelCollection} -
    *    The reference to this collection.
    * @emits Rekord.ModelCollection#add
    * @emits Rekord.ModelCollection#sort
    */
-  add: function(input, delaySort)
+  add: function(input, delaySort, remoteData)
   {
-    var model = this.parseModel( input );
+    var model = this.parseModel( input, remoteData );
 
     this.map.put( model.$key(), model );
     this.trigger( Collection.Events.Add, [this, model] );
@@ -435,18 +439,22 @@ extendArray( Collection, ModelCollection,
    * @param {Boolean} [delaySort=false] -
    *    Whether automatic sorting should be delayed until the user manually
    *    calls {@link Rekord.ModelCollection#sort sort}.
+   * @param {Boolean} [remoteData=false] -
+   *    If the model is from a remote source. Remote sources place the model
+   *    directly into the database while local sources aren't stored in the
+   *    database until they're saved.
    * @return {Rekord.ModelCollection} -
    *    The reference to this collection.
    * @emits Rekord.ModelCollection#adds
    * @emits Rekord.ModelCollection#sort
    */
-  addAll: function(models, delaySort)
+  addAll: function(models, delaySort, remoteData)
   {
     if ( isArray( models ) )
     {
       for (var i = 0; i < models.length; i++)
       {
-        var model = this.parseModel( models[ i ] );
+        var model = this.parseModel( models[ i ], remoteData );
 
         this.map.put( model.$key(), model );
       }

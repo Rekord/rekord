@@ -118,11 +118,28 @@ extendArray( Array, Page,
     var end = Math.min( start + this.pageSize, n );
     var length = end - start;
 
-    this.length = length;
+    this.length = 0;
 
     for (var i = 0; i < length; i++)
     {
-      this[ i ] = source[ start++ ];
+      this.push( source[ start++ ] );
+    }
+  },
+
+  more: function(pages)
+  {
+    var source = this.collection;
+    var limit = source.length;
+    var pageCount = pages || 1;
+    var offset = this.pageIndex * this.pageSize;
+    var start = offset + this.length;
+    var adding = this.pageSize * pageCount;
+    var desiredEnd = start + adding;
+    var actualEnd = Math.min( limit, desiredEnd );
+
+    while (start < actualEnd)
+    {
+      this.push( source[ start++ ] );
     }
   },
 

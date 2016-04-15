@@ -64,11 +64,32 @@ extend( Search, SearchPaged,
 
       if ( !dontRun )
       {
+        this.$append = false;
         this.$run();
       }
     }
 
     return this;
+  },
+
+  $more: function()
+  {
+    var next = this.$getPageIndex() + 1;
+
+    if ( next < this.$getPageCount() )
+    {
+      this.$setPageIndex( next );
+      this.$once( Search.Events.Ready, this.$onMoreEnd );
+      this.$append = true;
+      this.$run();
+    }
+
+    return this;
+  },
+
+  $onMoreEnd: function()
+  {
+    this.$append = false;
   },
 
   $first: function(dontRun)

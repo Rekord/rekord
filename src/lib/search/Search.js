@@ -45,8 +45,9 @@ Search.prototype =
 
   $init: function(database, url, options)
   {
-    applyOptions( this, options, Search.Defaults, true );
+    applyOptions( this, options, this.$getDefaults(), true );
 
+    this.$append = false;
     this.$db = database;
     this.$url = url;
     this.$results = new ModelCollection( database );
@@ -129,7 +130,16 @@ Search.prototype =
     var models = this.$decode.apply( this, arguments );
 
     this.$status = Search.Status.Success;
-    this.$results.reset( models, true );
+
+    if ( this.$append )
+    {
+      this.$results.addAll( models, false, true );
+    }
+    else
+    {
+      this.$results.reset( models, true );
+    }
+
     this.$trigger( Search.Events.Ready, [this, response] );
     this.$trigger( Search.Events.Success, [this, response] );
   },
