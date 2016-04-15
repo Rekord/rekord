@@ -583,6 +583,36 @@ test( '$refresh', function(assert)
   strictEqual( t0.name, 'name1' );
 });
 
+test( '$autoRefresh', function(assert)
+{
+  noline();
+
+  var Todo = Rekord({
+    name: 'Model_autoRefresh',
+    fields: ['name']
+  });
+
+  var remote = Todo.Database.rest;
+
+  var t0 = Todo.create({name: 'name0'});
+
+  t0.$autoRefresh();
+
+  strictEqual( t0.name, 'name0' );
+
+  remote.map.put( t0.id, {id: t0.id, name: 'name1'} );
+
+  offline();
+
+  strictEqual( t0.name, 'name0' );
+
+  online();
+
+  strictEqual( t0.name, 'name1' );
+
+  noline();
+});
+
 test( '$cancel', function(assert)
 {
   var prefix = 'Model_cancel_';

@@ -435,6 +435,15 @@ Model.prototype =
   $refresh: function(cascade)
   {
     this.$db.refreshModel( this, cascade );
+
+    return this;
+  },
+
+  $autoRefresh: function()
+  {
+    Rekord.on( Rekord.Events.Online, this.$refresh, this );
+
+    return this;
   },
 
   $cancel: function(reset)

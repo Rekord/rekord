@@ -1249,7 +1249,7 @@ Database.prototype =
 
   refreshModel: function(model, cascade)
   {
-    model.$addOperation( GetLocal, cascade );
+    model.$addOperation( GetRemote, cascade );
   }
 
 };
