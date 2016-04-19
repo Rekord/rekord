@@ -19,6 +19,10 @@ The easiest way to install rekord is through bower via `bower install rekord`.
 - If REST call fails because application is offline, wait until application comes back online to proceed with changes
 - If the application restarts with pending operations, they will be resumed
 
+**Examples**
+
+Examples exist in a separate project: https://github.com/Rekord/rekord-examples
+
 **Restrictions**
 
 One minor restriction currently exists - id has to be supplied upon instance creation otherwise a UUID is generated and must be used as the ID of the instance.
