@@ -3393,6 +3393,27 @@ Rekord.debug = function(event, source)  /*, data.. */
   // up to the user
 };
 
+/**
+ * Sets the debug implementation provided the factory function. This function
+ * can only be called once - all subsequent calls will be ignored unless
+ * `overwrite` is given as a truthy value.
+ *
+ * @memberof Rekord
+ * @param {Function} factory -
+ *    The factory which provides debug implementations.
+ * @param {Boolean} [overwrite=false] -
+ *    True if existing implementations are to be ignored and the given factory
+ *    should be the implementation.
+ */
+Rekord.setDebug = function(factory, overwrite)
+{
+  if ( !Rekord.debugSet || overwrite )
+  {
+    Rekord.debug = factory;
+    Rekord.debugSet = true;
+  }
+};
+
 Rekord.Debugs = {
 
   CREATION: 0,                // options
@@ -3593,9 +3614,30 @@ Rekord.rest = function(database)
 };
 
 /**
+ * Sets the rest implementation provided the factory function. This function
+ * can only be called once - all subsequent calls will be ignored unless
+ * `overwrite` is given as a truthy value.
+ *
+ * @memberof Rekord
+ * @param {Function} factory -
+ *    The factory which provides rest implementations.
+ * @param {Boolean} [overwrite=false] -
+ *    True if existing implementations are to be ignored and the given factory
+ *    should be the implementation.
+ */
+Rekord.setRest = function(factory, overwrite)
+{
+  if ( !Rekord.restSet || overwrite )
+  {
+    Rekord.rest = factory;
+    Rekord.restSet = true;
+  }
+};
+
+/**
  * A factory function for returning an object capable of storing objects for
  * retrieval later by the application.
- * 
+ *
  * @param  {Database} database
  *         The database this store is for.
  * @return {Object} -
@@ -3607,22 +3649,22 @@ Rekord.store = function(database)
 
     /**
      * Places a record in the store with the given key.
-     * 
+     *
      * @param  {String|Number} key
      *         The key to store the record as.
      * @param  {Object} record
      *         The record to store.
      * @param  {function} success
      *         A function to invoke when the record is successfully stored with
-     *         the key. The arguments of the function should be the key and 
+     *         the key. The arguments of the function should be the key and
      *         record passed to this function.
      * @param  {function} failure
      *         A function to invoke when the record failed to be stored with the
      *         key. The arguments of the function should be the key, record, and
      *         an error that occurred if available.
      */
-    put: function(key, record, success, failure) 
-    { 
+    put: function(key, record, success, failure)
+    {
       success( key, record );
     },
 
@@ -3634,7 +3676,7 @@ Rekord.store = function(database)
 
     /**
      * Removes a record from the store with the given key.
-     * 
+     *
      * @param  {String|Number} key
      *         The key to remove from the store.
      * @param  {function} success
@@ -3646,21 +3688,21 @@ Rekord.store = function(database)
      *         from the store. The arguments of the function are the key given
      *         to this function and an error that occurred if available.
      */
-    remove: function(key, success, failure) 
+    remove: function(key, success, failure)
     {
       success( key );
     },
 
     /**
      * Returns all records and their keys to the given success callback.
-     * 
+     *
      * @param  {function} success
      *         The function to invoke with the array of records and an array
      *         of keys.
      * @param  {function} failure
      *         The function to invoke with the error that occurred if available.
      */
-    all: function(success, failure) 
+    all: function(success, failure)
     {
       success( [], [] );
     }
@@ -3670,12 +3712,34 @@ Rekord.store = function(database)
 };
 
 /**
+ * Sets the store implementation provided the factory function. This function
+ * can only be called once - all subsequent calls will be ignored unless
+ * `overwrite` is given as a truthy value.
+ *
+ * @memberof Rekord
+ * @param {Function} factory -
+ *    The factory which provides store implementations.
+ * @param {Boolean} [overwrite=false] -
+ *    True if existing implementations are to be ignored and the given factory
+ *    should be the implementation.
+ */
+Rekord.setStore = function(factory, overwrite)
+{
+  if ( !Rekord.storeSet || overwrite )
+  {
+    Rekord.store = factory;
+    Rekord.storeSet = true;
+  }
+};
+
+
+/**
  * The factory responsible for creating a service which publishes operations
  * and receives operations that have occurred. The first argument is a reference
  * to the Database and the second argument is a function to invoke when a
  * live operation occurs. This function must return a function that can be passed
  * an operation to be delegated to other clients.
- * 
+ *
  * @param  {Database} database
  *         The database this live function is for.
  * @return {function} -
@@ -3697,6 +3761,28 @@ Rekord.live = function(database)
 
   };
 };
+
+/**
+ * Sets the live implementation provided the factory function. This function
+ * can only be called once - all subsequent calls will be ignored unless
+ * `overwrite` is given as a truthy value.
+ *
+ * @memberof Rekord
+ * @param {Function} factory -
+ *    The factory which provides live implementations.
+ * @param {Boolean} [overwrite=false] -
+ *    True if existing implementations are to be ignored and the given factory
+ *    should be the implementation.
+ */
+Rekord.setLive = function(factory, overwrite)
+{
+  if ( !Rekord.liveSet || overwrite )
+  {
+    Rekord.live = factory;
+    Rekord.liveSet = true;
+  }
+};
+
 
 // Initial online
 Rekord.online = window.navigator.onLine !== false;

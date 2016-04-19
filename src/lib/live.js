@@ -5,7 +5,7 @@
  * to the Database and the second argument is a function to invoke when a
  * live operation occurs. This function must return a function that can be passed
  * an operation to be delegated to other clients.
- * 
+ *
  * @param  {Database} database
  *         The database this live function is for.
  * @return {function} -
@@ -26,4 +26,25 @@ Rekord.live = function(database)
     }
 
   };
+};
+
+/**
+ * Sets the live implementation provided the factory function. This function
+ * can only be called once - all subsequent calls will be ignored unless
+ * `overwrite` is given as a truthy value.
+ *
+ * @memberof Rekord
+ * @param {Function} factory -
+ *    The factory which provides live implementations.
+ * @param {Boolean} [overwrite=false] -
+ *    True if existing implementations are to be ignored and the given factory
+ *    should be the implementation.
+ */
+Rekord.setLive = function(factory, overwrite)
+{
+  if ( !Rekord.liveSet || overwrite )
+  {
+    Rekord.live = factory;
+    Rekord.liveSet = true;
+  }
 };

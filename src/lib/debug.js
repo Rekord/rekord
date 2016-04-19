@@ -4,6 +4,27 @@ Rekord.debug = function(event, source)  /*, data.. */
   // up to the user
 };
 
+/**
+ * Sets the debug implementation provided the factory function. This function
+ * can only be called once - all subsequent calls will be ignored unless
+ * `overwrite` is given as a truthy value.
+ *
+ * @memberof Rekord
+ * @param {Function} factory -
+ *    The factory which provides debug implementations.
+ * @param {Boolean} [overwrite=false] -
+ *    True if existing implementations are to be ignored and the given factory
+ *    should be the implementation.
+ */
+Rekord.setDebug = function(factory, overwrite)
+{
+  if ( !Rekord.debugSet || overwrite )
+  {
+    Rekord.debug = factory;
+    Rekord.debugSet = true;
+  }
+};
+
 Rekord.Debugs = {
 
   CREATION: 0,                // options
