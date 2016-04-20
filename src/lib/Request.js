@@ -8,7 +8,7 @@ function Request(context, success, failure)
   this.callCanceled = 0;
 }
 
-Request.prototype =
+addMethods( Request.prototype,
 {
 
   onSuccess: function()
@@ -39,4 +39,4 @@ Request.prototype =
     this.callCanceled = this.call;
   }
 
-};
+});

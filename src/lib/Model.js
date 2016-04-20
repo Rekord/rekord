@@ -94,7 +94,7 @@ Model.Blocked =
   valueOf: true
 };
 
-Model.prototype =
+addMethods( Model.prototype,
 {
 
   $init: function(props, remoteData)
@@ -578,7 +578,7 @@ Model.prototype =
     return encoded;
   },
 
-  $change: function()
+  $changed: function()
   {
     this.$trigger( Model.Events.Change );
   },
@@ -682,7 +682,8 @@ Model.prototype =
     return this.$db.className + ' ' + JSON.stringify( this.$toJSON() );
   }
 
-};
+});
 
 eventize( Model.prototype, true );
+
 addEventFunction( Model.prototype, '$change', Model.Events.Changes, true );

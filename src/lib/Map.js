@@ -29,7 +29,7 @@ function Map()
   this.indices = {};
 }
 
-Map.prototype =
+addMethods( Map.prototype,
 {
 
   /**
@@ -315,4 +315,4 @@ Map.prototype =
     return this;
   }
 
-};
+});

@@ -18,7 +18,7 @@ function Shard(database)
   this.database = database;
 }
 
-Shard.prototype =
+addMethods( Shard.prototype,
 {
 
   STATUS_FAIL_ALL: 500,
@@ -305,4 +305,4 @@ Shard.prototype =
     }
   }
 
-};
+});

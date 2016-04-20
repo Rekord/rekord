@@ -207,7 +207,7 @@ Database.Defaults =
   createLive:           defaultCreateLive
 };
 
-Database.prototype =
+addMethods( Database.prototype,
 {
 
   // Notifies a callback when the database has loaded (either locally or remotely).
@@ -1252,7 +1252,7 @@ Database.prototype =
     model.$addOperation( GetRemote, cascade );
   }
 
-};
+});
 
 eventize( Database.prototype );
 addEventFunction( Database.prototype, 'change', Database.Events.Changes );

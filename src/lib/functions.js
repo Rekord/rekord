@@ -565,11 +565,42 @@ function extend(parent, child, override)
   // Avoid calling the parent constructor
   parent = copyConstructor( parent );
   // Child instances are instanceof parent
-  child.prototype = new parent()
+  child.prototype = new parent();
   // Copy new methods into child prototype
-  transfer( override, child.prototype )
+  addMethods( child.prototype, override );
   // Set the correct constructor
   child.prototype.constructor = child;
+}
+
+var addMethod = (function()
+{
+  if ( Object.defineProperty )
+  {
+    return function(target, methodName, method)
+    {
+      Object.defineProperty( target, methodName, {
+        configurable: true,
+        enumerable: false,
+        value: method
+      });
+    };
+  }
+  else
+  {
+    return function(target, methodName, method)
+    {
+      target[ methodName ] = method;
+    };
+  }
+
+})();
+
+function addMethods(target, methods)
+{
+  for (var methodName in methods)
+  {
+    addMethod( target, methodName, methods[ methodName ] );
+  }
 }
 
 // Creates a factory for instantiating

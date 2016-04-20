@@ -4,7 +4,7 @@ function addEventFunction(target, functionName, events, secret)
   var on = secret ? '$on' : 'on';
   var off = secret ? '$off' : 'off';
 
-  target[ functionName ] = function(callback, context)
+  addMethod( target, functionName, function(callback, context)
   {
     var subject = this;
     var unlistened = false;
@@ -31,7 +31,7 @@ function addEventFunction(target, functionName, events, secret)
     subject[ on ]( events, listener );
 
     return unlistener;
-  };
+  });
 }
 
 /**
@@ -289,18 +289,18 @@ function eventize(target, secret)
 
   if ( secret )
   {
-    target.$on = on;
-    target.$once = once;
-    target.$after = after;
-    target.$off = off;
-    target.$trigger = trigger;
+    addMethod( target, '$on', on );
+    addMethod( target, '$once', once );
+    addMethod( target, '$after', after );
+    addMethod( target, '$off', off );
+    addMethod( target, '$trigger', trigger );
   }
   else
   {
-    target.on = on;
-    target.once = once;
-    target.after = after;
-    target.off = off;
-    target.trigger = trigger;
+    addMethod( target, 'on', on );
+    addMethod( target, 'once', once );
+    addMethod( target, 'after', after );
+    addMethod( target, 'off', off );
+    addMethod( target, 'trigger', trigger );
   }
 };

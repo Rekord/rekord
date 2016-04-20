@@ -3,7 +3,7 @@ function Operation()
 {
 }
 
-Operation.prototype =
+addMethods( Operation.prototype,
 {
   reset: function(model, cascade)
   {
@@ -127,4 +127,4 @@ Operation.prototype =
 
   }
 
-};
+});

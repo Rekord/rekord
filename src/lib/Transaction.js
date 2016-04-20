@@ -52,7 +52,7 @@ Transaction.Events =
   Any:            'remote-success local-success offline blocked error'
 };
 
-Transaction.prototype =
+addMethods( Transaction.prototype,
 {
   add: function(cascade, model, operation)
   {
@@ -178,6 +178,6 @@ Transaction.prototype =
     return ignore;
   }
 
-};
+});
 
 eventize( Transaction.prototype );

@@ -35,7 +35,7 @@ Search.Defaults =
 {
 };
 
-Search.prototype =
+addMethods( Search.prototype,
 {
 
   $getDefaults: function()
@@ -166,6 +166,6 @@ Search.prototype =
     return '';
   }
 
-};
+});
 
 eventize( Search.prototype, true );

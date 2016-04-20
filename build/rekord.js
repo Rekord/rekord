@@ -568,11 +568,42 @@ function extend(parent, child, override)
   // Avoid calling the parent constructor
   parent = copyConstructor( parent );
   // Child instances are instanceof parent
-  child.prototype = new parent()
+  child.prototype = new parent();
   // Copy new methods into child prototype
-  transfer( override, child.prototype )
+  addMethods( child.prototype, override );
   // Set the correct constructor
   child.prototype.constructor = child;
+}
+
+var addMethod = (function()
+{
+  if ( Object.defineProperty )
+  {
+    return function(target, methodName, method)
+    {
+      Object.defineProperty( target, methodName, {
+        configurable: true,
+        enumerable: false,
+        value: method
+      });
+    };
+  }
+  else
+  {
+    return function(target, methodName, method)
+    {
+      target[ methodName ] = method;
+    };
+  }
+
+})();
+
+function addMethods(target, methods)
+{
+  for (var methodName in methods)
+  {
+    addMethod( target, methodName, methods[ methodName ] );
+  }
 }
 
 // Creates a factory for instantiating
@@ -1551,7 +1582,7 @@ function addEventFunction(target, functionName, events, secret)
   var on = secret ? '$on' : 'on';
   var off = secret ? '$off' : 'off';
 
-  target[ functionName ] = function(callback, context)
+  addMethod( target, functionName, function(callback, context)
   {
     var subject = this;
     var unlistened = false;
@@ -1578,7 +1609,7 @@ function addEventFunction(target, functionName, events, secret)
     subject[ on ]( events, listener );
 
     return unlistener;
-  };
+  });
 }
 
 /**
@@ -1836,19 +1867,19 @@ function eventize(target, secret)
 
   if ( secret )
   {
-    target.$on = on;
-    target.$once = once;
-    target.$after = after;
-    target.$off = off;
-    target.$trigger = trigger;
+    addMethod( target, '$on', on );
+    addMethod( target, '$once', once );
+    addMethod( target, '$after', after );
+    addMethod( target, '$off', off );
+    addMethod( target, '$trigger', trigger );
   }
   else
   {
-    target.on = on;
-    target.once = once;
-    target.after = after;
-    target.off = off;
-    target.trigger = trigger;
+    addMethod( target, 'on', on );
+    addMethod( target, 'once', once );
+    addMethod( target, 'after', after );
+    addMethod( target, 'off', off );
+    addMethod( target, 'trigger', trigger );
   }
 };
 
@@ -2912,6 +2943,15 @@ function FileEncoder(input, model, field, forSaving)
 
 Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 {
+
+  model.filtered = function(whereProperties, whereValue, whereEquals)
+  {
+    return db.models.filtered( whereProperties, whereValue, whereEquals );
+  };
+});
+
+Rekord.on( Rekord.Events.Plugins, function(model, db, options)
+{
   model.find = function(whereProperties, whereValue, whereEquals)
   {
     return db.models.firstWhere( whereProperties, whereValue, whereEquals );
@@ -3376,15 +3416,6 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
     addCreatedAt( 'created_at' );
     addUpdatedAt( 'updated_at' );
   }
-});
-
-Rekord.on( Rekord.Events.Plugins, function(model, db, options)
-{
-
-  model.filtered = function(whereProperties, whereValue, whereEquals)
-  {
-    return db.models.filtered( whereProperties, whereValue, whereEquals );
-  };
 });
 
 
@@ -4088,7 +4119,7 @@ Database.Defaults =
   createLive:           defaultCreateLive
 };
 
-Database.prototype =
+addMethods( Database.prototype,
 {
 
   // Notifies a callback when the database has loaded (either locally or remotely).
@@ -5133,7 +5164,7 @@ Database.prototype =
     model.$addOperation( GetRemote, cascade );
   }
 
-};
+});
 
 eventize( Database.prototype );
 addEventFunction( Database.prototype, 'change', Database.Events.Changes );
@@ -5234,7 +5265,7 @@ Model.Blocked =
   valueOf: true
 };
 
-Model.prototype =
+addMethods( Model.prototype,
 {
 
   $init: function(props, remoteData)
@@ -5718,7 +5749,7 @@ Model.prototype =
     return encoded;
   },
 
-  $change: function()
+  $changed: function()
   {
     this.$trigger( Model.Events.Change );
   },
@@ -5822,9 +5853,10 @@ Model.prototype =
     return this.$db.className + ' ' + JSON.stringify( this.$toJSON() );
   }
 
-};
+});
 
 eventize( Model.prototype, true );
+
 addEventFunction( Model.prototype, '$change', Model.Events.Changes, true );
 
 
@@ -5858,7 +5890,7 @@ function Map()
   this.indices = {};
 }
 
-Map.prototype =
+addMethods( Map.prototype,
 {
 
   /**
@@ -6144,7 +6176,7 @@ Map.prototype =
     return this;
   }
 
-};
+});
 
 
 function Request(context, success, failure)
@@ -6156,7 +6188,7 @@ function Request(context, success, failure)
   this.callCanceled = 0;
 }
 
-Request.prototype =
+addMethods( Request.prototype,
 {
 
   onSuccess: function()
@@ -6187,7 +6219,7 @@ Request.prototype =
     this.callCanceled = this.call;
   }
 
-};
+});
 
 
 /**
@@ -10113,7 +10145,7 @@ Search.Defaults =
 {
 };
 
-Search.prototype =
+addMethods( Search.prototype,
 {
 
   $getDefaults: function()
@@ -10244,7 +10276,7 @@ Search.prototype =
     return '';
   }
 
-};
+});
 
 eventize( Search.prototype, true );
 
@@ -10496,7 +10528,7 @@ Transaction.Events =
   Any:            'remote-success local-success offline blocked error'
 };
 
-Transaction.prototype =
+addMethods( Transaction.prototype,
 {
   add: function(cascade, model, operation)
   {
@@ -10622,7 +10654,7 @@ Transaction.prototype =
     return ignore;
   }
 
-};
+});
 
 eventize( Transaction.prototype );
 
@@ -10631,7 +10663,7 @@ function Operation()
 {
 }
 
-Operation.prototype =
+addMethods( Operation.prototype,
 {
   reset: function(model, cascade)
   {
@@ -10755,7 +10787,7 @@ Operation.prototype =
 
   }
 
-};
+});
 
 function GetLocal(model, cascade)
 {
@@ -11581,7 +11613,7 @@ Relation.Defaults =
   discriminatorToModel: {}
 };
 
-Relation.prototype =
+addMethods( Relation.prototype,
 {
 
   debugQuery: null,
@@ -12044,7 +12076,7 @@ Relation.prototype =
     return null;
   }
 
-};
+});
 
 function RelationSingle()
 {
@@ -14110,7 +14142,7 @@ function Shard(database)
   this.database = database;
 }
 
-Shard.prototype =
+addMethods( Shard.prototype,
 {
 
   STATUS_FAIL_ALL: 500,
@@ -14397,7 +14429,7 @@ Shard.prototype =
     }
   }
 
-};
+});
 
 
   /* Top-Level Function */

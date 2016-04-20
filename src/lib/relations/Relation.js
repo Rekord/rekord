@@ -21,7 +21,7 @@ Relation.Defaults =
   discriminatorToModel: {}
 };
 
-Relation.prototype =
+addMethods( Relation.prototype,
 {
 
   debugQuery: null,
@@ -484,4 +484,4 @@ Relation.prototype =
     return null;
   }
 
-};
+});
