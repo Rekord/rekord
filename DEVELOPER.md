@@ -7,7 +7,6 @@ This document describes how to set up your development environment to build and 
 * [Installing NPM Modules](#installing-npm-modules)
 * [Build commands](#build-commands)
 * [Running Tests Locally](#running-tests-locally)
-* [Running Examples](#running-examples)
 * [Project Information](#project-information)
 
 See the [contribution guidelines](https://github.com/Rekord/rekord/blob/master/CONTRIBUTING.md)
@@ -81,31 +80,6 @@ Test are written using QUnit. You can run just the unit tests as follows:
 ```shell
 gulp test
 ```
-
-## Running Examples
-
-### Starting Servers
-
-The examples come ready with a simple REST API back-end and a real-time server. To run these servers execute the following commands (assuming you're current directory is rekord):
-
-```shell
-cd examples/pubsub
-node example-api.js &
-node pubsub-server.js &
-```
-
-**Notes:**
-* The trailing & will fork the process, if you wish to execute it synchronously then exclude the & and open up another terminal to run the second node command.
-* When forking a process - a PID will be displayed on the screen. Use `kill -9 <PID>` to kill the forked process.
-* Expect to see debugging information in the terminal as the examples interact with the servers.
-
-### Viewing Examples
-
-You can point your browser to the following example files:
-
-* `examples/todos/index.html` - Todo List Example (simple example, real-time supported)
-* `examples/tasks/index.html` - Tasks & Task List Example (real-time supported)
-* `examples/users/index.html` - Users, Groups, & User Groups (hasMany & hasManyThrough relationships)
 
 ## Project Information
 
