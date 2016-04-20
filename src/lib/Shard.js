@@ -5,7 +5,7 @@ Rekord.shard = function(methods)
   {
     var shard = new Shard( database );
 
-    transfer( methods, shard );
+    addMethods( shard, methods );
 
     shard.initialize( database );
 

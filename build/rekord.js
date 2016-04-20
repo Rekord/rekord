@@ -2319,12 +2319,12 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
     {
       var $init = model.prototype.$init;
 
-      model.prototype.$init = function()
+      addMethod( model.prototype, '$init', function()
       {
         $init.apply( this, arguments );
 
         applyEventListeners( this, modelEvents );
-      };
+      });
     }
   }
 
@@ -3129,7 +3129,7 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 
   if ( !isEmpty( methods ) )
   {
-    transfer( methods, model.prototype );
+    addMethods( model.prototype, methods );
   }
 });
 
@@ -3373,12 +3373,12 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 
     var $save = model.prototype.$save;
 
-    model.prototype.$save = function()
+    addMethod( model.prototype, '$save', function()
     {
       this[ field ] = currentTimestamp();
 
       $save.apply( this, arguments );
-    };
+    });
   }
 
   function addTimestampField(type, field)
@@ -10028,82 +10028,87 @@ function DiscriminateCollection(collection, discriminator, discriminatorsToModel
   var clone = collection.clone;
   var cloneEmpty = collection.cloneEmpty;
 
-  /**
-   * Builds a key from input. Discriminated collections only accept objects as
-   * input - otherwise there's no way to determine the discriminator. If the
-   * discriminator on the input doesn't map to a Rekord instance OR the input
-   * is not an object the input will be returned instead of a model instance.
-   *
-   * @param {modelInput} input -
-   *    The input to create a key for.
-   * @return {Any} -
-   *    The built key or the given input if a key could not be built.
-   */
-  collection.buildKeyFromInput = function(input)
+  addMethods( collection,
   {
-    if ( isObject( input ) )
+
+    /**
+     * Builds a key from input. Discriminated collections only accept objects as
+     * input - otherwise there's no way to determine the discriminator. If the
+     * discriminator on the input doesn't map to a Rekord instance OR the input
+     * is not an object the input will be returned instead of a model instance.
+     *
+     * @param {modelInput} input -
+     *    The input to create a key for.
+     * @return {Any} -
+     *    The built key or the given input if a key could not be built.
+     */
+    buildKeyFromInput: function(input)
     {
-      var discriminatedValue = input[ this.discriminator ];
+      if ( isObject( input ) )
+      {
+        var discriminatedValue = input[ this.discriminator ];
+        var model = this.discriminatorsToModel[ discriminatedValue ];
+
+        if ( model )
+        {
+          return model.Database.buildKeyFromInput( input );
+        }
+      }
+
+      return input;
+    },
+
+    /**
+     * Takes input and returns a model instance. The input is expected to be an
+     * object, any other type will return null.
+     *
+     * @param {modelInput} input -
+     *    The input to parse to a model instance.
+     * @param {Boolean} [remoteData=false] -
+     *    Whether or not the input is coming from a remote source.
+     * @return {Rekord.Model} -
+     *    The model instance parsed or null if none was found.
+     */
+    parseModel: function(input, remoteData)
+    {
+      if ( input instanceof Model )
+      {
+        return input;
+      }
+
+      var discriminatedValue = isValue( input ) ? input[ this.discriminator ] : null;
       var model = this.discriminatorsToModel[ discriminatedValue ];
 
-      if ( model )
-      {
-        return model.Database.buildKeyFromInput( input );
-      }
-    }
+      return model ? model.Database.parseModel( input, remoteData ) : null;
+    },
 
-    return input;
-  };
-
-  /**
-   * Takes input and returns a model instance. The input is expected to be an
-   * object, any other type will return null.
-   *
-   * @param {modelInput} input -
-   *    The input to parse to a model instance.
-   * @param {Boolean} [remoteData=false] -
-   *    Whether or not the input is coming from a remote source.
-   * @return {Rekord.Model} -
-   *    The model instance parsed or null if none was found.
-   */
-  collection.parseModel = function(input, remoteData)
-  {
-    if ( input instanceof Model )
+    /**
+     * Returns a clone of this collection.
+     *
+     * @method
+     * @memberof Rekord.Collection#
+     * @return {Rekord.Collection} -
+     *    The reference to a clone collection.
+     */
+    clone: function()
     {
-      return input;
+      return DiscriminateCollection( clone.apply( this ), discriminator, discriminatorsToModel );
+    },
+
+    /**
+     * Returns an empty clone of this collection.
+     *
+     * @method
+     * @memberof Rekord.Collection#
+     * @return {Rekord.Collection} -
+     *    The reference to a clone collection.
+     */
+    cloneEmpty: function()
+    {
+      return DiscriminateCollection( cloneEmpty.apply( this ), discriminator, discriminatorsToModel );
     }
 
-    var discriminatedValue = isValue( input ) ? input[ this.discriminator ] : null;
-    var model = this.discriminatorsToModel[ discriminatedValue ];
-
-    return model ? model.Database.parseModel( input, remoteData ) : null;
-  };
-
-  /**
-   * Returns a clone of this collection.
-   *
-   * @method
-   * @memberof Rekord.Collection#
-   * @return {Rekord.Collection} -
-   *    The reference to a clone collection.
-   */
-  collection.clone = function()
-  {
-    return DiscriminateCollection( clone.apply( this ), discriminator, discriminatorsToModel );
-  };
-
-  /**
-   * Returns an empty clone of this collection.
-   *
-   * @method
-   * @memberof Rekord.Collection#
-   * @return {Rekord.Collection} -
-   *    The reference to a clone collection.
-   */
-  collection.cloneEmpty = function()
-  {
-    return DiscriminateCollection( cloneEmpty.apply( this ), discriminator, discriminatorsToModel );
-  };
+  });
 
   return collection;
 }
@@ -11644,7 +11649,7 @@ addMethods( Relation.prototype,
 
     if ( this.discriminated )
     {
-      transfer( Polymorphic, this );
+      addMethods( this, Polymorphic );
     }
 
     this.setReferences( database, field, options );
@@ -14129,7 +14134,7 @@ Rekord.shard = function(methods)
   {
     var shard = new Shard( database );
 
-    transfer( methods, shard );
+    addMethods( shard, methods );
 
     shard.initialize( database );
 

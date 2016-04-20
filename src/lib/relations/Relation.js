@@ -52,7 +52,7 @@ addMethods( Relation.prototype,
 
     if ( this.discriminated )
     {
-      transfer( Polymorphic, this );
+      addMethods( this, Polymorphic );
     }
 
     this.setReferences( database, field, options );

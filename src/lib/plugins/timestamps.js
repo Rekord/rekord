@@ -72,12 +72,12 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 
     var $save = model.prototype.$save;
 
-    model.prototype.$save = function()
+    addMethod( model.prototype, '$save', function()
     {
       this[ field ] = currentTimestamp();
 
       $save.apply( this, arguments );
-    };
+    });
   }
 
   function addTimestampField(type, field)

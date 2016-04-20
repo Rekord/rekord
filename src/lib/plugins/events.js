@@ -32,12 +32,12 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
     {
       var $init = model.prototype.$init;
 
-      model.prototype.$init = function()
+      addMethod( model.prototype, '$init', function()
       {
         $init.apply( this, arguments );
 
         applyEventListeners( this, modelEvents );
-      };
+      });
     }
   }
 
