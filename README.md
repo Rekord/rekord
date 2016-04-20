@@ -3,6 +3,8 @@
 [![Build Status](https://travis-ci.org/Rekord/rekord.svg?branch=master)](https://travis-ci.org/Rekord/rekord)
 [![devDependency Status](https://david-dm.org/Rekord/rekord/dev-status.svg)](https://david-dm.org/Rekord/rekord#info=devDependencies)
 [![Dependency Status](https://david-dm.org/Rekord/rekord.svg)](https://david-dm.org/Rekord/rekord)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/Rekord/rekord/blob/master/LICENSE)
+[![Alpha](https://img.shields.io/badge/State-Alpha-orange.svg)]()
 
 Rekord is a javascript ORM that is offline & real-time capable.
 
