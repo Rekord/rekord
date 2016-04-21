@@ -20,7 +20,7 @@ Working with relational data in javascript can be painful. Rekord eases that pai
 The key for a model can be given when creating a model - otherwise the key will be given a UUID. This is necessary to be offline capable, models need keys so related models can reference it.
 
 4. *What do you mean by capable?*  
-Caching data/changes locally and real-time behavior is optional - if you don't want either feature then you don't need to chose an implementation to use.
+Caching data/changes locally and real-time behavior is optional - if you don't want either feature then you don't need to include an implementation.
 
 5. *Rekord can handle horizontal scaling via sharding?*  
 Yes! You can say models of type X can exist on REST endpoints A, B, & C. You can provide a function which takes a model and returns the set of REST endpoints that need to be sent saves/removes. When you query on a sharded type it can contact all REST endpoints and combine the results.
