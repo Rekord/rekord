@@ -1,4 +1,4 @@
-# ![Logo](https://avatars2.githubusercontent.com/u/18293077?v=3&s=100) Rekord
+# <img src="https://raw.githubusercontent.com/Rekord/rekord/master/images/rekord-color.png" width="60"> Rekord
 
 [![Build Status](https://travis-ci.org/Rekord/rekord.svg?branch=master)](https://travis-ci.org/Rekord/rekord)
 [![devDependency Status](https://david-dm.org/Rekord/rekord/dev-status.svg)](https://david-dm.org/Rekord/rekord#info=devDependencies)
