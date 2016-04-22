@@ -1,3 +1,10 @@
+
+/**
+ *
+ * @constructor
+ * @memberof Rekord
+ * @augments Rekord.Eventful
+ */
 function Page(collection, pageSize, pageIndex)
 {
   this.onChanges = bind( this, this.handleChanges );

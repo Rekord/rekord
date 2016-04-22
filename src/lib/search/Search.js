@@ -12,6 +12,12 @@
  *    {@link Rekord.Search#$results} property.
  */
 
+/**
+ *
+ * @constructor
+ * @memberof Rekord
+ * @augments Rekord.Eventful$
+ */
 function Search(database, url, options)
 {
   this.$init( database, url, options );

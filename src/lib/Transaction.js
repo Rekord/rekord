@@ -32,6 +32,12 @@ Rekord.transactNone = function(cascade, model, operation)
   return new Transaction( cascade, model, operation );
 };
 
+/**
+ *
+ * @constructor
+ * @memberof Rekord
+ * @augments Rekord.Eventful
+ */
 function Transaction(cascade, model, operation)
 {
   this.cascade = cascade;

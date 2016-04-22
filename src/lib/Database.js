@@ -1,5 +1,11 @@
 
 
+/**
+ *
+ * @constructor
+ * @memberof Rekord
+ * @augments Rekord.Eventful
+ */
 function Database(options)
 {
   var defaults = Database.Defaults;

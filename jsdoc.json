@@ -1,8 +1,7 @@
 {
   "source": {
     "include": [
-      "src/lib/functions.js",
-      "src/lib/eventize.js",
+      "src/lib/functions/",
       "src/lib/Rekord.js",
       "src/lib/debug.js",
       "src/lib/rest.js",

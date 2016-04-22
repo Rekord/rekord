@@ -13,8 +13,7 @@ var build = {
   output: './build/',
   include: [
     './src/header.js',
-    './src/lib/functions.js',
-    './src/lib/eventize.js',
+    './src/lib/functions/*',
     './src/lib/Rekord.js',
     './src/lib/plugins/*.js',
     './src/lib/debug.js',

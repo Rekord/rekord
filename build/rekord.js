@@ -2,123 +2,231 @@
 {
 
 
-/**
- * A function which takes a value (typically an object) and returns a true or
- * false value.
- *
- * @callback whereCallback
- * @param {Any} value -
- *    The value to test.
- * @return {Boolean} -
- *    Whether or not the value passed the test.
- * @see Rekord.createWhere
- * @see Rekord.saveWhere
- */
+var AP = Array.prototype;
 
 /**
- * A function for comparing two values and determine whether they're considered
- * equal.
- *
- * @callback equalityCallback
- * @param {Any} a -
- *    The first value to test.
- * @param {Any} b -
- *    The second value to test.
- * @return {Boolean} -
- *    Whether or not the two values are considered equivalent.
- * @see Rekord.equals
- * @see Rekord.equalsStrict
- * @see Rekord.equalsCompare
- */
-
-/**
- * A function for comparing two values to determine if one is greater or lesser
- * than the other or if they're equal.
+ * Converts the given variable to an array of strings. If the variable is a
+ * string it is split based on the delimiter given. If the variable is an
+ * array then it is returned. If the variable is any other type it may result
+ * in an error.
  *
  * ```javascript
- * comparisonCallback( a, b ) < 0 // a < b
- * comparisonCallback( a, b ) > 0 // a > b
- * comparisonCallback( a, b ) == 0 // a == b
+ * Rekord.toArray([1, 2, 3]); // [1, 2, 3]
+ * Rekord.toArray('1,2,3', ','); // ['1', '2', '3']
  * ```
  *
- * @callback comparisonCallback
- * @param {Any} a -
- *    The first value to test.
- * @param {Any} b -
- *    The second value to test.
- * @return {Number} -
- *    0 if the two values are considered equal, a negative value if `a` is
- *    considered less than `b`, and a positive value if `a` is considered
- *    greater than `b`.
- * @see Rekord.compare
- * @see Rekord.compareNumbers
+ * @memberof Rekord
+ * @param {String|String[]} x
+ *    The variable to convert to an Array.
+ * @param {String} [delimiter]
+ *    The delimiter to split if the given variable is a string.
+ * @return {String[]} -
+ *    The array of strings created.
  */
+function toArray(x, delimiter)
+{
+  return x instanceof Array ? x : x.split( delimiter );
+}
 
 /**
- * A function for resolving a value from a given value. Typically used to
- * transform an object into one of it's properties.
- *
- * @callback propertyResolverCallback
- * @param {Any} model -
- *    The model to use to resolve a value.
- * @return {Any} -
- *    The resolved value.
- * @see Rekord.createPropertyResolver
- */
-
- /**
-  * A string, a function, or an array of mixed values.
-  *
-  * ```javascript
-  * 'age'                   // age property of an object
-  * '-age'                  // age property of an object, ordering reversed
-  * function(a, b) {}       // a function which compares two values
-  * ['age', 'done']         // age property of an object, and when equal, the done value
-  * 'creator.name'          // name sub-property of creator property
-  * '{creator.name}, {age}' // formatted string
-  * ```
-  *
-  * @typedef {String|comparisonCallback|Array} comparatorInput
-  */
-
-/**
- * An expression which resolves a value from another value.
+ * Finds the index of a variable in an array optionally using a custom
+ * comparison function. If the variable is not found in the array then `false`
+ * is returned.
  *
  * ```javascript
- * // {age: 6, name: 'x', user: {first: 'tom'}}
- * 'age'                    // age property of an object
- * 'user.first'             // sub property
- * '{age}, {user.first}'    // a formatted string built from object values
- * function(a) {}           // a function which returns a value itself
- * ['age', 'name']          // multiple properties joined with a delimiter
- * {age:null, user:'first'} // multiple properties joined with a delimiter including a sub property
+ * Rekord.indexOf([1, 2, 3], 1); // 0
+ * Rekord.indexOf([1, 2, 3], 4); // false
+ * Rekord.indexOf([1, 2, 2], 2); // 1
  * ```
  *
- * @typedef {String|Function|Array|Object} propertyResolverInput
+ *
+ * @memberof Rekord
+ * @param {Array} arr
+ *    The array to search through.
+ * @param {Any} x
+ *    The variable to search for.
+ * @param {Function} [comparator]
+ *    The function to use which compares two values and returns a truthy
+ *    value if they are considered equivalent. If a comparator is not given
+ *    then strict comparison is used to determine equivalence.
+ * @return {Number|Boolean} -
+ *    The index in the array the variable exists at, otherwise false if
+ *    the variable wasn't found in the array.
  */
+function indexOf(arr, x, comparator)
+{
+  var cmp = comparator || equalsStrict;
+
+  for (var i = 0, n = arr.length; i < n; i++)
+  {
+    if ( cmp( arr[i], x ) )
+    {
+      return i;
+    }
+  }
+
+  return false;
+}
 
 /**
- * An expression which can be used to generate a function for testing a value
- * and returning a boolean result. The following types can be given and will
- * result in the following tests:
+ * Returns an instance of {@link Rekord.Collection} with the initial values
+ * passed as arguments to this function.
  *
- * - `String`: If a string & value are given - the generated function will test
- *    if the object has a property with the given value. If a string is given
- *    and no value is given - the generated function will test if the object
- *    has the property and a non-null value.
- * - `Object`: If an object is given - the generated function will test all
- *    properties of the given object and return true only if the object being
- *    tested has the same values.
- * - `Array`: If an array is given - each element in the array is passed as
- *    arguments to generate a new function. The returned function will only
- *    return true if all generated functions return true - otherwise false.
- * - `whereCallback`: A function can be given which is immediately returned as
- *    the test function.
+ * ```javascript
+ * Rekord.collect(1, 2, 3, 4);
+ * Rekord.collect([1, 2, 3, 4]); // same as above
+ * Rekord.collect();
+ * Rekord.collect([]); // same as above
+ * ```
  *
- * @typedef {String|Object|Array|whereCallback} whereInput
+ * @memberof Rekord
+ * @param {Any[]|...Any} a
+ *    The initial values in the collection. You can pass an array of values
+ *    or any number of arguments.
+ * @return {Rekord.Collection} -
+ *    A newly created instance containing the given values.
  */
+function collect(a)
+{
+  var values = arguments.length > 1 || !isArray(a) ? Array.prototype.slice.call( arguments ) : a;
 
- var AP = Array.prototype;
+  return new Collection( values );
+}
+
+function swap(a, i, k)
+{
+  var t = a[ i ];
+  a[ i ] = a[ k ];
+  a[ k ] = t;
+}
+
+function isSorted(comparator, array)
+{
+  if ( !comparator )
+  {
+    return true;
+  }
+
+  for (var i = 0, n = array.length - 1; i < n; i++)
+  {
+    if ( comparator( array[ i ], array[ i + 1 ] ) > 0 )
+    {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+
+// Copies a constructor function returning a function that can be called to
+// return an instance and doesn't invoke the original constructor.
+function copyConstructor(func)
+{
+  function F() {};
+  F.prototype = func.prototype;
+  return F;
+}
+
+function extend(parent, child, override)
+{
+  // Avoid calling the parent constructor
+  parent = copyConstructor( parent );
+  // Child instances are instanceof parent
+  child.prototype = new parent();
+  // Copy new methods into child prototype
+  addMethods( child.prototype, override );
+  // Set the correct constructor
+  child.prototype.constructor = child;
+}
+
+var addMethod = (function()
+{
+  if ( Object.defineProperty )
+  {
+    return function(target, methodName, method)
+    {
+      Object.defineProperty( target, methodName, {
+        configurable: true,
+        enumerable: false,
+        value: method
+      });
+    };
+  }
+  else
+  {
+    return function(target, methodName, method)
+    {
+      target[ methodName ] = method;
+    };
+  }
+
+})();
+
+function addMethods(target, methods)
+{
+  for (var methodName in methods)
+  {
+    addMethod( target, methodName, methods[ methodName ] );
+  }
+}
+
+// Creates a factory for instantiating
+function factory(constructor)
+{
+  function F(args)
+  {
+    return constructor.apply( this, args );
+  }
+
+  F.prototype = constructor.prototype;
+
+  return function()
+  {
+    return new F( arguments );
+  };
+}
+
+function extendArray(parent, child, override)
+{
+  // If direct extension of array is supported...
+  if ( extendArraySupported() )
+  {
+    extend( parent, child, override );
+    child.create = factory( child );
+  }
+  // Otherwise copy all of the methods
+  else
+  {
+    // Avoid calling the parent constructor
+    parent = copyConstructor( parent );
+
+    // TODO fix for IE8
+    child.create = function()
+    {
+      var created = new parent();
+      child.apply( created, arguments );
+      transfer( override, created );
+      return created;
+    };
+  }
+}
+
+// Is directly extending an array supported?
+function extendArraySupported()
+{
+  if ( extendArraySupported.supported === undefined )
+  {
+    function EA() {};
+    EA.prototype = [];
+    var eq = new EA();
+    eq.push(0);
+    extendArraySupported.supported = (eq.length === 1);
+  }
+
+  return extendArraySupported.supported;
+}
+
 
 /**
  * Determines whether the given variable is defined.
@@ -341,30 +449,6 @@ function isObject(x)
 }
 
 /**
- * Converts the given variable to an array of strings. If the variable is a
- * string it is split based on the delimiter given. If the variable is an
- * array then it is returned. If the variable is any other type it may result
- * in an error.
- *
- * ```javascript
- * Rekord.toArray([1, 2, 3]); // [1, 2, 3]
- * Rekord.toArray('1,2,3', ','); // ['1', '2', '3']
- * ```
- *
- * @memberof Rekord
- * @param {String|String[]} x
- *    The variable to convert to an Array.
- * @param {String} [delimiter]
- *    The delimiter to split if the given variable is a string.
- * @return {String[]} -
- *    The array of strings created.
- */
-function toArray(x, delimiter)
-{
-  return x instanceof Array ? x : x.split( delimiter );
-}
-
-/**
  * Determines whether the given variable is not null and is not undefined.
  *
  * ```javascript
@@ -387,46 +471,6 @@ function toArray(x, delimiter)
 function isValue(x)
 {
   return !!(x !== undefined && x !== null);
-}
-
-/**
- * Finds the index of a variable in an array optionally using a custom
- * comparison function. If the variable is not found in the array then `false`
- * is returned.
- *
- * ```javascript
- * Rekord.indexOf([1, 2, 3], 1); // 0
- * Rekord.indexOf([1, 2, 3], 4); // false
- * Rekord.indexOf([1, 2, 2], 2); // 1
- * ```
- *
- *
- * @memberof Rekord
- * @param {Array} arr
- *    The array to search through.
- * @param {Any} x
- *    The variable to search for.
- * @param {Function} [comparator]
- *    The function to use which compares two values and returns a truthy
- *    value if they are considered equivalent. If a comparator is not given
- *    then strict comparison is used to determine equivalence.
- * @return {Number|Boolean} -
- *    The index in the array the variable exists at, otherwise false if
- *    the variable wasn't found in the array.
- */
-function indexOf(arr, x, comparator)
-{
-  var cmp = comparator || equalsStrict;
-
-  for (var i = 0, n = arr.length; i < n; i++)
-  {
-    if ( cmp( arr[i], x ) )
-    {
-      return i;
-    }
-  }
-
-  return false;
 }
 
 /**
@@ -486,452 +530,7 @@ function S4()
   return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
 }
 
-/**
- * Determines whether the properties on one object equals the properties on
- * another object.
- *
- * @memberof Rekord
- * @param {Object} test -
- *    The object to test for matching.
- * @param {String|String[]} testFields -
- *    The property name or array of properties to test for equality on `test`.
- * @param {Object} expected -
- *    The object with the expected values.
- * @param {String|String[]} expectedFields -
- *    The property name or array of properties to test for equality on `expected`.
- * @param {equalityCallback} [equals] -
- *    The equality function which compares two values and returns whether they
- *    are considered equivalent.
- * @return {Boolean} -
- *    True if the `testFields` properties on `test` are equivalent to the
- *    `expectedFields` on `expected` according to the `equals` function.
- */
-function propsMatch(test, testFields, expected, expectedFields, equals)
-{
-  var equality = equals || Rekord.equals;
 
-  if ( isString( testFields ) ) // && isString( expectedFields )
-  {
-    return equality( test[ testFields ], expected[ expectedFields ] );
-  }
-  else // if ( isArray( testFields ) && isArray( expectedFields ) )
-  {
-    for (var i = 0; i < testFields.length; i++)
-    {
-      var testProp = testFields[ i ];
-      var expectedProp = expectedFields[ i ];
-
-      if ( !equality( test[ testProp ], expected[ expectedProp ] ) )
-      {
-        return false;
-      }
-    }
-
-    return true;
-  }
-
-  return false;
-}
-
-// Determines whether the given model has the given fields
-function hasFields(model, fields, exists)
-{
-  if ( isArray( fields ) )
-  {
-    for (var i = 0; i < fields.length; i++)
-    {
-      if ( !exists( model[ fields[ i ] ] ) )
-      {
-        return false;
-      }
-    }
-
-    return true;
-  }
-  else // isString( fields )
-  {
-    return exists( model[ fields ] );
-  }
-}
-
-// Copies a constructor function returning a function that can be called to
-// return an instance and doesn't invoke the original constructor.
-function copyConstructor(func)
-{
-  function F() {};
-  F.prototype = func.prototype;
-  return F;
-}
-
-function extend(parent, child, override)
-{
-  // Avoid calling the parent constructor
-  parent = copyConstructor( parent );
-  // Child instances are instanceof parent
-  child.prototype = new parent();
-  // Copy new methods into child prototype
-  addMethods( child.prototype, override );
-  // Set the correct constructor
-  child.prototype.constructor = child;
-}
-
-var addMethod = (function()
-{
-  if ( Object.defineProperty )
-  {
-    return function(target, methodName, method)
-    {
-      Object.defineProperty( target, methodName, {
-        configurable: true,
-        enumerable: false,
-        value: method
-      });
-    };
-  }
-  else
-  {
-    return function(target, methodName, method)
-    {
-      target[ methodName ] = method;
-    };
-  }
-
-})();
-
-function addMethods(target, methods)
-{
-  for (var methodName in methods)
-  {
-    addMethod( target, methodName, methods[ methodName ] );
-  }
-}
-
-// Creates a factory for instantiating
-function factory(constructor)
-{
-  function F(args)
-  {
-    return constructor.apply( this, args );
-  }
-
-  F.prototype = constructor.prototype;
-
-  return function()
-  {
-    return new F( arguments );
-  };
-}
-
-function extendArray(parent, child, override)
-{
-  // If direct extension of array is supported...
-  if ( extendArraySupported() )
-  {
-    extend( parent, child, override );
-    child.create = factory( child );
-  }
-  // Otherwise copy all of the methods
-  else
-  {
-    // Avoid calling the parent constructor
-    parent = copyConstructor( parent );
-
-    // TODO fix for IE8
-    child.create = function()
-    {
-      var created = new parent();
-      child.apply( created, arguments );
-      transfer( override, created );
-      return created;
-    };
-  }
-}
-
-// Is directly extending an array supported?
-function extendArraySupported()
-{
-  if ( extendArraySupported.supported === undefined )
-  {
-    function EA() {};
-    EA.prototype = [];
-    var eq = new EA();
-    eq.push(0);
-    extendArraySupported.supported = (eq.length === 1);
-  }
-
-  return extendArraySupported.supported;
-}
-
-function transfer(from, to)
-{
-  for (var prop in from)
-  {
-    to[ prop ] = from[ prop ];
-  }
-
-  return to;
-}
-
-function swap(a, i, k)
-{
-  var t = a[ i ];
-  a[ i ] = a[ k ];
-  a[ k ] = t;
-}
-
-function applyOptions( target, options, defaults, secret )
-{
-  options = options || {};
-
-  function setProperty(prop, value)
-  {
-    if ( isFunction( value ) )
-    {
-      addMethod( target, prop, value );
-    }
-    else
-    {
-      target[ prop ] = value;
-    }
-  }
-
-  for (var prop in defaults)
-  {
-    var defaultValue = defaults[ prop ];
-    var option = options[ prop ];
-    var valued = isValue( option );
-
-    if ( !valued && defaultValue === undefined )
-    {
-      throw ( prop + ' is a required option' );
-    }
-    else if ( valued )
-    {
-      setProperty( prop, option );
-    }
-    else
-    {
-      setProperty( prop, copy( defaultValue ) );
-    }
-  }
-
-  for (var prop in options)
-  {
-    if ( !(prop in defaults) )
-    {
-      setProperty( prop, options[ prop ] );
-    }
-  }
-
-  if ( secret )
-  {
-    target.$options = options;
-  }
-  else
-  {
-    target.options = options;
-  }
-}
-
-function camelCaseReplacer(match)
-{
-  return match.length === 1 ? match.toUpperCase() : match.charAt(1).toUpperCase();
-}
-
-function toCamelCase(name)
-{
-  return name.replace( toCamelCase.REGEX, camelCaseReplacer );
-}
-
-toCamelCase.REGEX = /(^.|_.)/g;
-
-/**
- * Returns an instance of {@link Rekord.Collection} with the initial values
- * passed as arguments to this function.
- *
- * ```javascript
- * Rekord.collect(1, 2, 3, 4);
- * Rekord.collect([1, 2, 3, 4]); // same as above
- * Rekord.collect();
- * Rekord.collect([]); // same as above
- * ```
- *
- * @memberof Rekord
- * @param {Any[]|...Any} a
- *    The initial values in the collection. You can pass an array of values
- *    or any number of arguments.
- * @return {Rekord.Collection} -
- *    A newly created instance containing the given values.
- */
-function collect(a)
-{
-  var values = arguments.length > 1 || !isArray(a) ? Array.prototype.slice.call( arguments ) : a;
-
-  return new Collection( values );
-}
-
-function evaluate(x)
-{
-  if ( !isValue( x ) )
-  {
-    return x;
-  }
-
-  if ( isRekord( x ) )
-  {
-    return new x();
-  }
-  if ( isFunction( x ) )
-  {
-    return x();
-  }
-
-  return copy( x );
-}
-
-function grab(obj, props, copyValues)
-{
-  var grabbed = {};
-
-  for (var i = 0; i < props.length; i++)
-  {
-    var p = props[ i ];
-
-    if ( p in obj )
-    {
-      grabbed[ p ] = copyValues ? copy( obj[ p ] ) : obj[ p ];
-    }
-  }
-
-  return grabbed;
-}
-
-function pull(obj, props, copyValues)
-{
-  if ( isString( props ) )
-  {
-    var pulledValue = obj[ props ];
-
-    return copyValues ? copy( pulledValue ) : pulledValue;
-  }
-  else // isArray( props )
-  {
-    var pulled = [];
-
-    for (var i = 0; i < props.length; i++)
-    {
-      var p = props[ i ];
-      var pulledValue = obj[ p ];
-
-      pulled.push( copyValues ? copy( pulledValue ) : pulledValue );
-    }
-
-    return pulled;
-  }
-}
-
-function collapse()
-{
-  var target = {};
-
-  for (var i = 0; i < arguments.length; i++)
-  {
-    var a = arguments[ i ];
-
-    if ( isObject( a ) )
-    {
-      for (var prop in a)
-      {
-        if ( !(prop in target) )
-        {
-          target[ prop ] = a[ prop ];
-        }
-      }
-    }
-  }
-
-  return target;
-}
-
-function clean(x)
-{
-  for (var prop in x)
-  {
-    if ( prop.charAt(0) === '$' )
-    {
-      delete x[ prop ];
-    }
-  }
-
-  return x;
-}
-
-function cleanFunctions(x)
-{
-  for (var prop in x)
-  {
-    if ( isFunction( x[prop] ) )
-    {
-      delete x[ prop ];
-    }
-  }
-
-  return x;
-}
-
-function copy(x, copyHidden)
-{
-  if (x === null || x === undefined || typeof x !== 'object' || isFunction(x) || isRegExp(x))
-  {
-    return x;
-  }
-
-  if (isArray(x))
-  {
-    var c = [];
-
-    for (var i = 0; i < x.length; i++)
-    {
-      c.push( copy(x[i], copyHidden) );
-    }
-
-    return c;
-  }
-
-  if (isDate(x))
-  {
-    return new Date( x.getTime() );
-  }
-
-  var c = {};
-
-  for (var prop in x)
-  {
-    if (copyHidden || prop.charAt(0) !== '$')
-    {
-      c[ prop ] = copy( x[prop], copyHidden );
-    }
-  }
-
-  return c;
-}
-
-function diff(curr, old, props, comparator)
-{
-  var d = {};
-
-  for (var i = 0; i < props.length; i++)
-  {
-    var p = props[ i ];
-
-    if (!comparator( curr[ p ], old[ p ] ) )
-    {
-      d[ p ] = copy( curr[ p ] );
-    }
-  }
-
-  return d;
-}
 
 function sizeof(x)
 {
@@ -980,129 +579,41 @@ function isEmpty(x)
   return false;
 }
 
-function equalsStrict(a, b)
+function evaluate(x)
 {
-  return a === b;
+  if ( !isValue( x ) )
+  {
+    return x;
+  }
+
+  if ( isRekord( x ) )
+  {
+    return new x();
+  }
+  if ( isFunction( x ) )
+  {
+    return x();
+  }
+
+  return copy( x );
 }
 
-function equalsCompare(a, b)
-{
-  return compare( a, b ) === 0;
-}
 
-function equals(a, b)
-{
-  if (a === b) return true;
-  if (a === null || b === null) return false;
-  if (a !== a && b !== b) return true; // NaN === NaN
+ /**
+  * A string, a function, or an array of mixed values.
+  *
+  * ```javascript
+  * 'age'                   // age property of an object
+  * '-age'                  // age property of an object, ordering reversed
+  * function(a, b) {}       // a function which compares two values
+  * ['age', 'done']         // age property of an object, and when equal, the done value
+  * 'creator.name'          // name sub-property of creator property
+  * '{creator.name}, {age}' // formatted string
+  * ```
+  *
+  * @typedef {String|comparisonCallback|Array} comparatorInput
+  */
 
-  var at = typeof a;
-  var bt = typeof b;
-  if (at !== bt) return false;
-
-  var aa = isArray(a);
-  var ba = isArray(b);
-  if (aa !== ba) return false;
-
-  if (aa) {
-    if (a.length !== b.length) return false;
-    for (var i = 0; i < a.length; i++) {
-      if (!equals(a[i], b[i])) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  if (isDate(a)) {
-    return isDate(b) && equals( a.getTime(), b.getTime() );
-  }
-  if (isRegExp(a)) {
-    return isRegExp(b) && a.toString() === b.toString();
-  }
-
-  if (at === 'object') {
-    for (var p in a) {
-      if (p.charAt(0) !== '$' && !isFunction(a[p])) {
-        if (!(p in b) || !equals(a[p], b[p])) {
-          return false;
-        }
-      }
-    }
-    for (var p in b) {
-      if (p.charAt(0) !== '$' && !isFunction(b[p])) {
-        if (!(p in a)) {
-          return false;
-        }
-      }
-    }
-    return true;
-  }
-
-  return false;
-}
-
-function compareNumbers(a, b)
-{
-  return (a === b ? 0 : (a < b ? -1 : 1));
-}
-
-function compare(a, b, nullsFirst)
-{
-  if (a == b)
-  {
-    return 0;
-  }
-
-  var av = isValue( a );
-  var bv = isValue( b );
-
-  if (av !== bv)
-  {
-    return (av && !nullsFirst) || (bv && nullsFirst) ? -1 : 1;
-  }
-
-  if (isDate(a))
-  {
-    a = a.getTime();
-  }
-  if (isDate(b))
-  {
-    b = b.getTime();
-  }
-  if (isNumber(a) && isNumber(b))
-  {
-    return compareNumbers(a, b);
-  }
-  if (isArray(a) && isArray(b))
-  {
-    return compareNumbers(a.length, b.length);
-  }
-  if (isBoolean(a) && isBoolean(b))
-  {
-    return a ? -1 : 1;
-  }
-
-  return (a + '').localeCompare(b + '');
-}
-
-function isSorted(comparator, array)
-{
-  if ( !comparator )
-  {
-    return true;
-  }
-
-  for (var i = 0, n = array.length - 1; i < n; i++)
-  {
-    if ( comparator( array[ i ], array[ i + 1 ] ) > 0 )
-    {
-      return false;
-    }
-  }
-
-  return true;
-}
 
 Rekord.Comparators = {};
 
@@ -1216,376 +727,150 @@ function createComparator(comparator, nullsFirst)
   return null;
 }
 
-Rekord.NumberResolvers = {};
-
-function saveNumberResolver(name, numbers)
-{
-  return Rekord.NumberResolvers[ name ] = createNumberResolver( numbers );
-}
-
-function createNumberResolver(numbers)
-{
-  var resolver = createPropertyResolver( numbers );
-
-  if ( isString( numbers ) && numbers in Rekord.NumberResolvers )
-  {
-    return Rekord.NumberResolvers[ numbers ];
-  }
-
-  return function resolveNumber(model)
-  {
-    return parseFloat( resolver( model ) );
-  };
-}
-
-Rekord.PropertyResolvers = {};
-
-function savePropertyResolver(name, properties, delim)
-{
-  return Rekord.PropertyResolvers[ name ] = createPropertyResolver( properties, delim );
-}
 
 /**
- * Creates a function which resolves a value from another value given an
- * expression. This is often used to get a property value of an object.
+ * A function for comparing two values and determine whether they're considered
+ * equal.
  *
- * ```javascript
- * // x = {age: 6, name: 'tom', user: {first: 'jack'}}
- * createPropertyResolver()( x )                          // x
- * createPropertyResolver( 'age' )( x )                   // 6
- * createPropertyResolver( 'user.first' )( x )            // 'jack'
- * createPropertyResolver( '{name} & {user.first}')( x )  // 'tom & jack'
- * createPropertyResolver( ['name', 'age'] )( x )         // 'tom,6'
- * createPropertyResolver( ['name', 'age'], ' is ' )( x ) // 'tom is 6'
- * createPropertyResolver( {age:null, user:'first'})( x ) // '6,jack'
- * ```
- *
- * @memberof Rekord
- * @param {propertyResolverInput} [properties] -
- *    The expression which converts one value into another.
- * @param {String} [delim=','] -
- *    A delimiter to use to join multiple properties into a string.
- * @return {propertyResolverCallback} -
- *    A function to take values and resolve new ones.
+ * @callback equalityCallback
+ * @param {Any} a -
+ *    The first value to test.
+ * @param {Any} b -
+ *    The second value to test.
+ * @return {Boolean} -
+ *    Whether or not the two values are considered equivalent.
+ * @see Rekord.equals
+ * @see Rekord.equalsStrict
+ * @see Rekord.equalsCompare
  */
-function createPropertyResolver(properties, delim)
+
+ /**
+  * A function for comparing two values to determine if one is greater or lesser
+  * than the other or if they're equal.
+  *
+  * ```javascript
+  * comparisonCallback( a, b ) < 0 // a < b
+  * comparisonCallback( a, b ) > 0 // a > b
+  * comparisonCallback( a, b ) == 0 // a == b
+  * ```
+  *
+  * @callback comparisonCallback
+  * @param {Any} a -
+  *    The first value to test.
+  * @param {Any} b -
+  *    The second value to test.
+  * @return {Number} -
+  *    0 if the two values are considered equal, a negative value if `a` is
+  *    considered less than `b`, and a positive value if `a` is considered
+  *    greater than `b`.
+  * @see Rekord.compare
+  * @see Rekord.compareNumbers
+  */
+
+function equalsStrict(a, b)
 {
-  if ( isFunction( properties ) )
-  {
-    return properties;
-  }
-  else if ( isString( properties ) )
-  {
-    if ( properties in Rekord.PropertyResolvers )
-    {
-      return Rekord.PropertyResolvers[ properties ];
-    }
+  return a === b;
+}
 
-    if ( properties.indexOf('{') !== -1 )
-    {
-      return function resolveFormatted(model)
-      {
-        return format( properties, model );
-      };
-    }
-    else if ( properties.indexOf('.') !== -1 )
-    {
-      return function resolveExpression(model)
-      {
-        return parse( properties, model );
-      };
-    }
-    else
-    {
-      return function resolveProperty(model)
-      {
-        return model[ properties ];
-      };
-    }
-  }
-  else if ( isArray( properties ) )
-  {
-    return function resolveProperties(model)
-    {
-      return pull( model, properties ).join( delim );
-    };
-  }
-  else if ( isObject( properties ) )
-  {
-    var propsArray = [];
-    var propsResolver = [];
+function equalsCompare(a, b)
+{
+  return compare( a, b ) === 0;
+}
 
-    for (var prop in properties)
-    {
-      propsArray.push( prop );
-      propsResolver.push( createPropertyResolver( properties[ prop ], delim ) );
-    }
+function equals(a, b)
+{
+  if (a === b) return true;
+  if (a === null || b === null) return false;
+  if (a !== a && b !== b) return true; // NaN === NaN
 
-    return function resolvePropertyObject(model)
-    {
-      var pulled = [];
+  var at = typeof a;
+  var bt = typeof b;
+  if (at !== bt) return false;
 
-      for (var i = 0; i < prop.length; i++)
-      {
-        pulled.push( propsResolver[ i ]( model[ propsArray[ i ] ] ) );
+  var aa = isArray(a);
+  var ba = isArray(b);
+  if (aa !== ba) return false;
+
+  if (aa) {
+    if (a.length !== b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (!equals(a[i], b[i])) {
+        return false;
       }
-
-      return pulled.join( delim );
-    };
-  }
-  else
-  {
-    return function resolveNone(model)
-    {
-      return model;
     }
+    return true;
   }
-}
 
-/**
- * A map of saved {@link whereCallback} functions.
- *
- * @type {Object}
- */
-Rekord.Wheres = {};
-
-/**
- * Saves a function created with {@link Rekord.createWhere} to a cache of
- * filter functions which can be created more quickly in subsequent calls. It's
- * advised to make use of saved where's even in simpler scenarios for several
- * reasons:
- *
- * - You can name a comparison which is self documenting
- * - When refactoring, you only need to modify a single place in the code
- * - It's slightly more efficient (time & memory) to cache filter functions
- *
- * ```javascript
- * Rekord.saveWhere('whereName', 'field', true);
- * Rekord.createWhere('whereName'); // returns the same function except quicker
- * ```
- *
- * @memberof Rekord
- * @param {String} name -
- *    The name of the filter function to save for later use.
- * @param {String|Object|Array|whereCallback} [properties] -
- *    See {@link Rekord.createWhere}
- * @param {Any} [value] -
- *    See {@link Rekord.createWhere}
- * @param {equalityCallback} [equals=Rekord.equalsStrict] -
- *    See {@link Rekord.createWhere}
- * @see Rekord.createWhere
- */
-function saveWhere(name, properties, values, equals)
-{
-  return Rekord.Wheres[ name ] = createWhere( properties, values, equals );
-}
-
-/**
- * Creates a function which returns a true or false value given a test value.
- * This is also known as a filter function.
- *
- * ```javascript
- * Rekord.createWhere('field', true);  // when an object has property where field=true
- * Rekord.createWhere('field'); // when an object has the property named field
- * Rekord.createWhere(function(){}); // a function can be given which is immediately returned
- * Rekord.createWhere(['field', function(){}, ['field', true]]); // when an object meets all of the above criteria
- * Rekord.createWhere({foo: 1, bar: 2}); // when an object has foo=1 and bar=2
- * Rekord.createWhere('field', true, myEquals); // A custom comparison function can be given.
- * Rekord.createWhere(); // always returns true
- * ```
- *
- * @memberof Rekord
- * @param {whereInput} [properties] -
- *    The first expression used to generate a filter function.
- * @param {Any} [value] -
- *    When the first argument is a string this argument will be treated as a
- *    value to compare to the value of the named property on the object passed
- *    through the filter function.
- * @param {equalityCallback} [equals=Rekord.equalsStrict] -
- *    An alternative function can be used to compare to values.
- * @return {whereCallback} -
- *    A function which takes a value (typically an object) and returns a true
- *    or false value.
- * @see Rekord.saveWhere
- */
-function createWhere(properties, value, equals)
-{
-  var equality = equals || equalsStrict;
-
-  if ( isFunction( properties ) )
-  {
-    return properties;
+  if (isDate(a)) {
+    return isDate(b) && equals( a.getTime(), b.getTime() );
   }
-  else if ( isArray( properties ) )
-  {
-    var parsed = [];
+  if (isRegExp(a)) {
+    return isRegExp(b) && a.toString() === b.toString();
+  }
 
-    for (var i = 0; i < properties.length; i++)
-    {
-      var where = properties[ i ];
-
-      parsed.push( isArray( where ) ? createWhere.apply( this, where ) : createWhere( where ) );
-    }
-
-    return function whereMultiple(model)
-    {
-      for (var i = 0; i < parsed.length; i++)
-      {
-        if ( !parsed[ i ]( model ) )
-        {
+  if (at === 'object') {
+    for (var p in a) {
+      if (p.charAt(0) !== '$' && !isFunction(a[p])) {
+        if (!(p in b) || !equals(a[p], b[p])) {
           return false;
         }
       }
-
-      return true;
-    };
-  }
-  else if ( isObject( properties ) )
-  {
-    return function whereEqualsObject(model)
-    {
-      for (var prop in properties)
-      {
-        if ( !equality( model[ prop ], properties[ prop ] ) )
-        {
+    }
+    for (var p in b) {
+      if (p.charAt(0) !== '$' && !isFunction(b[p])) {
+        if (!(p in a)) {
           return false;
         }
       }
-
-      return true;
-    };
-  }
-  else if ( isString( properties ) )
-  {
-    if ( properties in Rekord.Wheres )
-    {
-      return Rekord.Wheres[ properties ];
     }
-
-    var resolver = createPropertyResolver( properties );
-
-    if ( isValue( value ) )
-    {
-      return function whereEqualsValue(model)
-      {
-        return equality( resolver( model ), value );
-      };
-    }
-    else
-    {
-      return function whereHasValue(model)
-      {
-        return isValue( resolver( model ) );
-      };
-    }
+    return true;
   }
-  else
-  {
-    return function whereAll(model)
-    {
-      return true;
-    };
-  }
+
+  return false;
 }
 
-Rekord.Havings = {};
-
-function saveHaving(name, having)
+function compareNumbers(a, b)
 {
-  return Rekord.Havings[ name ] = createHaving( having );
+  return (a === b ? 0 : (a < b ? -1 : 1));
 }
 
-function createHaving(having)
+function compare(a, b, nullsFirst)
 {
-  if ( isFunction( having ) )
+  if (a == b)
   {
-    return having;
+    return 0;
   }
-  else if ( isString( having ) )
-  {
-    if ( having in Rekord.Havings )
-    {
-      return Rekord.Havings[ having ];
-    }
 
-    return function hasValue(model)
-    {
-      return isValue( model ) && isValue( model[ having ] );
-    };
+  var av = isValue( a );
+  var bv = isValue( b );
+
+  if (av !== bv)
+  {
+    return (av && !nullsFirst) || (bv && nullsFirst) ? -1 : 1;
   }
-  else
+
+  if (isDate(a))
   {
-    return function hasAll()
-    {
-      return true;
-    };
+    a = a.getTime();
   }
-}
-
-
-function parse(expr, base)
-{
-  var valid = true;
-
-  expr.replace( parse.REGEX, function(prop)
+  if (isDate(b))
   {
-    if (!valid)
-    {
-      return;
-    }
-
-    if ( isArray( base ) )
-    {
-      var i = parseInt(prop);
-
-      if (!isNaN(i))
-      {
-        base = base[ i ];
-      }
-      else
-      {
-        valid = false;
-      }
-    }
-    else if ( isObject( base ) )
-    {
-      if (prop in base)
-      {
-        var value = base[ prop ];
-        base = isFunction(value) ? value() : value;
-      }
-      else
-      {
-        valid = false;
-      }
-    }
-    else
-    {
-      valid = false;
-    }
-  });
-
-  return valid ? base : void 0;
-}
-
-parse.REGEX = /([\w$]+)/g;
-
-function format(template, base)
-{
-  return template.replace( format.REGEX, function(match)
+    b = b.getTime();
+  }
+  if (isNumber(a) && isNumber(b))
   {
-    return parse( match, base );
-  });
-}
-
-format.REGEX = /\{[^\}]+\}/g;
-
-function createFormatter(template)
-{
-  return function formatter(base)
+    return compareNumbers(a, b);
+  }
+  if (isArray(a) && isArray(b))
   {
-    return format( template, base );
-  };
+    return compareNumbers(a.length, b.length);
+  }
+  if (isBoolean(a) && isBoolean(b))
+  {
+    return a ? -1 : 1;
+  }
+
+  return (a + '').localeCompare(b + '');
 }
 
 
@@ -1631,10 +916,13 @@ function addEventFunction(target, functionName, events, secret)
  *
  * The following methods will be added to the given target:
  *
- *     target.on( events, callback, [context] )
- *     target.once( events, callback, [context] )
- *     target.off( events, callback )
- *     target.trigger( events, [a, b, c...] )
+ * ```
+ * target.on( events, callback, [context] )
+ * target.once( events, callback, [context] )
+ * target.after( events, callback, [context] )
+ * target.off( events, callback )
+ * target.trigger( events, [a, b, c...] )
+ * ```
  *
  * Where...
  * - `events` is a string of space delimited events.
@@ -1643,10 +931,11 @@ function addEventFunction(target, functionName, events, secret)
  *   invoked. If no context is given the default value is the object which has
  *   the trigger function that was invoked.
  *
- * @method eventize
- * @for Core
- * @param {Object} target The object to add `on`, `once`, `off`, and `trigger`
- *    functions to.
+ * @memberof Rekord
+ * @param {Object} [target] -
+ *    The object to add `on`, `once`, `off`, and `trigger` functions to.
+ * @param {Boolean} [secret=false] -
+ *    If true - the functions will be prefixed with `$`.
  */
 function eventize(target, secret)
 {
@@ -1658,10 +947,22 @@ function eventize(target, secret)
   var triggerId = 0;
 
   /**
-   * **See:** {{#crossLink "Core/eventize:method"}}{{/crossLink}}
+   * A mixin which adds `on`, `once`, `after`, and `trigger` functions to
+   * another object.
    *
-   * @class eventize
+   * @class Eventful
+   * @memberof Rekord
+   * @see Rekord.eventize
    */
+
+   /**
+    * A mixin which adds `$on`, `$once`, `$after`, and `$trigger` functions to
+    * another object.
+    *
+    * @class Eventful$
+    * @memberof Rekord
+    * @see Rekord.eventize
+    */
 
   // Adds a listener to $this
   function onListeners($this, property, events, callback, context)
@@ -1674,7 +975,7 @@ function eventize(target, secret)
     var events = toArray( events, ' ' );
     var listeners = $this[ property ];
 
-    if ( !isDefined( listeners ) )
+    if ( !listeners )
     {
       listeners = $this[ property ] = {};
     }
@@ -1684,7 +985,7 @@ function eventize(target, secret)
       var eventName = events[ i ];
       var eventListeners = listeners[ eventName ];
 
-      if ( !isDefined( eventListeners ) )
+      if ( !eventListeners )
       {
         eventListeners = listeners[ eventName ] = [];
       }
@@ -1706,28 +1007,74 @@ function eventize(target, secret)
    * each time any of them are triggered.
    *
    * @method on
-   * @for eventize
-   * @param {String|Array|Object} events
-   * @param {Function} callback
-   * @param {Object} [context]
-   * @chainable
+   * @memberof Rekord.Eventful#
+   * @param {String|Array} events -
+   *    The event or events to listen to.
+   * @param {Function} callback -
+   *    The function to invoke when any of the events are invoked.
+   * @param {Object} [context] -
+   *    The value of `this` when the callback is invoked. If not specified, the
+   *    reference of the object this function exists on will be `this`.
+   * @return {Function} -
+   *    A function to invoke to stop listening to all of the events given.
    */
+
+  /**
+   * Listens for every occurrence of the given events and invokes the callback
+   * each time any of them are triggered.
+   *
+   * @method $on
+   * @memberof Rekord.Eventful$#
+   * @param {String|Array} events -
+   *    The event or events to listen to.
+   * @param {Function} callback -
+   *    The function to invoke when any of the events are invoked.
+   * @param {Object} [context] -
+   *    The value of `this` when the callback is invoked. If not specified, the
+   *    reference of the object this function exists on will be `this`.
+   * @return {Function} -
+   *    A function to invoke to stop listening to all of the events given.
+   */
+
   function on(events, callback, context)
   {
     return onListeners( this, '$$on', events, callback, context );
   }
 
   /**
-   * Listens for the next occurrence for each of the given events and invokes
-   * the callback when any of the events are triggered.
+   * Listens for the first of the given events to be triggered and invokes the
+   * callback once.
    *
    * @method once
-   * @for eventize
-   * @param {String|Array|Object} events
-   * @param {Function} callback
-   * @param {Object} [context]
-   * @chainable
+   * @memberof Rekord.Eventful#
+   * @param {String|Array} events -
+   *    The event or events to listen to.
+   * @param {Function} callback -
+   *    The function to invoke when any of the events are invoked.
+   * @param {Object} [context] -
+   *    The value of `this` when the callback is invoked. If not specified, the
+   *    reference of the object this function exists on will be `this`.
+   * @return {Function} -
+   *    A function to invoke to stop listening to all of the events given.
    */
+
+  /**
+   * Listens for the first of the given events to be triggered and invokes the
+   * callback once.
+   *
+   * @method $once
+   * @memberof Rekord.Eventful$#
+   * @param {String|Array} events -
+   *    The event or events to listen to.
+   * @param {Function} callback -
+   *    The function to invoke when any of the events are invoked.
+   * @param {Object} [context] -
+   *    The value of `this` when the callback is invoked. If not specified, the
+   *    reference of the object this function exists on will be `this`.
+   * @return {Function} -
+   *    A function to invoke to stop listening to all of the events given.
+   */
+
   function once(events, callback, context)
   {
     return onListeners( this, '$$once', events, callback, context );
@@ -1894,6 +1241,743 @@ function eventize(target, secret)
     addMethod( target, 'trigger', trigger );
   }
 };
+
+
+
+Rekord.Havings = {};
+
+function saveHaving(name, having)
+{
+  return Rekord.Havings[ name ] = createHaving( having );
+}
+
+function createHaving(having)
+{
+  if ( isFunction( having ) )
+  {
+    return having;
+  }
+  else if ( isString( having ) )
+  {
+    if ( having in Rekord.Havings )
+    {
+      return Rekord.Havings[ having ];
+    }
+
+    return function hasValue(model)
+    {
+      return isValue( model ) && isValue( model[ having ] );
+    };
+  }
+  else
+  {
+    return function hasAll()
+    {
+      return true;
+    };
+  }
+}
+
+
+
+
+
+function applyOptions( target, options, defaults, secret )
+{
+  options = options || {};
+
+  function setProperty(prop, value)
+  {
+    if ( isFunction( value ) )
+    {
+      addMethod( target, prop, value );
+    }
+    else
+    {
+      target[ prop ] = value;
+    }
+  }
+
+  for (var prop in defaults)
+  {
+    var defaultValue = defaults[ prop ];
+    var option = options[ prop ];
+    var valued = isValue( option );
+
+    if ( !valued && defaultValue === undefined )
+    {
+      throw ( prop + ' is a required option' );
+    }
+    else if ( valued )
+    {
+      setProperty( prop, option );
+    }
+    else
+    {
+      setProperty( prop, copy( defaultValue ) );
+    }
+  }
+
+  for (var prop in options)
+  {
+    if ( !(prop in defaults) )
+    {
+      setProperty( prop, options[ prop ] );
+    }
+  }
+
+  if ( secret )
+  {
+    target.$options = options;
+  }
+  else
+  {
+    target.options = options;
+  }
+}
+
+/**
+ * Determines whether the properties on one object equals the properties on
+ * another object.
+ *
+ * @memberof Rekord
+ * @param {Object} test -
+ *    The object to test for matching.
+ * @param {String|String[]} testFields -
+ *    The property name or array of properties to test for equality on `test`.
+ * @param {Object} expected -
+ *    The object with the expected values.
+ * @param {String|String[]} expectedFields -
+ *    The property name or array of properties to test for equality on `expected`.
+ * @param {equalityCallback} [equals] -
+ *    The equality function which compares two values and returns whether they
+ *    are considered equivalent.
+ * @return {Boolean} -
+ *    True if the `testFields` properties on `test` are equivalent to the
+ *    `expectedFields` on `expected` according to the `equals` function.
+ */
+function propsMatch(test, testFields, expected, expectedFields, equals)
+{
+  var equality = equals || Rekord.equals;
+
+  if ( isString( testFields ) ) // && isString( expectedFields )
+  {
+    return equality( test[ testFields ], expected[ expectedFields ] );
+  }
+  else // if ( isArray( testFields ) && isArray( expectedFields ) )
+  {
+    for (var i = 0; i < testFields.length; i++)
+    {
+      var testProp = testFields[ i ];
+      var expectedProp = expectedFields[ i ];
+
+      if ( !equality( test[ testProp ], expected[ expectedProp ] ) )
+      {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  return false;
+}
+
+// Determines whether the given model has the given fields
+function hasFields(model, fields, exists)
+{
+  if ( isArray( fields ) )
+  {
+    for (var i = 0; i < fields.length; i++)
+    {
+      if ( !exists( model[ fields[ i ] ] ) )
+      {
+        return false;
+      }
+    }
+
+    return true;
+  }
+  else // isString( fields )
+  {
+    return exists( model[ fields ] );
+  }
+}
+
+
+function grab(obj, props, copyValues)
+{
+  var grabbed = {};
+
+  for (var i = 0; i < props.length; i++)
+  {
+    var p = props[ i ];
+
+    if ( p in obj )
+    {
+      grabbed[ p ] = copyValues ? copy( obj[ p ] ) : obj[ p ];
+    }
+  }
+
+  return grabbed;
+}
+
+function pull(obj, props, copyValues)
+{
+  if ( isString( props ) )
+  {
+    var pulledValue = obj[ props ];
+
+    return copyValues ? copy( pulledValue ) : pulledValue;
+  }
+  else // isArray( props )
+  {
+    var pulled = [];
+
+    for (var i = 0; i < props.length; i++)
+    {
+      var p = props[ i ];
+      var pulledValue = obj[ p ];
+
+      pulled.push( copyValues ? copy( pulledValue ) : pulledValue );
+    }
+
+    return pulled;
+  }
+}
+
+function transfer(from, to)
+{
+  for (var prop in from)
+  {
+    to[ prop ] = from[ prop ];
+  }
+
+  return to;
+}
+
+function collapse()
+{
+  var target = {};
+
+  for (var i = 0; i < arguments.length; i++)
+  {
+    var a = arguments[ i ];
+
+    if ( isObject( a ) )
+    {
+      for (var prop in a)
+      {
+        if ( !(prop in target) )
+        {
+          target[ prop ] = a[ prop ];
+        }
+      }
+    }
+  }
+
+  return target;
+}
+
+function clean(x)
+{
+  for (var prop in x)
+  {
+    if ( prop.charAt(0) === '$' )
+    {
+      delete x[ prop ];
+    }
+  }
+
+  return x;
+}
+
+function cleanFunctions(x)
+{
+  for (var prop in x)
+  {
+    if ( isFunction( x[prop] ) )
+    {
+      delete x[ prop ];
+    }
+  }
+
+  return x;
+}
+
+function copy(x, copyHidden)
+{
+  if (x === null || x === undefined || typeof x !== 'object' || isFunction(x) || isRegExp(x))
+  {
+    return x;
+  }
+
+  if (isArray(x))
+  {
+    var c = [];
+
+    for (var i = 0; i < x.length; i++)
+    {
+      c.push( copy(x[i], copyHidden) );
+    }
+
+    return c;
+  }
+
+  if (isDate(x))
+  {
+    return new Date( x.getTime() );
+  }
+
+  var c = {};
+
+  for (var prop in x)
+  {
+    if (copyHidden || prop.charAt(0) !== '$')
+    {
+      c[ prop ] = copy( x[prop], copyHidden );
+    }
+  }
+
+  return c;
+}
+
+function diff(curr, old, props, comparator)
+{
+  var d = {};
+
+  for (var i = 0; i < props.length; i++)
+  {
+    var p = props[ i ];
+
+    if (!comparator( curr[ p ], old[ p ] ) )
+    {
+      d[ p ] = copy( curr[ p ] );
+    }
+  }
+
+  return d;
+}
+
+
+
+
+function parse(expr, base)
+{
+  var valid = true;
+
+  expr.replace( parse.REGEX, function(prop)
+  {
+    if (!valid)
+    {
+      return;
+    }
+
+    if ( isArray( base ) )
+    {
+      var i = parseInt(prop);
+
+      if (!isNaN(i))
+      {
+        base = base[ i ];
+      }
+      else
+      {
+        valid = false;
+      }
+    }
+    else if ( isObject( base ) )
+    {
+      if (prop in base)
+      {
+        var value = base[ prop ];
+        base = isFunction(value) ? value() : value;
+      }
+      else
+      {
+        valid = false;
+      }
+    }
+    else
+    {
+      valid = false;
+    }
+  });
+
+  return valid ? base : void 0;
+}
+
+parse.REGEX = /([\w$]+)/g;
+
+function format(template, base)
+{
+  return template.replace( format.REGEX, function(match)
+  {
+    return parse( match, base );
+  });
+}
+
+format.REGEX = /\{[^\}]+\}/g;
+
+function createFormatter(template)
+{
+  return function formatter(base)
+  {
+    return format( template, base );
+  };
+}
+
+
+
+/**
+ * A function for resolving a value from a given value. Typically used to
+ * transform an object into one of it's properties.
+ *
+ * @callback propertyResolverCallback
+ * @param {Any} model -
+ *    The model to use to resolve a value.
+ * @return {Any} -
+ *    The resolved value.
+ * @see Rekord.createPropertyResolver
+ */
+
+
+/**
+ * An expression which resolves a value from another value.
+ *
+ * ```javascript
+ * // {age: 6, name: 'x', user: {first: 'tom'}}
+ * 'age'                    // age property of an object
+ * 'user.first'             // sub property
+ * '{age}, {user.first}'    // a formatted string built from object values
+ * function(a) {}           // a function which returns a value itself
+ * ['age', 'name']          // multiple properties joined with a delimiter
+ * {age:null, user:'first'} // multiple properties joined with a delimiter including a sub property
+ * ```
+ *
+ * @typedef {String|Function|Array|Object} propertyResolverInput
+ */
+
+Rekord.NumberResolvers = {};
+
+function saveNumberResolver(name, numbers)
+{
+  return Rekord.NumberResolvers[ name ] = createNumberResolver( numbers );
+}
+
+function createNumberResolver(numbers)
+{
+  var resolver = createPropertyResolver( numbers );
+
+  if ( isString( numbers ) && numbers in Rekord.NumberResolvers )
+  {
+    return Rekord.NumberResolvers[ numbers ];
+  }
+
+  return function resolveNumber(model)
+  {
+    return parseFloat( resolver( model ) );
+  };
+}
+
+Rekord.PropertyResolvers = {};
+
+function savePropertyResolver(name, properties, delim)
+{
+  return Rekord.PropertyResolvers[ name ] = createPropertyResolver( properties, delim );
+}
+
+/**
+ * Creates a function which resolves a value from another value given an
+ * expression. This is often used to get a property value of an object.
+ *
+ * ```javascript
+ * // x = {age: 6, name: 'tom', user: {first: 'jack'}}
+ * createPropertyResolver()( x )                          // x
+ * createPropertyResolver( 'age' )( x )                   // 6
+ * createPropertyResolver( 'user.first' )( x )            // 'jack'
+ * createPropertyResolver( '{name} & {user.first}')( x )  // 'tom & jack'
+ * createPropertyResolver( ['name', 'age'] )( x )         // 'tom,6'
+ * createPropertyResolver( ['name', 'age'], ' is ' )( x ) // 'tom is 6'
+ * createPropertyResolver( {age:null, user:'first'})( x ) // '6,jack'
+ * ```
+ *
+ * @memberof Rekord
+ * @param {propertyResolverInput} [properties] -
+ *    The expression which converts one value into another.
+ * @param {String} [delim=','] -
+ *    A delimiter to use to join multiple properties into a string.
+ * @return {propertyResolverCallback} -
+ *    A function to take values and resolve new ones.
+ */
+function createPropertyResolver(properties, delim)
+{
+  if ( isFunction( properties ) )
+  {
+    return properties;
+  }
+  else if ( isString( properties ) )
+  {
+    if ( properties in Rekord.PropertyResolvers )
+    {
+      return Rekord.PropertyResolvers[ properties ];
+    }
+
+    if ( properties.indexOf('{') !== -1 )
+    {
+      return function resolveFormatted(model)
+      {
+        return format( properties, model );
+      };
+    }
+    else if ( properties.indexOf('.') !== -1 )
+    {
+      return function resolveExpression(model)
+      {
+        return parse( properties, model );
+      };
+    }
+    else
+    {
+      return function resolveProperty(model)
+      {
+        return model[ properties ];
+      };
+    }
+  }
+  else if ( isArray( properties ) )
+  {
+    return function resolveProperties(model)
+    {
+      return pull( model, properties ).join( delim );
+    };
+  }
+  else if ( isObject( properties ) )
+  {
+    var propsArray = [];
+    var propsResolver = [];
+
+    for (var prop in properties)
+    {
+      propsArray.push( prop );
+      propsResolver.push( createPropertyResolver( properties[ prop ], delim ) );
+    }
+
+    return function resolvePropertyObject(model)
+    {
+      var pulled = [];
+
+      for (var i = 0; i < prop.length; i++)
+      {
+        pulled.push( propsResolver[ i ]( model[ propsArray[ i ] ] ) );
+      }
+
+      return pulled.join( delim );
+    };
+  }
+  else
+  {
+    return function resolveNone(model)
+    {
+      return model;
+    }
+  }
+}
+
+
+function camelCaseReplacer(match)
+{
+  return match.length === 1 ? match.toUpperCase() : match.charAt(1).toUpperCase();
+}
+
+function toCamelCase(name)
+{
+  return name.replace( toCamelCase.REGEX, camelCaseReplacer );
+}
+
+toCamelCase.REGEX = /(^.|_.)/g;
+
+
+/**
+ * A function which takes a value (typically an object) and returns a true or
+ * false value.
+ *
+ * @callback whereCallback
+ * @param {Any} value -
+ *    The value to test.
+ * @return {Boolean} -
+ *    Whether or not the value passed the test.
+ * @see Rekord.createWhere
+ * @see Rekord.saveWhere
+ */
+
+/**
+ * An expression which can be used to generate a function for testing a value
+ * and returning a boolean result. The following types can be given and will
+ * result in the following tests:
+ *
+ * - `String`: If a string & value are given - the generated function will test
+ *    if the object has a property with the given value. If a string is given
+ *    and no value is given - the generated function will test if the object
+ *    has the property and a non-null value.
+ * - `Object`: If an object is given - the generated function will test all
+ *    properties of the given object and return true only if the object being
+ *    tested has the same values.
+ * - `Array`: If an array is given - each element in the array is passed as
+ *    arguments to generate a new function. The returned function will only
+ *    return true if all generated functions return true - otherwise false.
+ * - `whereCallback`: A function can be given which is immediately returned as
+ *    the test function.
+ *
+ * @typedef {String|Object|Array|whereCallback} whereInput
+ */
+
+
+/**
+ * A map of saved {@link whereCallback} functions.
+ *
+ * @type {Object}
+ */
+Rekord.Wheres = {};
+
+/**
+ * Saves a function created with {@link Rekord.createWhere} to a cache of
+ * filter functions which can be created more quickly in subsequent calls. It's
+ * advised to make use of saved where's even in simpler scenarios for several
+ * reasons:
+ *
+ * - You can name a comparison which is self documenting
+ * - When refactoring, you only need to modify a single place in the code
+ * - It's slightly more efficient (time & memory) to cache filter functions
+ *
+ * ```javascript
+ * Rekord.saveWhere('whereName', 'field', true);
+ * Rekord.createWhere('whereName'); // returns the same function except quicker
+ * ```
+ *
+ * @memberof Rekord
+ * @param {String} name -
+ *    The name of the filter function to save for later use.
+ * @param {String|Object|Array|whereCallback} [properties] -
+ *    See {@link Rekord.createWhere}
+ * @param {Any} [value] -
+ *    See {@link Rekord.createWhere}
+ * @param {equalityCallback} [equals=Rekord.equalsStrict] -
+ *    See {@link Rekord.createWhere}
+ * @see Rekord.createWhere
+ */
+function saveWhere(name, properties, values, equals)
+{
+  return Rekord.Wheres[ name ] = createWhere( properties, values, equals );
+}
+
+/**
+ * Creates a function which returns a true or false value given a test value.
+ * This is also known as a filter function.
+ *
+ * ```javascript
+ * Rekord.createWhere('field', true);  // when an object has property where field=true
+ * Rekord.createWhere('field'); // when an object has the property named field
+ * Rekord.createWhere(function(){}); // a function can be given which is immediately returned
+ * Rekord.createWhere(['field', function(){}, ['field', true]]); // when an object meets all of the above criteria
+ * Rekord.createWhere({foo: 1, bar: 2}); // when an object has foo=1 and bar=2
+ * Rekord.createWhere('field', true, myEquals); // A custom comparison function can be given.
+ * Rekord.createWhere(); // always returns true
+ * ```
+ *
+ * @memberof Rekord
+ * @param {whereInput} [properties] -
+ *    The first expression used to generate a filter function.
+ * @param {Any} [value] -
+ *    When the first argument is a string this argument will be treated as a
+ *    value to compare to the value of the named property on the object passed
+ *    through the filter function.
+ * @param {equalityCallback} [equals=Rekord.equalsStrict] -
+ *    An alternative function can be used to compare to values.
+ * @return {whereCallback} -
+ *    A function which takes a value (typically an object) and returns a true
+ *    or false value.
+ * @see Rekord.saveWhere
+ */
+function createWhere(properties, value, equals)
+{
+  var equality = equals || equalsStrict;
+
+  if ( isFunction( properties ) )
+  {
+    return properties;
+  }
+  else if ( isArray( properties ) )
+  {
+    var parsed = [];
+
+    for (var i = 0; i < properties.length; i++)
+    {
+      var where = properties[ i ];
+
+      parsed.push( isArray( where ) ? createWhere.apply( this, where ) : createWhere( where ) );
+    }
+
+    return function whereMultiple(model)
+    {
+      for (var i = 0; i < parsed.length; i++)
+      {
+        if ( !parsed[ i ]( model ) )
+        {
+          return false;
+        }
+      }
+
+      return true;
+    };
+  }
+  else if ( isObject( properties ) )
+  {
+    return function whereEqualsObject(model)
+    {
+      for (var prop in properties)
+      {
+        if ( !equality( model[ prop ], properties[ prop ] ) )
+        {
+          return false;
+        }
+      }
+
+      return true;
+    };
+  }
+  else if ( isString( properties ) )
+  {
+    if ( properties in Rekord.Wheres )
+    {
+      return Rekord.Wheres[ properties ];
+    }
+
+    var resolver = createPropertyResolver( properties );
+
+    if ( isValue( value ) )
+    {
+      return function whereEqualsValue(model)
+      {
+        return equality( resolver( model ), value );
+      };
+    }
+    else
+    {
+      return function whereHasValue(model)
+      {
+        return isValue( resolver( model ) );
+      };
+    }
+  }
+  else
+  {
+    return function whereAll(model)
+    {
+      return true;
+    };
+  }
+}
 
 
 /**
@@ -3924,6 +4008,12 @@ function Gate(callback)
 
 
 
+/**
+ *
+ * @constructor
+ * @memberof Rekord
+ * @augments Rekord.Eventful
+ */
 function Database(options)
 {
   var defaults = Database.Defaults;
@@ -5187,6 +5277,7 @@ addEventFunction( Database.prototype, 'change', Database.Events.Changes );
  *
  * @constructor
  * @memberof Rekord
+ * @augments Rekord.Eventful$
  * @param {Rekord.Database} db
  *        The database instance used in model instances.
  */
@@ -6246,6 +6337,7 @@ addMethods( Request.prototype,
  *
  * @constructor
  * @memberof Rekord
+ * @augments Rekord.Eventful
  * @extends Array
  * @param {Array} [values] 0
  *    The initial set of values in this collection.
@@ -8473,6 +8565,13 @@ var Filtering = {
 
 };
 
+
+/**
+ *
+ * @constructor
+ * @memberof Rekord
+ * @augments Rekord.Eventful
+ */
 function Page(collection, pageSize, pageIndex)
 {
   this.onChanges = bind( this, this.handleChanges );
@@ -10139,6 +10238,12 @@ function DiscriminateCollection(collection, discriminator, discriminatorsToModel
  *    {@link Rekord.Search#$results} property.
  */
 
+/**
+ *
+ * @constructor
+ * @memberof Rekord
+ * @augments Rekord.Eventful$
+ */
 function Search(database, url, options)
 {
   this.$init( database, url, options );
@@ -10525,6 +10630,12 @@ Rekord.transactNone = function(cascade, model, operation)
   return new Transaction( cascade, model, operation );
 };
 
+/**
+ *
+ * @constructor
+ * @memberof Rekord
+ * @augments Rekord.Eventful
+ */
 function Transaction(cascade, model, operation)
 {
   this.cascade = cascade;

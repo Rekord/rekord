@@ -4,6 +4,7 @@
  *
  * @constructor
  * @memberof Rekord
+ * @augments Rekord.Eventful$
  * @param {Rekord.Database} db
  *        The database instance used in model instances.
  */

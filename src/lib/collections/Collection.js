@@ -11,6 +11,7 @@
  *
  * @constructor
  * @memberof Rekord
+ * @augments Rekord.Eventful
  * @extends Array
  * @param {Array} [values] 0
  *    The initial set of values in this collection.

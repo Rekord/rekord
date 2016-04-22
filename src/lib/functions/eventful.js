@@ -41,10 +41,13 @@ function addEventFunction(target, functionName, events, secret)
  *
  * The following methods will be added to the given target:
  *
- *     target.on( events, callback, [context] )
- *     target.once( events, callback, [context] )
- *     target.off( events, callback )
- *     target.trigger( events, [a, b, c...] )
+ * ```
+ * target.on( events, callback, [context] )
+ * target.once( events, callback, [context] )
+ * target.after( events, callback, [context] )
+ * target.off( events, callback )
+ * target.trigger( events, [a, b, c...] )
+ * ```
  *
  * Where...
  * - `events` is a string of space delimited events.
@@ -53,10 +56,11 @@ function addEventFunction(target, functionName, events, secret)
  *   invoked. If no context is given the default value is the object which has
  *   the trigger function that was invoked.
  *
- * @method eventize
- * @for Core
- * @param {Object} target The object to add `on`, `once`, `off`, and `trigger`
- *    functions to.
+ * @memberof Rekord
+ * @param {Object} [target] -
+ *    The object to add `on`, `once`, `off`, and `trigger` functions to.
+ * @param {Boolean} [secret=false] -
+ *    If true - the functions will be prefixed with `$`.
  */
 function eventize(target, secret)
 {
@@ -68,10 +72,22 @@ function eventize(target, secret)
   var triggerId = 0;
 
   /**
-   * **See:** {{#crossLink "Core/eventize:method"}}{{/crossLink}}
+   * A mixin which adds `on`, `once`, `after`, and `trigger` functions to
+   * another object.
    *
-   * @class eventize
+   * @class Eventful
+   * @memberof Rekord
+   * @see Rekord.eventize
    */
+
+   /**
+    * A mixin which adds `$on`, `$once`, `$after`, and `$trigger` functions to
+    * another object.
+    *
+    * @class Eventful$
+    * @memberof Rekord
+    * @see Rekord.eventize
+    */
 
   // Adds a listener to $this
   function onListeners($this, property, events, callback, context)
@@ -84,7 +100,7 @@ function eventize(target, secret)
     var events = toArray( events, ' ' );
     var listeners = $this[ property ];
 
-    if ( !isDefined( listeners ) )
+    if ( !listeners )
     {
       listeners = $this[ property ] = {};
     }
@@ -94,7 +110,7 @@ function eventize(target, secret)
       var eventName = events[ i ];
       var eventListeners = listeners[ eventName ];
 
-      if ( !isDefined( eventListeners ) )
+      if ( !eventListeners )
       {
         eventListeners = listeners[ eventName ] = [];
       }
@@ -116,28 +132,74 @@ function eventize(target, secret)
    * each time any of them are triggered.
    *
    * @method on
-   * @for eventize
-   * @param {String|Array|Object} events
-   * @param {Function} callback
-   * @param {Object} [context]
-   * @chainable
+   * @memberof Rekord.Eventful#
+   * @param {String|Array} events -
+   *    The event or events to listen to.
+   * @param {Function} callback -
+   *    The function to invoke when any of the events are invoked.
+   * @param {Object} [context] -
+   *    The value of `this` when the callback is invoked. If not specified, the
+   *    reference of the object this function exists on will be `this`.
+   * @return {Function} -
+   *    A function to invoke to stop listening to all of the events given.
    */
+
+  /**
+   * Listens for every occurrence of the given events and invokes the callback
+   * each time any of them are triggered.
+   *
+   * @method $on
+   * @memberof Rekord.Eventful$#
+   * @param {String|Array} events -
+   *    The event or events to listen to.
+   * @param {Function} callback -
+   *    The function to invoke when any of the events are invoked.
+   * @param {Object} [context] -
+   *    The value of `this` when the callback is invoked. If not specified, the
+   *    reference of the object this function exists on will be `this`.
+   * @return {Function} -
+   *    A function to invoke to stop listening to all of the events given.
+   */
+
   function on(events, callback, context)
   {
     return onListeners( this, '$$on', events, callback, context );
   }
 
   /**
-   * Listens for the next occurrence for each of the given events and invokes
-   * the callback when any of the events are triggered.
+   * Listens for the first of the given events to be triggered and invokes the
+   * callback once.
    *
    * @method once
-   * @for eventize
-   * @param {String|Array|Object} events
-   * @param {Function} callback
-   * @param {Object} [context]
-   * @chainable
+   * @memberof Rekord.Eventful#
+   * @param {String|Array} events -
+   *    The event or events to listen to.
+   * @param {Function} callback -
+   *    The function to invoke when any of the events are invoked.
+   * @param {Object} [context] -
+   *    The value of `this` when the callback is invoked. If not specified, the
+   *    reference of the object this function exists on will be `this`.
+   * @return {Function} -
+   *    A function to invoke to stop listening to all of the events given.
    */
+
+  /**
+   * Listens for the first of the given events to be triggered and invokes the
+   * callback once.
+   *
+   * @method $once
+   * @memberof Rekord.Eventful$#
+   * @param {String|Array} events -
+   *    The event or events to listen to.
+   * @param {Function} callback -
+   *    The function to invoke when any of the events are invoked.
+   * @param {Object} [context] -
+   *    The value of `this` when the callback is invoked. If not specified, the
+   *    reference of the object this function exists on will be `this`.
+   * @return {Function} -
+   *    A function to invoke to stop listening to all of the events given.
+   */
+
   function once(events, callback, context)
   {
     return onListeners( this, '$$once', events, callback, context );
