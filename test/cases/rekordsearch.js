@@ -127,7 +127,6 @@ test( '$run concurrent, ensure latest', function(assert)
   timer.run();
 });
 
-
 test( '$cancel', function(assert)
 {
   var timer = assert.timer();
@@ -159,6 +158,47 @@ test( '$cancel', function(assert)
   wait( 3, function()
   {
     strictEqual( search.$results.length, 0 );
+  });
+
+  timer.run();
+});
+
+test( '$decode', function(assert)
+{
+  var timer = assert.timer();
+
+  var prefix = 'RekordSearch_decode_';
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['name', 'done']
+  });
+
+  var rest = Task.Database.rest;
+
+  expect( 2 );
+
+  rest.delay = 2;
+  rest.returnValue = {
+    results: [
+      {id: 1, name: 't0', done: 1},
+      {id: 2, name: 't1', done: 0}
+    ]
+  };
+
+  var search = Task.search('/some/url', {
+    $decode: function(response) {
+      ok( response.results, 'response results exist' );
+      return response.results;
+    }
+  });
+
+  search.name = 'names';
+  search.$run();
+
+  wait( 3, function()
+  {
+    strictEqual( search.$results.length, 2, 'response results returned' );
   });
 
   timer.run();

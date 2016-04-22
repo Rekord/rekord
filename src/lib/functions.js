@@ -680,6 +680,18 @@ function applyOptions( target, options, defaults, secret )
 {
   options = options || {};
 
+  function setProperty(prop, value)
+  {
+    if ( isFunction( value ) )
+    {
+      addMethod( target, prop, value );
+    }
+    else
+    {
+      target[ prop ] = value;
+    }
+  }
+
   for (var prop in defaults)
   {
     var defaultValue = defaults[ prop ];
@@ -692,11 +704,11 @@ function applyOptions( target, options, defaults, secret )
     }
     else if ( valued )
     {
-      target[ prop ] = option;
+      setProperty( prop, option );
     }
     else
     {
-      target[ prop ] = copy( defaultValue );
+      setProperty( prop, copy( defaultValue ) );
     }
   }
 
@@ -704,7 +716,7 @@ function applyOptions( target, options, defaults, secret )
   {
     if ( !(prop in defaults) )
     {
-      target[ prop ] = options[ prop ];
+      setProperty( prop, options[ prop ] );
     }
   }
 
