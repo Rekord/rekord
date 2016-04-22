@@ -112,7 +112,7 @@ function createPropertyResolver(properties, delim)
     {
       return function resolveProperty(model)
       {
-        return model[ properties ];
+        return model ? model[ properties ] : undefined;
       };
     }
   }

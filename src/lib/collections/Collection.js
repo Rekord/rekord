@@ -1933,7 +1933,7 @@ extendArray( Array, Collection,
   group: function(grouping)
   {
     var by = createPropertyResolver( grouping.by, grouping.bySeparator || '/' );
-    var having = createHaving( grouping.having );
+    var having = createWhere( grouping.having, grouping.havingValue, grouping.havingEquals );
     var select = grouping.select || {};
     var map = {};
 

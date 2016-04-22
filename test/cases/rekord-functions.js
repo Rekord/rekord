@@ -537,24 +537,6 @@ test( 'Rekord.saveNumberResolver', function(assert)
   deepEqual( n1( m2 ), 45 );
 });
 
-test( 'Rekord.saveHaving', function(assert)
-{
-  Rekord.saveHaving( 'have0', 'name' );
-  Rekord.saveHaving( 'have1' );
-
-  var h0 = Rekord.createHaving( 'have0' );
-  var h1 = Rekord.createHaving( 'have1' );
-
-  var m0 = {name: 'Phil', age: 26};
-  var m1 = {title: 'Mr', age: 69};
-
-  strictEqual( h0( m0 ), true );
-  strictEqual( h0( m1 ), false );
-
-  strictEqual( h1( m0 ), true );
-  strictEqual( h1( m1 ), true );
-});
-
 test( 'Rekord.hasFields', function(assert)
 {
   var hasFields = Rekord({

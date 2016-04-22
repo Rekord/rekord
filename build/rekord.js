@@ -1244,42 +1244,6 @@ function eventize(target, secret)
 
 
 
-Rekord.Havings = {};
-
-function saveHaving(name, having)
-{
-  return Rekord.Havings[ name ] = createHaving( having );
-}
-
-function createHaving(having)
-{
-  if ( isFunction( having ) )
-  {
-    return having;
-  }
-  else if ( isString( having ) )
-  {
-    if ( having in Rekord.Havings )
-    {
-      return Rekord.Havings[ having ];
-    }
-
-    return function hasValue(model)
-    {
-      return isValue( model ) && isValue( model[ having ] );
-    };
-  }
-  else
-  {
-    return function hasAll()
-    {
-      return true;
-    };
-  }
-}
-
-
-
 
 
 function applyOptions( target, options, defaults, secret )
@@ -1741,7 +1705,7 @@ function createPropertyResolver(properties, delim)
     {
       return function resolveProperty(model)
       {
-        return model[ properties ];
+        return model ? model[ properties ] : undefined;
       };
     }
   }
@@ -8259,7 +8223,7 @@ extendArray( Array, Collection,
   group: function(grouping)
   {
     var by = createPropertyResolver( grouping.by, grouping.bySeparator || '/' );
-    var having = createHaving( grouping.having );
+    var having = createWhere( grouping.having, grouping.havingValue, grouping.havingEquals );
     var select = grouping.select || {};
     var map = {};
 
@@ -14650,9 +14614,6 @@ addMethods( Shard.prototype,
 
   global.Rekord.saveNumberResolver = saveNumberResolver;
   global.Rekord.createNumberResolver = createNumberResolver;
-
-  global.Rekord.saveHaving = saveHaving;
-  global.Rekord.createHaving = createHaving;
 
   global.Rekord.parse = parse;
   global.Rekord.format = format;

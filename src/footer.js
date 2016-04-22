@@ -90,9 +90,6 @@
   global.Rekord.saveNumberResolver = saveNumberResolver;
   global.Rekord.createNumberResolver = createNumberResolver;
 
-  global.Rekord.saveHaving = saveHaving;
-  global.Rekord.createHaving = createHaving;
-
   global.Rekord.parse = parse;
   global.Rekord.format = format;
   global.Rekord.createFormatter = createFormatter;
