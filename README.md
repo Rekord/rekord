@@ -25,6 +25,9 @@ Caching data/changes locally and real-time behavior is optional - if you don't w
 5. *Rekord can handle horizontal scaling via sharding?*  
 Yes! You can say models of type X can exist on REST endpoints A, B, & C. You can provide a function which takes a model and returns the set of REST endpoints that need to be sent saves/removes. When you query on a sharded type it can contact all REST endpoints and combine the results.
 
+6. *Why do some functions in the API start with $?*  
+The `Rekord.Model` and `Rekord.Search` classes can have custom properties therefore to avoid collisions the functions and private variables start with `$`. If your design includes properties like `status`, `operation`, `db`, `relations`, etc it won't interfere with Rekord.
+
 **Installation**
 
 The easiest way to install rekord is through bower via `bower install rekord`.
