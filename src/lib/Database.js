@@ -171,15 +171,17 @@ function defaultResolveModels( response )
 
 Database.Events =
 {
-  NoLoad:       'no-load',
-  RemoteLoad:   'remote-load',
-  LocalLoad:    'local-load',
-  Updated:      'updated',
-  ModelAdded:   'model-added',
-  ModelUpdated: 'model-updated',
-  ModelRemoved: 'model-removed',
-  Loads:        'no-load remote-load local-load',
-  Changes:      'updated'
+  NoLoad:             'no-load',
+  RemoteLoad:         'remote-load',
+  LocalLoad:          'local-load',
+  Updated:            'updated',
+  ModelAdded:         'model-added',
+  ModelUpdated:       'model-updated',
+  ModelRemoved:       'model-removed',
+  OperationsStarted:  'operations-started',
+  OperationsFinished: 'operations-finished',
+  Loads:              'no-load remote-load local-load',
+  Changes:            'updated'
 };
 
 Database.Defaults =

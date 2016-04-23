@@ -38,6 +38,7 @@ addMethods( Operation.prototype,
     else
     {
       this.next = operation;
+      this.model.$trigger( Model.Events.OperationsStarted );
     }
   },
 
@@ -63,6 +64,11 @@ addMethods( Operation.prototype,
 
   execute: function()
   {
+    if ( this.db.pendingOperations === 0 )
+    {
+      this.db.trigger( Database.Events.OperationsStarted );
+    }
+
     this.db.pendingOperations++;
 
     this.run( this.db, this.model );
@@ -83,12 +89,17 @@ addMethods( Operation.prototype,
       {
         this.next.execute();
       }
+      else
+      {
+        this.model.$trigger( Model.Events.OperationsFinished );
+      }
 
       this.db.pendingOperations--;
 
       if ( this.db.pendingOperations === 0 )
       {
         this.db.onOperationRest();
+        this.db.trigger( Database.Events.OperationsFinished );
       }
     }
 

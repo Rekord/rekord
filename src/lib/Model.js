@@ -78,6 +78,8 @@ Model.Events =
   RemoteGets:           'remote-get remote-get-failure remote-get-offline',
   RemoteAndRemove:      'remote-remove removed',
   SavedRemoteUpdate:    'saved remote-update',
+  OperationsStarted:    'operations-started',
+  OperationsFinished:   'operations-finished',
   Changes:              'saved remote-update key-update relation-update removed change'
 };
 

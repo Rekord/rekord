@@ -4143,15 +4143,17 @@ function defaultResolveModels( response )
 
 Database.Events =
 {
-  NoLoad:       'no-load',
-  RemoteLoad:   'remote-load',
-  LocalLoad:    'local-load',
-  Updated:      'updated',
-  ModelAdded:   'model-added',
-  ModelUpdated: 'model-updated',
-  ModelRemoved: 'model-removed',
-  Loads:        'no-load remote-load local-load',
-  Changes:      'updated'
+  NoLoad:             'no-load',
+  RemoteLoad:         'remote-load',
+  LocalLoad:          'local-load',
+  Updated:            'updated',
+  ModelAdded:         'model-added',
+  ModelUpdated:       'model-updated',
+  ModelRemoved:       'model-removed',
+  OperationsStarted:  'operations-started',
+  OperationsFinished: 'operations-finished',
+  Loads:              'no-load remote-load local-load',
+  Changes:            'updated'
 };
 
 Database.Defaults =
@@ -5315,6 +5317,8 @@ Model.Events =
   RemoteGets:           'remote-get remote-get-failure remote-get-offline',
   RemoteAndRemove:      'remote-remove removed',
   SavedRemoteUpdate:    'saved remote-update',
+  OperationsStarted:    'operations-started',
+  OperationsFinished:   'operations-finished',
   Changes:              'saved remote-update key-update relation-update removed change'
 };
 
@@ -10790,6 +10794,7 @@ addMethods( Operation.prototype,
     else
     {
       this.next = operation;
+      this.model.$trigger( Model.Events.OperationsStarted );
     }
   },
 
@@ -10815,6 +10820,11 @@ addMethods( Operation.prototype,
 
   execute: function()
   {
+    if ( this.db.pendingOperations === 0 )
+    {
+      this.db.trigger( Database.Events.OperationsStarted );
+    }
+
     this.db.pendingOperations++;
 
     this.run( this.db, this.model );
@@ -10835,12 +10845,17 @@ addMethods( Operation.prototype,
       {
         this.next.execute();
       }
+      else
+      {
+        this.model.$trigger( Model.Events.OperationsFinished );
+      }
 
       this.db.pendingOperations--;
 
       if ( this.db.pendingOperations === 0 )
       {
         this.db.onOperationRest();
+        this.db.trigger( Database.Events.OperationsFinished );
       }
     }
 
