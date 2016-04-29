@@ -203,3 +203,37 @@ test( '$decode', function(assert)
 
   timer.run();
 });
+
+test( '$offline', function(assert)
+{
+  var prefix = 'RekordSearch_offline_';
+
+  noline();
+
+  var Todo = Rekord({
+    name: prefix + 'todo',
+    fields: ['name', 'done']
+  });
+
+  offline();
+
+  var search = Todo.search('/some/url');
+
+  expect( 2 );
+
+  search.$run();
+
+  search.$offline(function()
+  {
+    ok( true, 'offline!' );
+  });
+
+  search.$failure(function()
+  {
+    ok( false, 'oops, failure' );
+  });
+
+  strictEqual( search.$status, Rekord.Search.Status.Offline );
+
+  noline();
+});

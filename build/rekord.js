@@ -10432,14 +10432,16 @@ Search.Events =
 {
   Ready:      'ready',
   Success:    'success',
-  Failure:    'failure'
+  Failure:    'failure',
+  Offline:    'offline'
 };
 
 Search.Status =
 {
   Pending:    'pending',
   Success:    'success',
-  Failure:    'failure'
+  Failure:    'failure',
+  Offline:    'offline'
 };
 
 Search.Defaults =
@@ -10536,6 +10538,20 @@ addMethods( Search.prototype,
     return this;
   },
 
+  $offline: function(callback, context)
+  {
+    if ( this.$status === Search.Status.Pending )
+    {
+      this.$once( Search.Events.Offline, callback, context );
+    }
+    else if ( this.$status === Search.Status.Offline )
+    {
+      callback.call( context, this );
+    }
+
+    return this;
+  },
+
   $handleSuccess: function(response)
   {
     var models = this.$decode.apply( this, arguments );
@@ -10555,11 +10571,20 @@ addMethods( Search.prototype,
     this.$trigger( Search.Events.Success, [this, response] );
   },
 
-  $handleFailure: function(response)
+  $handleFailure: function(response, status)
   {
-    this.$status = Search.Status.Failure;
+    var offline = status === 0;
+
+    if ( offline )
+    {
+      Rekord.checkNetworkStatus();
+
+      offline = !Rekord.online;
+    }
+
+    this.$status = offline ? Search.Status.Offline : Search.Status.Failure;
     this.$trigger( Search.Events.Ready, [this, response] );
-    this.$trigger( Search.Events.Failure, [this, response] );
+    this.$trigger( offline ? Search.Events.Offline : Search.Events.Failure, [this, response] );
   },
 
   $encode: function()
