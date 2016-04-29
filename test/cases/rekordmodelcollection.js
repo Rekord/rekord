@@ -163,3 +163,29 @@ test( 'clone models', function(assert)
   strictEqual( t1.name, t3.name );
   strictEqual( t3.done, false );
 });
+
+test( 'refreshWhere', function(assert)
+{
+  var prefix = 'RekordModelCollection_refreshWhere_';
+
+  var Todo = Rekord({
+    name: prefix + 'todo',
+    fields: ['name', 'done']
+  });
+
+  var t0 = Todo.create({name: 't0', done: true});
+  var t1 = Todo.create({name: 't1', done: false});
+  var t2 = Todo.create({name: 't2', done: true});
+
+  var c = Todo.collect([t0, t1, t2]);
+
+  Todo.Database.rest.map.put( t0.id, {name: 't0a'} );
+  Todo.Database.rest.map.put( t1.id, {name: 't1a'} );
+  Todo.Database.rest.map.put( t2.id, {name: 't2a'} );
+
+  c.refreshWhere( 'done', true );
+
+  strictEqual( t0.name, 't0a' );
+  strictEqual( t1.name, 't1' );
+  strictEqual( t2.name, 't2a' );
+});

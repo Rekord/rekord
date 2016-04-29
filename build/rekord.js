@@ -9885,6 +9885,33 @@ extendArray( Collection, ModelCollection,
   },
 
   /**
+   * Calls {@link Rekord.Model#$refresh} on models in this collection that meet
+   * the given where expression.
+   *
+   * @method
+   * @memberof Rekord.ModelCollection#
+   * @param {whereInput} [properties] -
+   *    See {@link Rekord.createWhere}
+   * @param {Any} [value] -
+   *    See {@link Rekord.createWhere}
+   * @param {equalityCallback} [equals=Rekord.equalsStrict] -
+   *    See {@link Rekord.createWhere}
+   * @return {Rekord.ModelCollection} -
+   *    The reference to this collection.
+   * @see Rekord.createWhere
+   * @see Rekord.Model#$refresh
+   */
+  refreshWhere: function(properties, value, equals)
+  {
+    function refreshIt(model)
+    {
+      model.$refresh();
+    }
+
+    return this.eachWhere( refreshIt, properties, value, equals );
+  },
+
+  /**
    * Returns a clone of this collection. Optionally the models in this
    * collection can also be cloned.
    *
@@ -11748,7 +11775,7 @@ extend( Operation, SaveRemote,
     {
       Rekord.debug( Rekord.Debugs.SAVE_UPDATE_FAIL, model );
 
-      model.$addOperation( RemoveNow );
+      this.insertNext( RemoveNow );
 
       db.destroyModel( model );
 
