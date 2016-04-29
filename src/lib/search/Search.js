@@ -174,4 +174,4 @@ addMethods( Search.prototype,
 
 });
 
-eventize( Search.prototype, true );
+addEventable( Search.prototype, true );

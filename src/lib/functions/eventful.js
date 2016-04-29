@@ -62,7 +62,7 @@ function addEventFunction(target, functionName, events, secret)
  * @param {Boolean} [secret=false] -
  *    If true - the functions will be prefixed with `$`.
  */
-function eventize(target, secret)
+function addEventable(target, secret)
 {
 
   var CALLBACK_FUNCTION = 0;
@@ -77,7 +77,7 @@ function eventize(target, secret)
    *
    * @class Eventful
    * @memberof Rekord
-   * @see Rekord.eventize
+   * @see Rekord.addEventable
    */
 
    /**
@@ -86,7 +86,7 @@ function eventize(target, secret)
     *
     * @class Eventful$
     * @memberof Rekord
-    * @see Rekord.eventize
+    * @see Rekord.addEventable
     */
 
   // Adds a listener to $this
@@ -247,7 +247,7 @@ function eventize(target, secret)
    *     target.off('a', x);     // remove listener x from event a
    *
    * @method off
-   * @for eventize
+   * @for addEventable
    * @param {String|Array|Object} [events]
    * @param {Function} [callback]
    * @chainable
@@ -328,7 +328,7 @@ function eventize(target, secret)
    * Triggers a single event optionally passing an argument to any listeners.
    *
    * @method trigger
-   * @for eventize
+   * @for addEventable
    * @param {String} event
    * @param {Array} args
    * @chainable

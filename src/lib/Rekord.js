@@ -154,7 +154,7 @@ Rekord.get = function(name, callback, context)
   * @typedef {String|Number} modelKey
   */
 
-eventize( Rekord );
+addEventable( Rekord );
 
 Rekord.Events =
 {

@@ -2097,7 +2097,7 @@ extendArray( Array, Collection,
 
 });
 
-eventize( Collection.prototype );
+addEventable( Collection.prototype );
 
 /**
  * Adds a listener for change events on this collection.

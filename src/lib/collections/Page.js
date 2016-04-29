@@ -157,5 +157,5 @@ extendArray( Array, Page,
 
 });
 
-eventize( Page.prototype );
+addEventable( Page.prototype );
 addEventFunction( Page.prototype, 'change', Page.Events.Changes );

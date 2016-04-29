@@ -687,6 +687,6 @@ addMethods( Model.prototype,
 
 });
 
-eventize( Model.prototype, true );
+addEventable( Model.prototype, true );
 
 addEventFunction( Model.prototype, '$change', Model.Events.Changes, true );

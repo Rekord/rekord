@@ -1262,5 +1262,5 @@ addMethods( Database.prototype,
 
 });
 
-eventize( Database.prototype );
+addEventable( Database.prototype );
 addEventFunction( Database.prototype, 'change', Database.Events.Changes );

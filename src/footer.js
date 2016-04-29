@@ -45,7 +45,7 @@
   global.Rekord.hasFields = hasFields;
   global.Rekord.toArray = toArray;
 
-  global.Rekord.eventize = eventize;
+  global.Rekord.addEventable = addEventable;
 
   global.Rekord.extend = extend;
   global.Rekord.extendArray = extendArray;

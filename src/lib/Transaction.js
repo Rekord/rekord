@@ -186,4 +186,4 @@ addMethods( Transaction.prototype,
 
 });
 
-eventize( Transaction.prototype );
+addEventable( Transaction.prototype );
