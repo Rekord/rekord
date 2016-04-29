@@ -374,3 +374,121 @@ test( 'remove offline transaction', function(assert)
 
   noline();
 });
+
+test( 'remove remote only local', function(assert)
+{
+  var prefix = 'RekordModel_remove_remote_local_only_';
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['name', 'done', 'list_id']
+  });
+
+  var TaskList = Rekord({
+    name: prefix + 'task_list',
+    fields: ['name'],
+    hasMany: {
+      tasks: {
+        model: Task,
+        foreign: 'list_id'
+      }
+    }
+  });
+
+  var l0 = TaskList.create({
+    id: 29,
+    name: 'l0',
+    tasks: [
+      {id: 4, name: 't0', done: true},
+      {id: 5, name: 't1', done: false}
+    ]
+  });
+
+  var t0 = Task.get(4);
+  var t1 = Task.get(5);
+
+  t0.$save();
+  t1.$save();
+
+  notStrictEqual( l0.id, void 0 );
+  strictEqual( t0.list_id, l0.id );
+  strictEqual( t1.list_id, l0.id );
+
+  Task.Database.rest.map.remove( 5 );
+
+  notOk( t1.$isDeleted() );
+
+  t1.$refresh();
+
+  ok( t1.$isDeleted() );
+  strictEqual( l0.tasks.length, 1 );
+
+  Task.Database.rest.map.remove( 4 );
+
+  notOk( t0.$isDeleted() );
+
+  Task.refresh();
+
+  ok( t1.$isDeleted() );
+  strictEqual( l0.tasks.length, 0 );
+});
+
+test( 'remove remote only local relationship', function(assert)
+{
+  var prefix = 'RekordModel_remove_remote_local_only_relationship_';
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['name', 'done', 'list_id']
+  });
+
+  var TaskList = Rekord({
+    name: prefix + 'task_list',
+    fields: ['name'],
+    hasMany: {
+      tasks: {
+        model: Task,
+        foreign: 'list_id',
+        cascadeRemove: Rekord.Cascade.All
+      }
+    }
+  });
+
+  var l0 = TaskList.create({
+    id: 29,
+    name: 'l0',
+    tasks: [
+      Task.create({id: 4, name: 't0', done: true}),
+      Task.create({id: 5, name: 't1', done: false})
+    ]
+  });
+
+  var t0 = Task.get(4);
+  var t1 = Task.get(5);
+
+  TaskList.Database.rest.map.put( 29, {
+    id: 29,
+    name: 'l0',
+    tasks: [
+      {id:  4, name: 't0', done: false}
+    ]
+  });
+
+  expect(5);
+
+  notOk( t0.$isDeleted() );
+  notOk( t1.$isDeleted() );
+
+  l0.$refresh();
+
+  t1.$on( Rekord.Model.Events.PreRemove, function()
+  {
+    // shouldn't get called
+    ok( false );
+  });
+
+  notOk( t0.$isDeleted() );
+  ok( t1.$isDeleted() );
+
+  notStrictEqual( Task.Database.rest.lastOperation, 'remove' );
+});

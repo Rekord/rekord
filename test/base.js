@@ -211,7 +211,7 @@ function TestStore()
   this.map = new Rekord.Map();
   this.valid = true;
   this.delay = 0;
-  this.lastKey = this.lastRecord = null;
+  this.lastKey = this.lastRecord = this.lastOperation = null;
 }
 
 TestStore.prototype =
@@ -247,6 +247,7 @@ TestStore.prototype =
   get: function(key, success, failure)
   {
     this.lastKey = key;
+    this.lastOperation = 'get';
 
     var map = this.map;
     function onGet()
@@ -255,7 +256,7 @@ TestStore.prototype =
       if ( model ) {
         success.call( this, key, model );
       } else {
-        failure.apply( this );
+        failure.apply( this, 404 );
       }
     }
 
@@ -269,6 +270,7 @@ TestStore.prototype =
   {
     this.lastKey = key;
     this.lastRecord = record;
+    this.lastOperation = 'put';
 
     var map = this.map;
     function onPut()
@@ -282,6 +284,7 @@ TestStore.prototype =
   remove: function(key, success, failure)
   {
     this.lastKey = key;
+    this.lastOperation = 'remove';
 
     var map = this.map;
     var removed = map.get( key );
@@ -295,6 +298,7 @@ TestStore.prototype =
   },
   all: function(success, failure)
   {
+    this.lastOperation = 'all';
     this.finishDelayed( success, failure, this.map.values, this.map.keys );
   }
 };

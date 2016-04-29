@@ -789,6 +789,21 @@ addMethods( Database.prototype,
     return model;
   },
 
+  destroyModel: function(model, modelKey)
+  {
+    var db = this;
+    var key = modelKey || model.$key();
+
+    delete db.all[ key ];
+
+    db.models.remove( key );
+    db.trigger( Database.Events.ModelRemoved, [model] );
+
+    model.$trigger( Model.Events.RemoteAndRemove );
+
+    Rekord.debug( Rekord.Debugs.REMOTE_REMOVE, db, model );
+  },
+
   destroyLocalUncachedModel: function(model, key)
   {
     var db = this;
@@ -806,14 +821,7 @@ addMethods( Database.prototype,
         return false;
       }
 
-      delete db.all[ key ];
-
-      db.models.remove( key );
-      db.trigger( Database.Events.ModelRemoved, [model] );
-
-      model.$trigger( Model.Events.RemoteAndRemove );
-
-      Rekord.debug( Rekord.Debugs.REMOTE_REMOVE, db, model );
+      db.destroyModel( model, key );
 
       return true;
     }
@@ -832,10 +840,15 @@ addMethods( Database.prototype,
       {
         // Removed saved history and the current ID
         delete model.$saved;
-        delete model.$local.$saved;
 
         db.removeKey( model );
-        db.removeKey( model.$local );
+
+        if ( model.$local )
+        {
+          delete model.$local.$saved;
+
+          db.removeKey( model.$local );
+        }
 
         model.$trigger( Model.Events.Detach );
 
@@ -846,14 +859,7 @@ addMethods( Database.prototype,
 
       model.$addOperation( RemoveNow );
 
-      delete db.all[ key ];
-
-      db.models.remove( key );
-      db.trigger( Database.Events.ModelRemoved, [model] );
-
-      model.$trigger( Model.Events.RemoteAndRemove );
-
-      Rekord.debug( Rekord.Debugs.REMOTE_REMOVE, db, model );
+      db.destroyModel( model, key );
     }
     else
     {

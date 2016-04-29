@@ -436,7 +436,7 @@ extend( RelationMultiple, HasManyThrough,
 
       if ( callRemove )
       {
-        through.$remove();
+        through.$remove( remoteData ? Rekord.Cascade.Local : Rekord.Cascade.All );
       }
 
       throughs.remove( throughKey );

@@ -942,7 +942,7 @@ test( 'events', function(assert)
   var context0 = {name: 'c0'};
   var context1 = {name: 'c1'};
 
-  expect( 11 );
+  expect( 10 );
 
   var Task = Rekord({
     name: 'events',

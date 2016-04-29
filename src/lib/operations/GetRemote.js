@@ -50,11 +50,20 @@ extend( Operation, GetRemote,
 
   onFailure: function(response, status)
   {
+    var db = this.db;
     var model = this.model;
 
     Rekord.debug( Rekord.Debugs.GET_REMOTE_ERROR, model, response, status );
 
-    if ( status === 0 )
+    if ( status === 410 || status === 404 )
+    {
+      this.insertNext( RemoveNow );
+
+      db.destroyModel( model );
+
+      model.$trigger( Model.Events.RemoteGetFailure, [model, response] );
+    }
+    else if ( status === 0 )
     {
       model.$trigger( Model.Events.RemoteGetOffline, [model, response] );
     }

@@ -290,7 +290,17 @@ extend( RelationMultiple, HasMany,
 
       if ( this.cascadeRemove )
       {
-        related.$remove( this.cascadeRemove );
+        if ( remoteData )
+        {
+          if ( this.cascadeRemove & Rekord.Cascade.Local )
+          {
+            related.$remove( Rekord.Cascade.Local );
+          }
+        }
+        else
+        {
+          related.$remove( this.cascadeRemove );
+        }
       }
 
       this.sort( relation );

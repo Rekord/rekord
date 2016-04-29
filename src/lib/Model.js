@@ -242,13 +242,13 @@ addMethods( Model.prototype,
     this.$set( props );
   },
 
-  $set: function(props, value, remoteData)
+  $set: function(props, value, remoteData, avoidChange)
   {
     if ( isObject( props ) )
     {
       for (var prop in props)
       {
-        this.$set( prop, props[ prop ], remoteData );
+        this.$set( prop, props[ prop ], remoteData, true );
       }
     }
     else if ( isString( props ) )
@@ -270,7 +270,7 @@ addMethods( Model.prototype,
       }
     }
 
-    if ( isValue( props ) )
+    if ( !avoidChange && isValue( props ) )
     {
       this.$trigger( Model.Events.Change, [props, value] );
     }

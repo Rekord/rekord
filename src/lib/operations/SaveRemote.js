@@ -77,6 +77,8 @@ extend( Operation, SaveRemote,
 
       this.insertNext( RemoveNow );
 
+      db.destroyModel( model );
+
       model.$trigger( Model.Events.RemoteSaveFailure, [model, response] );
     }
     else if ( status !== 0 )

@@ -4761,6 +4761,21 @@ addMethods( Database.prototype,
     return model;
   },
 
+  destroyModel: function(model, modelKey)
+  {
+    var db = this;
+    var key = modelKey || model.$key();
+
+    delete db.all[ key ];
+
+    db.models.remove( key );
+    db.trigger( Database.Events.ModelRemoved, [model] );
+
+    model.$trigger( Model.Events.RemoteAndRemove );
+
+    Rekord.debug( Rekord.Debugs.REMOTE_REMOVE, db, model );
+  },
+
   destroyLocalUncachedModel: function(model, key)
   {
     var db = this;
@@ -4778,14 +4793,7 @@ addMethods( Database.prototype,
         return false;
       }
 
-      delete db.all[ key ];
-
-      db.models.remove( key );
-      db.trigger( Database.Events.ModelRemoved, [model] );
-
-      model.$trigger( Model.Events.RemoteAndRemove );
-
-      Rekord.debug( Rekord.Debugs.REMOTE_REMOVE, db, model );
+      db.destroyModel( model, key );
 
       return true;
     }
@@ -4804,10 +4812,15 @@ addMethods( Database.prototype,
       {
         // Removed saved history and the current ID
         delete model.$saved;
-        delete model.$local.$saved;
 
         db.removeKey( model );
-        db.removeKey( model.$local );
+
+        if ( model.$local )
+        {
+          delete model.$local.$saved;
+
+          db.removeKey( model.$local );
+        }
 
         model.$trigger( Model.Events.Detach );
 
@@ -4818,14 +4831,7 @@ addMethods( Database.prototype,
 
       model.$addOperation( RemoveNow );
 
-      delete db.all[ key ];
-
-      db.models.remove( key );
-      db.trigger( Database.Events.ModelRemoved, [model] );
-
-      model.$trigger( Model.Events.RemoteAndRemove );
-
-      Rekord.debug( Rekord.Debugs.REMOTE_REMOVE, db, model );
+      db.destroyModel( model, key );
     }
     else
     {
@@ -5481,13 +5487,13 @@ addMethods( Model.prototype,
     this.$set( props );
   },
 
-  $set: function(props, value, remoteData)
+  $set: function(props, value, remoteData, avoidChange)
   {
     if ( isObject( props ) )
     {
       for (var prop in props)
       {
-        this.$set( prop, props[ prop ], remoteData );
+        this.$set( prop, props[ prop ], remoteData, true );
       }
     }
     else if ( isString( props ) )
@@ -5509,7 +5515,7 @@ addMethods( Model.prototype,
       }
     }
 
-    if ( isValue( props ) )
+    if ( !avoidChange && isValue( props ) )
     {
       this.$trigger( Model.Events.Change, [props, value] );
     }
@@ -11198,11 +11204,20 @@ extend( Operation, GetRemote,
 
   onFailure: function(response, status)
   {
+    var db = this.db;
     var model = this.model;
 
     Rekord.debug( Rekord.Debugs.GET_REMOTE_ERROR, model, response, status );
 
-    if ( status === 0 )
+    if ( status === 410 || status === 404 )
+    {
+      this.insertNext( RemoveNow );
+
+      db.destroyModel( model );
+
+      model.$trigger( Model.Events.RemoteGetFailure, [model, response] );
+    }
+    else if ( status === 0 )
     {
       model.$trigger( Model.Events.RemoteGetOffline, [model, response] );
     }
@@ -11733,7 +11748,9 @@ extend( Operation, SaveRemote,
     {
       Rekord.debug( Rekord.Debugs.SAVE_UPDATE_FAIL, model );
 
-      this.insertNext( RemoveNow );
+      model.$addOperation( RemoveNow );
+
+      db.destroyModel( model );
 
       model.$trigger( Model.Events.RemoteSaveFailure, [model, response] );
     }
@@ -13406,7 +13423,17 @@ extend( RelationMultiple, HasMany,
 
       if ( this.cascadeRemove )
       {
-        related.$remove( this.cascadeRemove );
+        if ( remoteData )
+        {
+          if ( this.cascadeRemove & Rekord.Cascade.Local )
+          {
+            related.$remove( Rekord.Cascade.Local );
+          }
+        }
+        else
+        {
+          related.$remove( this.cascadeRemove );
+        }
       }
 
       this.sort( relation );
@@ -13875,7 +13902,7 @@ extend( RelationMultiple, HasManyThrough,
 
       if ( callRemove )
       {
-        through.$remove();
+        through.$remove( remoteData ? Rekord.Cascade.Local : Rekord.Cascade.All );
       }
 
       throughs.remove( throughKey );
