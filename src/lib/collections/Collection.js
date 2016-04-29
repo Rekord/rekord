@@ -1737,6 +1737,49 @@ extendArray( Array, Collection,
   },
 
   /**
+   * Iterates over each element in this collection that matches the where
+   * expression and passes the element and it's index to the given function.
+   *
+   * @method
+   * @memberof Rekord.Collection#
+   * @param {Function} callback -
+   *    The function to invoke for each element of this collection passing the
+   *    element and the index where it exists.
+   * @param {whereInput} [properties] -
+   *    The expression used to create a function to test the elements in this
+   *    collection.
+   * @param {Any} [value] -
+   *    When the first argument is a string this argument will be treated as a
+   *    value to compare to the value of the named property on the object passed
+   *    through the filter function.
+   * @param {equalityCallback} [equals=Rekord.equalsStrict] -
+   *    An alternative function can be used to compare to values.
+   * @return {Rekord.Collection} -
+   *    The reference to this collection.
+   */
+  eachWhere: function(callback, properties, values, equals)
+  {
+    var where = createWhere( properties, values, equals );
+
+    for (var i = 0; i < this.length; i++)
+    {
+      var item = this[ i ];
+
+      if ( where( item ) )
+      {
+        callback.call( this, item, i );
+
+        if ( this[ i ] !== item )
+        {
+          i--;
+        }
+      }
+    }
+
+    return this;
+  },
+
+  /**
    * Reduces all the elements of this collection to a single value. All elements
    * are passed to a function which accepts the currently reduced value and the
    * current element and returns the new reduced value.

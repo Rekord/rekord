@@ -525,3 +525,35 @@ test( 'page change', function(assert)
   p.next();
 
 });
+
+test( 'each', function(assert)
+{
+  var c = Rekord.collect(1, 2, 3, 4, 5);
+
+  expect( 5 );
+
+  c.each(function(x, i)
+  {
+    strictEqual( x, i + 1 );
+  })
+});
+
+test( 'eachWhere', function(assert)
+{
+  var c = Rekord.collect(1, 2, 3, 4, 5);
+
+  expect( 4 );
+
+  function isEven(x)
+  {
+    return x % 2 === 0;
+  }
+
+  function lookAtItem(x, i)
+  {
+    strictEqual( x, i + 1 );
+    strictEqual( 0, x % 2 );
+  }
+
+  c.eachWhere( lookAtItem, isEven );
+});
