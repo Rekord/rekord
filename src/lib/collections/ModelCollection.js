@@ -990,16 +990,35 @@ extendArray( Collection, ModelCollection,
   },
 
   /**
-   * Returns a clone of this collection.
+   * Returns a clone of this collection. Optionally the models in this
+   * collection can also be cloned.
    *
    * @method
    * @memberof Rekord.ModelCollection#
+   * @param {Boolean} [cloneModels=false] -
+   *    Whether or not the models should be cloned as well.
+   * @param {Boolean} [cloneProperties] -
+   *    The properties object which defines what fields should be given a
+   *    different (non-cloned) value and which relations need to be cloned.
    * @return {Rekord.ModelCollection} -
    *    The reference to a clone collection.
+   * @see Rekord.Model#$clone
    */
-  clone: function()
+  clone: function(cloneModels, cloneProperties)
   {
-    return new ModelCollection( this.database, this, true );
+    var source = this;
+
+    if ( cloneModels )
+    {
+      source = [];
+
+      for (var i = 0; i < this.length; i++)
+      {
+        source[ i ] = this[ i ].$clone( cloneProperties );
+      }
+    }
+
+    return new ModelCollection( this.database, source, true );
   },
 
   /**

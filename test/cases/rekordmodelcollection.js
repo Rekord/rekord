@@ -136,3 +136,30 @@ test( 'cancelWhere', function(assert)
 
   strictEqual( t3.name, void 0 );
 });
+
+test( 'clone models', function(assert)
+{
+  var prefix = 'RekordModelCollection_clone_models_';
+
+  var Todo = Rekord({
+    name: prefix + 'todo',
+    fields: ['name', 'done']
+  });
+
+  var t0 = Todo.create({name: 't0', done: true});
+  var t1 = Todo.create({name: 't1', done: false});
+
+  var c = Todo.collect([t0, t1]);
+
+  var clone = c.clone( true, {done: false} );
+  var t2 = clone[ 0 ];
+  var t3 = clone[ 1 ];
+
+  notStrictEqual( t0, t2 );
+  strictEqual( t0.name, t2.name );
+  strictEqual( t2.done, false );
+
+  notStrictEqual( t1, t3 );
+  strictEqual( t1.name, t3.name );
+  strictEqual( t3.done, false );
+});
