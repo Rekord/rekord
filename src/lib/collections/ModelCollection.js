@@ -872,6 +872,124 @@ extendArray( Collection, ModelCollection,
   },
 
   /**
+   * Calls {@link Rekord.Model#$push} on models in this collection that meet
+   * the given where expression.
+   *
+   * @method
+   * @memberof Rekord.ModelCollection#
+   * @param {String[]} [fields] -
+   *    The set of fields to save for later popping or discarding. If not
+   *    specified, all model fields will be saved.
+   * @param {whereInput} [properties] -
+   *    See {@link Rekord.createWhere}
+   * @param {Any} [value] -
+   *    See {@link Rekord.createWhere}
+   * @param {equalityCallback} [equals=Rekord.equalsStrict] -
+   *    See {@link Rekord.createWhere}
+   * @return {Rekord.ModelCollection} -
+   *    The reference to this collection.
+   * @see Rekord.createWhere
+   * @see Rekord.Model#$push
+   */
+  pushWhere: function(fields, properties, value, equals)
+  {
+    function pushIt(model)
+    {
+      model.$push( fields );
+    }
+
+    return this.eachWhere( pushIt, properties, value, equals );
+  },
+
+  /**
+   * Calls {@link Rekord.Model#$pop} on models in this collection that meet
+   * the given where expression.
+   *
+   * @method
+   * @memberof Rekord.ModelCollection#
+   * @param {Boolean} [dontDiscard=false] -
+   *    Whether to remove the saved state after the saved state has been applied
+   *    back to the model. A falsy value will result in
+   *    {@link Rekord.Model#$discard} being called.
+   * @param {whereInput} [properties] -
+   *    See {@link Rekord.createWhere}
+   * @param {Any} [value] -
+   *    See {@link Rekord.createWhere}
+   * @param {equalityCallback} [equals=Rekord.equalsStrict] -
+   *    See {@link Rekord.createWhere}
+   * @return {Rekord.ModelCollection} -
+   *    The reference to this collection.
+   * @see Rekord.createWhere
+   * @see Rekord.Model#$pop
+   */
+  popWhere: function(dontDiscard, properties, value, equals)
+  {
+    function popIt(model)
+    {
+      model.$pop( dontDiscard );
+    }
+
+    return this.eachWhere( popIt, properties, value, equals );
+  },
+
+  /**
+   * Calls {@link Rekord.Model#$discard} on models in this collection that meet
+   * the given where expression.
+   *
+   * @method
+   * @memberof Rekord.ModelCollection#
+   * @param {whereInput} [properties] -
+   *    See {@link Rekord.createWhere}
+   * @param {Any} [value] -
+   *    See {@link Rekord.createWhere}
+   * @param {equalityCallback} [equals=Rekord.equalsStrict] -
+   *    See {@link Rekord.createWhere}
+   * @return {Rekord.ModelCollection} -
+   *    The reference to this collection.
+   * @see Rekord.createWhere
+   * @see Rekord.Model#$discard
+   */
+  discardWhere: function(properties, value, equals)
+  {
+    function discardIt(model)
+    {
+      model.$discard();
+    }
+
+    return this.eachWhere( discardIt, properties, value, equals );
+  },
+
+  /**
+   * Calls {@link Rekord.Model#$cancel} on models in this collection that meet
+   * the given where expression.
+   *
+   * @method
+   * @memberof Rekord.ModelCollection#
+   * @param {Boolean} [reset=false] -
+   *    If reset is true and the model doesn't have a saved state -
+   *    {@link Rekord.Model#$reset} will be called.
+   * @param {whereInput} [properties] -
+   *    See {@link Rekord.createWhere}
+   * @param {Any} [value] -
+   *    See {@link Rekord.createWhere}
+   * @param {equalityCallback} [equals=Rekord.equalsStrict] -
+   *    See {@link Rekord.createWhere}
+   * @return {Rekord.ModelCollection} -
+   *    The reference to this collection.
+   * @see Rekord.createWhere
+   * @see Rekord.Model#$cancel
+   */
+  cancelWhere: function(reset, properties, value, equals)
+  {
+    function cancelIt(model)
+    {
+      model.$cancel( reset );
+    }
+
+    return this.eachWhere( cancelIt, properties, value, equals );
+  },
+
+  /**
    * Returns a clone of this collection.
    *
    * @method

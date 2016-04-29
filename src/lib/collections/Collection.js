@@ -1746,16 +1746,14 @@ extendArray( Array, Collection,
    *    The function to invoke for each element of this collection passing the
    *    element and the index where it exists.
    * @param {whereInput} [properties] -
-   *    The expression used to create a function to test the elements in this
-   *    collection.
+   *    See {@link Rekord.createWhere}
    * @param {Any} [value] -
-   *    When the first argument is a string this argument will be treated as a
-   *    value to compare to the value of the named property on the object passed
-   *    through the filter function.
+   *    See {@link Rekord.createWhere}
    * @param {equalityCallback} [equals=Rekord.equalsStrict] -
-   *    An alternative function can be used to compare to values.
+   *    See {@link Rekord.createWhere}
    * @return {Rekord.Collection} -
    *    The reference to this collection.
+   * @see Rekord.createWhere
    */
   eachWhere: function(callback, properties, values, equals)
   {
