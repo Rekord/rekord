@@ -19,7 +19,7 @@
  */
 function Collection(values)
 {
-  this.addAll( values );
+  this.addAll( values, true );
 }
 
 /**
@@ -246,16 +246,20 @@ extendArray( Array, Collection,
    * @param {Boolean} [nullsFirst=false] -
    *    When a comparison is done involving a null/undefined value this can
    *    determine which is ordered before the other.
+   * @param {Boolean} [ignorePrimitive=false] -
+   *    Sorting is automatically done for non-primitive collections if a
+   *    comparator exists. This flag ensures primitive collections aren't sorted
+   *    after every operation.
    * @return {Rekord.Collection} -
    *    The reference to this collection.
    * @emits Rekord.Collection#sort
    * @see Rekord.createComparator
    */
-  sort: function(comparator, nullsFirst)
+  sort: function(comparator, nullsFirst, ignorePrimitive)
   {
     var cmp = comparator ? createComparator( comparator, nullsFirst ) : this.comparator;
 
-    if ( !isSorted( cmp, this ) )
+    if ( !isSorted( cmp, this ) || ( !ignorePrimitive && !cmp && isPrimitiveArray( this ) ) )
     {
       AP.sort.call( this, cmp );
 
@@ -284,13 +288,13 @@ extendArray( Array, Collection,
     {
       AP.push.apply( this, values );
     }
-    else if ( isObject( models ) )
+    else if ( isValue( values ) )
     {
       AP.push.call( this, values );
     }
 
     this.trigger( Collection.Events.Reset, [this] );
-    this.sort();
+    this.sort( undefined, undefined, true );
 
     return this;
   },
@@ -588,7 +592,7 @@ extendArray( Array, Collection,
 
     if ( !delaySort )
     {
-      this.sort();
+      this.sort( undefined, undefined, true );
     }
 
     return this;
@@ -619,9 +623,9 @@ extendArray( Array, Collection,
 
     AP.push.apply( this, values );
 
-    this.trigger( Collection.Events.Adds, [this, values] );
+    this.trigger( Collection.Events.Adds, [this, AP.slice.apply(values)] );
 
-    this.sort();
+    this.sort( undefined, undefined, true );
 
     return this.length;
   },
@@ -651,9 +655,9 @@ extendArray( Array, Collection,
 
     AP.unshift.apply( this, values );
 
-    this.trigger( Collection.Events.Adds, [this, values] );
+    this.trigger( Collection.Events.Adds, [this, AP.slice.apply(values)] );
 
-    this.sort();
+    this.sort( undefined, undefined, true );
 
     return this.length;
   },
@@ -690,7 +694,7 @@ extendArray( Array, Collection,
 
       if ( !delaySort )
       {
-        this.sort();
+        this.sort( undefined, undefined, true );
       }
     }
 
@@ -729,7 +733,7 @@ extendArray( Array, Collection,
 
     if ( !delaySort )
     {
-      this.sort();
+      this.sort( undefined, undefined, true );
     }
 
     return this;
@@ -764,7 +768,7 @@ extendArray( Array, Collection,
 
     if ( !delaySort )
     {
-      this.sort();
+      this.sort( undefined, undefined, true );
     }
 
     return removed;
@@ -798,7 +802,7 @@ extendArray( Array, Collection,
 
     if ( !delaySort )
     {
-      this.sort();
+      this.sort( undefined, undefined, true );
     }
 
     return removed;
@@ -841,7 +845,7 @@ extendArray( Array, Collection,
 
       if ( !delaySort )
       {
-        this.sort();
+        this.sort( undefined, undefined, true );
       }
     }
 
@@ -936,7 +940,7 @@ extendArray( Array, Collection,
 
       if ( !delaySort )
       {
-        this.sort();
+        this.sort( undefined, undefined, true );
       }
     }
 
@@ -994,7 +998,7 @@ extendArray( Array, Collection,
 
     if ( !delaySort )
     {
-      this.sort();
+      this.sort( undefined, undefined, true );
     }
 
     return removed;
@@ -1028,7 +1032,7 @@ extendArray( Array, Collection,
    */
   splice: function(start, deleteCount)
   {
-    var adding = AP.splice.call( arguments, 0, 2 );
+    var adding = AP.slice.call( arguments, 2 );
     var removed = AP.splice.apply( this, arguments );
 
     if ( deleteCount )
@@ -1041,7 +1045,7 @@ extendArray( Array, Collection,
       this.trigger( Collection.Events.Adds, [this, adding] );
     }
 
-    this.sort();
+    this.sort( undefined, undefined, true );
 
     return removed;
   },

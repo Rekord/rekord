@@ -114,3 +114,18 @@ function isSorted(comparator, array)
 
   return true;
 }
+
+function isPrimitiveArray(array)
+{
+  for (var i = 0; i < array.length; i++)
+  {
+    var item = array[i];
+
+    if ( isValue( item ) )
+    {
+      return !isObject( item );
+    }
+  }
+
+  return true;
+}

@@ -2,9 +2,7 @@ module( 'RekordCollection' );
 
 function createRekordCollection()
 {
-  var c = new Rekord.Collection();
-
-  c.addAll([
+  return Rekord.collect([
     {id: 1, name: 'Phil',   age: 26, sex: 'M', superhero: true},
     {id: 2, name: 'Nicole', age: 26, sex: 'F'},
     {id: 3, name: 'Adam',   age: 28, sex: 'M'},
@@ -13,8 +11,6 @@ function createRekordCollection()
     {id: 6, name: 'Andrea', age: 29, sex: 'F'},
     {id: 7, name: 'Sam',    age: 31, sex: 'F'}
   ]);
-
-  return c;
 }
 
 function resolveFirstLetter(x)
@@ -59,6 +55,36 @@ test( 'setComparator', function(assert)
   strictEqual( c[2].name, 'Adam' );
 });
 
+test( 'addComparator', function(assert)
+{
+  var p0 = {age: 1, name: 'A'};
+  var p1 = {age: 1, name: 'B'};
+  var p2 = {age: 1, name: 'C'};
+  var p3 = {age: 2, name: 'A'};
+  var p4 = {age: 2, name: 'B'};
+  var p5 = {age: 3, name: 'A'};
+
+  var c = Rekord.collect([p4, p5, p3, p2, p0, p1]);
+
+  c.setComparator( 'age' );
+
+  strictEqual( c[0].age, 1 );
+  strictEqual( c[1].age, 1 );
+  strictEqual( c[2].age, 1 );
+  strictEqual( c[3].age, 2 );
+  strictEqual( c[4].age, 2 );
+  strictEqual( c[5].age, 3 );
+
+  c.addComparator( 'name' );
+
+  strictEqual( c[0], p0 );
+  strictEqual( c[1], p3 );
+  strictEqual( c[2], p5 );
+  strictEqual( c[3], p1 );
+  strictEqual( c[4], p4 );
+  strictEqual( c[5], p2 );
+});
+
 test( 'isSorted', function(assert)
 {
   var c = new Rekord.Collection([1, 5, 4, 2]);
@@ -80,16 +106,302 @@ test( 'isSorted', function(assert)
   ok( c.isSorted() );
 });
 
+test( 'sort', function(assert)
+{
+  var c = Rekord.collect([1, 2, 5, 4, 3]);
+
+  expect( 2 );
+
+  c.on( Rekord.Collection.Events.Sort, function(arr)
+  {
+    ok( true, 'collection sorted' );
+    strictEqual( c, arr );
+  });
+
+  c.sort();
+});
+
+test( 'sort by name', function(assert)
+{
+  var p0 = {age: 1, name: 'A'};
+  var p1 = {age: 1, name: 'B'};
+  var p2 = {age: 1, name: 'C'};
+  var p3 = {age: 2, name: 'D'};
+
+  var c = Rekord.collect([p0, p2, p3, p1]);
+
+  strictEqual( c[0], p0 );
+  strictEqual( c[1], p2 );
+  strictEqual( c[2], p3 );
+  strictEqual( c[3], p1 );
+
+  c.sort( 'name' );
+
+  strictEqual( c[0], p0 );
+  strictEqual( c[1], p1 );
+  strictEqual( c[2], p2 );
+  strictEqual( c[3], p3 );
+});
+
+test( 'reset', function(assert)
+{
+  var c = Rekord.collect([1, 2, 3]);
+
+  expect( 7 );
+
+  c.on( Rekord.Collection.Events.Reset, function(arr)
+  {
+    ok( true, 'collection reset' );
+    strictEqual( arr, c );
+  });
+
+  strictEqual( c.length, 3 );
+
+  c.reset( 4 );
+
+  strictEqual( c.length, 1 );
+
+  c.reset( [4, 5] );
+
+  strictEqual( c.length, 2 );
+});
+
+test( 'reset autoSort', function(assert)
+{
+  var c = Rekord.collect([1, 3, 2]);
+
+  c.setComparator( Rekord.compareNumbers );
+
+  expect( 7 );
+  deepEqual( c.toArray(), [1, 2, 3] );
+
+  c.on( Rekord.Collection.Events.Reset, function(arr)
+  {
+    strictEqual( arr, c, 'collection reset' );
+  });
+
+  strictEqual( c.length, 3 );
+
+  c.reset( 4 );
+
+  strictEqual( c.length, 1 );
+
+  c.reset( [5, 4] );
+
+  strictEqual( c.length, 2 );
+  deepEqual( c.toArray(), [4, 5] );
+});
+
+test( 'where', function(assert)
+{
+  var c = createRekordCollection();
+  var w = c.where('superhero', true);
+
+  strictEqual( w.length, 2 );
+  strictEqual( w[0].name, 'Phil' );
+  strictEqual( w[1].name, 'Robert' );
+});
+
 test( 'add', function(assert)
 {
   var c = createRekordCollection();
   c.setComparator( 'name' );
+
+  expect( 4 );
+
+  c.on( Rekord.Collection.Events.Add, function(arr, v)
+  {
+    strictEqual( arr, c, 'collection matched' );
+    strictEqual( v.id, 8, 'model matched' );
+  });
 
   strictEqual( c[0].name, 'Adam' );
 
   c.add({id: 8, name: 'Aardvark'});
 
   strictEqual( c[0].name, 'Aardvark' );
+});
+
+test( 'push', function(assert)
+{
+  var c = Rekord.collect([1, 3, 4, 5]);
+
+  expect( 4 );
+
+  c.on( Rekord.Collection.Events.Adds, function(arr, added)
+  {
+    strictEqual( arr, c, 'collection matched' );
+    deepEqual( added, [6, 7] );
+  });
+
+  c.push( 6, 7 );
+
+  strictEqual( c.length, 6 );
+  deepEqual( c.toArray(), [1, 3, 4, 5, 6, 7] );
+});
+
+test( 'push autoSort', function(assert)
+{
+  var c = Rekord.collect([1, 5, 4, 3]);
+  c.setComparator( Rekord.compareNumbers );
+
+  expect( 4 );
+
+  c.on( Rekord.Collection.Events.Adds, function(arr, added)
+  {
+    strictEqual( arr, c, 'collection matched' );
+    deepEqual( added, [7, 6] );
+  });
+
+  c.push( 7, 6 );
+
+  strictEqual( c.length, 6 );
+  deepEqual( c.toArray(), [1, 3, 4, 5, 6, 7] );
+});
+
+test( 'unshift', function(assert)
+{
+  var c = Rekord.collect([1, 3, 4, 5]);
+
+  expect( 4 );
+
+  c.on( Rekord.Collection.Events.Adds, function(arr, added)
+  {
+    strictEqual( arr, c, 'collection matched' );
+    deepEqual( added, [6, 7] );
+  });
+
+  c.unshift( 6, 7 );
+
+  strictEqual( c.length, 6 );
+  deepEqual( c.toArray(), [6, 7, 1, 3, 4, 5] );
+});
+
+test( 'unshift autoSort', function(assert)
+{
+  var c = Rekord.collect([1, 5, 4, 3]);
+  c.setComparator( Rekord.compareNumbers );
+
+  expect( 4 );
+
+  c.on( Rekord.Collection.Events.Adds, function(arr, added)
+  {
+    strictEqual( arr, c, 'collection matched' );
+    deepEqual( added, [7, 6] );
+  });
+
+  c.unshift( 7, 6 );
+
+  strictEqual( c.length, 6 );
+  deepEqual( c.toArray(), [1, 3, 4, 5, 6, 7] );
+});
+
+test( 'addAll', function(assert)
+{
+  var c = Rekord.collect([1, 4, 2, 5]);
+
+  expect( 4 );
+
+  c.on( Rekord.Collection.Events.Adds, function(arr, added)
+  {
+    strictEqual( arr, c, 'collection matched' );
+    deepEqual( added, [2, 3, 5] );
+  });
+
+  c.addAll([2, 3, 5]);
+
+  strictEqual( c.length, 7 );
+  deepEqual( c.toArray(), [1, 4, 2, 5, 2, 3, 5] );
+});
+
+test( 'addAll autoSort', function(assert)
+{
+  var c = Rekord.collect([1, 4, 2, 5]);
+  c.setComparator( Rekord.compareNumbers );
+
+  expect( 4 );
+
+  c.on( Rekord.Collection.Events.Adds, function(arr, added)
+  {
+    strictEqual( arr, c, 'collection matched' );
+    deepEqual( added, [2, 3, 5] );
+  });
+
+  c.addAll([2, 3, 5]);
+
+  strictEqual( c.length, 7 );
+  deepEqual( c.toArray(), [1, 2, 2, 3, 4, 5, 5] );
+});
+
+test( 'insertAt', function(assert)
+{
+  var c = Rekord.collect(1, 3, 4);
+
+  expect( 3 );
+
+  c.on( Rekord.Collection.Events.Add, function(arr, v)
+  {
+    strictEqual( arr, c, 'collection matched' );
+    strictEqual( v, 2 );
+  });
+
+  c.insertAt( 1, 2 );
+
+  deepEqual( c.toArray(), [1, 2, 3, 4] );
+});
+
+test( 'insertAt autoSort', function(assert)
+{
+  var c = Rekord.collect(1, 4, 3);
+  c.setComparator( Rekord.compareNumbers );
+
+  expect( 3 );
+
+  c.on( Rekord.Collection.Events.Add, function(arr, v)
+  {
+    strictEqual( arr, c, 'collection matched' );
+    strictEqual( v, 2 );
+  });
+
+  c.insertAt( 2, 2 );
+
+  deepEqual( c.toArray(), [1, 2, 3, 4] );
+});
+
+test( 'pop', function(assert)
+{
+  var c = Rekord.collect([1, 8, 3, 6]);
+
+  expect( 4 );
+
+  c.on( Rekord.Collection.Events.Remove, function(arr, v, i)
+  {
+    strictEqual( arr, c, 'collection matched' );
+    strictEqual( v, 6 );
+    strictEqual( i, 3 );
+  });
+
+  var p = c.pop();
+
+  strictEqual( p, 6 );
+});
+
+test( 'shift', function(assert)
+{
+  var c = Rekord.collect([1, 8, 3, 6]);
+
+  expect( 4 );
+
+  c.on( Rekord.Collection.Events.Remove, function(arr, v, i)
+  {
+    strictEqual( arr, c, 'collection matched' );
+    strictEqual( v, 1 );
+    strictEqual( i, 0 );
+  });
+
+  var p = c.shift();
+
+  strictEqual( p, 1 );
 });
 
 test( 'removeAt', function(assert)
@@ -105,6 +417,185 @@ test( 'removeAt', function(assert)
 
   strictEqual( c[0].name, 'Adam' );
   strictEqual( c[1].name, 'Ashley' );
+});
+
+test( 'remove', function(assert)
+{
+  var c = new Rekord.Collection([1, 2, 3, 4, 5]);
+
+  c.remove( 4 );
+
+  deepEqual( c.toArray(), [1, 2, 3, 5] );
+
+  c.remove( -1 );
+
+  deepEqual( c.toArray(), [1, 2, 3, 5] );
+});
+
+test( 'removeAll', function(assert)
+{
+  var c = new Rekord.Collection([1, 2, 3, 4, 5]);
+
+  c.removeAll( [4, 2, 1] );
+
+  deepEqual( c.toArray(), [3, 5] );
+
+  c.removeAll( [-1] );
+
+  deepEqual( c.toArray(), [3, 5] );
+});
+
+test( 'removeAll autoSort', function(assert)
+{
+  var c = new Rekord.Collection([1, 2, 5, 4, 3]);
+  c.setComparator( Rekord.compareNumbers );
+
+  c.removeAll( [4, 2, 1] );
+
+  deepEqual( c.toArray(), [3, 5] );
+
+  c.removeAll( [-1] );
+
+  deepEqual( c.toArray(), [3, 5] );
+});
+
+test( 'removeWhere', function(assert)
+{
+  var EVEN = function(x) { return x % 2 === 0; };
+  var c = Rekord.collect([1, 2, 3, 4, 5, 6]);
+
+  expect( 4 );
+
+  c.on( Rekord.Collection.Events.Removes, function(arr, removed)
+  {
+    strictEqual( arr, c, 'collection matched' );
+    deepEqual( removed.toArray(), [6, 4, 2] );
+  });
+
+  var r = c.removeWhere( EVEN );
+
+  deepEqual( r.toArray(), [6, 4, 2] );
+  deepEqual( c.toArray(), [1, 3, 5] );
+});
+
+test( 'splice delete and add', function(assert)
+{
+  var c = Rekord.collect([1, 2, 3, 4, 5, 6, 7, 8]);
+
+  expect( 6 );
+
+  c.on( Rekord.Collection.Events.Removes, function(arr, removed)
+  {
+    strictEqual( c, arr, 'collection matched' );
+    deepEqual( removed, [3, 4], 'removed' );
+  });
+
+  c.on( Rekord.Collection.Events.Adds, function(arr, added)
+  {
+    strictEqual( c, arr, 'collection matched' );
+    deepEqual( added, [3.5, 4.5], 'added' );
+  });
+
+  var r = c.splice( 2, 2, 3.5, 4.5 );
+
+  deepEqual( r, [3, 4] );
+  deepEqual( c.toArray(), [1, 2, 3.5, 4.5, 5, 6, 7, 8] );
+});
+
+test( 'splice delete', function(assert)
+{
+  var c = Rekord.collect([1, 2, 3, 4, 5, 6, 7, 8]);
+
+  expect( 4 );
+
+  c.on( Rekord.Collection.Events.Removes, function(arr, removed)
+  {
+    strictEqual( c, arr, 'collection matched' );
+    deepEqual( removed, [3, 4], 'removed' );
+  });
+
+  c.on( Rekord.Collection.Events.Adds, function(arr, added)
+  {
+    strictEqual( c, arr, 'collection matched' );
+    deepEqual( added, [3.5, 4.5], 'added' );
+  });
+
+  var r = c.splice( 2, 2 );
+
+  deepEqual( r, [3, 4] );
+  deepEqual( c.toArray(), [1, 2, 5, 6, 7, 8] );
+});
+
+test( 'splice add', function(assert)
+{
+  var c = Rekord.collect([1, 2, 3, 4, 5, 6, 7, 8]);
+
+  expect( 4 );
+
+  c.on( Rekord.Collection.Events.Removes, function(arr, removed)
+  {
+    strictEqual( c, arr, 'collection matched' );
+    deepEqual( removed, [3, 4], 'removed' );
+  });
+
+  c.on( Rekord.Collection.Events.Adds, function(arr, added)
+  {
+    strictEqual( c, arr, 'collection matched' );
+    deepEqual( added, [3.5, 4.5], 'added' );
+  });
+
+  var r = c.splice( 2, 0, 3.5, 4.5 );
+
+  deepEqual( r, [] );
+  deepEqual( c.toArray(), [1, 2, 3.5, 4.5, 3, 4, 5, 6, 7, 8] );
+});
+
+test( 'reverse', function(assert)
+{
+  var c = Rekord.collect([1, 4, 6, 8]);
+
+  expect( 2 );
+
+  c.on( Rekord.Collection.Events.Updates, function(arr)
+  {
+    strictEqual( arr, c, 'collection matched' );
+  });
+
+  c.reverse();
+
+  deepEqual( c.toArray(), [8, 6, 4, 1] );
+});
+
+test( 'reverse autoSort', function(assert)
+{
+  var c = Rekord.collect([1, 4, 6, 8]);
+  c.setComparator( Rekord.compareNumbers );
+
+  expect( 2 );
+
+  c.on( Rekord.Collection.Events.Updates, function(arr)
+  {
+    strictEqual( arr, c, 'collection matched' );
+  });
+
+  c.reverse();
+
+  deepEqual( c.toArray(), [8, 6, 4, 1], 'not sorted back yet' );
+});
+
+test( 'indexOf', function(assert)
+{
+  var c = Rekord.collect(1, 3, 4, 5, 6, 3);
+
+  strictEqual( c.indexOf( 0 ), -1 );
+  strictEqual( c.indexOf( 1 ), 0 );
+  strictEqual( c.indexOf( 2 ), -1 );
+  strictEqual( c.indexOf( 3 ), 1 );
+  strictEqual( c.indexOf( 4 ), 2 );
+  strictEqual( c.indexOf( 5 ), 3 );
+  strictEqual( c.indexOf( 6 ), 4 );
+  strictEqual( c.indexOf( 7 ), -1 );
+
 });
 
 test( 'minModel', function(assert)
@@ -251,7 +742,6 @@ test( 'contains', function(assert)
   ok( c.contains('age') );
   ok( c.contains('age', 28) );
   notOk( c.contains('age', 34) );
-
 });
 
 test( 'group', function(assert)
@@ -269,7 +759,6 @@ test( 'group', function(assert)
   strictEqual( grouped.length, 2 );
   deepEqual( grouped[0], {sex: 'F', age: 29, name: 'Sam'} );
   deepEqual( grouped[1], {sex: 'M', age: 27.333333333333332, name: 'Robert'} );
-
 });
 
 test( 'clear', function(assert)
@@ -310,56 +799,6 @@ test( 'complement', function(assert)
   deepEqual( c.complement([2, 5, 6], []), [6] );
 });
 
-test( 'remove', function(assert)
-{
-  var c = new Rekord.Collection([1, 2, 3, 4, 5]);
-
-  c.remove( 4 );
-
-  deepEqual( c.toArray(), [1, 2, 3, 5] );
-
-  c.remove( -1 );
-
-  deepEqual( c.toArray(), [1, 2, 3, 5] );
-});
-
-test( 'removeAll', function(assert)
-{
-  var c = new Rekord.Collection([1, 2, 3, 4, 5]);
-
-  c.removeAll( [4, 2, 1] );
-
-  deepEqual( c.toArray(), [3, 5] );
-
-  c.removeAll( [-1] );
-
-  deepEqual( c.toArray(), [3, 5] );
-});
-
-test( 'indexOf', function(assert)
-{
-  var c = Rekord.collect(1, 3, 4, 5, 6, 3);
-
-  strictEqual( c.indexOf( 0 ), -1 );
-  strictEqual( c.indexOf( 1 ), 0 );
-  strictEqual( c.indexOf( 2 ), -1 );
-  strictEqual( c.indexOf( 3 ), 1 );
-  strictEqual( c.indexOf( 4 ), 2 );
-  strictEqual( c.indexOf( 5 ), 3 );
-  strictEqual( c.indexOf( 6 ), 4 );
-  strictEqual( c.indexOf( 7 ), -1 );
-
-});
-
-test( 'insertAt', function(assert)
-{
-  var c = Rekord.collect(1, 3, 4);
-
-  c.insertAt( 1, 2 );
-
-  deepEqual( c.toArray(), [1, 2, 3, 4] );
-});
-
 test( 'reduce', function(assert)
 {
   var c = Rekord.collect(1, 2, 3, 4);
@@ -372,7 +811,14 @@ test( 'reduce', function(assert)
   strictEqual( c.reduce( reducer, 1 ), 24 );
 });
 
-test( 'filtered', function(assert)
+test( 'random', function(assert)
+{
+  var c = Rekord.collect(1, 2, 3, 4);
+
+  notStrictEqual( c.random(), void 0 );
+});
+
+test( 'filtered more', function(assert)
 {
   var EVEN = function(x) { return x % 2 === 0; };
 
@@ -454,7 +900,6 @@ test( 'page', function(assert)
 
   strictEqual( p.length, 0 );
   deepEqual( p.toArray(), [] );
-
 });
 
 test( 'page more', function(assert)
@@ -503,7 +948,6 @@ test( 'change', function(assert)
   off();
 
   c.add( 56 );
-
 });
 
 test( 'page change', function(assert)
@@ -523,7 +967,6 @@ test( 'page change', function(assert)
   p.next();
 
   p.next();
-
 });
 
 test( 'each', function(assert)
@@ -556,4 +999,14 @@ test( 'eachWhere', function(assert)
   }
 
   c.eachWhere( lookAtItem, isEven );
+});
+
+test( 'clone', function(assert)
+{
+  var c = Rekord.collect([1, 2, 3, 4]);
+
+  var n = c.clone();
+
+  notStrictEqual( c, n );
+  deepEqual( n.toArray(), [1, 2, 3, 4] );
 });

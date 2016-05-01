@@ -72,6 +72,7 @@
   global.Rekord.cleanFunctions = cleanFunctions;
 
   global.Rekord.compare = compare;
+  global.Rekord.compareNumbers = compareNumbers;
   global.Rekord.equals = equals;
   global.Rekord.equalsStrict = equalsStrict;
   global.Rekord.equalsCompare = equalsCompare;
