@@ -205,14 +205,8 @@ addMethods( Map.prototype,
    */
   reverse: function()
   {
-    var max = this.size() - 1;
-    var half = Math.ceil( max / 2 );
-
-    for (var i = 0; i < half; i++)
-    {
-      swap( this.values, i, max - i );
-      swap( this.keys, i, max - i );
-    }
+    reverse( this.values );
+    reverse( this.keys );
 
     this.rebuildIndex();
 

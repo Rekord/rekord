@@ -55,6 +55,7 @@
   global.Rekord.transfer = transfer;
   global.Rekord.collapse = collapse;
   global.Rekord.swap = swap;
+  global.Rekord.reverse = reverse;
   global.Rekord.grab = grab;
   global.Rekord.pull = pull;
   global.Rekord.copy = copy;

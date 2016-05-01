@@ -100,6 +100,19 @@ function swap(a, i, k)
   a[ k ] = t;
 }
 
+function reverse(arr)
+{
+  var n = arr.length;
+  var half = Math.floor( n / 2 );
+
+  for (var i = 0; i < half; i++)
+  {
+    swap( arr, n - i - 1, i );
+  }
+
+  return arr;
+}
+
 function isSorted(comparator, array)
 {
   if ( !comparator )
@@ -6158,14 +6171,8 @@ addMethods( Map.prototype,
    */
   reverse: function()
   {
-    var max = this.size() - 1;
-    var half = Math.ceil( max / 2 );
-
-    for (var i = 0; i < half; i++)
-    {
-      swap( this.values, i, max - i );
-      swap( this.keys, i, max - i );
-    }
+    reverse( this.values );
+    reverse( this.keys );
 
     this.rebuildIndex();
 
@@ -7387,16 +7394,7 @@ extendArray( Array, Collection,
     }
     else
     {
-      var n = this.length;
-      var half = Math.floor( n / 2 );
-
-      for (var i = 0; i < half; i++)
-      {
-        var k = n - i - 1;
-        var a = this[ i ];
-        this[ i ] = this[ k ];
-        this[ k ] = a;
-      }
+      reverse( this );
     }
 
     this.trigger( Collection.Events.Updates, [this] );
@@ -9083,9 +9081,9 @@ extendArray( Collection, ModelCollection,
       }
       else
       {
-        for (var i = 0; i < models.length && !exists; i++)
+        for (var k = 0; k < models.length && !exists; k++)
         {
-          var modelKey = this.buildKeyFromInput( models[ i ] );
+          var modelKey = this.buildKeyFromInput( models[ k ] );
 
           exists = (key === modelKey);
         }
@@ -9197,6 +9195,8 @@ extendArray( Collection, ModelCollection,
 
     this.trigger( Collection.Events.Reset, [this] );
     this.sort();
+
+    return this;
   },
 
   /**
@@ -9319,7 +9319,7 @@ extendArray( Collection, ModelCollection,
       this.map.put( model.$key(), model );
     }
 
-    this.trigger( Collection.Events.Adds, [this, values] );
+    this.trigger( Collection.Events.Adds, [this, AP.slice.apply(values)] );
     this.sort();
 
     return this.length;
@@ -9534,6 +9534,8 @@ extendArray( Collection, ModelCollection,
         this.sort();
       }
     }
+
+    return removing;
   },
 
   /**
@@ -9645,6 +9647,60 @@ extendArray( Collection, ModelCollection,
   },
 
   /**
+   * Splices elements out of and into this collection - sorting the collection
+   * if a comparator is set on this collection.
+   *
+   * @method
+   * @memberof Rekord.ModelCollection#
+   * @param {Number} start -
+   *    Index at which to start changing the array (with origin 0). If greater
+   *    than the length of the array, actual starting index will be set to the
+   *    length of the array. If negative, will begin that many elements from the end.
+   * @param {Number} deleteCount -
+   *    An integer indicating the number of old array elements to remove. If
+   *    deleteCount is 0, no elements are removed. In this case, you should
+   *    specify at least one new element. If deleteCount is greater than the
+   *    number of elements left in the array starting at start, then all of the
+   *    elements through the end of the array will be deleted.
+   *    If deleteCount is omitted, deleteCount will be equal to (arr.length - start).
+   * @param {...Any} values -
+   *    The elements to add to the array, beginning at the start index. If you
+   *    don't specify any elements, splice() will only remove elements from the array.
+   * @return {Any[]} -
+   *    The array of deleted elements.
+   * @emits Rekord.ModelCollection#removes
+   * @emits Rekord.ModelCollection#adds
+   * @emits Rekord.ModelCollection#sort
+   */
+  splice: function(start, deleteCount)
+  {
+    var adding = AP.slice.call( arguments, 2 );
+    var addingKeys = [start, deleteCount];
+    for (var i = 0; i < adding.length; i++)
+    {
+      addingKeys.push( this.buildKeyFromInput( adding[ i ] ) );
+    }
+
+    var removed = AP.splice.apply( this, arguments );
+
+    AP.splice.apply( this.map.keys, addingKeys );
+
+    if ( deleteCount )
+    {
+      this.trigger( Collection.Events.Removes, [this, removed] );
+    }
+
+    if ( adding.length )
+    {
+      this.trigger( Collection.Events.Adds, [this, adding] );
+    }
+
+    this.sort();
+
+    return removed;
+  },
+
+  /**
    * Removes the models from this collection where the given expression is true.
    * The first argument, if `true`, can call {@link Rekord.Model#$remove} on each
    * model removed from this colleciton.
@@ -9659,15 +9715,20 @@ extendArray( Collection, ModelCollection,
    *    See {@link Rekord.createWhere}
    * @param {equalityCallback} [whereEquals] -
    *    See {@link Rekord.createWhere}
+   * @param {Array} [out=this.cloneEmpty()] -
+   *    The array to place the elements that match.
+   * @param {Boolean} [delaySort=false] -
+   *    Whether automatic sorting should be delayed until the user manually
+   *    calls {@link Rekord.Collection#sort sort}.
    * @return {Rekord.Model[]} -
    *    An array of models removed from this collection.
    * @emits Rekord.ModelCollection#removes
    * @emits Rekord.ModelCollection#sort
    */
-  removeWhere: function(callRemove, whereProperties, whereValue, whereEquals)
+  removeWhere: function(callRemove, whereProperties, whereValue, whereEquals, out, delaySort)
   {
     var where = createWhere( whereProperties, whereValue, whereEquals );
-    var removed = [];
+    var removed = out || this.cloneEmpty();
 
     for (var i = 0; i < this.length; i++)
     {
@@ -9678,6 +9739,7 @@ extendArray( Collection, ModelCollection,
       {
         this.map.remove( key );
         removed.push( model );
+        i--;
 
         if ( callRemove )
         {
@@ -9687,7 +9749,11 @@ extendArray( Collection, ModelCollection,
     }
 
     this.trigger( Collection.Events.Removes, [this, removed] );
-    this.sort();
+
+    if ( !delaySort )
+    {
+      this.sort();
+    }
 
     return removed;
   },
@@ -9770,7 +9836,7 @@ extendArray( Collection, ModelCollection,
       {
         model.$set( props, value, remoteData );
 
-        if ( !autoSave )
+        if ( !avoidSave )
         {
           model.$save();
         }
@@ -14871,6 +14937,7 @@ addMethods( Shard.prototype,
   global.Rekord.transfer = transfer;
   global.Rekord.collapse = collapse;
   global.Rekord.swap = swap;
+  global.Rekord.reverse = reverse;
   global.Rekord.grab = grab;
   global.Rekord.pull = pull;
   global.Rekord.copy = copy;

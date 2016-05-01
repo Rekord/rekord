@@ -1072,16 +1072,7 @@ extendArray( Array, Collection,
     }
     else
     {
-      var n = this.length;
-      var half = Math.floor( n / 2 );
-
-      for (var i = 0; i < half; i++)
-      {
-        var k = n - i - 1;
-        var a = this[ i ];
-        this[ i ] = this[ k ];
-        this[ k ] = a;
-      }
+      reverse( this );
     }
 
     this.trigger( Collection.Events.Updates, [this] );

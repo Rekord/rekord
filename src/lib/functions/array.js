@@ -97,6 +97,19 @@ function swap(a, i, k)
   a[ k ] = t;
 }
 
+function reverse(arr)
+{
+  var n = arr.length;
+  var half = Math.floor( n / 2 );
+
+  for (var i = 0; i < half; i++)
+  {
+    swap( arr, n - i - 1, i );
+  }
+
+  return arr;
+}
+
 function isSorted(comparator, array)
 {
   if ( !comparator )
