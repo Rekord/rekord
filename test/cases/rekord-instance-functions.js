@@ -426,23 +426,24 @@ test( 'search success', function(assert)
 
   remote.delay = 1;
 
-  var q = Todo.search( 'http://rekord.io' ).$run();
+  var q = Todo.search( 'http://rekord.io' );
+  var p = q.$run();
 
   expect( 4 );
 
   strictEqual( q.$results.length, 0 );
 
-  q.$ready(function()
+  p.complete(function()
   {
     strictEqual( q.$results.length, 3, 'query ready and models loaded' );
   });
 
-  q.$success(function()
+  p.success(function()
   {
     strictEqual( q.$results.length, 3, 'query success and models loaded' );
   });
 
-  q.$failure(function()
+  p.failure(function()
   {
     ok();
   });
@@ -479,23 +480,24 @@ test( 'search failure', function(assert)
   remote.delay = 1;
   remote.status = 300;
 
-  var q = Todo.search( 'http://rekord.io' ).$run();
+  var q = Todo.search( 'http://rekord.io' );
+  var p = q.$run();
 
   expect( 4 );
 
   strictEqual( q.$results.length, 0, 'initial length zero' );
 
-  q.$ready(function()
+  p.complete(function()
   {
     strictEqual( q.$results.length, 0, 'ready but empty' );
   });
 
-  q.$success(function()
+  p.success(function()
   {
     ok();
   });
 
-  q.$failure(function()
+  p.failure(function()
   {
     strictEqual( q.$results.length, 0, 'failure notified' );
   });
@@ -528,21 +530,22 @@ test( 'search single', function(assert)
 
   remote.delay = 1;
 
-  var q = Todo.search( 'http://rekord.io' ).$run();
+  var q = Todo.search( 'http://rekord.io' );
+  var p = q.$run();
 
   strictEqual( q.$results.length, 0 );
 
-  q.$ready(function()
+  p.complete(function()
   {
     strictEqual( q.$results.length, 1, 'query ready and models loaded' );
   });
 
-  q.$success(function()
+  p.success(function()
   {
     strictEqual( q.$results.length, 1, 'query success and models loaded' );
   });
 
-  q.$failure(function()
+  p.failure(function()
   {
     ok();
   });

@@ -10,8 +10,8 @@ Relation.Defaults =
 {
   model:                null,
   lazy:                 false,
-  store:                Rekord.Store.None,
-  save:                 Rekord.Save.None,
+  store:                Store.None,
+  save:                 Save.None,
   auto:                 true,
   property:             true,
   preserve:             true,
@@ -191,8 +191,9 @@ addMethods( Relation.prototype,
 
     Rekord.debug( this.debugQuery, this, model, search, queryOption, query, queryData );
 
-    search.$run();
-    search.$ready( this.handleExecuteQuery( model ), this );
+    var promise = search.$run();
+    
+    promise.complete( this.handleExecuteQuery( model ), this );
 
     return search;
   },
@@ -450,10 +451,10 @@ addMethods( Relation.prototype,
     {
       switch (mode)
       {
-      case Rekord.Save.Model:
+      case Save.Model:
         return related.$toJSON( true );
 
-      case Rekord.Store.Model:
+      case Store.Model:
         if ( related.$local )
         {
           return related.$local;
@@ -470,12 +471,12 @@ addMethods( Relation.prototype,
           return local;
         }
 
-      case Rekord.Save.Key:
-      case Rekord.Store.Key:
+      case Save.Key:
+      case Store.Key:
         return related.$key();
 
-      case Rekord.Save.Keys:
-      case Rekord.Store.Keys:
+      case Save.Keys:
+      case Store.Keys:
         return related.$keys();
 
       }

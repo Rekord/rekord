@@ -209,7 +209,7 @@ extend( Relation, RelationMultiple,
   {
     if ( !relation.delaySaving && !remoteData && relation.parent.$exists() )
     {
-      if ( this.store === Rekord.Store.Model || this.save === Rekord.Save.Model )
+      if ( this.store === Store.Model || this.save === Save.Model )
       {
         Rekord.debug( this.debugAutoSave, this, relation );
 

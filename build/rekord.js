@@ -965,7 +965,7 @@ function addEventFunction(target, functionName, events, secret)
  * @param {Boolean} [secret=false] -
  *    If true - the functions will be prefixed with `$`.
  */
-function addEventable(target, secret)
+function addEventful(target, secret)
 {
 
   var CALLBACK_FUNCTION = 0;
@@ -980,7 +980,7 @@ function addEventable(target, secret)
    *
    * @class Eventful
    * @memberof Rekord
-   * @see Rekord.addEventable
+   * @see Rekord.addEventful
    */
 
    /**
@@ -989,7 +989,7 @@ function addEventable(target, secret)
     *
     * @class Eventful$
     * @memberof Rekord
-    * @see Rekord.addEventable
+    * @see Rekord.addEventful
     */
 
   // Adds a listener to $this
@@ -1150,7 +1150,7 @@ function addEventable(target, secret)
    *     target.off('a', x);     // remove listener x from event a
    *
    * @method off
-   * @for addEventable
+   * @for addEventful
    * @param {String|Array|Object} [events]
    * @param {Function} [callback]
    * @chainable
@@ -1231,7 +1231,7 @@ function addEventable(target, secret)
    * Triggers a single event optionally passing an argument to any listeners.
    *
    * @method trigger
-   * @for addEventable
+   * @for addEventful
    * @param {String} event
    * @param {Array} args
    * @chainable
@@ -2127,7 +2127,7 @@ Rekord.get = function(name, callback, context)
   * @typedef {String|Number} modelKey
   */
 
-addEventable( Rekord );
+addEventful( Rekord );
 
 Rekord.Events =
 {
@@ -2138,7 +2138,7 @@ Rekord.Events =
   Offline:      'offline'
 };
 
-Rekord.Cascade =
+var Cascade =
 {
   None:       0,
   Local:      1,
@@ -2150,14 +2150,19 @@ Rekord.Cascade =
   All:        7
 };
 
-Rekord.Cache =
+function canCascade(cascade, type)
+{
+  return !isNumber( cascade ) || (cascade & type) === type;
+};
+
+var Cache =
 {
   None:       'none',
   Pending:    'pending',
   All:        'all'
 };
 
-Rekord.Store =
+var Store =
 {
   None:   0,
   Model:  1,
@@ -2165,7 +2170,7 @@ Rekord.Store =
   Keys:   3
 };
 
-Rekord.Save =
+var Save =
 {
   None:   0,
   Model:  4,
@@ -3018,7 +3023,7 @@ function FileEncoder(input, model, field, forSaving)
         {
           delete cached.file;
 
-          model.$addOperation( SaveLocal, Rekord.Cascade.Local );
+          model.$addOperation( SaveLocal, Cascade.Local );
         });
       }
 
@@ -4199,7 +4204,7 @@ Database.Defaults =
   loadRelations:        true,
   loadRemote:           true,
   autoRefresh:          true,
-  cache:                Rekord.Cache.All,
+  cache:                Cache.All,
   fullSave:             false,
   fullPublish:          false,
   encodings:            {},
@@ -4757,7 +4762,7 @@ addMethods( Database.prototype,
     {
       model = db.createModel( decoded, true );
 
-      if ( db.cache === Rekord.Cache.All )
+      if ( db.cache === Cache.All )
       {
         model.$local = model.$toJSON( false );
         model.$local.$status = model.$status;
@@ -4884,7 +4889,7 @@ addMethods( Database.prototype,
     var db = this;
     var model = db.all[ key ];
 
-    if ( db.cache === Rekord.Cache.All )
+    if ( db.cache === Cache.All )
     {
       return db.destroyLocalCachedModel( model, key );
     }
@@ -4986,7 +4991,7 @@ addMethods( Database.prototype,
       Rekord.after( Rekord.Events.Online, db.onOnline, db );
     }
 
-    if ( db.cache === Rekord.Cache.None )
+    if ( db.cache === Cache.None )
     {
       db.loadNone();
 
@@ -5042,7 +5047,9 @@ addMethods( Database.prototype,
   refresh: function(callback, context)
   {
     var db = this;
-    var callbackContext = context || db;
+    var promise = new Promise();
+
+    promise.complete( callback, context || db );
 
     function onModels(response)
     {
@@ -5089,10 +5096,7 @@ addMethods( Database.prototype,
 
       Rekord.debug( Rekord.Debugs.REMOTE_LOAD, db, models );
 
-      if ( callback )
-      {
-        callback.call( callbackContext, db.models );
-      }
+      promise.resolve( db.models );
     }
 
     function onLoadError(response, status)
@@ -5118,13 +5122,12 @@ addMethods( Database.prototype,
         db.trigger( Database.Events.NoLoad, [db, response] );
       }
 
-      if ( callback )
-      {
-        callback.call( callbackContext, db.models );
-      }
+      promise.reject( db.models );
     }
 
     db.rest.all( onModels, onLoadError );
+
+    return promise;
   },
 
   onRefreshOnline: function()
@@ -5259,16 +5262,11 @@ addMethods( Database.prototype,
 
       model.$trigger( Model.Events.Removed );
     }
-  },
-
-  refreshModel: function(model, cascade)
-  {
-    model.$addOperation( GetRemote, cascade );
   }
 
 });
 
-addEventable( Database.prototype );
+addEventful( Database.prototype );
 addEventFunction( Database.prototype, 'change', Database.Events.Changes );
 
 
@@ -5307,6 +5305,49 @@ function Model(db)
    * @property {Boolean} $status
    *           Whether there is a pending save for this model.
    */
+}
+
+function createModelPromise(model, cascade, restSuccess, restFailure, restOffline, localSuccess, localFailure)
+{
+  var promise = new Promise( null, false );
+
+  if ( canCascade( cascade, Cascade.Rest ) )
+  {
+    var off1 = model.$once( restSuccess, function(data) {
+      off2();
+      off3();
+      promise.resolve( model, data );
+    });
+    var off2 = model.$once( restFailure, function(data, status) {
+      off1();
+      off3();
+      promise.reject( model, status, data );
+    });
+    var off3 = model.$once( restOffline, function() {
+      off1();
+      off2();
+      promise.noline( model );
+    });
+  }
+  else if ( canCascade( cascade, Cascade.Local ) )
+  {
+    var off1 = model.$once( localSuccess, function(data)
+    {
+      off2();
+      promise.resolve( model, data );
+    });
+    var off2 = model.$once( localFailure, function(data, status)
+    {
+      off1();
+      promise.reject( model, data );
+    });
+  }
+  else
+  {
+    promise.resolve( model );
+  }
+
+  return promise;
 }
 
 Model.Events =
@@ -5666,16 +5707,24 @@ addMethods( Model.prototype,
     var cascade =
       (arguments.length === 3 ? cascade :
         (arguments.length === 2 && isObject( setProperties ) && isNumber( setValue ) ? setValue :
-          (arguments.length === 1 && isNumber( setProperties ) ?  setProperties : Rekord.Cascade.All ) ) );
+          (arguments.length === 1 && isNumber( setProperties ) ?  setProperties : Cascade.All ) ) );
 
     if ( this.$isDeleted() )
     {
       Rekord.debug( Rekord.Debugs.SAVE_DELETED, this.$db, this );
 
-      return Rekord.transactNone( cascade, this, 'save' );
+      return Promise.resolve( this );
     }
 
-    return Rekord.transact( cascade, this, 'save', function(txn)
+    var promise = createModelPromise( this, cascade,
+      Model.Events.RemoteSave,
+      Model.Events.RemoteSaveFailure,
+      Model.Events.RemoteSaveOffline,
+      Model.Events.LocalSave,
+      Model.Events.LocalSaveFailure
+    );
+
+    return Promise.singularity( promise, this, function(singularity)
     {
       this.$db.addReference( this );
 
@@ -5691,14 +5740,22 @@ addMethods( Model.prototype,
 
   $remove: function(cascade)
   {
-    var cascade = isNumber( cascade ) ? cascade : Rekord.Cascade.All;
+    var cascade = isNumber( cascade ) ? cascade : Cascade.All;
 
     if ( !this.$exists() )
     {
-      return Rekord.transactNone( cascade, this, 'remove' );
+      return Promise.resolve( this );
     }
 
-    return Rekord.transact( cascade, this, 'remove', function(txn)
+    var promise = createModelPromise( this, cascade,
+      Model.Events.RemoteRemove,
+      Model.Events.RemoteRemoveFailure,
+      Model.Events.RemoteRemoveOffline,
+      Model.Events.LocalRemove,
+      Model.Events.LocalRemoveFailure
+    );
+
+    return Promise.singularity( promise, this, function(singularity)
     {
       this.$trigger( Model.Events.PreRemove, [this] );
 
@@ -5710,9 +5767,28 @@ addMethods( Model.prototype,
 
   $refresh: function(cascade)
   {
-    this.$db.refreshModel( this, cascade );
+    var promise = createModelPromise( this, cascade,
+      Model.Events.RemoteGet,
+      Model.Events.RemoteGetFailure,
+      Model.Events.RemoteGetOffline,
+      Model.Events.LocalGet,
+      Model.Events.LocalGetFailure
+    );
 
-    return this;
+    if ( canCascade( cascade, Cascade.Rest ) )
+    {
+      this.$addOperation( GetRemote, cascade );
+    }
+    else if ( canCascade( cascade, Cascade.Local ) )
+    {
+      this.$addOperation( GetLocal, cascade );
+    }
+    else
+    {
+      promise.resolve( this );
+    }
+
+    return promise;
   },
 
   $autoRefresh: function()
@@ -5960,7 +6036,7 @@ addMethods( Model.prototype,
 
 });
 
-addEventable( Model.prototype, true );
+addEventful( Model.prototype, true );
 
 addEventFunction( Model.prototype, '$change', Model.Events.Changes, true );
 
@@ -6273,49 +6349,6 @@ addMethods( Map.prototype,
     }
 
     return this;
-  }
-
-});
-
-
-function Request(context, success, failure)
-{
-  this.context = context;
-  this.success = success;
-  this.failure = failure;
-  this.call = 0;
-  this.callCanceled = 0;
-}
-
-addMethods( Request.prototype,
-{
-
-  onSuccess: function()
-  {
-    return this.handleCall( this, ++this.call, this.success );
-  },
-
-  onFailure: function()
-  {
-    return this.handleCall( this, this.call, this.failure );
-  },
-
-  handleCall: function(request, currentCall, callback)
-  {
-    return function onHandleCall()
-    {
-      if ( request.call === currentCall &&
-           currentCall > request.callCanceled &&
-           isFunction( callback ) )
-      {
-        callback.apply( request.context, arguments );
-      }
-    };
-  },
-
-  cancel: function()
-  {
-    this.callCanceled = this.call;
   }
 
 });
@@ -8412,7 +8445,7 @@ extendArray( Array, Collection,
 
 });
 
-addEventable( Collection.prototype );
+addEventful( Collection.prototype );
 
 /**
  * Adds a listener for change events on this collection.
@@ -8756,7 +8789,7 @@ extendArray( Array, Page,
 
 });
 
-addEventable( Page.prototype );
+addEventful( Page.prototype );
 addEventFunction( Page.prototype, 'change', Page.Events.Changes );
 
 
@@ -10506,28 +10539,11 @@ function DiscriminateCollection(collection, discriminator, discriminatorsToModel
  *
  * @constructor
  * @memberof Rekord
- * @augments Rekord.Eventful$
  */
 function Search(database, url, options)
 {
   this.$init( database, url, options );
 }
-
-Search.Events =
-{
-  Ready:      'ready',
-  Success:    'success',
-  Failure:    'failure',
-  Offline:    'offline'
-};
-
-Search.Status =
-{
-  Pending:    'pending',
-  Success:    'success',
-  Failure:    'failure',
-  Offline:    'offline'
-};
 
 Search.Defaults =
 {
@@ -10549,8 +10565,7 @@ addMethods( Search.prototype,
     this.$db = database;
     this.$url = url;
     this.$results = new ModelCollection( database );
-    this.$status = Search.Status.Success;
-    this.$request = new Request( this, this.$handleSuccess, this.$handleFailure );
+    this.$promise = Promise.resolve( this );
   },
 
   $set: function(props)
@@ -10561,87 +10576,24 @@ addMethods( Search.prototype,
   $run: function()
   {
     var encoded = this.$encode();
-    var success = this.$request.onSuccess();
-    var failure = this.$request.onFailure();
+    var success = bind( this, this.$handleSuccess );
+    var failure = bind( this, this.$handleFailure );
 
-    this.$status = Search.Status.Pending;
+    this.$cancel();
+    this.$promise = new Promise();
     this.$db.rest.query( this.$url, encoded, success, failure );
 
-    return this;
-  },
-
-  $cancel: function()
-  {
-    this.$off( Search.Events.Ready );
-    this.$off( Search.Events.Success );
-    this.$off( Search.Events.Failure );
-
-    this.$request.cancel();
-
-    return this;
-  },
-
-  $ready: function(callback, context)
-  {
-    if ( this.$status === Search.Status.Pending )
-    {
-      this.$once( Search.Events.Ready, callback, context );
-    }
-    else
-    {
-      callback.call( context, this );
-    }
-
-    return this;
-  },
-
-  $success: function(callback, context)
-  {
-    if ( this.$status === Search.Status.Pending )
-    {
-      this.$once( Search.Events.Success, callback, context );
-    }
-    else if ( this.$status === Search.Status.Success )
-    {
-      callback.call( context, this );
-    }
-
-    return this;
-  },
-
-  $failure: function(callback, context)
-  {
-    if ( this.$status === Search.Status.Pending )
-    {
-      this.$once( Search.Events.Failure, callback, context );
-    }
-    else if ( this.$status === Search.Status.Failure )
-    {
-      callback.call( context, this );
-    }
-
-    return this;
-  },
-
-  $offline: function(callback, context)
-  {
-    if ( this.$status === Search.Status.Pending )
-    {
-      this.$once( Search.Events.Offline, callback, context );
-    }
-    else if ( this.$status === Search.Status.Offline )
-    {
-      callback.call( context, this );
-    }
-
-    return this;
+    return this.$promise;
   },
 
   $handleSuccess: function(response)
   {
+    if ( !this.$promise.isPending() )
+    {
+      return;
+    }
+    
     var models = this.$decode.apply( this, arguments );
-
-    this.$status = Search.Status.Success;
 
     if ( this.$append )
     {
@@ -10652,12 +10604,16 @@ addMethods( Search.prototype,
       this.$results.reset( models, true );
     }
 
-    this.$trigger( Search.Events.Ready, [this, response] );
-    this.$trigger( Search.Events.Success, [this, response] );
+    this.$promise.resolve( this, response, this.$results );
   },
 
   $handleFailure: function(response, status)
   {
+    if ( !this.$promise.isPending() )
+    {
+      return;
+    }
+
     var offline = status === 0;
 
     if ( offline )
@@ -10667,9 +10623,19 @@ addMethods( Search.prototype,
       offline = !Rekord.online;
     }
 
-    this.$status = offline ? Search.Status.Offline : Search.Status.Failure;
-    this.$trigger( Search.Events.Ready, [this, response] );
-    this.$trigger( offline ? Search.Events.Offline : Search.Events.Failure, [this, response] );
+    if ( offline )
+    {
+      this.$promise.noline( this, response, status );
+    }
+    else
+    {
+      this.$promise.reject( this, response, status );
+    }
+  },
+
+  $cancel: function()
+  {
+    this.$promise.cancel();
   },
 
   $encode: function()
@@ -10688,8 +10654,6 @@ addMethods( Search.prototype,
   }
 
 });
-
-addEventable( Search.prototype, true );
 
 
 /**
@@ -10762,7 +10726,7 @@ extend( Search, SearchPaged,
       }
     }
 
-    return this;
+    return this.$promise;
   },
 
   $more: function()
@@ -10772,12 +10736,12 @@ extend( Search, SearchPaged,
     if ( next < this.$getPageCount() )
     {
       this.$setPageIndex( next );
-      this.$once( Search.Events.Ready, this.$onMoreEnd );
       this.$append = true;
       this.$run();
+      this.$promise.complete( this.$onMoreEnd, this );
     }
 
-    return this;
+    return this.$promise;
   },
 
   $onMoreEnd: function()
@@ -10886,194 +10850,321 @@ extend( Search, SearchPaged,
 });
 
 
-Rekord.transaction = null;
-
-Rekord.transact = function(cascade, model, operation, func)
+function Promise(executor, cancelable)
 {
-  var transaction = Rekord.transaction;
+  this.status = Promise.Status.Pending;
+  this.results = null;
+  this.cancelable = cancelable !== false;
 
-  if ( transaction )
+  if ( isFunction( executor ) )
   {
-    transaction.add( cascade, model, operation );
-
-    func.call( model, transaction )
-
-    return transaction;
+    executor(
+      bind(this, this.resolve),
+      bind(this, this.reject),
+      bind(this, this.noline),
+      bind(this, this.cancel)
+    );
   }
-  else
-  {
-    transaction = Rekord.transaction = new Transaction( cascade, model, operation );
-
-    transaction.add( cascade, model, operation );
-
-    func.call( model, transaction );
-
-    Rekord.transaction = null;
-
-    return transaction;
-  }
-};
-
-Rekord.transactNone = function(cascade, model, operation)
-{
-  return new Transaction( cascade, model, operation );
-};
-
-/**
- *
- * @constructor
- * @memberof Rekord
- * @augments Rekord.Eventful
- */
-function Transaction(cascade, model, operation)
-{
-  this.cascade = cascade;
-  this.model = model;
-  this.operation = operation;
-  this.status = null;
-  this.completed = 0;
-  this.operations = 0;
 }
 
-Transaction.Events =
+Promise.Status =
 {
-  RemoteSuccess:  'remote-success',
-  LocalSuccess:   'local-success',
-  Offline:        'offline',
-  Blocked:        'blocked',
-  Error:          'error',
-  Any:            'remote-success local-success offline blocked error'
+  Pending:    'pending',
+  Success:    'success',
+  Failure:    'failure',
+  Offline:    'offline',
+  Canceled:   'canceled'
 };
 
-addMethods( Transaction.prototype,
+Promise.Events =
 {
-  add: function(cascade, model, operation)
+  Success:      'success',
+  Failure:      'failure',
+  Offline:      'offline',
+  Canceled:     'canceled',
+  Unsuccessful: 'failure offline canceled',
+  Complete:     'success failure offline canceled'
+};
+
+Promise.all = function(iterable)
+{
+  var all = new Promise();
+  var successes = 0;
+  var goal = iterable.length;
+  var results = [];
+
+  function handleSuccess()
   {
-    var handled = {
-      already: false,
-      offs: []
-    };
+    results.push( AP.slice.apply( arguments ) );
 
-    switch (operation)
+    if ( ++successes === goal )
     {
-    case 'save':
-      if ( cascade & Rekord.Cascade.Rest )
-      {
-        handled.offs.push(
-          model.$once( Model.Events.RemoteSave, this.createHandler( false, false, handled ), this ),
-          model.$once( Model.Events.RemoteSaveFailure, this.createHandler( true, false, handled ), this ),
-          model.$once( Model.Events.RemoteSaveOffline, this.createHandler( false, true, handled ), this )
-        );
-      }
-      else if ( cascade & Rekord.Cascade.Local )
-      {
-        handled.offs.push(
-          model.$once( Model.Events.LocalSave, this.createHandler( false, false, handled ), this ),
-          model.$once( Model.Events.LocalSaveFailure, this.createHandler( true, false, handled ), this )
-        );
-      }
-      break;
+      all.resolve( results );
+    }
+  }
 
-    case 'remove':
-      if ( cascade & Rekord.Cascade.Rest )
+  for (var i = 0; i < iterable.length; i++)
+  {
+    var p = iterable[ i ];
+
+    if ( p instanceof Promise )
+    {
+      p.then( handleSuccess, all.reject, all.noline, all.cancel, all );
+    }
+    else
+    {
+      goal--;
+    }
+  }
+
+  return all;
+};
+
+Promise.race = function(iterable)
+{
+  var race = new Promise();
+
+  for (var i = 0; i < iterable.length; i++)
+  {
+    var p = iterable[ i ];
+
+    if ( p instanceof Promise )
+    {
+      p.then( race.resolve, race.reject, race.noline, race.cancel, race );
+    }
+  }
+
+  return race;
+};
+
+Promise.reject = function(reason)
+{
+  var p = new Promise();
+  p.reject.apply( p, arguments );
+  return p;
+};
+
+Promise.resolve = function()
+{
+  var p = new Promise();
+  p.resolve.apply( p, arguments );
+  return p;
+};
+
+Promise.noline = function(reason)
+{
+  var p = new Promise();
+  p.noline.apply( p, arguments );
+  return p;
+};
+
+Promise.cancel = function()
+{
+  var p = new Promise();
+  p.cancel.apply( p, arguments );
+  return p;
+};
+
+Promise.singularity = (function()
+{
+  var singularity = null;
+  var singularityResult = null;
+  var consuming = false;
+  var promiseCount = 0;
+  var promiseComplete = 0;
+
+  function handleSuccess()
+  {
+    if ( ++promiseComplete === promiseCount )
+    {
+      singularity.resolve( singularityResult );
+    }
+  }
+
+  function bindPromise(promise)
+  {
+    promiseCount++;
+    promise.then( handleSuccess, singularity.reject, singularity.noline, null, singularity );
+  }
+
+  return function(promise, context, callback)
+  {
+    if ( !consuming )
+    {
+      consuming = true;
+      singularity = new Promise( null, false );
+      singularityResult = context;
+      promiseCount = 0;
+      promiseComplete = 0;
+
+      bindPromise( promise );
+
+      try
       {
-        handled.offs.push(
-          model.$once( Model.Events.RemoteRemove, this.createHandler( false, false, handled ), this ),
-          model.$once( Model.Events.RemoteRemoveFailure, this.createHandler( true, false, handled ), this ),
-          model.$once( Model.Events.RemoteRemoveOffline, this.createHandler( false, true, handled ), this )
-        );
+        callback.call( context, singularity );
       }
-      else if ( cascade & Rekord.Cascade.Local )
+      catch (e)
       {
-        handled.offs.push(
-          model.$once( Model.Events.LocalRemove, this.createHandler( false, false, handled ), this ),
-          model.$once( Model.Events.LocalRemoveFailure, this.createHandler( true, false, handled ), this )
-        );
+        // throw error, Rekord.debug, and/or singularity.reject( e )
+        if ( global.console && global.console.log )
+        {
+          global.console.log( e );
+        }
+
+        throw e;
       }
-      break;
+      finally
+      {
+        consuming = false;
+      }
+    }
+    else
+    {
+      bindPromise( promise );
+
+      callback.call( context, singularity );
     }
 
-    if ( handled.offs.length )
+    return singularity;
+  };
+
+})();
+
+addMethods( Promise.prototype,
+{
+  resolve: function()
+  {
+    this.finish( Promise.Status.Success, Promise.Events.Success, arguments );
+  },
+
+  reject: function()
+  {
+    this.finish( Promise.Status.Failure, Promise.Events.Failure, arguments );
+  },
+
+  noline: function()
+  {
+    this.finish( Promise.Status.Offline, Promise.Events.Offline, arguments );
+  },
+
+  cancel: function()
+  {
+    if ( this.cancelable )
     {
-      this.operations++;
+      this.finish( Promise.Status.Canceled, Promise.Events.Canceled, arguments );
     }
   },
 
-  createHandler: function(failure, offline, handled)
+  then: function(success, failure, offline, canceled, context )
   {
-    return function onEvent()
-    {
-      if ( !handled.already )
-      {
-        handled.already = true;
+    this.success( success, context );
+    this.failure( failure, context );
+    this.offline( offline, context );
+    this.canceled( canceled, context );
 
-        for (var i = 0; i < handled.offs.length; i++)
-        {
-          handled.offs[ i ]();
-        }
-
-        if ( offline )
-        {
-          this.status = Transaction.Events.Offline;
-        }
-        else if ( !this.status && failure )
-        {
-          this.status = Transaction.Events.Error;
-        }
-
-        this.completed++;
-
-        if ( this.isFinished() )
-        {
-          this.finish();
-        }
-      }
-    };
+    return this;
   },
 
-  finish: function()
+  finish: function(status, events, results)
   {
-    this.completed = this.operations;
-
-    if ( !this.status )
+    if ( this.status === Promise.Status.Pending )
     {
-      if ( this.cascade & Rekord.Cascade.Rest )
+      this.results = AP.slice.apply( results );
+      this.status = status;
+      this.trigger( events, results );
+    }
+  },
+
+  listenFor: function(immediate, events, callback, context)
+  {
+    if ( isFunction( callback ) )
+    {
+      if ( this.status === Promise.Status.Pending )
       {
-        this.status = Transaction.Events.RemoteSuccess;
+        this.once( events, callback, context );
       }
-      else if ( this.cascade & Rekord.Cascade.Local )
+      else if ( immediate )
       {
-        this.status = Transaction.Events.LocalSuccess;
-      }
-      else
-      {
-        this.status = Transaction.Events.Error;
+        callback.apply( context || this, this.results );
       }
     }
 
-    this.trigger( this.status, [this.status, this.model, this.cascade] );
+    return this;
   },
 
-  isFinished: function()
+  success: function(callback, context)
   {
-    return this.completed === this.operations;
+    return this.listenFor( this.isSuccess(), Promise.Events.Success, callback, context );
   },
 
-  then: function(callback, context)
+  unsuccessful: function(callback, context)
   {
-    var ignore = this.once( Transaction.Events.Any, callback, context );
+    return this.listenFor( this.isUnsuccessful(), Promise.Events.Unsuccessful, callback, context );
+  },
 
-    if ( this.isFinished() )
-    {
-      this.finish();
-    }
+  failure: function(callback, context)
+  {
+    return this.listenFor( this.isFailure(), Promise.Events.Failure, callback, context );
+  },
 
-    return ignore;
+  catch: function(callback, context)
+  {
+    return this.listenFor( this.isFailure(), Promise.Events.Failure, callback, context );
+  },
+
+  offline: function(callback, context)
+  {
+    return this.listenFor( this.isOffline(), Promise.Events.Offline, callback, context );
+  },
+
+  canceled: function(callback, context)
+  {
+    return this.listenFor( this.isCanceled(), Promise.Events.Canceled, callback, context );
+  },
+
+  complete: function(callback, context)
+  {
+    return this.listenFor( true, Promise.Events.Complete, callback, context );
+  },
+
+  isSuccess: function()
+  {
+    return this.status === Promise.Status.Success;
+  },
+
+  isUnsuccessful: function()
+  {
+    return this.status !== Promise.Status.Success && this.status !== Promise.Status.Pending;
+  },
+
+  isFailure: function()
+  {
+    return this.status === Promise.Status.Failure;
+  },
+
+  isOffline: function()
+  {
+    return this.status === Promise.Status.Offline;
+  },
+
+  isCanceled: function()
+  {
+    return this.status === Promise.Status.Canceled;
+  },
+
+  isPending: function()
+  {
+    return this.status === Promise.Status.Pending;
+  },
+
+  isComplete: function()
+  {
+    return this.status !== Promise.Status.Pending;
   }
 
 });
 
-addEventable( Transaction.prototype );
+addEventful( Promise.prototype );
 
 
 function Operation()
@@ -11085,7 +11176,7 @@ addMethods( Operation.prototype,
   reset: function(model, cascade)
   {
     this.model = model;
-    this.cascade = isNumber( cascade ) ? cascade : Rekord.Cascade.All;
+    this.cascade = isNumber( cascade ) ? cascade : Cascade.All;
     this.db = model.$db;
     this.next = null;
     this.finished = false;
@@ -11225,7 +11316,7 @@ function GetLocal(model, cascade)
 extend( Operation, GetLocal,
 {
 
-  cascading: Rekord.Cascade.Local,
+  cascading: Cascade.Local,
 
   interrupts: false,
 
@@ -11239,7 +11330,7 @@ extend( Operation, GetLocal,
 
       this.finish();
     }
-    else if ( this.canCascade() && db.cache === Rekord.Cache.All )
+    else if ( this.canCascade() && db.cache === Cache.All )
     {
       db.store.get( model.$key(), this.success(), this.failure() );
     }
@@ -11267,7 +11358,7 @@ extend( Operation, GetLocal,
 
     model.$trigger( Model.Events.LocalGet, [model] );
 
-    if ( this.canCascade( Rekord.Cascade.Rest ) && !model.$isDeleted() )
+    if ( this.canCascade( Cascade.Rest ) && !model.$isDeleted() )
     {
       this.insertNext( GetRemote );
     }
@@ -11281,7 +11372,7 @@ extend( Operation, GetLocal,
 
     model.$trigger( Model.Events.LocalGetFailure, [model] );
 
-    if ( this.canCascade( Rekord.Cascade.Rest ) && !model.$isDeleted()  )
+    if ( this.canCascade( Cascade.Rest ) && !model.$isDeleted()  )
     {
       this.insertNext( GetRemote );
     }
@@ -11297,7 +11388,7 @@ function GetRemote(model, cascade)
 extend( Operation, GetRemote,
 {
 
-  cascading: Rekord.Cascade.Rest,
+  cascading: Cascade.Rest,
 
   interrupts: false,
 
@@ -11374,7 +11465,7 @@ function RemoveCache(model, cascade)
 extend( Operation, RemoveCache,
 {
 
-  cascading: Rekord.Cascade.None,
+  cascading: Cascade.None,
 
   interrupts: true,
 
@@ -11382,7 +11473,7 @@ extend( Operation, RemoveCache,
 
   run: function(db, model)
   {
-    if ( db.cache == Rekord.Cache.None )
+    if ( db.cache == Cache.None )
     {
       this.finish();
     }
@@ -11402,7 +11493,7 @@ function RemoveLocal(model, cascade)
 extend( Operation, RemoveLocal,
 {
 
-  cascading: Rekord.Cascade.Local,
+  cascading: Cascade.Local,
 
   interrupts: true,
 
@@ -11412,7 +11503,7 @@ extend( Operation, RemoveLocal,
   {
     model.$status = Model.Status.RemovePending;
 
-    if ( db.cache === Rekord.Cache.None || !model.$local || !this.canCascade() )
+    if ( db.cache === Cache.None || !model.$local || !this.canCascade() )
     {
       Rekord.debug( Rekord.Debugs.REMOVE_LOCAL_NONE, model );
 
@@ -11443,7 +11534,7 @@ extend( Operation, RemoveLocal,
 
     model.$trigger( Model.Events.LocalRemove, [model] );
 
-    if ( model.$saved && this.canCascade( Rekord.Cascade.Remote ) )
+    if ( model.$saved && this.canCascade( Cascade.Remote ) )
     {
       model.$addOperation( RemoveRemote, this.cascade );
     }
@@ -11457,7 +11548,7 @@ extend( Operation, RemoveLocal,
 
     model.$trigger( Model.Events.LocalRemoveFailure, [model] );
 
-    if ( model.$saved && this.canCascade( Rekord.Cascade.Remote ) )
+    if ( model.$saved && this.canCascade( Cascade.Remote ) )
     {
       model.$addOperation( RemoveRemote, this.cascade );
     }
@@ -11473,7 +11564,7 @@ function RemoveNow(model, cascade)
 extend( Operation, RemoveNow,
 {
 
-  cascading: Rekord.Cascade.Local,
+  cascading: Cascade.Local,
 
   interrupts: true,
 
@@ -11487,7 +11578,7 @@ extend( Operation, RemoveNow,
 
     db.removeFromModels( model );
 
-    if ( db.cache === Rekord.Cache.None || !this.canCascade() )
+    if ( db.cache === Cache.None || !this.canCascade() )
     {
       this.finishRemove();
       this.finish();
@@ -11530,7 +11621,7 @@ function RemoveRemote(model, cascade)
 extend( Operation, RemoveRemote,
 {
 
-  cascading: Rekord.Cascade.Remote,
+  cascading: Cascade.Remote,
 
   interrupts: true,
 
@@ -11538,7 +11629,7 @@ extend( Operation, RemoveRemote,
 
   run: function(db, model)
   {
-    if ( this.notCascade( Rekord.Cascade.Rest ) )
+    if ( this.notCascade( Cascade.Rest ) )
     {
       this.liveRemove();
 
@@ -11568,7 +11659,7 @@ extend( Operation, RemoveRemote,
     {
       Rekord.debug( Rekord.Debugs.REMOVE_MISSING, model, key );
 
-      this.finishRemove();
+      this.finishRemove( true );
     }
     else if ( status !== 0 )
     {
@@ -11597,7 +11688,7 @@ extend( Operation, RemoveRemote,
     }
   },
 
-  finishRemove: function()
+  finishRemove: function(notLive)
   {
     var db = this.db;
     var model = this.model;
@@ -11615,7 +11706,10 @@ extend( Operation, RemoveRemote,
     this.insertNext( RemoveNow );
 
     // Remove it live!
-    this.liveRemove();
+    if ( !notLive )
+    {
+      this.liveRemove();
+    }
 
     // Remove the model reference for good!
     delete db.all[ key ];
@@ -11623,7 +11717,7 @@ extend( Operation, RemoveRemote,
 
   liveRemove: function()
   {
-    if ( this.canCascade( Rekord.Cascade.Live ) )
+    if ( this.canCascade( Cascade.Live ) )
     {
       var db = this.db;
       var model = this.model;
@@ -11655,7 +11749,7 @@ function SaveLocal(model, cascade)
 extend( Operation, SaveLocal,
 {
 
-  cascading: Rekord.Cascade.Local,
+  cascading: Cascade.Local,
 
   interrupts: false,
 
@@ -11671,9 +11765,9 @@ extend( Operation, SaveLocal,
 
       this.finish();
     }
-    else if ( db.cache === Rekord.Cache.None || !this.canCascade() )
+    else if ( db.cache === Cache.None || !this.canCascade() )
     {
-      if ( this.canCascade( Rekord.Cascade.Remote ) )
+      if ( this.canCascade( Cascade.Remote ) )
       {
         if ( this.tryNext( SaveRemote ) )
         {
@@ -11785,7 +11879,7 @@ function SaveNow(model, cascade)
 extend( Operation, SaveNow,
 {
 
-  cascading: Rekord.Cascade.Local,
+  cascading: Cascade.Local,
 
   interrupts: false,
 
@@ -11796,7 +11890,7 @@ extend( Operation, SaveNow,
     var key = model.$key();
     var local = model.$local;
 
-    if ( db.cache === Rekord.Cache.All && key && local && this.canCascade() )
+    if ( db.cache === Cache.All && key && local && this.canCascade() )
     {
       db.store.put( key, local, this.success(), this.failure() );
     }
@@ -11816,7 +11910,7 @@ function SaveRemote(model, cascade)
 extend( Operation, SaveRemote,
 {
 
-  cascading: Rekord.Cascade.Remote,
+  cascading: Cascade.Remote,
 
   interrupts: false,
 
@@ -11835,7 +11929,7 @@ extend( Operation, SaveRemote,
     {
       this.finish();
     }
-    else if ( !db.hasData( model.$saving ) || this.notCascade( Rekord.Cascade.Rest ) )
+    else if ( !db.hasData( model.$saving ) || this.notCascade( Cascade.Rest ) )
     {
       this.liveSave();
       this.markSynced( model, true, Model.Events.RemoteSave, null );
@@ -11984,7 +12078,7 @@ extend( Operation, SaveRemote,
     this.liveSave();
     this.markSynced( model, false, Model.Events.RemoteSave, null );
 
-    if ( db.cache === Rekord.Cache.Pending )
+    if ( db.cache === Cache.Pending )
     {
       this.insertNext( RemoveCache );
     }
@@ -11999,7 +12093,7 @@ extend( Operation, SaveRemote,
     var db = this.db;
     var model = this.model;
 
-    if ( this.canCascade( Rekord.Cascade.Live ) && db.hasData( model.$publish ) )
+    if ( this.canCascade( Cascade.Live ) && db.hasData( model.$publish ) )
     {
       // Publish saved data to everyone else
       Rekord.debug( Rekord.Debugs.SAVE_PUBLISH, model, model.$publish );
@@ -12041,8 +12135,8 @@ Relation.Defaults =
 {
   model:                null,
   lazy:                 false,
-  store:                Rekord.Store.None,
-  save:                 Rekord.Save.None,
+  store:                Store.None,
+  save:                 Save.None,
   auto:                 true,
   property:             true,
   preserve:             true,
@@ -12222,8 +12316,9 @@ addMethods( Relation.prototype,
 
     Rekord.debug( this.debugQuery, this, model, search, queryOption, query, queryData );
 
-    search.$run();
-    search.$ready( this.handleExecuteQuery( model ), this );
+    var promise = search.$run();
+    
+    promise.complete( this.handleExecuteQuery( model ), this );
 
     return search;
   },
@@ -12481,10 +12576,10 @@ addMethods( Relation.prototype,
     {
       switch (mode)
       {
-      case Rekord.Save.Model:
+      case Save.Model:
         return related.$toJSON( true );
 
-      case Rekord.Store.Model:
+      case Store.Model:
         if ( related.$local )
         {
           return related.$local;
@@ -12501,12 +12596,12 @@ addMethods( Relation.prototype,
           return local;
         }
 
-      case Rekord.Save.Key:
-      case Rekord.Store.Key:
+      case Save.Key:
+      case Store.Key:
         return related.$key();
 
-      case Rekord.Save.Keys:
-      case Rekord.Store.Keys:
+      case Save.Keys:
+      case Store.Keys:
         return related.$keys();
 
       }
@@ -12935,7 +13030,7 @@ extend( Relation, RelationMultiple,
   {
     if ( !relation.delaySaving && !remoteData && relation.parent.$exists() )
     {
-      if ( this.store === Rekord.Store.Model || this.save === Rekord.Save.Model )
+      if ( this.store === Store.Model || this.save === Save.Model )
       {
         Rekord.debug( this.debugAutoSave, this, relation );
 
@@ -12989,14 +13084,14 @@ BelongsTo.Defaults =
   model:                null,
   lazy:                 false,
   query:                false,
-  store:                Rekord.Store.None,
-  save:                 Rekord.Save.None,
+  store:                Store.None,
+  save:                 Save.None,
   auto:                 true,
   property:             true,
   preserve:             true,
   dynamic:              false,
   local:                null,
-  cascade:              Rekord.Cascade.Local,
+  cascade:              Cascade.Local,
   discriminator:        'discriminator',
   discriminators:       {},
   discriminatorToModel: {}
@@ -13116,14 +13211,14 @@ HasOne.Defaults =
   model:                null,
   lazy:                 false,
   query:                false,
-  store:                Rekord.Store.None,
-  save:                 Rekord.Save.None,
+  store:                Store.None,
+  save:                 Save.None,
   auto:                 true,
   property:             true,
   preserve:             true,
   dynamic:              false,
   local:                null,
-  cascade:              Rekord.Cascade.All,
+  cascade:              Cascade.All,
   discriminator:        'discriminator',
   discriminators:       {},
   discriminatorToModel: {}
@@ -13279,16 +13374,16 @@ HasMany.Defaults =
   model:                null,
   lazy:                 false,
   query:                false,
-  store:                Rekord.Store.None,
-  save:                 Rekord.Save.None,
+  store:                Store.None,
+  save:                 Save.None,
   auto:                 true,
   property:             true,
   dynamic:              false,
   foreign:              null,
   comparator:           null,
   comparatorNullsFirst: false,
-  cascadeRemove:        Rekord.Cascade.Local,
-  cascadeSave:          Rekord.Cascade.None,
+  cascadeRemove:        Cascade.Local,
+  cascadeSave:          Cascade.None,
   discriminator:        'discriminator',
   discriminators:       {},
   discriminatorToModel: {}
@@ -13562,9 +13657,9 @@ extend( RelationMultiple, HasMany,
       {
         if ( remoteData )
         {
-          if ( this.cascadeRemove & Rekord.Cascade.Local )
+          if ( canCascade( this.cascadeRemove, Cascade.Local ) )
           {
-            related.$remove( Rekord.Cascade.Local );
+            related.$remove( Cascade.Local );
           }
         }
         else
@@ -13612,8 +13707,8 @@ HasManyThrough.Defaults =
   model:                null,
   lazy:                 false,
   query:                false,
-  store:                Rekord.Store.None,
-  save:                 Rekord.Save.None,
+  store:                Store.None,
+  save:                 Save.None,
   auto:                 true,
   property:             true,
   dynamic:              false,
@@ -13622,9 +13717,9 @@ HasManyThrough.Defaults =
   foreign:              null,
   comparator:           null,
   comparatorNullsFirst: false,
-  cascadeRemove:        Rekord.Cascade.NoRest,
-  cascadeSave:          Rekord.Cascade.All,
-  cascadeSaveRelated:   Rekord.Cascade.None,
+  cascadeRemove:        Cascade.NoRest,
+  cascadeSave:          Cascade.All,
+  cascadeSaveRelated:   Cascade.None,
   discriminator:        'discriminator',
   discriminators:       {},
   discriminatorToModel: {}
@@ -13947,7 +14042,7 @@ extend( RelationMultiple, HasManyThrough,
         }
         else
         {
-          through.$save( Rekord.Cascade.None );
+          through.$save( Cascade.None );
         }
       }
     }
@@ -14039,7 +14134,7 @@ extend( RelationMultiple, HasManyThrough,
 
       if ( callRemove )
       {
-        through.$remove( remoteData ? Rekord.Cascade.Local : Rekord.Cascade.All );
+        through.$remove( remoteData ? Cascade.Local : Cascade.All );
       }
 
       throughs.remove( throughKey );
@@ -14136,8 +14231,8 @@ HasRemote.Defaults =
   model:                undefined,
   lazy:                 false,
   query:                false,
-  store:                Rekord.Store.None,
-  save:                 Rekord.Save.None,
+  store:                Store.None,
+  save:                 Save.None,
   auto:                 false,
   property:             true,
   dynamic:              false,
@@ -14400,8 +14495,8 @@ var Polymorphic =
 
     DiscriminateCollection( search, this.discriminator, this.discriminatorToModel );
 
-    search.$run();
-    search.$ready( this.handleExecuteQuery( model ), this );
+    var promise = search.$run();
+    promise.complete( this.handleExecuteQuery( model ), this );
 
     return search;
   },
@@ -14885,97 +14980,103 @@ addMethods( Shard.prototype,
   global.Rekord = Rekord;
 
   /* Classes */
-  global.Rekord.Model = Model;
-  global.Rekord.Database = Database;
-  global.Rekord.Relation = Relation;
-  global.Rekord.Operation = Operation;
-  global.Rekord.Transaction = Transaction;
-  global.Rekord.Search = Search;
-  global.Rekord.SearchPaged = SearchPaged;
+  Rekord.Model = Model;
+  Rekord.Database = Database;
+  Rekord.Relation = Relation;
+  Rekord.Operation = Operation;
+  Rekord.Search = Search;
+  Rekord.SearchPaged = SearchPaged;
+  Rekord.Promise = Promise;
+
+  /* Enums */
+  Rekord.Cascade = Cascade;
+  Rekord.Cache = Cache;
+  Rekord.Store = Store;
+  Rekord.Save = Save;
 
   /* Collections */
-  global.Rekord.Map = Map;
-  global.Rekord.Collection = Collection;
-  global.Rekord.FilteredCollection = FilteredCollection;
-  global.Rekord.ModelCollection = ModelCollection;
-  global.Rekord.FilteredModelCollection = FilteredModelCollection;
-  global.Rekord.Page = Page;
+  Rekord.Map = Map;
+  Rekord.Collection = Collection;
+  Rekord.FilteredCollection = FilteredCollection;
+  Rekord.ModelCollection = ModelCollection;
+  Rekord.FilteredModelCollection = FilteredModelCollection;
+  Rekord.Page = Page;
 
   /* Relationships */
-  global.Rekord.HasOne = HasOne;
-  global.Rekord.BelongsTo = BelongsTo;
-  global.Rekord.HasMany = HasMany;
-  global.Rekord.HasManyThrough = HasManyThrough;
-  global.Rekord.HasRemote = HasRemote;
+  Rekord.HasOne = HasOne;
+  Rekord.BelongsTo = BelongsTo;
+  Rekord.HasMany = HasMany;
+  Rekord.HasManyThrough = HasManyThrough;
+  Rekord.HasRemote = HasRemote;
 
   /* Utility Functions */
-  global.Rekord.isRekord = isRekord;
-  global.Rekord.isDefined = isDefined;
-  global.Rekord.isFunction = isFunction;
-  global.Rekord.isString = isString;
-  global.Rekord.isNumber = isNumber;
-  global.Rekord.isBoolean = isBoolean;
-  global.Rekord.isDate = isDate;
-  global.Rekord.isRegExp = isRegExp;
-  global.Rekord.isArray = isArray;
-  global.Rekord.isObject = isObject;
-  global.Rekord.isValue = isValue;
+  Rekord.isRekord = isRekord;
+  Rekord.isDefined = isDefined;
+  Rekord.isFunction = isFunction;
+  Rekord.isString = isString;
+  Rekord.isNumber = isNumber;
+  Rekord.isBoolean = isBoolean;
+  Rekord.isDate = isDate;
+  Rekord.isRegExp = isRegExp;
+  Rekord.isArray = isArray;
+  Rekord.isObject = isObject;
+  Rekord.isValue = isValue;
 
-  global.Rekord.uuid = uuid;
-  global.Rekord.indexOf = indexOf;
-  global.Rekord.propsMatch = propsMatch;
-  global.Rekord.hasFields = hasFields;
-  global.Rekord.toArray = toArray;
+  Rekord.uuid = uuid;
+  Rekord.indexOf = indexOf;
+  Rekord.propsMatch = propsMatch;
+  Rekord.hasFields = hasFields;
+  Rekord.toArray = toArray;
 
-  global.Rekord.addEventable = addEventable;
+  Rekord.addEventful = addEventful;
 
-  global.Rekord.extend = extend;
-  global.Rekord.extendArray = extendArray;
-  global.Rekord.copyConstructor = copyConstructor;
-  global.Rekord.factory = factory;
+  Rekord.extend = extend;
+  Rekord.extendArray = extendArray;
+  Rekord.copyConstructor = copyConstructor;
+  Rekord.factory = factory;
 
-  global.Rekord.transfer = transfer;
-  global.Rekord.collapse = collapse;
-  global.Rekord.swap = swap;
-  global.Rekord.reverse = reverse;
-  global.Rekord.grab = grab;
-  global.Rekord.pull = pull;
-  global.Rekord.copy = copy;
-  global.Rekord.noop = noop;
-  global.Rekord.bind = bind;
-  global.Rekord.diff = diff;
-  global.Rekord.sizeof = sizeof;
-  global.Rekord.isEmpty = isEmpty;
-  global.Rekord.collect = collect;
-  global.Rekord.applyOptions = applyOptions;
-  global.Rekord.toCamelCase = toCamelCase;
-  global.Rekord.evaluate = evaluate;
+  Rekord.transfer = transfer;
+  Rekord.collapse = collapse;
+  Rekord.swap = swap;
+  Rekord.reverse = reverse;
+  Rekord.grab = grab;
+  Rekord.pull = pull;
+  Rekord.copy = copy;
+  Rekord.noop = noop;
+  Rekord.bind = bind;
+  Rekord.diff = diff;
+  Rekord.sizeof = sizeof;
+  Rekord.isEmpty = isEmpty;
+  Rekord.collect = collect;
+  Rekord.applyOptions = applyOptions;
+  Rekord.toCamelCase = toCamelCase;
+  Rekord.evaluate = evaluate;
 
-  global.Rekord.clean = clean;
-  global.Rekord.cleanFunctions = cleanFunctions;
+  Rekord.clean = clean;
+  Rekord.cleanFunctions = cleanFunctions;
 
-  global.Rekord.compare = compare;
-  global.Rekord.compareNumbers = compareNumbers;
-  global.Rekord.equals = equals;
-  global.Rekord.equalsStrict = equalsStrict;
-  global.Rekord.equalsCompare = equalsCompare;
+  Rekord.compare = compare;
+  Rekord.compareNumbers = compareNumbers;
+  Rekord.equals = equals;
+  Rekord.equalsStrict = equalsStrict;
+  Rekord.equalsCompare = equalsCompare;
 
-  global.Rekord.isSorted = isSorted;
-  global.Rekord.saveComparator = saveComparator;
-  global.Rekord.createComparator = createComparator;
-  global.Rekord.addComparator = addComparator;
+  Rekord.isSorted = isSorted;
+  Rekord.saveComparator = saveComparator;
+  Rekord.createComparator = createComparator;
+  Rekord.addComparator = addComparator;
 
-  global.Rekord.saveWhere = saveWhere;
-  global.Rekord.createWhere = createWhere;
+  Rekord.saveWhere = saveWhere;
+  Rekord.createWhere = createWhere;
 
-  global.Rekord.savePropertyResolver = savePropertyResolver;
-  global.Rekord.createPropertyResolver = createPropertyResolver;
+  Rekord.savePropertyResolver = savePropertyResolver;
+  Rekord.createPropertyResolver = createPropertyResolver;
 
-  global.Rekord.saveNumberResolver = saveNumberResolver;
-  global.Rekord.createNumberResolver = createNumberResolver;
+  Rekord.saveNumberResolver = saveNumberResolver;
+  Rekord.createNumberResolver = createNumberResolver;
 
-  global.Rekord.parse = parse;
-  global.Rekord.format = format;
-  global.Rekord.createFormatter = createFormatter;
+  Rekord.parse = parse;
+  Rekord.format = format;
+  Rekord.createFormatter = createFormatter;
 
 })(this);

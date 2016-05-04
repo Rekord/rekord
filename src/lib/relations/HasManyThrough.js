@@ -9,8 +9,8 @@ HasManyThrough.Defaults =
   model:                null,
   lazy:                 false,
   query:                false,
-  store:                Rekord.Store.None,
-  save:                 Rekord.Save.None,
+  store:                Store.None,
+  save:                 Save.None,
   auto:                 true,
   property:             true,
   dynamic:              false,
@@ -19,9 +19,9 @@ HasManyThrough.Defaults =
   foreign:              null,
   comparator:           null,
   comparatorNullsFirst: false,
-  cascadeRemove:        Rekord.Cascade.NoRest,
-  cascadeSave:          Rekord.Cascade.All,
-  cascadeSaveRelated:   Rekord.Cascade.None,
+  cascadeRemove:        Cascade.NoRest,
+  cascadeSave:          Cascade.All,
+  cascadeSaveRelated:   Cascade.None,
   discriminator:        'discriminator',
   discriminators:       {},
   discriminatorToModel: {}
@@ -344,7 +344,7 @@ extend( RelationMultiple, HasManyThrough,
         }
         else
         {
-          through.$save( Rekord.Cascade.None );
+          through.$save( Cascade.None );
         }
       }
     }
@@ -436,7 +436,7 @@ extend( RelationMultiple, HasManyThrough,
 
       if ( callRemove )
       {
-        through.$remove( remoteData ? Rekord.Cascade.Local : Rekord.Cascade.All );
+        through.$remove( remoteData ? Cascade.Local : Cascade.All );
       }
 
       throughs.remove( throughKey );

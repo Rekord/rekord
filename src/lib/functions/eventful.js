@@ -62,7 +62,7 @@ function addEventFunction(target, functionName, events, secret)
  * @param {Boolean} [secret=false] -
  *    If true - the functions will be prefixed with `$`.
  */
-function addEventable(target, secret)
+function addEventful(target, secret)
 {
 
   var CALLBACK_FUNCTION = 0;
@@ -77,7 +77,7 @@ function addEventable(target, secret)
    *
    * @class Eventful
    * @memberof Rekord
-   * @see Rekord.addEventable
+   * @see Rekord.addEventful
    */
 
    /**
@@ -86,7 +86,7 @@ function addEventable(target, secret)
     *
     * @class Eventful$
     * @memberof Rekord
-    * @see Rekord.addEventable
+    * @see Rekord.addEventful
     */
 
   // Adds a listener to $this
@@ -247,7 +247,7 @@ function addEventable(target, secret)
    *     target.off('a', x);     // remove listener x from event a
    *
    * @method off
-   * @for addEventable
+   * @for addEventful
    * @param {String|Array|Object} [events]
    * @param {Function} [callback]
    * @chainable
@@ -328,7 +328,7 @@ function addEventable(target, secret)
    * Triggers a single event optionally passing an argument to any listeners.
    *
    * @method trigger
-   * @for addEventable
+   * @for addEventful
    * @param {String} event
    * @param {Array} args
    * @chainable

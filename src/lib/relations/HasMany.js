@@ -9,16 +9,16 @@ HasMany.Defaults =
   model:                null,
   lazy:                 false,
   query:                false,
-  store:                Rekord.Store.None,
-  save:                 Rekord.Save.None,
+  store:                Store.None,
+  save:                 Save.None,
   auto:                 true,
   property:             true,
   dynamic:              false,
   foreign:              null,
   comparator:           null,
   comparatorNullsFirst: false,
-  cascadeRemove:        Rekord.Cascade.Local,
-  cascadeSave:          Rekord.Cascade.None,
+  cascadeRemove:        Cascade.Local,
+  cascadeSave:          Cascade.None,
   discriminator:        'discriminator',
   discriminators:       {},
   discriminatorToModel: {}
@@ -292,9 +292,9 @@ extend( RelationMultiple, HasMany,
       {
         if ( remoteData )
         {
-          if ( this.cascadeRemove & Rekord.Cascade.Local )
+          if ( canCascade( this.cascadeRemove, Cascade.Local ) )
           {
-            related.$remove( Rekord.Cascade.Local );
+            related.$remove( Cascade.Local );
           }
         }
         else

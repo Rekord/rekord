@@ -69,7 +69,7 @@ extend( Search, SearchPaged,
       }
     }
 
-    return this;
+    return this.$promise;
   },
 
   $more: function()
@@ -79,12 +79,12 @@ extend( Search, SearchPaged,
     if ( next < this.$getPageCount() )
     {
       this.$setPageIndex( next );
-      this.$once( Search.Events.Ready, this.$onMoreEnd );
       this.$append = true;
       this.$run();
+      this.$promise.complete( this.$onMoreEnd, this );
     }
 
-    return this;
+    return this.$promise;
   },
 
   $onMoreEnd: function()

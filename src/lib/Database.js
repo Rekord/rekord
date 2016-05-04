@@ -199,7 +199,7 @@ Database.Defaults =
   loadRelations:        true,
   loadRemote:           true,
   autoRefresh:          true,
-  cache:                Rekord.Cache.All,
+  cache:                Cache.All,
   fullSave:             false,
   fullPublish:          false,
   encodings:            {},
@@ -757,7 +757,7 @@ addMethods( Database.prototype,
     {
       model = db.createModel( decoded, true );
 
-      if ( db.cache === Rekord.Cache.All )
+      if ( db.cache === Cache.All )
       {
         model.$local = model.$toJSON( false );
         model.$local.$status = model.$status;
@@ -884,7 +884,7 @@ addMethods( Database.prototype,
     var db = this;
     var model = db.all[ key ];
 
-    if ( db.cache === Rekord.Cache.All )
+    if ( db.cache === Cache.All )
     {
       return db.destroyLocalCachedModel( model, key );
     }
@@ -986,7 +986,7 @@ addMethods( Database.prototype,
       Rekord.after( Rekord.Events.Online, db.onOnline, db );
     }
 
-    if ( db.cache === Rekord.Cache.None )
+    if ( db.cache === Cache.None )
     {
       db.loadNone();
 
@@ -1042,7 +1042,9 @@ addMethods( Database.prototype,
   refresh: function(callback, context)
   {
     var db = this;
-    var callbackContext = context || db;
+    var promise = new Promise();
+
+    promise.complete( callback, context || db );
 
     function onModels(response)
     {
@@ -1089,10 +1091,7 @@ addMethods( Database.prototype,
 
       Rekord.debug( Rekord.Debugs.REMOTE_LOAD, db, models );
 
-      if ( callback )
-      {
-        callback.call( callbackContext, db.models );
-      }
+      promise.resolve( db.models );
     }
 
     function onLoadError(response, status)
@@ -1118,13 +1117,12 @@ addMethods( Database.prototype,
         db.trigger( Database.Events.NoLoad, [db, response] );
       }
 
-      if ( callback )
-      {
-        callback.call( callbackContext, db.models );
-      }
+      promise.reject( db.models );
     }
 
     db.rest.all( onModels, onLoadError );
+
+    return promise;
   },
 
   onRefreshOnline: function()
@@ -1259,14 +1257,9 @@ addMethods( Database.prototype,
 
       model.$trigger( Model.Events.Removed );
     }
-  },
-
-  refreshModel: function(model, cascade)
-  {
-    model.$addOperation( GetRemote, cascade );
   }
 
 });
 
-addEventable( Database.prototype );
+addEventful( Database.prototype );
 addEventFunction( Database.prototype, 'change', Database.Events.Changes );

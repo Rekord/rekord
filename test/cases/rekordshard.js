@@ -714,7 +714,8 @@ test( 'query default', function(assert)
     shard: sharder
   });
 
-  var done = Task.search( '/done' ).$run();
+  var done = Task.search( '/done' );
+  var p = done.$run();
   done.$results.setComparator('name');
 
   strictEqual( done.$results.length, 3 );
@@ -753,7 +754,8 @@ test( 'query specific', function(assert)
     shard: sharder
   });
 
-  var done = Task.search( '/done' ).$run();
+  var done = Task.search( '/done' );
+  var p = done.$run();
   done.$results.setComparator('name');
 
   strictEqual( done.$results.length, 2 );
@@ -790,7 +792,8 @@ test( 'query failure atomic', function(assert)
     shard: sharder
   });
 
-  var done = Task.search( '/done' ).$run();
+  var done = Task.search( '/done' );
+  var p = done.$run();
   done.$results.setComparator('name');
 
   strictEqual( done.$results.length, 0 );
@@ -825,7 +828,8 @@ test( 'query failure not atomic', function(assert)
     shard: sharder
   });
 
-  var done = Task.search( '/done' ).$run();
+  var done = Task.search( '/done' );
+  var p = done.$run();
   done.$results.setComparator('name');
 
   strictEqual( done.$results.length, 1 );

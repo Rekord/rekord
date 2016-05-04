@@ -6,7 +6,7 @@ function RemoveRemote(model, cascade)
 extend( Operation, RemoveRemote,
 {
 
-  cascading: Rekord.Cascade.Remote,
+  cascading: Cascade.Remote,
 
   interrupts: true,
 
@@ -14,7 +14,7 @@ extend( Operation, RemoveRemote,
 
   run: function(db, model)
   {
-    if ( this.notCascade( Rekord.Cascade.Rest ) )
+    if ( this.notCascade( Cascade.Rest ) )
     {
       this.liveRemove();
 
@@ -44,7 +44,7 @@ extend( Operation, RemoveRemote,
     {
       Rekord.debug( Rekord.Debugs.REMOVE_MISSING, model, key );
 
-      this.finishRemove();
+      this.finishRemove( true );
     }
     else if ( status !== 0 )
     {
@@ -73,7 +73,7 @@ extend( Operation, RemoveRemote,
     }
   },
 
-  finishRemove: function()
+  finishRemove: function(notLive)
   {
     var db = this.db;
     var model = this.model;
@@ -91,7 +91,10 @@ extend( Operation, RemoveRemote,
     this.insertNext( RemoveNow );
 
     // Remove it live!
-    this.liveRemove();
+    if ( !notLive )
+    {
+      this.liveRemove();
+    }
 
     // Remove the model reference for good!
     delete db.all[ key ];
@@ -99,7 +102,7 @@ extend( Operation, RemoveRemote,
 
   liveRemove: function()
   {
-    if ( this.canCascade( Rekord.Cascade.Live ) )
+    if ( this.canCascade( Cascade.Live ) )
     {
       var db = this.db;
       var model = this.model;

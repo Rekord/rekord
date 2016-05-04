@@ -6,7 +6,7 @@ function RemoveCache(model, cascade)
 extend( Operation, RemoveCache,
 {
 
-  cascading: Rekord.Cascade.None,
+  cascading: Cascade.None,
 
   interrupts: true,
 
@@ -14,7 +14,7 @@ extend( Operation, RemoveCache,
 
   run: function(db, model)
   {
-    if ( db.cache == Rekord.Cache.None )
+    if ( db.cache == Cache.None )
     {
       this.finish();
     }

@@ -36,6 +36,49 @@ function Model(db)
    */
 }
 
+function createModelPromise(model, cascade, restSuccess, restFailure, restOffline, localSuccess, localFailure)
+{
+  var promise = new Promise( null, false );
+
+  if ( canCascade( cascade, Cascade.Rest ) )
+  {
+    var off1 = model.$once( restSuccess, function(data) {
+      off2();
+      off3();
+      promise.resolve( model, data );
+    });
+    var off2 = model.$once( restFailure, function(data, status) {
+      off1();
+      off3();
+      promise.reject( model, status, data );
+    });
+    var off3 = model.$once( restOffline, function() {
+      off1();
+      off2();
+      promise.noline( model );
+    });
+  }
+  else if ( canCascade( cascade, Cascade.Local ) )
+  {
+    var off1 = model.$once( localSuccess, function(data)
+    {
+      off2();
+      promise.resolve( model, data );
+    });
+    var off2 = model.$once( localFailure, function(data, status)
+    {
+      off1();
+      promise.reject( model, data );
+    });
+  }
+  else
+  {
+    promise.resolve( model );
+  }
+
+  return promise;
+}
+
 Model.Events =
 {
   Created:              'created',
@@ -393,16 +436,24 @@ addMethods( Model.prototype,
     var cascade =
       (arguments.length === 3 ? cascade :
         (arguments.length === 2 && isObject( setProperties ) && isNumber( setValue ) ? setValue :
-          (arguments.length === 1 && isNumber( setProperties ) ?  setProperties : Rekord.Cascade.All ) ) );
+          (arguments.length === 1 && isNumber( setProperties ) ?  setProperties : Cascade.All ) ) );
 
     if ( this.$isDeleted() )
     {
       Rekord.debug( Rekord.Debugs.SAVE_DELETED, this.$db, this );
 
-      return Rekord.transactNone( cascade, this, 'save' );
+      return Promise.resolve( this );
     }
 
-    return Rekord.transact( cascade, this, 'save', function(txn)
+    var promise = createModelPromise( this, cascade,
+      Model.Events.RemoteSave,
+      Model.Events.RemoteSaveFailure,
+      Model.Events.RemoteSaveOffline,
+      Model.Events.LocalSave,
+      Model.Events.LocalSaveFailure
+    );
+
+    return Promise.singularity( promise, this, function(singularity)
     {
       this.$db.addReference( this );
 
@@ -418,14 +469,22 @@ addMethods( Model.prototype,
 
   $remove: function(cascade)
   {
-    var cascade = isNumber( cascade ) ? cascade : Rekord.Cascade.All;
+    var cascade = isNumber( cascade ) ? cascade : Cascade.All;
 
     if ( !this.$exists() )
     {
-      return Rekord.transactNone( cascade, this, 'remove' );
+      return Promise.resolve( this );
     }
 
-    return Rekord.transact( cascade, this, 'remove', function(txn)
+    var promise = createModelPromise( this, cascade,
+      Model.Events.RemoteRemove,
+      Model.Events.RemoteRemoveFailure,
+      Model.Events.RemoteRemoveOffline,
+      Model.Events.LocalRemove,
+      Model.Events.LocalRemoveFailure
+    );
+
+    return Promise.singularity( promise, this, function(singularity)
     {
       this.$trigger( Model.Events.PreRemove, [this] );
 
@@ -437,9 +496,28 @@ addMethods( Model.prototype,
 
   $refresh: function(cascade)
   {
-    this.$db.refreshModel( this, cascade );
+    var promise = createModelPromise( this, cascade,
+      Model.Events.RemoteGet,
+      Model.Events.RemoteGetFailure,
+      Model.Events.RemoteGetOffline,
+      Model.Events.LocalGet,
+      Model.Events.LocalGetFailure
+    );
 
-    return this;
+    if ( canCascade( cascade, Cascade.Rest ) )
+    {
+      this.$addOperation( GetRemote, cascade );
+    }
+    else if ( canCascade( cascade, Cascade.Local ) )
+    {
+      this.$addOperation( GetLocal, cascade );
+    }
+    else
+    {
+      promise.resolve( this );
+    }
+
+    return promise;
   },
 
   $autoRefresh: function()
@@ -687,6 +765,6 @@ addMethods( Model.prototype,
 
 });
 
-addEventable( Model.prototype, true );
+addEventful( Model.prototype, true );
 
 addEventFunction( Model.prototype, '$change', Model.Events.Changes, true );

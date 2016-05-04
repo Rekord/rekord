@@ -3,97 +3,103 @@
   global.Rekord = Rekord;
 
   /* Classes */
-  global.Rekord.Model = Model;
-  global.Rekord.Database = Database;
-  global.Rekord.Relation = Relation;
-  global.Rekord.Operation = Operation;
-  global.Rekord.Transaction = Transaction;
-  global.Rekord.Search = Search;
-  global.Rekord.SearchPaged = SearchPaged;
+  Rekord.Model = Model;
+  Rekord.Database = Database;
+  Rekord.Relation = Relation;
+  Rekord.Operation = Operation;
+  Rekord.Search = Search;
+  Rekord.SearchPaged = SearchPaged;
+  Rekord.Promise = Promise;
+
+  /* Enums */
+  Rekord.Cascade = Cascade;
+  Rekord.Cache = Cache;
+  Rekord.Store = Store;
+  Rekord.Save = Save;
 
   /* Collections */
-  global.Rekord.Map = Map;
-  global.Rekord.Collection = Collection;
-  global.Rekord.FilteredCollection = FilteredCollection;
-  global.Rekord.ModelCollection = ModelCollection;
-  global.Rekord.FilteredModelCollection = FilteredModelCollection;
-  global.Rekord.Page = Page;
+  Rekord.Map = Map;
+  Rekord.Collection = Collection;
+  Rekord.FilteredCollection = FilteredCollection;
+  Rekord.ModelCollection = ModelCollection;
+  Rekord.FilteredModelCollection = FilteredModelCollection;
+  Rekord.Page = Page;
 
   /* Relationships */
-  global.Rekord.HasOne = HasOne;
-  global.Rekord.BelongsTo = BelongsTo;
-  global.Rekord.HasMany = HasMany;
-  global.Rekord.HasManyThrough = HasManyThrough;
-  global.Rekord.HasRemote = HasRemote;
+  Rekord.HasOne = HasOne;
+  Rekord.BelongsTo = BelongsTo;
+  Rekord.HasMany = HasMany;
+  Rekord.HasManyThrough = HasManyThrough;
+  Rekord.HasRemote = HasRemote;
 
   /* Utility Functions */
-  global.Rekord.isRekord = isRekord;
-  global.Rekord.isDefined = isDefined;
-  global.Rekord.isFunction = isFunction;
-  global.Rekord.isString = isString;
-  global.Rekord.isNumber = isNumber;
-  global.Rekord.isBoolean = isBoolean;
-  global.Rekord.isDate = isDate;
-  global.Rekord.isRegExp = isRegExp;
-  global.Rekord.isArray = isArray;
-  global.Rekord.isObject = isObject;
-  global.Rekord.isValue = isValue;
+  Rekord.isRekord = isRekord;
+  Rekord.isDefined = isDefined;
+  Rekord.isFunction = isFunction;
+  Rekord.isString = isString;
+  Rekord.isNumber = isNumber;
+  Rekord.isBoolean = isBoolean;
+  Rekord.isDate = isDate;
+  Rekord.isRegExp = isRegExp;
+  Rekord.isArray = isArray;
+  Rekord.isObject = isObject;
+  Rekord.isValue = isValue;
 
-  global.Rekord.uuid = uuid;
-  global.Rekord.indexOf = indexOf;
-  global.Rekord.propsMatch = propsMatch;
-  global.Rekord.hasFields = hasFields;
-  global.Rekord.toArray = toArray;
+  Rekord.uuid = uuid;
+  Rekord.indexOf = indexOf;
+  Rekord.propsMatch = propsMatch;
+  Rekord.hasFields = hasFields;
+  Rekord.toArray = toArray;
 
-  global.Rekord.addEventable = addEventable;
+  Rekord.addEventful = addEventful;
 
-  global.Rekord.extend = extend;
-  global.Rekord.extendArray = extendArray;
-  global.Rekord.copyConstructor = copyConstructor;
-  global.Rekord.factory = factory;
+  Rekord.extend = extend;
+  Rekord.extendArray = extendArray;
+  Rekord.copyConstructor = copyConstructor;
+  Rekord.factory = factory;
 
-  global.Rekord.transfer = transfer;
-  global.Rekord.collapse = collapse;
-  global.Rekord.swap = swap;
-  global.Rekord.reverse = reverse;
-  global.Rekord.grab = grab;
-  global.Rekord.pull = pull;
-  global.Rekord.copy = copy;
-  global.Rekord.noop = noop;
-  global.Rekord.bind = bind;
-  global.Rekord.diff = diff;
-  global.Rekord.sizeof = sizeof;
-  global.Rekord.isEmpty = isEmpty;
-  global.Rekord.collect = collect;
-  global.Rekord.applyOptions = applyOptions;
-  global.Rekord.toCamelCase = toCamelCase;
-  global.Rekord.evaluate = evaluate;
+  Rekord.transfer = transfer;
+  Rekord.collapse = collapse;
+  Rekord.swap = swap;
+  Rekord.reverse = reverse;
+  Rekord.grab = grab;
+  Rekord.pull = pull;
+  Rekord.copy = copy;
+  Rekord.noop = noop;
+  Rekord.bind = bind;
+  Rekord.diff = diff;
+  Rekord.sizeof = sizeof;
+  Rekord.isEmpty = isEmpty;
+  Rekord.collect = collect;
+  Rekord.applyOptions = applyOptions;
+  Rekord.toCamelCase = toCamelCase;
+  Rekord.evaluate = evaluate;
 
-  global.Rekord.clean = clean;
-  global.Rekord.cleanFunctions = cleanFunctions;
+  Rekord.clean = clean;
+  Rekord.cleanFunctions = cleanFunctions;
 
-  global.Rekord.compare = compare;
-  global.Rekord.compareNumbers = compareNumbers;
-  global.Rekord.equals = equals;
-  global.Rekord.equalsStrict = equalsStrict;
-  global.Rekord.equalsCompare = equalsCompare;
+  Rekord.compare = compare;
+  Rekord.compareNumbers = compareNumbers;
+  Rekord.equals = equals;
+  Rekord.equalsStrict = equalsStrict;
+  Rekord.equalsCompare = equalsCompare;
 
-  global.Rekord.isSorted = isSorted;
-  global.Rekord.saveComparator = saveComparator;
-  global.Rekord.createComparator = createComparator;
-  global.Rekord.addComparator = addComparator;
+  Rekord.isSorted = isSorted;
+  Rekord.saveComparator = saveComparator;
+  Rekord.createComparator = createComparator;
+  Rekord.addComparator = addComparator;
 
-  global.Rekord.saveWhere = saveWhere;
-  global.Rekord.createWhere = createWhere;
+  Rekord.saveWhere = saveWhere;
+  Rekord.createWhere = createWhere;
 
-  global.Rekord.savePropertyResolver = savePropertyResolver;
-  global.Rekord.createPropertyResolver = createPropertyResolver;
+  Rekord.savePropertyResolver = savePropertyResolver;
+  Rekord.createPropertyResolver = createPropertyResolver;
 
-  global.Rekord.saveNumberResolver = saveNumberResolver;
-  global.Rekord.createNumberResolver = createNumberResolver;
+  Rekord.saveNumberResolver = saveNumberResolver;
+  Rekord.createNumberResolver = createNumberResolver;
 
-  global.Rekord.parse = parse;
-  global.Rekord.format = format;
-  global.Rekord.createFormatter = createFormatter;
+  Rekord.parse = parse;
+  Rekord.format = format;
+  Rekord.createFormatter = createFormatter;
 
 })(this);

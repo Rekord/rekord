@@ -6,7 +6,7 @@ function SaveRemote(model, cascade)
 extend( Operation, SaveRemote,
 {
 
-  cascading: Rekord.Cascade.Remote,
+  cascading: Cascade.Remote,
 
   interrupts: false,
 
@@ -25,7 +25,7 @@ extend( Operation, SaveRemote,
     {
       this.finish();
     }
-    else if ( !db.hasData( model.$saving ) || this.notCascade( Rekord.Cascade.Rest ) )
+    else if ( !db.hasData( model.$saving ) || this.notCascade( Cascade.Rest ) )
     {
       this.liveSave();
       this.markSynced( model, true, Model.Events.RemoteSave, null );
@@ -174,7 +174,7 @@ extend( Operation, SaveRemote,
     this.liveSave();
     this.markSynced( model, false, Model.Events.RemoteSave, null );
 
-    if ( db.cache === Rekord.Cache.Pending )
+    if ( db.cache === Cache.Pending )
     {
       this.insertNext( RemoveCache );
     }
@@ -189,7 +189,7 @@ extend( Operation, SaveRemote,
     var db = this.db;
     var model = this.model;
 
-    if ( this.canCascade( Rekord.Cascade.Live ) && db.hasData( model.$publish ) )
+    if ( this.canCascade( Cascade.Live ) && db.hasData( model.$publish ) )
     {
       // Publish saved data to everyone else
       Rekord.debug( Rekord.Debugs.SAVE_PUBLISH, model, model.$publish );

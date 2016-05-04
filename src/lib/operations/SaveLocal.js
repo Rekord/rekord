@@ -6,7 +6,7 @@ function SaveLocal(model, cascade)
 extend( Operation, SaveLocal,
 {
 
-  cascading: Rekord.Cascade.Local,
+  cascading: Cascade.Local,
 
   interrupts: false,
 
@@ -22,9 +22,9 @@ extend( Operation, SaveLocal,
 
       this.finish();
     }
-    else if ( db.cache === Rekord.Cache.None || !this.canCascade() )
+    else if ( db.cache === Cache.None || !this.canCascade() )
     {
-      if ( this.canCascade( Rekord.Cascade.Remote ) )
+      if ( this.canCascade( Cascade.Remote ) )
       {
         if ( this.tryNext( SaveRemote ) )
         {

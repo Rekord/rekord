@@ -6,7 +6,7 @@ function GetLocal(model, cascade)
 extend( Operation, GetLocal,
 {
 
-  cascading: Rekord.Cascade.Local,
+  cascading: Cascade.Local,
 
   interrupts: false,
 
@@ -20,7 +20,7 @@ extend( Operation, GetLocal,
 
       this.finish();
     }
-    else if ( this.canCascade() && db.cache === Rekord.Cache.All )
+    else if ( this.canCascade() && db.cache === Cache.All )
     {
       db.store.get( model.$key(), this.success(), this.failure() );
     }
@@ -48,7 +48,7 @@ extend( Operation, GetLocal,
 
     model.$trigger( Model.Events.LocalGet, [model] );
 
-    if ( this.canCascade( Rekord.Cascade.Rest ) && !model.$isDeleted() )
+    if ( this.canCascade( Cascade.Rest ) && !model.$isDeleted() )
     {
       this.insertNext( GetRemote );
     }
@@ -62,7 +62,7 @@ extend( Operation, GetLocal,
 
     model.$trigger( Model.Events.LocalGetFailure, [model] );
 
-    if ( this.canCascade( Rekord.Cascade.Rest ) && !model.$isDeleted()  )
+    if ( this.canCascade( Cascade.Rest ) && !model.$isDeleted()  )
     {
       this.insertNext( GetRemote );
     }

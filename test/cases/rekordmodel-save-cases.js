@@ -273,27 +273,23 @@ test( 'save remote transaction', function(assert)
   txn.then(function(result)
   {
     ok( done, 'then called' );
-    strictEqual( result, 'remote-success' );
+    strictEqual( result, l0 );
   });
 
   wait( 0, function()
   {
-    notOk( txn.isFinished() );
-    strictEqual( txn.completed, 0 );
-    strictEqual( txn.operations, 2 );
+    notOk( txn.isComplete() );
   });
 
   wait( 1, function()
   {
-    notOk( txn.isFinished() );
-    strictEqual( txn.completed, 1 );
+    notOk( txn.isComplete() );
     done = true;
   });
 
   wait( 2, function()
   {
-    ok( txn.isFinished() );
-    strictEqual( txn.completed, 2 );
+    ok( txn.isComplete() );
   });
 
   timer.run();
@@ -338,27 +334,23 @@ test( 'save local transaction', function(assert)
   txn.then(function(result)
   {
     ok( done, 'then called' );
-    strictEqual( result, 'local-success' );
+    strictEqual( result, l0 );
   });
 
   wait( 0, function()
   {
-    notOk( txn.isFinished() );
-    strictEqual( txn.completed, 0 );
-    strictEqual( txn.operations, 2 );
+    notOk( txn.isComplete() );
   });
 
   wait( 1, function()
   {
-    notOk( txn.isFinished() );
-    strictEqual( txn.completed, 1 );
+    notOk( txn.isComplete() );
     done = true;
   });
 
   wait( 2, function()
   {
-    ok( txn.isFinished() );
-    strictEqual( txn.completed, 2 );
+    ok( txn.isComplete() );
   });
 
   timer.run();
@@ -400,9 +392,11 @@ test( 'save offline transaction', function(assert)
 
   var txn = l0.$save();
 
-  txn.then(function(result)
+  expect( 1 );
+
+  txn.offline(function(result)
   {
-    strictEqual( result, 'offline' );
+    strictEqual( result,l0 );
   });
 
   timer.run();

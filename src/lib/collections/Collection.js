@@ -2090,7 +2090,7 @@ extendArray( Array, Collection,
 
 });
 
-addEventable( Collection.prototype );
+addEventful( Collection.prototype );
 
 /**
  * Adds a listener for change events on this collection.

@@ -6,7 +6,7 @@ function GetRemote(model, cascade)
 extend( Operation, GetRemote,
 {
 
-  cascading: Rekord.Cascade.Rest,
+  cascading: Cascade.Rest,
 
   interrupts: false,
 

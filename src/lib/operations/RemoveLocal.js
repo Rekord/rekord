@@ -6,7 +6,7 @@ function RemoveLocal(model, cascade)
 extend( Operation, RemoveLocal,
 {
 
-  cascading: Rekord.Cascade.Local,
+  cascading: Cascade.Local,
 
   interrupts: true,
 
@@ -16,7 +16,7 @@ extend( Operation, RemoveLocal,
   {
     model.$status = Model.Status.RemovePending;
 
-    if ( db.cache === Rekord.Cache.None || !model.$local || !this.canCascade() )
+    if ( db.cache === Cache.None || !model.$local || !this.canCascade() )
     {
       Rekord.debug( Rekord.Debugs.REMOVE_LOCAL_NONE, model );
 
@@ -47,7 +47,7 @@ extend( Operation, RemoveLocal,
 
     model.$trigger( Model.Events.LocalRemove, [model] );
 
-    if ( model.$saved && this.canCascade( Rekord.Cascade.Remote ) )
+    if ( model.$saved && this.canCascade( Cascade.Remote ) )
     {
       model.$addOperation( RemoveRemote, this.cascade );
     }
@@ -61,7 +61,7 @@ extend( Operation, RemoveLocal,
 
     model.$trigger( Model.Events.LocalRemoveFailure, [model] );
 
-    if ( model.$saved && this.canCascade( Rekord.Cascade.Remote ) )
+    if ( model.$saved && this.canCascade( Cascade.Remote ) )
     {
       model.$addOperation( RemoveRemote, this.cascade );
     }

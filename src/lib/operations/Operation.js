@@ -8,7 +8,7 @@ addMethods( Operation.prototype,
   reset: function(model, cascade)
   {
     this.model = model;
-    this.cascade = isNumber( cascade ) ? cascade : Rekord.Cascade.All;
+    this.cascade = isNumber( cascade ) ? cascade : Cascade.All;
     this.db = model.$db;
     this.next = null;
     this.finished = false;

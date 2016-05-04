@@ -154,7 +154,7 @@ Rekord.get = function(name, callback, context)
   * @typedef {String|Number} modelKey
   */
 
-addEventable( Rekord );
+addEventful( Rekord );
 
 Rekord.Events =
 {
@@ -165,7 +165,7 @@ Rekord.Events =
   Offline:      'offline'
 };
 
-Rekord.Cascade =
+var Cascade =
 {
   None:       0,
   Local:      1,
@@ -177,14 +177,19 @@ Rekord.Cascade =
   All:        7
 };
 
-Rekord.Cache =
+function canCascade(cascade, type)
+{
+  return !isNumber( cascade ) || (cascade & type) === type;
+};
+
+var Cache =
 {
   None:       'none',
   Pending:    'pending',
   All:        'all'
 };
 
-Rekord.Store =
+var Store =
 {
   None:   0,
   Model:  1,
@@ -192,7 +197,7 @@ Rekord.Store =
   Keys:   3
 };
 
-Rekord.Save =
+var Save =
 {
   None:   0,
   Model:  4,

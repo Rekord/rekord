@@ -115,8 +115,8 @@ var Polymorphic =
 
     DiscriminateCollection( search, this.discriminator, this.discriminatorToModel );
 
-    search.$run();
-    search.$ready( this.handleExecuteQuery( model ), this );
+    var promise = search.$run();
+    promise.complete( this.handleExecuteQuery( model ), this );
 
     return search;
   },

@@ -317,7 +317,7 @@ function FileEncoder(input, model, field, forSaving)
         {
           delete cached.file;
 
-          model.$addOperation( SaveLocal, Rekord.Cascade.Local );
+          model.$addOperation( SaveLocal, Cascade.Local );
         });
       }
 

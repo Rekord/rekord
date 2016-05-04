@@ -56,31 +56,26 @@ test( '$run concurrent', function(assert)
 
   var search = Task.search();
   search.name = 'names';
-  search.$run();
+  var p = search.$run();
 
-  strictEqual( search.$status, Rekord.Search.Status.Pending );
+  ok( p.isPending() );
 
   wait( 1, function()
   {
-    strictEqual( search.$status, Rekord.Search.Status.Pending );
+    ok( p.isPending() );
 
     rest.returnValue = [
       {id: 3, name: 't2', done: 1}
     ];
 
-    search.$run();
+    p = search.$run();
 
-    strictEqual( search.$status, Rekord.Search.Status.Pending );
-  });
-
-  wait( 3, function()
-  {
-    strictEqual( search.$status, Rekord.Search.Status.Pending );
+    ok( p.isPending() );
   });
 
   wait( 4, function()
   {
-    strictEqual( search.$status, Rekord.Search.Status.Success );
+    ok( p.isSuccess() );
     strictEqual( search.$results.length, 1 );
     strictEqual( search.$results[0].name, 't2' );
   });
@@ -221,19 +216,19 @@ test( '$offline', function(assert)
 
   expect( 2 );
 
-  search.$run();
+  var p = search.$run();
 
-  search.$offline(function()
+  p.offline(function()
   {
     ok( true, 'offline!' );
   });
 
-  search.$failure(function()
+  p.failure(function()
   {
     ok( false, 'oops, failure' );
   });
 
-  strictEqual( search.$status, Rekord.Search.Status.Offline );
+  ok( p.isOffline() );
 
   noline();
 });
