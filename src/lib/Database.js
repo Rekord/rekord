@@ -57,6 +57,7 @@ function Database(options)
   this.pendingOperations = 0;
   this.afterOnline = false;
   this.saveFields = copy( fields );
+  this.readyPromise = new Promise( null, false );
 
   // Prepare
   this.prepare( this, options );
@@ -221,40 +222,7 @@ addMethods( Database.prototype,
   // Notifies a callback when the database has loaded (either locally or remotely).
   ready: function(callback, context, persistent)
   {
-    var db = this;
-    var callbackContext = context || db;
-    var invoked = false;
-
-    if ( db.initialized )
-    {
-      callback.call( callbackContext, db );
-
-      invoked = true;
-    }
-
-    if ( !db.initialized || persistent )
-    {
-      function onReady()
-      {
-        if ( !persistent )
-        {
-          off();
-        }
-        if ( !invoked || persistent )
-        {
-          if ( callback.call( callbackContext, db ) === false )
-          {
-            off();
-          }
-
-          invoked = true;
-        }
-      }
-
-      var off = db.on( Database.Events.Loads, onReady );
-    }
-
-    return invoked;
+    return this.readyPromise.success( callback, context, persistent );
   },
 
   // Determines whether the given object has data to save
@@ -280,14 +248,15 @@ addMethods( Database.prototype,
   grabModel: function(input, callback, context, remoteData)
   {
     var db = this;
-    var callbackContext = context || db;
-    var grabbed = false;
+    var promise = new Promise();
+
+    promise.success( callback, context || db );
 
     function checkModel()
     {
       var result = db.parseModel( input, remoteData );
 
-      if ( result !== false && !grabbed )
+      if ( result !== false && !promise.isComplete() )
       {
         if ( !db.loadRemote && !db.remoteLoaded && (result === null || !result.$isSaved()) )
         {
@@ -298,16 +267,14 @@ addMethods( Database.prototype,
 
           result.$once( Model.Events.RemoteGets, function()
           {
-            if ( !grabbed )
+            if ( !promise.isComplete() )
             {
-              grabbed = true;
-
               if ( isObject( input ) )
               {
                 result.$set( input );
               }
 
-              callback.call( callbackContext, result.$isSaved() ? result : null );
+              promise.resolve( result.$isSaved() ? result : null );
             }
           });
 
@@ -315,18 +282,19 @@ addMethods( Database.prototype,
         }
         else
         {
-          grabbed = true;
-          callback.call( callbackContext, result );
+          promise.resolve( result );
         }
       }
 
-      return grabbed ? false : true;
+      return promise.isComplete() ? false : true;
     }
 
     if ( checkModel() )
     {
       db.ready( checkModel, db, true );
     }
+
+    return promise;
   },
 
   // Parses the model from the given input
@@ -966,10 +934,8 @@ addMethods( Database.prototype,
         }
       }
 
-      db.initialized = true;
       db.localLoaded = true;
-
-      db.trigger( Database.Events.LocalLoad, [db] );
+      db.triggerLoad( Database.Events.LocalLoad );
 
       onLoaded( true, db );
     }
@@ -998,6 +964,15 @@ addMethods( Database.prototype,
     }
   },
 
+  triggerLoad: function(loadEvent, additionalParameters)
+  {
+    var db = this;
+
+    db.initialized = true;
+    db.trigger( loadEvent, [ db ].concat( additionalParameters || [] ) );
+    db.readyPromise.reset().resolve( db );
+  },
+
   loadNone: function()
   {
     var db = this;
@@ -1008,18 +983,19 @@ addMethods( Database.prototype,
     }
     else
     {
-      db.initialized = true;
-      db.trigger( Database.Events.NoLoad, [db] );
+      db.triggerLoad( Database.Events.NoLoad );
     }
   },
 
   onOnline: function()
   {
-    this.afterOnline = true;
+    var db = this;
 
-    if ( this.pendingOperations === 0 )
+    db.afterOnline = true;
+
+    if ( db.pendingOperations === 0 )
     {
-      this.onOperationRest();
+      db.onOperationRest();
     }
   },
 
@@ -1082,10 +1058,8 @@ addMethods( Database.prototype,
         }
       }
 
-      db.initialized = true;
       db.remoteLoaded = true;
-
-      db.trigger( Database.Events.RemoteLoad, [db] );
+      db.triggerLoad( Database.Events.RemoteLoad );
 
       db.updated();
 
@@ -1113,8 +1087,7 @@ addMethods( Database.prototype,
       {
         Rekord.debug( Rekord.Debugs.REMOTE_LOAD_ERROR, db, status );
 
-        db.initialized = true;
-        db.trigger( Database.Events.NoLoad, [db, response] );
+        db.triggerLoad( Database.Events.NoLoad, [response] );
       }
 
       promise.reject( db.models );

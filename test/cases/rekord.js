@@ -172,25 +172,25 @@ test( 'ensure relationships are loaded before saves/removes are resumed', functi
   var u1 = User.get( 1 );
   var t2 = Task.get( 2 );
 
-  notOk( u1.$isSaved() );
-  notOk( t2.$isSaved() );
+  notOk( u1.$isSaved(), 'user not saved' );
+  notOk( t2.$isSaved(), 'task not saved' );
 
   wait( 1, function()
   {
-    notOk( u1.$isSaved() );
-    notOk( t2.$isSaved() );
+    notOk( u1.$isSaved(), 'user still not saved' );
+    notOk( t2.$isSaved(), 'task still not saved' );
   });
 
   wait( 3, function()
   {
-    ok( u1.$isSaved() );
-    notOk( t2.$isSaved() );
+    ok( u1.$isSaved(), 'user saved' );
+    notOk( t2.$isSaved(), 'task still not saved again' );
   });
 
   wait( 5, function()
   {
-    ok( u1.$isSaved() );
-    ok( t2.$isSaved() );
+    ok( u1.$isSaved(), 'user still saved' );
+    ok( t2.$isSaved(), 'task saved' );
   });
 
   timer.run();

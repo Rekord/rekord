@@ -2028,12 +2028,16 @@ Rekord.autoload = false;
 
 Rekord.unloaded = [];
 
+Rekord.loadPromise = null;
+
 Rekord.load = function(callback, context)
 {
-  var callbackContext = context || this;
+  var promise = Rekord.loadPromise = Rekord.loadPromise || new Promise( null, false );
   var loading = Rekord.unloaded.slice();
   var loaded = [];
   var loadedSuccess = [];
+
+  promise.success( callback, context || this );
 
   Rekord.unloaded.length = 0;
 
@@ -2055,10 +2059,7 @@ Rekord.load = function(callback, context)
         }
       }
 
-      if ( callback )
-      {
-        callback.call( callbackContext );
-      }
+      promise.reset().resolve();
     }
   }
 
@@ -2066,6 +2067,8 @@ Rekord.load = function(callback, context)
   {
     loading[ i ].loadBegin( onLoadFinish );
   }
+
+  return promise;
 };
 
 Rekord.promises = {};
@@ -4036,6 +4039,7 @@ function Database(options)
   this.pendingOperations = 0;
   this.afterOnline = false;
   this.saveFields = copy( fields );
+  this.readyPromise = new Promise( null, false );
 
   // Prepare
   this.prepare( this, options );
@@ -4200,40 +4204,7 @@ addMethods( Database.prototype,
   // Notifies a callback when the database has loaded (either locally or remotely).
   ready: function(callback, context, persistent)
   {
-    var db = this;
-    var callbackContext = context || db;
-    var invoked = false;
-
-    if ( db.initialized )
-    {
-      callback.call( callbackContext, db );
-
-      invoked = true;
-    }
-
-    if ( !db.initialized || persistent )
-    {
-      function onReady()
-      {
-        if ( !persistent )
-        {
-          off();
-        }
-        if ( !invoked || persistent )
-        {
-          if ( callback.call( callbackContext, db ) === false )
-          {
-            off();
-          }
-
-          invoked = true;
-        }
-      }
-
-      var off = db.on( Database.Events.Loads, onReady );
-    }
-
-    return invoked;
+    return this.readyPromise.success( callback, context, persistent );
   },
 
   // Determines whether the given object has data to save
@@ -4259,14 +4230,15 @@ addMethods( Database.prototype,
   grabModel: function(input, callback, context, remoteData)
   {
     var db = this;
-    var callbackContext = context || db;
-    var grabbed = false;
+    var promise = new Promise();
+
+    promise.success( callback, context || db );
 
     function checkModel()
     {
       var result = db.parseModel( input, remoteData );
 
-      if ( result !== false && !grabbed )
+      if ( result !== false && !promise.isComplete() )
       {
         if ( !db.loadRemote && !db.remoteLoaded && (result === null || !result.$isSaved()) )
         {
@@ -4277,16 +4249,14 @@ addMethods( Database.prototype,
 
           result.$once( Model.Events.RemoteGets, function()
           {
-            if ( !grabbed )
+            if ( !promise.isComplete() )
             {
-              grabbed = true;
-
               if ( isObject( input ) )
               {
                 result.$set( input );
               }
 
-              callback.call( callbackContext, result.$isSaved() ? result : null );
+              promise.resolve( result.$isSaved() ? result : null );
             }
           });
 
@@ -4294,18 +4264,19 @@ addMethods( Database.prototype,
         }
         else
         {
-          grabbed = true;
-          callback.call( callbackContext, result );
+          promise.resolve( result );
         }
       }
 
-      return grabbed ? false : true;
+      return promise.isComplete() ? false : true;
     }
 
     if ( checkModel() )
     {
       db.ready( checkModel, db, true );
     }
+
+    return promise;
   },
 
   // Parses the model from the given input
@@ -4945,10 +4916,8 @@ addMethods( Database.prototype,
         }
       }
 
-      db.initialized = true;
       db.localLoaded = true;
-
-      db.trigger( Database.Events.LocalLoad, [db] );
+      db.triggerLoad( Database.Events.LocalLoad );
 
       onLoaded( true, db );
     }
@@ -4977,6 +4946,15 @@ addMethods( Database.prototype,
     }
   },
 
+  triggerLoad: function(loadEvent, additionalParameters)
+  {
+    var db = this;
+
+    db.initialized = true;
+    db.trigger( loadEvent, [ db ].concat( additionalParameters || [] ) );
+    db.readyPromise.reset().resolve( db );
+  },
+
   loadNone: function()
   {
     var db = this;
@@ -4987,18 +4965,19 @@ addMethods( Database.prototype,
     }
     else
     {
-      db.initialized = true;
-      db.trigger( Database.Events.NoLoad, [db] );
+      db.triggerLoad( Database.Events.NoLoad );
     }
   },
 
   onOnline: function()
   {
-    this.afterOnline = true;
+    var db = this;
 
-    if ( this.pendingOperations === 0 )
+    db.afterOnline = true;
+
+    if ( db.pendingOperations === 0 )
     {
-      this.onOperationRest();
+      db.onOperationRest();
     }
   },
 
@@ -5061,10 +5040,8 @@ addMethods( Database.prototype,
         }
       }
 
-      db.initialized = true;
       db.remoteLoaded = true;
-
-      db.trigger( Database.Events.RemoteLoad, [db] );
+      db.triggerLoad( Database.Events.RemoteLoad );
 
       db.updated();
 
@@ -5092,8 +5069,7 @@ addMethods( Database.prototype,
       {
         Rekord.debug( Rekord.Debugs.REMOTE_LOAD_ERROR, db, status );
 
-        db.initialized = true;
-        db.trigger( Database.Events.NoLoad, [db, response] );
+        db.triggerLoad( Database.Events.NoLoad, [response] );
       }
 
       promise.reject( db.models );
@@ -11029,12 +11005,24 @@ addMethods( Promise.prototype,
     }
   },
 
-  then: function(success, failure, offline, canceled, context )
+  then: function(success, failure, offline, canceled, context, persistent )
   {
-    this.success( success, context );
-    this.failure( failure, context );
-    this.offline( offline, context );
-    this.canceled( canceled, context );
+    this.success( success, context, persistent );
+    this.failure( failure, context, persistent );
+    this.offline( offline, context, persistent );
+    this.canceled( canceled, context, persistent );
+
+    return this;
+  },
+
+  reset: function(clearListeners)
+  {
+    this.status = Promise.Status.Pending;
+
+    if ( clearListeners )
+    {
+      this.off();
+    }
 
     return this;
   },
@@ -11049,13 +11037,20 @@ addMethods( Promise.prototype,
     }
   },
 
-  listenFor: function(immediate, events, callback, context)
+  listenFor: function(immediate, events, callback, context, persistent)
   {
     if ( isFunction( callback ) )
     {
       if ( this.status === Promise.Status.Pending )
       {
-        this.once( events, callback, context );
+        if ( persistent )
+        {
+          this.on( events, callback, context );
+        }
+        else
+        {
+          this.once( events, callback, context );
+        }
       }
       else if ( immediate )
       {
@@ -11066,39 +11061,39 @@ addMethods( Promise.prototype,
     return this;
   },
 
-  success: function(callback, context)
+  success: function(callback, context, persistent)
   {
-    return this.listenFor( this.isSuccess(), Promise.Events.Success, callback, context );
+    return this.listenFor( this.isSuccess(), Promise.Events.Success, callback, context, persistent );
   },
 
-  unsuccessful: function(callback, context)
+  unsuccessful: function(callback, context, persistent)
   {
-    return this.listenFor( this.isUnsuccessful(), Promise.Events.Unsuccessful, callback, context );
+    return this.listenFor( this.isUnsuccessful(), Promise.Events.Unsuccessful, callback, context, persistent );
   },
 
-  failure: function(callback, context)
+  failure: function(callback, context, persistent)
   {
-    return this.listenFor( this.isFailure(), Promise.Events.Failure, callback, context );
+    return this.listenFor( this.isFailure(), Promise.Events.Failure, callback, context, persistent );
   },
 
-  catch: function(callback, context)
+  catch: function(callback, context, persistent)
   {
-    return this.listenFor( this.isFailure(), Promise.Events.Failure, callback, context );
+    return this.listenFor( this.isFailure(), Promise.Events.Failure, callback, context, persistent );
   },
 
-  offline: function(callback, context)
+  offline: function(callback, context, persistent)
   {
-    return this.listenFor( this.isOffline(), Promise.Events.Offline, callback, context );
+    return this.listenFor( this.isOffline(), Promise.Events.Offline, callback, context, persistent );
   },
 
-  canceled: function(callback, context)
+  canceled: function(callback, context, persistent)
   {
-    return this.listenFor( this.isCanceled(), Promise.Events.Canceled, callback, context );
+    return this.listenFor( this.isCanceled(), Promise.Events.Canceled, callback, context, persistent );
   },
 
-  complete: function(callback, context)
+  complete: function(callback, context, persistent)
   {
-    return this.listenFor( true, Promise.Events.Complete, callback, context );
+    return this.listenFor( true, Promise.Events.Complete, callback, context, persistent );
   },
 
   isSuccess: function()

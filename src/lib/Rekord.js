@@ -55,12 +55,16 @@ Rekord.autoload = false;
 
 Rekord.unloaded = [];
 
+Rekord.loadPromise = null;
+
 Rekord.load = function(callback, context)
 {
-  var callbackContext = context || this;
+  var promise = Rekord.loadPromise = Rekord.loadPromise || new Promise( null, false );
   var loading = Rekord.unloaded.slice();
   var loaded = [];
   var loadedSuccess = [];
+
+  promise.success( callback, context || this );
 
   Rekord.unloaded.length = 0;
 
@@ -82,10 +86,7 @@ Rekord.load = function(callback, context)
         }
       }
 
-      if ( callback )
-      {
-        callback.call( callbackContext );
-      }
+      promise.reset().resolve();
     }
   }
 
@@ -93,6 +94,8 @@ Rekord.load = function(callback, context)
   {
     loading[ i ].loadBegin( onLoadFinish );
   }
+
+  return promise;
 };
 
 Rekord.promises = {};
