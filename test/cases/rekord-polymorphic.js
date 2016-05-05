@@ -2,6 +2,8 @@ module( 'Rekord Polymorphic' );
 
 test( 'poly hasOne', function()
 {
+  Rekord.promises = {};
+
   var prefix = 'poly_hasOne_';
 
   var Discriminators = {
@@ -50,13 +52,13 @@ test( 'poly hasOne', function()
 
   strictEqual( p0.contact, c0 );
   strictEqual( p0.contact_id, c0.id );
-  strictEqual( p0.contact_type, 1 );
+  strictEqual( p0.contact_type, Discriminators.Email );
 
   p0.contact = c1;
 
   strictEqual( p0.contact, c1 );
   strictEqual( p0.contact_id, c1.id );
-  strictEqual( p0.contact_type, 2 );
+  strictEqual( p0.contact_type, Discriminators.Address );
 
   p0.contact = null;
 
@@ -69,7 +71,7 @@ test( 'poly hasOne', function()
     first: 'Tim',
     last: 'John',
     contact_id: c1.id,
-    contact_type: 2
+    contact_type: Discriminators.Address
   });
 
   strictEqual( p1.contact, c1 );
@@ -77,6 +79,8 @@ test( 'poly hasOne', function()
 
 test( 'poly belongsTo', function()
 {
+  Rekord.promises = {};
+
   var prefix = 'poly_belongsTo_';
 
   var Discriminators = {
@@ -124,13 +128,13 @@ test( 'poly belongsTo', function()
 
   strictEqual( p0.contact, c0 );
   strictEqual( p0.contact_id, c0.id );
-  strictEqual( p0.contact_type, 1 );
+  strictEqual( p0.contact_type, Discriminators.Email );
 
   p0.contact = c1;
 
   strictEqual( p0.contact, c1 );
   strictEqual( p0.contact_id, c1.id );
-  strictEqual( p0.contact_type, 2 );
+  strictEqual( p0.contact_type, Discriminators.Address );
 
   p0.contact = null;
 
@@ -143,7 +147,7 @@ test( 'poly belongsTo', function()
     first: 'Tim',
     last: 'John',
     contact_id: c1.id,
-    contact_type: 2
+    contact_type: Discriminators.Address
   });
 
   strictEqual( p1.contact, c1 );
@@ -152,6 +156,8 @@ test( 'poly belongsTo', function()
 
 test( 'poly hasMany', function()
 {
+  Rekord.promises = {};
+
   var prefix = 'poly_hasMany_';
 
   var Discriminators = {

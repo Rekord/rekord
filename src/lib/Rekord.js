@@ -9,9 +9,11 @@
  */
 function Rekord(options)
 {
-  if ( options.name in Rekord.cache )
+  var promise = Rekord.get( options.name );
+
+  if ( promise.isComplete() )
   {
-    return Rekord.cache[ options.name ];
+    return promise.results[0];
   }
 
   Rekord.trigger( Rekord.Events.Options, [options] );
@@ -25,9 +27,6 @@ function Rekord(options)
   model.Database = database;
 
   Rekord.trigger( Rekord.Events.Plugins, [model, database, options] );
-
-  Rekord.cache[ database.name ] = model;
-  Rekord.cache[ database.className ] = model;
 
   if ( Rekord.autoload )
   {
@@ -44,7 +43,8 @@ function Rekord(options)
     Rekord.unloaded.push( database );
   }
 
-  Rekord.trigger( Rekord.Events.Initialized, [model] );
+  Rekord.get( database.name ).resolve( model );
+  Rekord.get( database.className ).resolve( model );
 
   Rekord.debug( Rekord.Debugs.CREATION, database, options );
 
@@ -95,37 +95,11 @@ Rekord.load = function(callback, context)
   }
 };
 
-Rekord.cache = {};
+Rekord.promises = {};
 
-Rekord.get = function(name, callback, context)
+Rekord.get = function(name)
 {
-  var cached = Rekord.cache[ name ];
-  var callbackContext = context || global;
-
-  if ( isFunction( callback ) )
-  {
-    if ( cached )
-    {
-      callback.call( callbackContext, cached );
-    }
-    else
-    {
-      function checkRekord()
-      {
-        var cached = Rekord.cache[ name ];
-
-        if ( cached )
-        {
-          callback.call( callbackContext, cached );
-          off();
-        }
-      }
-
-      var off = Rekord.on( Rekord.Events.Initialized, checkRekord );
-    }
-  }
-
-  return cached;
+  return Rekord.promises[ name ] = Rekord.promises[ name ] || new Promise( null, false );
 };
 
 /**

@@ -344,3 +344,21 @@ test( 'loadRemote false hasOne', function(assert)
   ok( t1.creator );
   strictEqual( t1.creator.name, 'u1' );
 });
+
+test( 'cached Rekord', function(assert)
+{
+  var prefix = 'rekord_cached_Rekord_';
+
+  var Task0 = Rekord({
+    name: prefix + 'task',
+    fields: ['name', 'done']
+  });
+
+  var Task1 = Rekord({
+    name: prefix + 'task',
+    fields: ['name']
+  });
+
+  strictEqual( Task0, Task1 );
+  deepEqual( Task1.Database.fields, ['id', 'name', 'done'] );
+});

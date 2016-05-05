@@ -50,7 +50,7 @@ var Polymorphic =
     {
       var discriminator = discriminators[ name ];
 
-      Rekord.get( name, this.setDiscriminated( discriminator, handleLoaded ), this );
+      Rekord.get( name ).complete( this.setDiscriminated( discriminator, handleLoaded ), this );
     }
   },
 
@@ -110,10 +110,10 @@ var Polymorphic =
 
     if ( isObject( queryData ) )
     {
-      transfer( queryData, search );
+      search.$set( queryData );
     }
 
-    DiscriminateCollection( search, this.discriminator, this.discriminatorToModel );
+    DiscriminateCollection( search.$results, this.discriminator, this.discriminatorToModel );
 
     var promise = search.$run();
     promise.complete( this.handleExecuteQuery( model ), this );

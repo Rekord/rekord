@@ -4,7 +4,7 @@ test( 'Rekord.get', function(assert)
 {
   expect( 1 );
 
-  Rekord.get( 'rekord_get', function(rekord)
+  Rekord.get( 'rekord_get' ).complete(function(rekord)
   {
     ok( true, 'rekord returned' );
   });

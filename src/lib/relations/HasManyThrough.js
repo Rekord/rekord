@@ -57,7 +57,7 @@ extend( RelationMultiple, HasManyThrough,
 
     if ( !isRekord( options.through ) )
     {
-      Rekord.get( options.through, this.setThrough, this );
+      Rekord.get( options.through ).complete( this.setThrough, this );
     }
     else
     {

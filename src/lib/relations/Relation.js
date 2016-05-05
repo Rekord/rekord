@@ -62,7 +62,7 @@ addMethods( Relation.prototype,
   {
     if ( !isRekord( this.model ) )
     {
-      Rekord.get( this.model, this.setModelReference( database, field, options ), this );
+      Rekord.get( this.model ).complete( this.setModelReference( database, field, options ), this );
     }
     else
     {
@@ -192,7 +192,7 @@ addMethods( Relation.prototype,
     Rekord.debug( this.debugQuery, this, model, search, queryOption, query, queryData );
 
     var promise = search.$run();
-    
+
     promise.complete( this.handleExecuteQuery( model ), this );
 
     return search;

@@ -187,7 +187,7 @@ function noline()
 
 function restart()
 {
-  Rekord.cache = {};
+  Rekord.promises = {};
   noline();
   online();
 }
