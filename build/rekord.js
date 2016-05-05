@@ -5265,49 +5265,6 @@ function Model(db)
    */
 }
 
-function createModelPromise(model, cascade, restSuccess, restFailure, restOffline, localSuccess, localFailure)
-{
-  var promise = new Promise( null, false );
-
-  if ( canCascade( cascade, Cascade.Rest ) )
-  {
-    var off1 = model.$once( restSuccess, function(data) {
-      off2();
-      off3();
-      promise.resolve( model, data );
-    });
-    var off2 = model.$once( restFailure, function(data, status) {
-      off1();
-      off3();
-      promise.reject( model, status, data );
-    });
-    var off3 = model.$once( restOffline, function() {
-      off1();
-      off2();
-      promise.noline( model );
-    });
-  }
-  else if ( canCascade( cascade, Cascade.Local ) )
-  {
-    var off1 = model.$once( localSuccess, function(data)
-    {
-      off2();
-      promise.resolve( model, data );
-    });
-    var off2 = model.$once( localFailure, function(data, status)
-    {
-      off1();
-      promise.reject( model, data );
-    });
-  }
-  else
-  {
-    promise.resolve( model );
-  }
-
-  return promise;
-}
-
 Model.Events =
 {
   Created:              'created',
@@ -5923,9 +5880,14 @@ addMethods( Model.prototype,
     return this.$status === Model.Status.Synced;
   },
 
-  $isPending: function()
+  $isSaving: function()
   {
     return this.$status === Model.Status.SavePending;
+  },
+
+  $isPending: function()
+  {
+    return this.$status === Model.Status.SavePending || this.$status === Model.Status.RemovePending;
   },
 
   $isDeleted: function()
@@ -5997,6 +5959,49 @@ addMethods( Model.prototype,
 addEventful( Model.prototype, true );
 
 addEventFunction( Model.prototype, '$change', Model.Events.Changes, true );
+
+function createModelPromise(model, cascade, restSuccess, restFailure, restOffline, localSuccess, localFailure)
+{
+  var promise = new Promise( null, false );
+
+  if ( canCascade( cascade, Cascade.Rest ) )
+  {
+    var off1 = model.$once( restSuccess, function(data) {
+      off2();
+      off3();
+      promise.resolve( model, data );
+    });
+    var off2 = model.$once( restFailure, function(data, status) {
+      off1();
+      off3();
+      promise.reject( model, status, data );
+    });
+    var off3 = model.$once( restOffline, function() {
+      off1();
+      off2();
+      promise.noline( model );
+    });
+  }
+  else if ( canCascade( cascade, Cascade.Local ) )
+  {
+    var off1 = model.$once( localSuccess, function(data)
+    {
+      off2();
+      promise.resolve( model, data );
+    });
+    var off2 = model.$once( localFailure, function(data, status)
+    {
+      off1();
+      promise.reject( model, data );
+    });
+  }
+  else
+  {
+    promise.resolve( model );
+  }
+
+  return promise;
+}
 
 
 /**
@@ -12697,7 +12702,7 @@ extend( Relation, RelationSingle,
     {
       var related = relation.related;
 
-      if ( related && related.$isPending() )
+      if ( related && related.$isSaving() )
       {
         return;
       }
@@ -13010,7 +13015,7 @@ extend( Relation, RelationMultiple,
 
   canRemoveRelated: function(related, remoteData)
   {
-    return !remoteData || !related.$isPending();
+    return !remoteData || !related.$isSaving();
   },
 
   checkSave: function(relation, remoteData)

@@ -96,7 +96,7 @@ extend( Relation, RelationSingle,
     {
       var related = relation.related;
 
-      if ( related && related.$isPending() )
+      if ( related && related.$isSaving() )
       {
         return;
       }

@@ -202,7 +202,7 @@ extend( Relation, RelationMultiple,
 
   canRemoveRelated: function(related, remoteData)
   {
-    return !remoteData || !related.$isPending();
+    return !remoteData || !related.$isSaving();
   },
 
   checkSave: function(relation, remoteData)
