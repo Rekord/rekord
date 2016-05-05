@@ -32,9 +32,9 @@
  *    updated total of the search.
  */
 
-function SearchPaged(database, url, options)
+function SearchPaged(database, url, options, props, run)
 {
-  this.$init( database, url, options );
+  this.$init( database, url, options, props, run );
 }
 
 SearchPaged.Defaults =

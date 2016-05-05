@@ -3290,8 +3290,8 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
    * search.name = 'like this';
    * search.done = true;
    * search.anyProperty = [1, 3, 4];
-   * search.$run();
-   * search.$success( function(search) {
+   * var promise = search.$run();
+   * promise.success( function(search) {
    *   search.$results; // collection of returned results
    * });
    * ```
@@ -3302,12 +3302,16 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
    *    A URL to send the search data to.
    * @param {searchOptions} [options] -
    *    Options for the search.
+   * @param {Object} [props] -
+   *    Initial set of properties on the search.
+   * @param {Boolean} [run=false] -
+   *    Whether or not to run the search immediately.
    * @return {Rekord.Search} -
    *    A new search for models.
    */
-  model.search = function(url, options)
+  model.search = function(url, options, props, run)
   {
-    return new Search( db, url, options );
+    return new Search( db, url, options, props, run );
   };
 });
 
@@ -3332,8 +3336,8 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
    * search.name = 'like this';
    * search.done = true;
    * search.anyProperty = [1, 3, 4];
-   * search.$run();
-   * search.$success( function(search) {
+   * var promise = search.$run();
+   * promise.success( function(search) {
    *   search.$results; // collection of returned results
    *   search.total; // number of results that would've been returned without pagination
    *   search.page_index; // the zero-based page index
@@ -3348,12 +3352,16 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
    *    A URL to send the search data to.
    * @param {searchPageOptions} [options] -
    *    Options for the search.
+   * @param {Object} [props] -
+   *    Initial set of properties on the search.
+   * @param {Boolean} [run=false] -
+   *    Whether or not to run the search immediately.
    * @return {Rekord.SearchPaged} -
    *    A new paginated search for models.
    */
-  model.searchPaged = function(url, options)
+  model.searchPaged = function(url, options, props, run)
   {
-    return new SearchPaged( db, url, options );
+    return new SearchPaged( db, url, options, props, run );
   };
 });
 
@@ -10490,9 +10498,9 @@ function DiscriminateCollection(collection, discriminator, discriminatorsToModel
  * @constructor
  * @memberof Rekord
  */
-function Search(database, url, options)
+function Search(database, url, options, props, run)
 {
-  this.$init( database, url, options );
+  this.$init( database, url, options, props, run );
 }
 
 Search.Defaults =
@@ -10507,7 +10515,7 @@ addMethods( Search.prototype,
     return Search.Defaults;
   },
 
-  $init: function(database, url, options)
+  $init: function(database, url, options, props, run)
   {
     applyOptions( this, options, this.$getDefaults(), true );
 
@@ -10516,6 +10524,16 @@ addMethods( Search.prototype,
     this.$url = url;
     this.$results = new ModelCollection( database );
     this.$promise = Promise.resolve( this );
+
+    if ( isObject( props ) )
+    {
+      this.$set( props );
+    }
+
+    if ( run )
+    {
+      this.$run();
+    }
   },
 
   $set: function(props)
@@ -10542,7 +10560,7 @@ addMethods( Search.prototype,
     {
       return;
     }
-    
+
     var models = this.$decode.apply( this, arguments );
 
     if ( this.$append )
@@ -10639,9 +10657,9 @@ addMethods( Search.prototype,
  *    updated total of the search.
  */
 
-function SearchPaged(database, url, options)
+function SearchPaged(database, url, options, props, run)
 {
-  this.$init( database, url, options );
+  this.$init( database, url, options, props, run );
 }
 
 SearchPaged.Defaults =

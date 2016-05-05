@@ -8,6 +8,38 @@
 
 Rekord is a javascript REST ORM that is offline and real-time capable.
 
+**Features**
+- Relationships `hasOne`, `belongsTo`, `hasMany`, `hasManyThrough`, & `hasRemote`
+- Polymorphic relationships for `hasOne`, `belongsTo` & `hasMany`
+- Inheritance (with `extend` option)
+- Horizontal scaling with `shard`ing
+- Supports composite keys
+- Specify default values
+- Handle collisions with a "revision" field
+- Automatically refresh when application becomes online
+- Cache no data, all data, or only pending changes
+- Send only changed values to REST/real-time APIs or entire object
+- Convert values between client & server data types
+- Easily order by field, combination of fields, custom function, or expression
+- Control what information from relationships (if any) is stored locally or sent to the REST api
+- Add dynamic fields to model objects (setting & getting)
+- Data returned from REST calls or real-time events is intelligibly merged to avoid overwriting local unsaved changes
+- Add `updated_at` and `created_at` timestamps and their automatic behavior with a single option
+- Add custom methods to the model objects
+- Look at a live subset of models with `model.filtered( properties to match or custom function )`
+- Fetch a single model from the REST API with `model.fetch( key )`
+- Load bootstrapped data with `model.boot( model or array of models )`
+- Execute searches (fields are sent to REST API and an array of models is expected) with `model.search( URL, [options], [post data], [run now?] )`
+- Execute paginated searches
+- Add global event listeners to the "database" or all model instances
+- Stores data locally through `Rekord.store` interface (ex: [storkjs](https://github.com/Rekord/rekord-storkjs))
+- Stores data remotely through `Rekord.rest` interface (ex: [angular](https://github.com/Rekord/rekord-angular), [jquery](https://github.com/Rekord/rekord-jquery), [pouchdb](https://github.com/Rekord/rekord-pouchdb), [firebase](https://github.com/Rekord/rekord-firebase))
+- Real-time changes through `Rekord.live` interface (ex: [pubsub](https://github.com/Rekord/rekord-pubsub), [pouchdb](https://github.com/Rekord/rekord-pouchdb), [firebase](https://github.com/Rekord/rekord-firebase))
+- Create a live filtered view of any collection
+- Create a live paginated view of any collection
+- All collections have the following notable operations: sort, page, filtered, where, subtract, intersect, complement, clear, removeWhere, min, max, first, last, sum, avg, count, pluck, reduce, random, chunk, reverse, & group
+- Model collections have the following notable operations: removeWhere, update, & updateWhere
+
 **FAQ**
 
 1. *Does Rekord directly interact with a database?*  
@@ -35,38 +67,6 @@ The easiest way to install rekord is through bower via `bower install rekord`.
 **Examples**
 
 Examples exist in a separate project: https://github.com/Rekord/rekord-examples
-
-**Features**
-- Stores data locally through `Rekord.store` interface (ex: [storkjs](https://github.com/Rekord/rekord-storkjs))
-- Stores data remotely through `Rekord.rest` interface (ex: [angular](https://github.com/Rekord/rekord-angular), [jquery](https://github.com/Rekord/rekord-jquery), [pouchdb](https://github.com/Rekord/rekord-pouchdb), [firebase](https://github.com/Rekord/rekord-firebase))
-- Real-time changes through `Rekord.live` interface (ex: [pubsub](https://github.com/Rekord/rekord-pubsub), [pouchdb](https://github.com/Rekord/rekord-pouchdb), [firebase](https://github.com/Rekord/rekord-firebase))
-- Relationships `hasOne`, `belongsTo`, `hasMany`, `hasManyThrough`, & `hasRemote`
-- Polymorphic relationships for `hasOne`, `belongsTo` & `hasMany`
-- Inheritance (with `extend` option)
-- Horizontal scaling with `shard`ing
-- Look at a live subset of models with `model.filtered( properties to match or custom function )`
-- Fetch a single model from the REST API with `model.fetch( key )`
-- Load bootstrapped data with `model.boot( model or array of models )`
-- Execute searches (fields are sent to REST API and an array of models is expected) with `model.search( URL, [post data] )`
-- Execute paginated searches
-- Supports composite keys
-- Specify default values
-- Handle collisions with a "revision" field
-- Automatically refresh when application becomes online
-- Cache all data or only pending changes
-- Send only changed values to REST/real-time APIs or entire object
-- Convert values between client & server data types
-- Easily order by field, combination of fields, or custom function
-- Control what information from relationships (if any) is stored locally or sent to the REST api
-- Add `updated_at` and `created_at` timestamps and their automatic behavior with a single option
-- Add custom methods to the model objects
-- Add global event listeners to the "database" or all model instances
-- Add dynamic fields to model objects (setting & getting)
-- Data returned from REST calls or real-time events is intelligibly merged to avoid overwriting local unsaved changes  
-- Create a live filtered view of any collection
-- Create a live paginated view of any collection
-- All collections have the following notable operations: sort, page, filtered, where, subtract, intersect, complement, clear, removeWhere, min, max, first, last, sum, avg, count, pluck, reduce, random, chunk, reverse, & group
-- Model collections have the following notable operations: removeWhere, update, & updateWhere
 
 **Bindings**
 

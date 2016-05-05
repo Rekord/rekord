@@ -19,8 +19,8 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
    * search.name = 'like this';
    * search.done = true;
    * search.anyProperty = [1, 3, 4];
-   * search.$run();
-   * search.$success( function(search) {
+   * var promise = search.$run();
+   * promise.success( function(search) {
    *   search.$results; // collection of returned results
    *   search.total; // number of results that would've been returned without pagination
    *   search.page_index; // the zero-based page index
@@ -35,11 +35,15 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
    *    A URL to send the search data to.
    * @param {searchPageOptions} [options] -
    *    Options for the search.
+   * @param {Object} [props] -
+   *    Initial set of properties on the search.
+   * @param {Boolean} [run=false] -
+   *    Whether or not to run the search immediately.
    * @return {Rekord.SearchPaged} -
    *    A new paginated search for models.
    */
-  model.searchPaged = function(url, options)
+  model.searchPaged = function(url, options, props, run)
   {
-    return new SearchPaged( db, url, options );
+    return new SearchPaged( db, url, options, props, run );
   };
 });

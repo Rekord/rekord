@@ -17,9 +17,9 @@
  * @constructor
  * @memberof Rekord
  */
-function Search(database, url, options)
+function Search(database, url, options, props, run)
 {
-  this.$init( database, url, options );
+  this.$init( database, url, options, props, run );
 }
 
 Search.Defaults =
@@ -34,7 +34,7 @@ addMethods( Search.prototype,
     return Search.Defaults;
   },
 
-  $init: function(database, url, options)
+  $init: function(database, url, options, props, run)
   {
     applyOptions( this, options, this.$getDefaults(), true );
 
@@ -43,6 +43,16 @@ addMethods( Search.prototype,
     this.$url = url;
     this.$results = new ModelCollection( database );
     this.$promise = Promise.resolve( this );
+
+    if ( isObject( props ) )
+    {
+      this.$set( props );
+    }
+
+    if ( run )
+    {
+      this.$run();
+    }
   },
 
   $set: function(props)
@@ -69,7 +79,7 @@ addMethods( Search.prototype,
     {
       return;
     }
-    
+
     var models = this.$decode.apply( this, arguments );
 
     if ( this.$append )
