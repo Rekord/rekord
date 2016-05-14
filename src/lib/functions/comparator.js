@@ -15,11 +15,11 @@
   */
 
 
-Rekord.Comparators = {};
+var Comparators = {};
 
 function saveComparator(name, comparator, nullsFirst)
 {
-  return Rekord.Comparators[ name ] = createComparator( comparator, nullsFirst );
+  return Comparators[ name ] = createComparator( comparator, nullsFirst );
 }
 
 function addComparator(second, comparator, nullsFirst)
@@ -57,9 +57,9 @@ function createComparator(comparator, nullsFirst)
   }
   else if ( isString( comparator ) )
   {
-    if ( comparator in Rekord.Comparators )
+    if ( comparator in Comparators )
     {
-      return Rekord.Comparators[ comparator ];
+      return Comparators[ comparator ];
     }
 
     if ( comparator.charAt(0) === '-' )

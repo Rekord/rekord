@@ -29,20 +29,20 @@
  * @typedef {String|Function|Array|Object} propertyResolverInput
  */
 
-Rekord.NumberResolvers = {};
+var NumberResolvers = {};
 
 function saveNumberResolver(name, numbers)
 {
-  return Rekord.NumberResolvers[ name ] = createNumberResolver( numbers );
+  return NumberResolvers[ name ] = createNumberResolver( numbers );
 }
 
 function createNumberResolver(numbers)
 {
   var resolver = createPropertyResolver( numbers );
 
-  if ( isString( numbers ) && numbers in Rekord.NumberResolvers )
+  if ( isString( numbers ) && numbers in NumberResolvers )
   {
-    return Rekord.NumberResolvers[ numbers ];
+    return NumberResolvers[ numbers ];
   }
 
   return function resolveNumber(model)
@@ -51,11 +51,11 @@ function createNumberResolver(numbers)
   };
 }
 
-Rekord.PropertyResolvers = {};
+var PropertyResolvers = {};
 
 function savePropertyResolver(name, properties, delim)
 {
-  return Rekord.PropertyResolvers[ name ] = createPropertyResolver( properties, delim );
+  return PropertyResolvers[ name ] = createPropertyResolver( properties, delim );
 }
 
 /**
@@ -89,9 +89,9 @@ function createPropertyResolver(properties, delim)
   }
   else if ( isString( properties ) )
   {
-    if ( properties in Rekord.PropertyResolvers )
+    if ( properties in PropertyResolvers )
     {
-      return Rekord.PropertyResolvers[ properties ];
+      return PropertyResolvers[ properties ];
     }
 
     if ( properties.indexOf('{') !== -1 )

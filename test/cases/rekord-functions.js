@@ -245,7 +245,7 @@ test( 'Rekord.sizeof', function(assert)
   strictEqual( Rekord.sizeof( {} ), 0 );
   strictEqual( Rekord.sizeof( [] ), 0 );
   strictEqual( Rekord.sizeof( '' ), 0 );
-  strictEqual( Rekord.sizeof( 123 ), 0 );
+  strictEqual( Rekord.sizeof( 123 ), 123 );
   strictEqual( Rekord.sizeof( null ), 0 );
   strictEqual( Rekord.sizeof( void 0 ), 0 );
 

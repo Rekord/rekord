@@ -32,7 +32,7 @@
   Rekord.HasManyThrough = HasManyThrough;
   Rekord.HasRemote = HasRemote;
 
-  /* Utility Functions */
+  /* Common Functions */
   Rekord.isRekord = isRekord;
   Rekord.isDefined = isDefined;
   Rekord.isFunction = isFunction;
@@ -44,62 +44,80 @@
   Rekord.isArray = isArray;
   Rekord.isObject = isObject;
   Rekord.isValue = isValue;
-
+  Rekord.noop = noop;
+  Rekord.bind = bind;
   Rekord.uuid = uuid;
-  Rekord.indexOf = indexOf;
-  Rekord.propsMatch = propsMatch;
-  Rekord.hasFields = hasFields;
+  Rekord.sizeof = sizeof;
+  Rekord.isEmpty = isEmpty;
+  Rekord.evaluate = evaluate;
+
+  /* Array Functions */
   Rekord.toArray = toArray;
+  Rekord.indexOf = indexOf;
+  Rekord.collect = collect;
+  Rekord.swap = swap;
+  Rekord.reverse = reverse;
+  Rekord.isSorted = isSorted;
+  Rekord.isPrimitiveArray = isPrimitiveArray;
 
-  Rekord.addEventful = addEventful;
-
+  /* Class Functions */
   Rekord.extend = extend;
   Rekord.extendArray = extendArray;
+  Rekord.addMethod = addMethod;
+  Rekord.addMethods = addMethods;
+  Rekord.replaceMethod = replaceMethod;
   Rekord.copyConstructor = copyConstructor;
   Rekord.factory = factory;
 
-  Rekord.transfer = transfer;
-  Rekord.collapse = collapse;
-  Rekord.swap = swap;
-  Rekord.reverse = reverse;
-  Rekord.grab = grab;
-  Rekord.pull = pull;
-  Rekord.copy = copy;
-  Rekord.noop = noop;
-  Rekord.bind = bind;
-  Rekord.diff = diff;
-  Rekord.sizeof = sizeof;
-  Rekord.isEmpty = isEmpty;
-  Rekord.collect = collect;
-  Rekord.applyOptions = applyOptions;
-  Rekord.toCamelCase = toCamelCase;
-  Rekord.evaluate = evaluate;
+  /* Comparator Functions */
+  Rekord.Comparators = Comparators;
+  Rekord.saveComparator = saveComparator;
+  Rekord.addComparator = addComparator;
+  Rekord.createComparator = createComparator;
 
-  Rekord.clean = clean;
-  Rekord.cleanFunctions = cleanFunctions;
-
-  Rekord.compare = compare;
-  Rekord.compareNumbers = compareNumbers;
-  Rekord.equals = equals;
+  /* Comparison Functions */
   Rekord.equalsStrict = equalsStrict;
   Rekord.equalsCompare = equalsCompare;
+  Rekord.equals = equals;
+  Rekord.compareNumbers = compareNumbers;
+  Rekord.compare = compare;
 
-  Rekord.isSorted = isSorted;
-  Rekord.saveComparator = saveComparator;
-  Rekord.createComparator = createComparator;
-  Rekord.addComparator = addComparator;
+  /* Eventful Functions */
+  Rekord.addEventFunction = addEventFunction;
+  Rekord.addEventful = addEventful;
 
-  Rekord.saveWhere = saveWhere;
-  Rekord.createWhere = createWhere;
+  /* Object Functions */
+  Rekord.applyOptions = applyOptions;
+  Rekord.propsMatch = propsMatch;
+  Rekord.hasFields = hasFields;
+  Rekord.grab = grab;
+  Rekord.pull = pull;
+  Rekord.transfer = transfer;
+  Rekord.collapse = collapse;
+  Rekord.clean = clean;
+  Rekord.cleanFunctions = cleanFunctions;
+  Rekord.copy = copy;
+  Rekord.diff = diff;
 
-  Rekord.savePropertyResolver = savePropertyResolver;
-  Rekord.createPropertyResolver = createPropertyResolver;
-
-  Rekord.saveNumberResolver = saveNumberResolver;
-  Rekord.createNumberResolver = createNumberResolver;
-
+  /* Parse Functions */
   Rekord.parse = parse;
   Rekord.format = format;
   Rekord.createFormatter = createFormatter;
+
+  /* Resolver Functions */
+  Rekord.NumberResolvers = NumberResolvers;
+  Rekord.saveNumberResolver = saveNumberResolver;
+  Rekord.createNumberResolver = createNumberResolver;
+  Rekord.PropertyResolvers = PropertyResolvers;
+  Rekord.savePropertyResolver = savePropertyResolver;
+  Rekord.createPropertyResolver = createPropertyResolver;
+
+  /* String Functions */
+  Rekord.toCamelCase = toCamelCase;
+
+  /* Where Functions */
+  Rekord.Wheres = Wheres;
+  Rekord.saveWhere = saveWhere;
+  Rekord.createWhere = createWhere;
 
 })(this);

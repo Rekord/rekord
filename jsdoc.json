@@ -43,7 +43,8 @@
       "src/lib/relations/HasRemote.js",
       "src/lib/relations/Polymorphic.js",
       "src/lib/Shard.js",
-      "src/lib/plugins/"
+      "src/lib/plugins/",
+      "src/lib/validation/"
     ]
   },
   "templates": {

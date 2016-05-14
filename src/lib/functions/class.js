@@ -1,13 +1,4 @@
 
-// Copies a constructor function returning a function that can be called to
-// return an instance and doesn't invoke the original constructor.
-function copyConstructor(func)
-{
-  function F() {};
-  F.prototype = func.prototype;
-  return F;
-}
-
 function extend(parent, child, override)
 {
   // Avoid calling the parent constructor
@@ -18,53 +9,6 @@ function extend(parent, child, override)
   addMethods( child.prototype, override );
   // Set the correct constructor
   child.prototype.constructor = child;
-}
-
-var addMethod = (function()
-{
-  if ( Object.defineProperty )
-  {
-    return function(target, methodName, method)
-    {
-      Object.defineProperty( target, methodName, {
-        configurable: true,
-        enumerable: false,
-        value: method
-      });
-    };
-  }
-  else
-  {
-    return function(target, methodName, method)
-    {
-      target[ methodName ] = method;
-    };
-  }
-
-})();
-
-function addMethods(target, methods)
-{
-  for (var methodName in methods)
-  {
-    addMethod( target, methodName, methods[ methodName ] );
-  }
-}
-
-// Creates a factory for instantiating
-function factory(constructor)
-{
-  function F(args)
-  {
-    return constructor.apply( this, args );
-  }
-
-  F.prototype = constructor.prototype;
-
-  return function()
-  {
-    return new F( arguments );
-  };
 }
 
 function extendArray(parent, child, override)
@@ -105,4 +49,66 @@ function extendArraySupported()
   }
 
   return extendArraySupported.supported;
+}
+
+var addMethod = (function()
+{
+  if ( Object.defineProperty )
+  {
+    return function(target, methodName, method)
+    {
+      Object.defineProperty( target, methodName, {
+        configurable: true,
+        enumerable: false,
+        value: method
+      });
+    };
+  }
+  else
+  {
+    return function(target, methodName, method)
+    {
+      target[ methodName ] = method;
+    };
+  }
+
+})();
+
+function addMethods(target, methods)
+{
+  for (var methodName in methods)
+  {
+    addMethod( target, methodName, methods[ methodName ] );
+  }
+}
+
+function replaceMethod(target, methodName, methodFactory)
+{
+  addMethod( target, methodName, methodFactory( target[ methodName ] ) );
+}
+
+
+// Copies a constructor function returning a function that can be called to
+// return an instance and doesn't invoke the original constructor.
+function copyConstructor(func)
+{
+  function F() {};
+  F.prototype = func.prototype;
+  return F;
+}
+
+// Creates a factory for instantiating
+function factory(constructor)
+{
+  function F(args)
+  {
+    return constructor.apply( this, args );
+  }
+
+  F.prototype = constructor.prototype;
+
+  return function()
+  {
+    return new F( arguments );
+  };
 }

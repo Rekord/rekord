@@ -1,7 +1,5 @@
 
 
-
-
 function applyOptions( target, options, defaults, secret )
 {
   options = options || {};

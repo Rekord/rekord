@@ -20,6 +20,22 @@ function hasModel(rekord, key, model, message)
   strictEqual( rekord.get( key ), model, message );
 }
 
+function pushChanges(target, changes)
+{
+  var previous = {};
+
+  for (var prop in changes)
+  {
+    previous[ prop ] = target[ prop ];
+    target[ prop ] = changes[ prop ];
+  }
+
+  return function()
+  {
+    Rekord.transfer( previous, target );
+  };
+};
+
 function currentTime()
 {
   var counter = 1;

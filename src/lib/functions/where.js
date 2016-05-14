@@ -39,7 +39,7 @@
  *
  * @type {Object}
  */
-Rekord.Wheres = {};
+var Wheres = {};
 
 /**
  * Saves a function created with {@link Rekord.createWhere} to a cache of
@@ -69,7 +69,7 @@ Rekord.Wheres = {};
  */
 function saveWhere(name, properties, values, equals)
 {
-  return Rekord.Wheres[ name ] = createWhere( properties, values, equals );
+  return Wheres[ name ] = createWhere( properties, values, equals );
 }
 
 /**
@@ -149,9 +149,9 @@ function createWhere(properties, value, equals)
   }
   else if ( isString( properties ) )
   {
-    if ( properties in Rekord.Wheres )
+    if ( properties in Wheres )
     {
-      return Rekord.Wheres[ properties ];
+      return Wheres[ properties ];
     }
 
     var resolver = createPropertyResolver( properties );

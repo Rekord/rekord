@@ -320,6 +320,10 @@ function sizeof(x)
 
     return properties;
   }
+  else if ( isNumber( x ) )
+  {
+    return x;
+  }
 
   return 0;
 }

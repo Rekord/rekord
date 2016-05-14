@@ -147,15 +147,6 @@ function isPrimitiveArray(array)
 }
 
 
-// Copies a constructor function returning a function that can be called to
-// return an instance and doesn't invoke the original constructor.
-function copyConstructor(func)
-{
-  function F() {};
-  F.prototype = func.prototype;
-  return F;
-}
-
 function extend(parent, child, override)
 {
   // Avoid calling the parent constructor
@@ -166,53 +157,6 @@ function extend(parent, child, override)
   addMethods( child.prototype, override );
   // Set the correct constructor
   child.prototype.constructor = child;
-}
-
-var addMethod = (function()
-{
-  if ( Object.defineProperty )
-  {
-    return function(target, methodName, method)
-    {
-      Object.defineProperty( target, methodName, {
-        configurable: true,
-        enumerable: false,
-        value: method
-      });
-    };
-  }
-  else
-  {
-    return function(target, methodName, method)
-    {
-      target[ methodName ] = method;
-    };
-  }
-
-})();
-
-function addMethods(target, methods)
-{
-  for (var methodName in methods)
-  {
-    addMethod( target, methodName, methods[ methodName ] );
-  }
-}
-
-// Creates a factory for instantiating
-function factory(constructor)
-{
-  function F(args)
-  {
-    return constructor.apply( this, args );
-  }
-
-  F.prototype = constructor.prototype;
-
-  return function()
-  {
-    return new F( arguments );
-  };
 }
 
 function extendArray(parent, child, override)
@@ -253,6 +197,68 @@ function extendArraySupported()
   }
 
   return extendArraySupported.supported;
+}
+
+var addMethod = (function()
+{
+  if ( Object.defineProperty )
+  {
+    return function(target, methodName, method)
+    {
+      Object.defineProperty( target, methodName, {
+        configurable: true,
+        enumerable: false,
+        value: method
+      });
+    };
+  }
+  else
+  {
+    return function(target, methodName, method)
+    {
+      target[ methodName ] = method;
+    };
+  }
+
+})();
+
+function addMethods(target, methods)
+{
+  for (var methodName in methods)
+  {
+    addMethod( target, methodName, methods[ methodName ] );
+  }
+}
+
+function replaceMethod(target, methodName, methodFactory)
+{
+  addMethod( target, methodName, methodFactory( target[ methodName ] ) );
+}
+
+
+// Copies a constructor function returning a function that can be called to
+// return an instance and doesn't invoke the original constructor.
+function copyConstructor(func)
+{
+  function F() {};
+  F.prototype = func.prototype;
+  return F;
+}
+
+// Creates a factory for instantiating
+function factory(constructor)
+{
+  function F(args)
+  {
+    return constructor.apply( this, args );
+  }
+
+  F.prototype = constructor.prototype;
+
+  return function()
+  {
+    return new F( arguments );
+  };
 }
 
 
@@ -577,6 +583,10 @@ function sizeof(x)
 
     return properties;
   }
+  else if ( isNumber( x ) )
+  {
+    return x;
+  }
 
   return 0;
 }
@@ -643,11 +653,11 @@ function evaluate(x)
   */
 
 
-Rekord.Comparators = {};
+var Comparators = {};
 
 function saveComparator(name, comparator, nullsFirst)
 {
-  return Rekord.Comparators[ name ] = createComparator( comparator, nullsFirst );
+  return Comparators[ name ] = createComparator( comparator, nullsFirst );
 }
 
 function addComparator(second, comparator, nullsFirst)
@@ -685,9 +695,9 @@ function createComparator(comparator, nullsFirst)
   }
   else if ( isString( comparator ) )
   {
-    if ( comparator in Rekord.Comparators )
+    if ( comparator in Comparators )
     {
-      return Rekord.Comparators[ comparator ];
+      return Comparators[ comparator ];
     }
 
     if ( comparator.charAt(0) === '-' )
@@ -1272,8 +1282,6 @@ function addEventful(target, secret)
 
 
 
-
-
 function applyOptions( target, options, defaults, secret )
 {
   options = options || {};
@@ -1650,20 +1658,20 @@ function createFormatter(template)
  * @typedef {String|Function|Array|Object} propertyResolverInput
  */
 
-Rekord.NumberResolvers = {};
+var NumberResolvers = {};
 
 function saveNumberResolver(name, numbers)
 {
-  return Rekord.NumberResolvers[ name ] = createNumberResolver( numbers );
+  return NumberResolvers[ name ] = createNumberResolver( numbers );
 }
 
 function createNumberResolver(numbers)
 {
   var resolver = createPropertyResolver( numbers );
 
-  if ( isString( numbers ) && numbers in Rekord.NumberResolvers )
+  if ( isString( numbers ) && numbers in NumberResolvers )
   {
-    return Rekord.NumberResolvers[ numbers ];
+    return NumberResolvers[ numbers ];
   }
 
   return function resolveNumber(model)
@@ -1672,11 +1680,11 @@ function createNumberResolver(numbers)
   };
 }
 
-Rekord.PropertyResolvers = {};
+var PropertyResolvers = {};
 
 function savePropertyResolver(name, properties, delim)
 {
-  return Rekord.PropertyResolvers[ name ] = createPropertyResolver( properties, delim );
+  return PropertyResolvers[ name ] = createPropertyResolver( properties, delim );
 }
 
 /**
@@ -1710,9 +1718,9 @@ function createPropertyResolver(properties, delim)
   }
   else if ( isString( properties ) )
   {
-    if ( properties in Rekord.PropertyResolvers )
+    if ( properties in PropertyResolvers )
     {
-      return Rekord.PropertyResolvers[ properties ];
+      return PropertyResolvers[ properties ];
     }
 
     if ( properties.indexOf('{') !== -1 )
@@ -1789,6 +1797,37 @@ function toCamelCase(name)
 
 toCamelCase.REGEX = /(^.|_.)/g;
 
+function split(x, delimiter, escape)
+{
+  var splits = x.split( delimiter );
+  var i = 0;
+  var n = splits.length - 2;
+
+  while (i < n)
+  {
+    var a = splits[ i ];
+    var ae = a.length - escape.length;
+
+    if ( a.substring( ae ) === escape )
+    {
+      var b = splits[ i + 1 ];
+      var c = splits[ i + 2 ];
+      var joined = a.substring( 0, ae ) + b + c;
+
+      splits.splice( i, 3, joined );
+      n -= 2;
+    }
+    else
+    {
+      i += 1;
+      splits.splice( i, 1 );
+      n -= 1;
+    }
+  }
+
+  return splits;
+}
+
 
 /**
  * A function which takes a value (typically an object) and returns a true or
@@ -1830,7 +1869,7 @@ toCamelCase.REGEX = /(^.|_.)/g;
  *
  * @type {Object}
  */
-Rekord.Wheres = {};
+var Wheres = {};
 
 /**
  * Saves a function created with {@link Rekord.createWhere} to a cache of
@@ -1860,7 +1899,7 @@ Rekord.Wheres = {};
  */
 function saveWhere(name, properties, values, equals)
 {
-  return Rekord.Wheres[ name ] = createWhere( properties, values, equals );
+  return Wheres[ name ] = createWhere( properties, values, equals );
 }
 
 /**
@@ -1940,9 +1979,9 @@ function createWhere(properties, value, equals)
   }
   else if ( isString( properties ) )
   {
-    if ( properties in Rekord.Wheres )
+    if ( properties in Wheres )
     {
-      return Rekord.Wheres[ properties ];
+      return Wheres[ properties ];
     }
 
     var resolver = createPropertyResolver( properties );
@@ -2154,1347 +2193,6 @@ var Save =
   Key:    5,
   Keys:   6
 };
-
-Rekord.on( Rekord.Events.Plugins, function(model, db, options)
-{
-
-  /**
-   * Returns the reference to the collection which contains all saved models.
-   *
-   * ```javascript
-   * var Task = Rekord({
-   *   fields: ['name', 'done']
-   * });
-   * var t0 = Task.create({name: 't0', done: true}); // saves
-   * var t1 = new Task({name: 't1'});
-   * Task.all(); // [t0]
-   * ```
-   *
-   * @method all
-   * @memberof Rekord.Model
-   * @return {Rekord.ModelCollection} -
-   *    The reference to the collection of models.
-   */
-  model.all = function()
-  {
-    return db.models;
-  };
-});
-
-Rekord.on( Rekord.Events.Plugins, function(model, db, options)
-{
-
-  /**
-   * Returns an instance of a model or model collection with remote data (from
-   * the server). If the model(s) exist locally then the values passed in will
-   * overwrite the current values of the models. This is typically used to
-   * bootstrap data from the server in your webpage.
-   *
-   * ```javascript
-   * var User = Rekord({
-   *   fields: ['name', 'email']
-   * });
-   * var currentUser = User.boot({
-   *   id: 1234,
-   *   name: 'Administrator',
-   *   email: 'rekordjs@gmail.com'
-   * });
-   * var friends = User.boot([
-   *   { id: 'c1', name: 'Cat 1', email: 'cat1@gmail.com' },
-   *   { id: 'c2', name: 'Cat 2', email: 'cat2@gmail.com' }
-   * ]);
-   * ```
-   *
-   * @method boot
-   * @memberof Rekord.Model
-   * @param {modelInput[]|Object}
-   * @return {Rekord.ModelCollection|Rekord.Model} -
-   *    The collection or model bootstrapped.
-   */
-  model.boot = function( input )
-  {
-    if ( isArray( input ) )
-    {
-      return new ModelCollection( db, input, true );
-    }
-    else if ( isObject( input ) )
-    {
-      return db.putRemoteData( input );
-    }
-
-    return input;
-  };
-});
-
-Rekord.on( Rekord.Events.Plugins, function(model, db, options)
-{
-
-  /**
-   * Creates a collection of models.
-   *
-   * ```javascript
-   * var Task = Rekord({
-   *   fields: ['name']
-   * });
-   * var t0 = Task.create({id: 34, name: 't0'});
-   * var t1 = new Task({name: 't1'});
-   * var t2 = {name: 't2'};
-   *
-   * var c = Task.collect( 34, t1, t2 ); // or Task.collect( [34, t1, t2] )
-   * c; // [t0, t1, t2]
-   * ```
-   *
-   * @method collect
-   * @memberof Rekord.Model
-   * @param {modelInput[]|...modelInput} models -
-   *    The array of models to to return as a collection.
-   * @return {Rekord.ModelCollection} -
-   *    The collection created.
-   */
-  model.collect = function(a)
-  {
-    var models = arguments.length > 1 || !isArray(a) ?
-      AP.slice.call( arguments ) : a;
-
-    return new ModelCollection( db, models );
-  };
-});
-
-Rekord.on( Rekord.Events.Plugins, function(model, db, options)
-{
-
-  /**
-   * Creates a model instance, saves it, and returns it.
-   *
-   * ```javascript
-   * var Task = Rekord({
-   *  fields: ['name'],
-   *  defaults: {
-   *    name: 'New Task'
-   *  }
-   * });
-   * var t0 = Task.create({id: 34, name: 't0'});
-   * var t1 = Task.create({name: 't1'}); // id generated with uuid
-   * var t2 = Task.create(); // name populated with default 'New Task'
-   * ```
-   *
-   * @method create
-   * @memberof Rekord.Model
-   * @param {Object} [props] -
-   *    The initial values for the new model - if any.
-   * @return {Rekord.Model} -
-   *    The saved model instance.
-   */
-  model.create = function( props )
-  {
-    var instance = isObject( props ) ?
-      db.createModel( props ) :
-      db.instantiate();
-
-    instance.$save();
-
-    return instance;
-  };
-});
-
-Rekord.on( Rekord.Events.Plugins, function(model, db, options)
-{
-  var dynamics = collapse( options.dynamic, Database.Defaults.dynamic );
-
-  if ( !isEmpty( dynamics ) )
-  {
-    for ( var property in dynamics )
-    {
-      addDynamicProperty( model.prototype, property, dynamics[ property ] );
-    }
-  }
-});
-
-function addDynamicProperty(modelPrototype, property, definition)
-{
-  var get = isFunction( definition ) ? definition :
-          ( isObject( definition ) && isFunction( definition.get ) ? definition.get : noop );
-  var set = isObject( definition ) && isFunction( definition.set ) ? definition.set : noop;
-
-  if ( Object.defineProperty )
-  {
-    Object.defineProperty( modelPrototype, property,
-    {
-      configurable: false,
-      enumerable: true,
-      get: get,
-      set: set
-    });
-  }
-  else
-  {
-    var $init = modelPrototype.$init;
-
-    modelPrototype.$init = function()
-    {
-      $init.apply( this, arguments );
-
-      var lastCalculatedValue = this[ property ] = get.apply( this );
-
-      var handleChange = function()
-      {
-        var current = this[ property ];
-
-        if ( current !== lastCalculatedValue )
-        {
-          set.call( this, current );
-        }
-        else
-        {
-          lastCalculatedValue = this[ property ] = get.apply( this );
-        }
-      };
-
-      this.$after( Model.Events.Changes, handleChange, this );
-    };
-  }
-}
-
-Rekord.on( Rekord.Events.Plugins, function(model, db, options)
-{
-  var events = collapse( options.events, Database.Defaults.events );
-
-  if ( !isEmpty( events ) )
-  {
-    var modelEvents = [];
-    var databaseEvents = [];
-
-    for ( var eventType in events )
-    {
-      var callback = events[ eventType ];
-      var eventName = toCamelCase( eventType );
-
-      var databaseEventString = Database.Events[ eventName ];
-      var modelEventString = Model.Events[ eventName ];
-
-      if ( databaseEventString )
-      {
-        parseEventListeners( databaseEventString, callback, false, databaseEvents );
-      }
-
-      if ( modelEventString )
-      {
-        parseEventListeners( modelEventString, callback, true, modelEvents );
-      }
-    }
-
-    applyEventListeners( db, databaseEvents );
-
-    if ( modelEvents.length )
-    {
-      var $init = model.prototype.$init;
-
-      addMethod( model.prototype, '$init', function()
-      {
-        $init.apply( this, arguments );
-
-        applyEventListeners( this, modelEvents );
-      });
-    }
-  }
-
-});
-
-function parseEventListeners(events, callback, secret, out)
-{
-  var map = {
-    on:     secret ? '$on' : 'on',
-    once:   secret ? '$once' : 'once',
-    after:  secret ? '$after' : 'after'
-  };
-
-  var listeners = out || [];
-
-  if ( isFunction( callback ) )
-  {
-    listeners.push(
-    {
-      when: map.on,
-      events: events,
-      invoke: callback
-    });
-  }
-  else if ( isArray( callback ) && callback.length === 2 && isFunction( callback[0] ) )
-  {
-    listeners.push(
-    {
-      when: map.on,
-      events: events,
-      invoke: callback[0],
-      context: callback[1]
-    });
-  }
-  else if ( isObject( callback ) )
-  {
-    for ( var eventType in callback )
-    {
-      if ( eventType in map )
-      {
-        var subcallback = callback[ eventType ];
-        var when = map[ eventType ];
-
-        if ( isFunction( subcallback ) )
-        {
-          listeners.push(
-          {
-            when: when,
-            events: events,
-            invoke: subcallback
-          });
-        }
-        else if ( isArray( subcallback ) && subcallback.length === 2 && isFunction( subcallback[0] ) )
-        {
-          listeners.push(
-          {
-            when: when,
-            events: events,
-            invoke: subcallback[0],
-            context: subcallback[1]
-          });
-        }
-      }
-    }
-  }
-
-  return listeners;
-}
-
-function applyEventListeners(target, listeners)
-{
-  for (var i = 0; i < listeners.length; i++)
-  {
-    var l = listeners[ i ];
-
-    target[ l.when ]( l.events, l.invoke, l.context );
-  }
-}
-
-Rekord.on( Rekord.Events.Plugins, function(model, db, options)
-{
-  var extend = options.extend || Database.Defaults.extend;
-
-  if ( !isRekord( extend ) )
-  {
-    return;
-  }
-
-  var defaults = Database.Defaults;
-  var edb = extend.Database;
-  var eoptions = edb.options;
-
-  function tryOverwrite(option)
-  {
-    if ( !options[ option ] )
-    {
-      db[ option ] = edb[ option ];
-    }
-  }
-
-  function tryMerge(option)
-  {
-    var dbo = db[ option ];
-    var edbo = edb[ option ];
-
-    for (var prop in edbo)
-    {
-      if ( !(prop in dbo ) )
-      {
-        dbo[ prop ] = edbo[ prop ];
-      }
-    }
-  }
-
-  function tryUnshift(options, sourceOptions)
-  {
-    var source = edb[ sourceOptions || options ];
-    var target = db[ options ];
-
-    for (var i = source.length - 1; i >= 0; i--)
-    {
-      var k = indexOf( target, source[ i ] );
-
-      if ( k !== false )
-      {
-        target.splice( k, 1 );
-      }
-
-      target.unshift( source[ i ] );
-    }
-  }
-
-  tryOverwrite( 'keySeparator' );
-  tryMerge( 'defaults' );
-  tryMerge( 'ignoredFields' );
-  tryOverwrite( 'loadRelations' );
-  tryOverwrite( 'loadRemote' );
-  tryOverwrite( 'autoRefresh' );
-  tryOverwrite( 'cache' );
-  tryOverwrite( 'fullSave' );
-  tryOverwrite( 'fullPublish' );
-  tryMerge( 'encodings' );
-  tryMerge( 'decodings' );
-  tryOverwrite( 'summarize' );
-  tryUnshift( 'fields' );
-  tryUnshift( 'saveFields', 'fields' );
-
-  if ( !options.comparator )
-  {
-    db.setComparator( eoptions.comparator, eoptions.comparatorNullsFirst );
-  }
-
-  if ( !options.revision )
-  {
-    db.setRevision( eoptions.revision );
-  }
-
-  if ( !options.summarize )
-  {
-    db.setSummarize( eoptions.summarize );
-  }
-
-  for (var name in edb.relations)
-  {
-    if ( name in db.relations )
-    {
-      continue;
-    }
-
-    var relation = edb.relations[ name ];
-    var relationCopy = new relation.constructor();
-
-    relationCopy.init( db, name, relation.options );
-
-    if ( relationCopy.save )
-    {
-      db.saveFields.push( name );
-    }
-
-    db.relations[ name ] = relationCopy;
-    db.relationNames.push( name );
-  }
-
-  db.rest   = Rekord.rest( db );
-  db.store  = Rekord.store( db );
-  db.live   = Rekord.live( db );
-
-});
-
-Rekord.on( Rekord.Events.Plugins, function(model, db, options)
-{
-
-  /**
-   * Gets the local model matching the given input (or creates one) and loads
-   * it from the remote source ({@link Rekord.rest}). If `callback` is specified
-   * then it is invoked with the instance once it's loaded.
-   *
-   * ```javascript
-   * var Task = Rekord({
-   *  fields: ['name']
-   * });
-   * var t0 = Task.fetch( 34, function(task) {
-   *   task; // {id: 34 name: 'Remotely Loaded'}
-   * });
-   * t0; // {id: 34} until remotely loaded
-   * ```
-   *
-   * @method fetch
-   * @memberof Rekord.Model
-   * @param {modelInput} input -
-   *    The model input used to determine the key and load the model.
-   * @param {Function} [callback] -
-   *    The function to invoke passing the reference of the model once it's
-   *    successfully remotely loaded.
-   * @param {Object} [context] -
-   *    The context (this) for the callback.
-   * @return {Rekord.Model} -
-   *    The model instance.
-   */
-  model.fetch = function( input, callback, context )
-  {
-    var key = db.buildKeyFromInput( input );
-    var instance = db.get( key );
-
-    if ( !instance )
-    {
-      instance = db.buildObjectFromKey( key );
-
-      if ( isObject( input ) )
-      {
-        instance.$set( input );
-      }
-    }
-
-    if ( isFunction( callback ) )
-    {
-      var callbackContext = context || this;
-
-      instance.$once( Model.Events.RemoteGets, function()
-      {
-        callback.call( callbackContext, instance );
-      });
-    }
-
-    instance.$refresh();
-
-    return instance;
-  };
-});
-
-Rekord.on( Rekord.Events.Plugins, function(model, db, options)
-{
-
-  /**
-   * Returns the collection of all local models and tries to reload them (and
-   * any additional models returned) from a remote source ({@link Rekord.rest}).
-   * If `callback` is specified then it is invoked with the collections all
-   * models once it's loaded.
-   *
-   * ```javascript
-   * var Task = Rekord({
-   *  fields: ['name']
-   * });
-   * var tasks0 = Task.fetchAll( function(tasks1) {
-   *   tasks0 // tasks1
-   * });
-   * ```
-   *
-   * @method fetchAll
-   * @memberof Rekord.Model
-   * @param {Function} [callback] -
-   *    The function to invoke passing the reference of the model collection
-   *    when it's successfully remotely loaded.
-   * @param {Object} [context] -
-   *    The context (this) for the callback.
-   * @return {Rekord.ModelCollection} -
-   *    The collection of all models of this type.
-   */
-  model.fetchAll = function(callback, context)
-  {
-    db.refresh( callback, context );
-
-    return db.models;
-  };
-});
-
-Rekord.on( Rekord.Events.Plugins, function(model, db, options)
-{
-  var files = options.files || Database.Defaults.files;
-
-  if ( !isObject( files ) )
-  {
-    return;
-  }
-
-  if ( !isFilesSupported() )
-  {
-    Rekord.trigger( Rekord.Events.FilesNotSupported );
-
-    return;
-  }
-
-  for (var field in files)
-  {
-    var fieldOption = files[ field ];
-
-    if ( isString( fieldOption ) )
-    {
-      fieldOption = {
-        type: fieldOption
-      };
-    }
-
-    db.decodings[ field ] = FileDecodings[ fieldOption.type ]( db, fieldOption );
-    db.encodings[ field ] = FileEncoder;
-  }
-});
-
-/**
-files: {
-  field: {
-    type: 'text', // base64, dataURL, resource
-    processor: 'processor_name',
-    capacity: 1024 * 1024, // maximum bytes
-    types: ['image/png', 'image/jpg', 'image/gif'], // acceptable MIME types
-    autoSave: true,
-    store: true,
-    save: true
-  }
-}
-**/
-
-Rekord.fileProcessors = {};
-
-Rekord.Events.FilesNotSupported = 'files-not-supported';
-Rekord.Events.FileTooLarge = 'file-too-large';
-Rekord.Events.FileWrongType = 'file-wrong-type';
-Rekord.Events.FileOffline = 'file-offline';
-
-// {
-//  fileToValue(file, model, field, callback),
-//  valueToUser(value, model, field, callback)
-// }
-Rekord.addFileProcessor = function(name, methods)
-{
-  Rekord.fileProcessors[ name ] = methods;
-};
-
-Rekord.fileProperties =
-[
-  'lastModifiedDate', 'name', 'size', 'type'
-];
-
-function isFilesSupported()
-{
-  return global.File && global.FileReader && global.FileList;
-}
-
-function toFile(input)
-{
-  if ( input instanceof global.File )
-  {
-    return input;
-  }
-  else if ( input instanceof global.Blob )
-  {
-    return input;
-  }
-  else if ( input instanceof global.FileList && input.length > 0 )
-  {
-    return input[0];
-  }
-
-  return false;
-}
-
-function convertNone(x)
-{
-  return x;
-}
-
-function convertBase64(x)
-{
-  var i = isString( x ) ? x.indexOf(';base64,') : -1;
-
-  return i === -1 ? x : x.substring( i + 8 );
-}
-
-function trySave(model, options)
-{
-  if ( options.autoSave && model.$isSaved() )
-  {
-    model.$save();
-  }
-}
-
-function putFileCache(model, property, value, file, options)
-{
-  model.$files = model.$files || {};
-  model.$files[ property ] = {
-    value: value,
-    user: value,
-    file: file,
-    options: options
-  };
-}
-
-function setFilesValue(processor, value, model, property, options)
-{
-  var result = undefined;
-  var done = false;
-
-  if ( processor && processor.valueToUser )
-  {
-    processor.valueToUser( value, model, property, function(user)
-    {
-      model.$files[ property ].user = user;
-
-      if ( done )
-      {
-        model[ property ] = user;
-        trySave( model, options );
-      }
-      else
-      {
-        result = user;
-      }
-    });
-  }
-  else
-  {
-    result = value;
-  }
-
-  done = true;
-
-  return result;
-}
-
-function fileReader(method, converter, options)
-{
-  var processor = Rekord.fileProcessors[ options.processor ];
-
-  if ( !(method in global.FileReader.prototype) )
-  {
-    Rekord.trigger( Rekord.Events.FilesNotSupported );
-  }
-
-  return function(input, model, property)
-  {
-    var file = toFile( input );
-
-    if ( file !== false )
-    {
-      var reader = new global.FileReader();
-      var result = undefined;
-      var done = false;
-
-      reader.onload = function(e)
-      {
-        var value = converter( e.target.result );
-
-        putFileCache( model, property, value, file, options );
-
-        result = setFilesValue( processor, value, model, property, options );
-
-        if ( done )
-        {
-          model[ property ] = result;
-          trySave( model, options );
-        }
-      };
-
-      reader[ method ]( file );
-
-      done = true;
-
-      return result;
-    }
-    else if ( isObject( input ) && input.FILE )
-    {
-      var result = undefined;
-
-      var setter = function(value)
-      {
-          result = value;
-      };
-
-      Rekord.trigger( Rekord.Events.FileOffline, [input, model, property, setter] );
-
-      return result;
-    }
-    else
-    {
-      putFileCache( model, property, input, null, options );
-
-      return setFilesValue( processor, input, model, property, options );
-    }
-  };
-}
-
-var FileDecodings =
-{
-  text: function(db, options)
-  {
-    return fileReader( 'readAsText', convertNone, options );
-  },
-  dataURL: function(db, options)
-  {
-    return fileReader( 'readAsDataURL', convertNone, options );
-  },
-  base64: function(db, options)
-  {
-    return fileReader( 'readAsDataURL', convertBase64, options );
-  },
-  resource: function(db, options)
-  {
-    return function(input, model, property)
-    {
-      var file = toFile( input );
-      var processor = Rekord.fileProcessors[ options.processor ];
-
-      if ( !processor )
-      {
-        throw 'Processor required for resource files.';
-      }
-
-      if ( file !== false )
-      {
-        if ( isNumber( options.capacity ) && isNumber( file.size ) && file.size > options.capacity )
-        {
-          Rekord.trigger( Rekord.Events.FileTooLarge, [file, model, property] );
-
-          return undefined;
-        }
-
-        if ( isArray( options.types ) && isString( file.type ) && indexOf( options.types, file.type ) === false )
-        {
-          Rekord.trigger( Rekord.Events.FileWrongType, [file, model, property] );
-
-          return undefined;
-        }
-
-        var result = undefined;
-        var done = false;
-
-        processor.fileToValue( file, model, property, function(value)
-        {
-          putFileCache( model, property, value, file, options );
-
-          result = setFilesValue( processor, value, model, property, options );
-
-          if ( done )
-          {
-            model[ property ] = result;
-            trySave( model, options );
-          }
-        });
-
-        done = true;
-
-        return result;
-      }
-      else if ( isObject( input ) && input.FILE )
-      {
-        Rekord.trigger( Rekord.Events.FileOffline, [input, model, property] );
-      }
-      else
-      {
-        putFileCache( model, property, input, null, options );
-
-        return setFilesValue( processor, input, model, property, options );
-      }
-    };
-  }
-};
-
-function FileEncoder(input, model, field, forSaving)
-{
-  if ( model.$files && field in model.$files )
-  {
-    var cached = model.$files[ field ];
-
-    if ( (forSaving && cached.save === false) || (!forSaving && cached.store === false) )
-    {
-      return undefined;
-    }
-
-    if ( !forSaving && cached.file )
-    {
-      var props = grab( cached.file, Rekord.fileProperties, false );
-
-      props.FILE = true;
-
-      return props;
-    }
-
-    if ( input === cached.user )
-    {
-      if ( forSaving && cached.file )
-      {
-        model.$once( Model.Events.RemoteSave, function()
-        {
-          delete cached.file;
-
-          model.$addOperation( SaveLocal, Cascade.Local );
-        });
-      }
-
-      return cached.value;
-    }
-  }
-
-  return input;
-}
-
-Rekord.on( Rekord.Events.Plugins, function(model, db, options)
-{
-
-  model.filtered = function(whereProperties, whereValue, whereEquals)
-  {
-    return db.models.filtered( whereProperties, whereValue, whereEquals );
-  };
-});
-
-Rekord.on( Rekord.Events.Plugins, function(model, db, options)
-{
-  model.find = function(whereProperties, whereValue, whereEquals)
-  {
-    return db.models.firstWhere( whereProperties, whereValue, whereEquals );
-  };
-});
-Rekord.on( Rekord.Events.Plugins, function(model, db, options)
-{
-
-  /**
-   * Returns the model instance identified with the given input. This includes
-   * saved and unsaved models. If a `callback` is given the model will be passed
-   * to the function. The `callback` method is useful for waiting for Rekord
-   * to finish initializing (which includes loading models from local storage
-   * followed by remote storage if configured) and returning a model instance.
-   * If Rekord has finished initializing and the model doesn't exist locally
-   * then it is fetched from the remoute source using {@link Rekord.rest}.
-   *
-   * ```javascript
-   * var Task = Rekord({
-   *  fields: ['name']
-   * });
-   * var t0 = Task.get( 34 ); // only looks at models currently loaded
-   * var t1 = Task.get( 23, function(model) {
-   *   model; // local or remotely loaded if it didn't exist locally - could be null if it doesn't exist at all
-   * })
-   * ```
-   *
-   * @method get
-   * @memberof Rekord.Model
-   * @param {modelInput} input -
-   *    The model input used to determine the key and load the model.
-   * @param {Function} [callback] -
-   *    The function to invoke passing the reference of the model when it's
-   *    successfully found.
-   * @param {Object} [context] -
-   *    The context (this) for the callback.
-   * @return {Rekord.Model} -
-   *    The model instance if `callback` is not given - or undefined if the
-   *    input doesn't resolve to a model or `callback` is given.
-   */
-  model.get = function( input, callback, context )
-  {
-    if ( isFunction( callback ) )
-    {
-      db.grabModel( input, callback, context );
-    }
-    else
-    {
-      return db.get( input );
-    }
-  };
-});
-
-Rekord.on( Rekord.Events.Plugins, function(model, db, options)
-{
-
-  /**
-   * Gets the model instance identified with the given input and passes it to the
-   * `callback` function. If Rekord is not finished initializing this function
-   * will wait until it is and check for the model. If it still doesn't exist
-   * locally it is loaded from a remote source using {@link Rekord.rest}. If the
-   * model doesn't exist at all a null value will be returned to the function.
-   *
-   * ```javascript
-   * var Task = Rekord({
-   *  fields: ['name']
-   * });
-   * var t1 = Task.grab( 23, function(model) {
-   *   model; // local or remotely loaded if it didn't exist locally - could be null if it doesn't exist at all
-   * })
-   * ```
-   *
-   * @method grab
-   * @memberof Rekord.Model
-   * @param {modelInput} input -
-   *    The model input used to determine the key and load the model.
-   * @param {Function} callback -
-   *    The function to invoke passing the reference of the model when it's
-   *    successfully found.
-   * @param {Object} [context] -
-   *    The context (this) for the callback.
-   * @return {Rekord.Model} -
-   *    The model instance of it exists locally at the moment, or undefined
-   *    if the model hasn't been loaded yet.
-   */
-  model.grab = function( input, callback, context )
-  {
-    var callbackContext = context || this;
-    var instance = db.get( input );
-
-    if ( instance )
-    {
-      callback.call( callbackContext, instance );
-    }
-    else
-    {
-      db.grabModel( input, function(instance)
-      {
-        if ( instance )
-        {
-          callback.call( callbackContext, instance )
-        }
-        else
-        {
-          model.fetch( input, callback, context );
-        }
-      });
-    }
-
-    return instance;
-  };
-});
-
-Rekord.on( Rekord.Events.Plugins, function(model, db, options)
-{
-
-  /**
-   * Gets all model instances currently loaded, locally loaded, or remotely
-   * loaded and passes it to the `callback` function.
-   *
-   * ```javascript
-   * var Task = Rekord({
-   *  fields: ['name']
-   * });
-   * var tasks = Task.grabAll( function(models) {
-   *   models; // local or remotely loaded if it didn't exist locally.
-   * })
-   * ```
-   *
-   * @method grabAll
-   * @memberof Rekord.Model
-   * @param {Function} callback -
-   *    The function to invoke passing the reference of the model collection
-   *    when it's loaded.
-   * @param {Object} [context] -
-   *    The context (this) for the callback.
-   * @return {Rekord.Model} -
-   *    The model collection of it exists locally at the moment, or undefined
-   *    if models haven't been loaded yet.
-   */
-  model.grabAll = function( callback, context )
-  {
-    var callbackContext = context || this;
-    var models = db.models;
-
-    if ( models.length )
-    {
-      callback.call( callbackContext, models );
-    }
-    else
-    {
-      db.ready(function()
-      {
-        if ( models.length )
-        {
-          callback.call( callbackContext, models );
-        }
-        else
-        {
-          db.refresh(function()
-          {
-            callback.call( callbackContext, models );
-          });
-        }
-      });
-    }
-
-    return models;
-  };
-});
-
-Rekord.on( Rekord.Events.Plugins, function(model, db, options)
-{
-  var methods = collapse( options.methods, Database.Defaults.methods );
-
-  if ( !isEmpty( methods ) )
-  {
-    addMethods( model.prototype, methods );
-  }
-});
-
-Rekord.on( Rekord.Events.Plugins, function(model, db, options)
-{
-
-  /**
-   * Invokes a function when Rekord has loaded. It's considered loaded when
-   * it's loaded locally, remotely, or neither (depending on the options
-   * passed to the database). The `callback` can also be invoked `persistent`ly
-   * on any load event - which includes {@link Rekord.Database#refresh}.
-   *
-   * ```javascript
-   * var Task = Rekord({
-   *  fields: ['name']
-   * });
-   * Task.ready( function(db) {
-   *  // Tasks have been loaded, lets do something about it!
-   * });
-   * ```
-   *
-   * @method ready
-   * @memberof Rekord.Model
-   * @param {Function} callback -
-   *    The function to invoke passing the reference of the database when it's
-   *    loaded.
-   * @param {Object} [context] -
-   *    The context (this) for the callback.
-   * @param {Boolean} [persistent=false] -
-   *    Whether the `callback` function should be invoked multiple times.
-   *    Depending on the state of initializing, the callback can be invoked when
-   *    models are loaded locally (if the `cache` is not equal to `None`),
-   *    models are loaded remotely (if `loadRemote` is true), and every time
-   *    {@link Rekord.Database#refresh} is called manually OR if `autoRefresh`
-   *    is specified as true and the application changes from offline to online.
-   */
-  model.ready = function( callback, context, persistent )
-  {
-    db.ready( callback, context, persistent );
-  };
-});
-
-Rekord.on( Rekord.Events.Plugins, function(model, db, options)
-{
-
-  /**
-   * Refreshs the model database from the remote source by calling
-   * {@link Rekord.Database#refresh}. A `callback` can be passed to be invoked
-   * when the model database has refreshed (or failed to refresh) where all
-   * models that have been loaded will be passed as the first argument.
-   *
-   * ```javascript
-   * var Task = Rekord({
-   *  fields: ['name']
-   * });
-   * Task.refresh( function(models) {
-   *  models; // The collection of models loaded remotely (or current models if it failed to load them remotely.
-   * });
-   * ```
-   *
-   * @method refresh
-   * @memberof Rekord.Model
-   * @param {Function} callback -
-   *    The function to invoke passing the reference model collection.
-   * @param {Object} [context] -
-   *    The context (this) for the callback.
-   */
-  model.refresh = function( callback, context )
-  {
-    return db.refresh( callback, context );
-  };
-});
-
-Rekord.on( Rekord.Events.Plugins, function(model, db, options)
-{
-
-  /**
-   * Creates a new search for model instances. A search is an object with
-   * properties that are passed to a configurable {@link Rekord.rest} function
-   * which expect an array of models to be returned from the remote call that
-   * match the search parameters.
-   *
-   * ```javascript
-   * var Task = Rekord({
-   *  fields: ['name', 'done']
-   * });
-   * var search = Task.search('/api/task/search');
-   * search.name = 'like this';
-   * search.done = true;
-   * search.anyProperty = [1, 3, 4];
-   * var promise = search.$run();
-   * promise.success( function(search) {
-   *   search.$results; // collection of returned results
-   * });
-   * ```
-   *
-   * @method search
-   * @memberof Rekord.Model
-   * @param {String} url -
-   *    A URL to send the search data to.
-   * @param {searchOptions} [options] -
-   *    Options for the search.
-   * @param {Object} [props] -
-   *    Initial set of properties on the search.
-   * @param {Boolean} [run=false] -
-   *    Whether or not to run the search immediately.
-   * @return {Rekord.Search} -
-   *    A new search for models.
-   */
-  model.search = function(url, options, props, run)
-  {
-    return new Search( db, url, options, props, run );
-  };
-});
-
-Rekord.on( Rekord.Events.Plugins, function(model, db, options)
-{
-
-  /**
-   * Creates a new search with pagination for model instances. A paginated
-   * search is an object with properties that are passed to a configurable
-   * {@link Rekord.rest} function which expect an array of models to be returned
-   * as well as paging information from the remote call. Special properties are
-   * passed to the server (`page_index`, `page_size`) which dictate which
-   * chunk of data should be returned. A special `total` property is expected to
-   * be returned with `results` which tells the search how many records would've
-   * been returned without the pagination.
-   *
-   * ```javascript
-   * var Task = Rekord({
-   *  fields: ['name', 'done']
-   * });
-   * var search = Task.searchPaged('/api/task/searchPaged');
-   * search.name = 'like this';
-   * search.done = true;
-   * search.anyProperty = [1, 3, 4];
-   * var promise = search.$run();
-   * promise.success( function(search) {
-   *   search.$results; // collection of returned results
-   *   search.total; // number of results that would've been returned without pagination
-   *   search.page_index; // the zero-based page index
-   *   search.page_size; // the number of results to be returned
-   * });
-   * search.$next(); // increase page_index, get the next page
-   * ```
-   *
-   * @method searchPaged
-   * @memberof Rekord.Model
-   * @param {String} url -
-   *    A URL to send the search data to.
-   * @param {searchPageOptions} [options] -
-   *    Options for the search.
-   * @param {Object} [props] -
-   *    Initial set of properties on the search.
-   * @param {Boolean} [run=false] -
-   *    Whether or not to run the search immediately.
-   * @return {Rekord.SearchPaged} -
-   *    A new paginated search for models.
-   */
-  model.searchPaged = function(url, options, props, run)
-  {
-    return new SearchPaged( db, url, options, props, run );
-  };
-});
-
-Rekord.on( Rekord.Events.Options, function(options)
-{
-  var shard = options.shard || Database.Defaults.shard;
-
-  if ( !isObject( shard ) )
-  {
-    return;
-  }
-
-  options.createRest = Rekord.shard( shard );
-});
-
-Rekord.on( Rekord.Events.Plugins, function(model, db, options)
-{
-  var time = options.timestamps || Database.Defaults.timestamps;
-  var timeAsDate = options.timestampsAsDate || Database.Defaults.timestampsAsDate;
-  var currentTimestamp = timeAsDate ? currentDate : currentTime;
-
-  if ( !time )
-  {
-    return;
-  }
-
-  function currentTime()
-  {
-    return new Date().getTime();
-  }
-
-  function currentDate()
-  {
-    return new Date();
-  }
-
-  function encode(x)
-  {
-    return x instanceof Date ? x.getTime() : x;
-  }
-
-  function decode(x)
-  {
-    return isNumber( x ) ? new Date( x ) : (isString( x ) && Date.parse ? Date.parse( x ) : x);
-  }
-
-  function addTimestamp(field)
-  {
-    var i = indexOf( db.fields, field );
-
-    if ( i === false )
-    {
-      db.fields.push( field );
-      db.saveFields.push( field );
-    }
-
-    if ( !(field in db.defaults) )
-    {
-      db.defaults[ field ] = currentTimestamp;
-    }
-
-    if ( timeAsDate )
-    {
-      if ( !(field in db.encodings) )
-      {
-        db.encodings[ field ] = encode;
-      }
-      if ( !(field in db.decodings ) )
-      {
-        db.decodings[ field ] = decode;
-      }
-    }
-  }
-
-  function addCreatedAt(field)
-  {
-    addTimestamp( field );
-
-    db.ignoredFields[ field ] = true;
-  }
-
-  function addUpdatedAt(field)
-  {
-    addTimestamp( field );
-
-    db.ignoredFields[ field ] = true;
-
-    var $save = model.prototype.$save;
-
-    addMethod( model.prototype, '$save', function()
-    {
-      this[ field ] = currentTimestamp();
-
-      $save.apply( this, arguments );
-    });
-  }
-
-  function addTimestampField(type, field)
-  {
-    switch (type) {
-      case 'created_at':
-        return addCreatedAt( field );
-      case 'updated_at':
-        return addUpdatedAt( field );
-      default:
-        return addTimestamp( field );
-    }
-  }
-
-  if ( isString( time ) )
-  {
-    addTimestampField( time, time );
-  }
-  else if ( isArray( time ) )
-  {
-    for (var i = 0; i < time.length; i++)
-    {
-      addTimestampField( time[ i ], time[ i ] );
-    }
-  }
-  else if ( isObject( time ) )
-  {
-    for (var prop in time)
-    {
-      addTimestampField( prop, time[ prop ] );
-    }
-  }
-  else
-  {
-    addCreatedAt( 'created_at' );
-    addUpdatedAt( 'updated_at' );
-  }
-});
 
 
 Rekord.debug = function(event, source)  /*, data.. */
@@ -14967,6 +13665,3014 @@ addMethods( Shard.prototype,
 
 });
 
+Rekord.on( Rekord.Events.Plugins, function(model, db, options)
+{
+
+  /**
+   * Returns the reference to the collection which contains all saved models.
+   *
+   * ```javascript
+   * var Task = Rekord({
+   *   fields: ['name', 'done']
+   * });
+   * var t0 = Task.create({name: 't0', done: true}); // saves
+   * var t1 = new Task({name: 't1'});
+   * Task.all(); // [t0]
+   * ```
+   *
+   * @method all
+   * @memberof Rekord.Model
+   * @return {Rekord.ModelCollection} -
+   *    The reference to the collection of models.
+   */
+  model.all = function()
+  {
+    return db.models;
+  };
+});
+
+Rekord.on( Rekord.Events.Plugins, function(model, db, options)
+{
+
+  /**
+   * Returns an instance of a model or model collection with remote data (from
+   * the server). If the model(s) exist locally then the values passed in will
+   * overwrite the current values of the models. This is typically used to
+   * bootstrap data from the server in your webpage.
+   *
+   * ```javascript
+   * var User = Rekord({
+   *   fields: ['name', 'email']
+   * });
+   * var currentUser = User.boot({
+   *   id: 1234,
+   *   name: 'Administrator',
+   *   email: 'rekordjs@gmail.com'
+   * });
+   * var friends = User.boot([
+   *   { id: 'c1', name: 'Cat 1', email: 'cat1@gmail.com' },
+   *   { id: 'c2', name: 'Cat 2', email: 'cat2@gmail.com' }
+   * ]);
+   * ```
+   *
+   * @method boot
+   * @memberof Rekord.Model
+   * @param {modelInput[]|Object}
+   * @return {Rekord.ModelCollection|Rekord.Model} -
+   *    The collection or model bootstrapped.
+   */
+  model.boot = function( input )
+  {
+    if ( isArray( input ) )
+    {
+      return new ModelCollection( db, input, true );
+    }
+    else if ( isObject( input ) )
+    {
+      return db.putRemoteData( input );
+    }
+
+    return input;
+  };
+});
+
+Rekord.on( Rekord.Events.Plugins, function(model, db, options)
+{
+
+  /**
+   * Creates a collection of models.
+   *
+   * ```javascript
+   * var Task = Rekord({
+   *   fields: ['name']
+   * });
+   * var t0 = Task.create({id: 34, name: 't0'});
+   * var t1 = new Task({name: 't1'});
+   * var t2 = {name: 't2'};
+   *
+   * var c = Task.collect( 34, t1, t2 ); // or Task.collect( [34, t1, t2] )
+   * c; // [t0, t1, t2]
+   * ```
+   *
+   * @method collect
+   * @memberof Rekord.Model
+   * @param {modelInput[]|...modelInput} models -
+   *    The array of models to to return as a collection.
+   * @return {Rekord.ModelCollection} -
+   *    The collection created.
+   */
+  model.collect = function(a)
+  {
+    var models = arguments.length > 1 || !isArray(a) ?
+      AP.slice.call( arguments ) : a;
+
+    return new ModelCollection( db, models );
+  };
+});
+
+Rekord.on( Rekord.Events.Plugins, function(model, db, options)
+{
+
+  /**
+   * Creates a model instance, saves it, and returns it.
+   *
+   * ```javascript
+   * var Task = Rekord({
+   *  fields: ['name'],
+   *  defaults: {
+   *    name: 'New Task'
+   *  }
+   * });
+   * var t0 = Task.create({id: 34, name: 't0'});
+   * var t1 = Task.create({name: 't1'}); // id generated with uuid
+   * var t2 = Task.create(); // name populated with default 'New Task'
+   * ```
+   *
+   * @method create
+   * @memberof Rekord.Model
+   * @param {Object} [props] -
+   *    The initial values for the new model - if any.
+   * @return {Rekord.Model} -
+   *    The saved model instance.
+   */
+  model.create = function( props )
+  {
+    var instance = isObject( props ) ?
+      db.createModel( props ) :
+      db.instantiate();
+
+    instance.$save();
+
+    return instance;
+  };
+});
+
+Rekord.on( Rekord.Events.Plugins, function(model, db, options)
+{
+  var dynamics = collapse( options.dynamic, Database.Defaults.dynamic );
+
+  if ( !isEmpty( dynamics ) )
+  {
+    for ( var property in dynamics )
+    {
+      addDynamicProperty( model.prototype, property, dynamics[ property ] );
+    }
+  }
+});
+
+function addDynamicProperty(modelPrototype, property, definition)
+{
+  var get = isFunction( definition ) ? definition :
+          ( isObject( definition ) && isFunction( definition.get ) ? definition.get : noop );
+  var set = isObject( definition ) && isFunction( definition.set ) ? definition.set : noop;
+
+  if ( Object.defineProperty )
+  {
+    Object.defineProperty( modelPrototype, property,
+    {
+      configurable: false,
+      enumerable: true,
+      get: get,
+      set: set
+    });
+  }
+  else
+  {
+    var $init = modelPrototype.$init;
+
+    modelPrototype.$init = function()
+    {
+      $init.apply( this, arguments );
+
+      var lastCalculatedValue = this[ property ] = get.apply( this );
+
+      var handleChange = function()
+      {
+        var current = this[ property ];
+
+        if ( current !== lastCalculatedValue )
+        {
+          set.call( this, current );
+        }
+        else
+        {
+          lastCalculatedValue = this[ property ] = get.apply( this );
+        }
+      };
+
+      this.$after( Model.Events.Changes, handleChange, this );
+    };
+  }
+}
+
+Rekord.on( Rekord.Events.Plugins, function(model, db, options)
+{
+  var events = collapse( options.events, Database.Defaults.events );
+
+  if ( !isEmpty( events ) )
+  {
+    var modelEvents = [];
+    var databaseEvents = [];
+
+    for ( var eventType in events )
+    {
+      var callback = events[ eventType ];
+      var eventName = toCamelCase( eventType );
+
+      var databaseEventString = Database.Events[ eventName ];
+      var modelEventString = Model.Events[ eventName ];
+
+      if ( databaseEventString )
+      {
+        parseEventListeners( databaseEventString, callback, false, databaseEvents );
+      }
+
+      if ( modelEventString )
+      {
+        parseEventListeners( modelEventString, callback, true, modelEvents );
+      }
+    }
+
+    applyEventListeners( db, databaseEvents );
+
+    if ( modelEvents.length )
+    {
+      var $init = model.prototype.$init;
+
+      addMethod( model.prototype, '$init', function()
+      {
+        $init.apply( this, arguments );
+
+        applyEventListeners( this, modelEvents );
+      });
+    }
+  }
+
+});
+
+function parseEventListeners(events, callback, secret, out)
+{
+  var map = {
+    on:     secret ? '$on' : 'on',
+    once:   secret ? '$once' : 'once',
+    after:  secret ? '$after' : 'after'
+  };
+
+  var listeners = out || [];
+
+  if ( isFunction( callback ) )
+  {
+    listeners.push(
+    {
+      when: map.on,
+      events: events,
+      invoke: callback
+    });
+  }
+  else if ( isArray( callback ) && callback.length === 2 && isFunction( callback[0] ) )
+  {
+    listeners.push(
+    {
+      when: map.on,
+      events: events,
+      invoke: callback[0],
+      context: callback[1]
+    });
+  }
+  else if ( isObject( callback ) )
+  {
+    for ( var eventType in callback )
+    {
+      if ( eventType in map )
+      {
+        var subcallback = callback[ eventType ];
+        var when = map[ eventType ];
+
+        if ( isFunction( subcallback ) )
+        {
+          listeners.push(
+          {
+            when: when,
+            events: events,
+            invoke: subcallback
+          });
+        }
+        else if ( isArray( subcallback ) && subcallback.length === 2 && isFunction( subcallback[0] ) )
+        {
+          listeners.push(
+          {
+            when: when,
+            events: events,
+            invoke: subcallback[0],
+            context: subcallback[1]
+          });
+        }
+      }
+    }
+  }
+
+  return listeners;
+}
+
+function applyEventListeners(target, listeners)
+{
+  for (var i = 0; i < listeners.length; i++)
+  {
+    var l = listeners[ i ];
+
+    target[ l.when ]( l.events, l.invoke, l.context );
+  }
+}
+
+Rekord.on( Rekord.Events.Plugins, function(model, db, options)
+{
+  var extend = options.extend || Database.Defaults.extend;
+
+  if ( !isRekord( extend ) )
+  {
+    return;
+  }
+
+  var defaults = Database.Defaults;
+  var edb = extend.Database;
+  var eoptions = edb.options;
+
+  function tryOverwrite(option)
+  {
+    if ( !options[ option ] )
+    {
+      db[ option ] = edb[ option ];
+    }
+  }
+
+  function tryMerge(option)
+  {
+    var dbo = db[ option ];
+    var edbo = edb[ option ];
+
+    for (var prop in edbo)
+    {
+      if ( !(prop in dbo ) )
+      {
+        dbo[ prop ] = edbo[ prop ];
+      }
+    }
+  }
+
+  function tryUnshift(options, sourceOptions)
+  {
+    var source = edb[ sourceOptions || options ];
+    var target = db[ options ];
+
+    for (var i = source.length - 1; i >= 0; i--)
+    {
+      var k = indexOf( target, source[ i ] );
+
+      if ( k !== false )
+      {
+        target.splice( k, 1 );
+      }
+
+      target.unshift( source[ i ] );
+    }
+  }
+
+  tryOverwrite( 'keySeparator' );
+  tryMerge( 'defaults' );
+  tryMerge( 'ignoredFields' );
+  tryOverwrite( 'loadRelations' );
+  tryOverwrite( 'loadRemote' );
+  tryOverwrite( 'autoRefresh' );
+  tryOverwrite( 'cache' );
+  tryOverwrite( 'fullSave' );
+  tryOverwrite( 'fullPublish' );
+  tryMerge( 'encodings' );
+  tryMerge( 'decodings' );
+  tryOverwrite( 'summarize' );
+  tryUnshift( 'fields' );
+  tryUnshift( 'saveFields', 'fields' );
+
+  if ( !options.comparator )
+  {
+    db.setComparator( eoptions.comparator, eoptions.comparatorNullsFirst );
+  }
+
+  if ( !options.revision )
+  {
+    db.setRevision( eoptions.revision );
+  }
+
+  if ( !options.summarize )
+  {
+    db.setSummarize( eoptions.summarize );
+  }
+
+  for (var name in edb.relations)
+  {
+    if ( name in db.relations )
+    {
+      continue;
+    }
+
+    var relation = edb.relations[ name ];
+    var relationCopy = new relation.constructor();
+
+    relationCopy.init( db, name, relation.options );
+
+    if ( relationCopy.save )
+    {
+      db.saveFields.push( name );
+    }
+
+    db.relations[ name ] = relationCopy;
+    db.relationNames.push( name );
+  }
+
+  db.rest   = Rekord.rest( db );
+  db.store  = Rekord.store( db );
+  db.live   = Rekord.live( db );
+
+});
+
+Rekord.on( Rekord.Events.Plugins, function(model, db, options)
+{
+
+  /**
+   * Gets the local model matching the given input (or creates one) and loads
+   * it from the remote source ({@link Rekord.rest}). If `callback` is specified
+   * then it is invoked with the instance once it's loaded.
+   *
+   * ```javascript
+   * var Task = Rekord({
+   *  fields: ['name']
+   * });
+   * var t0 = Task.fetch( 34, function(task) {
+   *   task; // {id: 34 name: 'Remotely Loaded'}
+   * });
+   * t0; // {id: 34} until remotely loaded
+   * ```
+   *
+   * @method fetch
+   * @memberof Rekord.Model
+   * @param {modelInput} input -
+   *    The model input used to determine the key and load the model.
+   * @param {Function} [callback] -
+   *    The function to invoke passing the reference of the model once it's
+   *    successfully remotely loaded.
+   * @param {Object} [context] -
+   *    The context (this) for the callback.
+   * @return {Rekord.Model} -
+   *    The model instance.
+   */
+  model.fetch = function( input, callback, context )
+  {
+    var key = db.buildKeyFromInput( input );
+    var instance = db.get( key );
+
+    if ( !instance )
+    {
+      instance = db.buildObjectFromKey( key );
+
+      if ( isObject( input ) )
+      {
+        instance.$set( input );
+      }
+    }
+
+    if ( isFunction( callback ) )
+    {
+      var callbackContext = context || this;
+
+      instance.$once( Model.Events.RemoteGets, function()
+      {
+        callback.call( callbackContext, instance );
+      });
+    }
+
+    instance.$refresh();
+
+    return instance;
+  };
+});
+
+Rekord.on( Rekord.Events.Plugins, function(model, db, options)
+{
+
+  /**
+   * Returns the collection of all local models and tries to reload them (and
+   * any additional models returned) from a remote source ({@link Rekord.rest}).
+   * If `callback` is specified then it is invoked with the collections all
+   * models once it's loaded.
+   *
+   * ```javascript
+   * var Task = Rekord({
+   *  fields: ['name']
+   * });
+   * var tasks0 = Task.fetchAll( function(tasks1) {
+   *   tasks0 // tasks1
+   * });
+   * ```
+   *
+   * @method fetchAll
+   * @memberof Rekord.Model
+   * @param {Function} [callback] -
+   *    The function to invoke passing the reference of the model collection
+   *    when it's successfully remotely loaded.
+   * @param {Object} [context] -
+   *    The context (this) for the callback.
+   * @return {Rekord.ModelCollection} -
+   *    The collection of all models of this type.
+   */
+  model.fetchAll = function(callback, context)
+  {
+    db.refresh( callback, context );
+
+    return db.models;
+  };
+});
+
+Rekord.on( Rekord.Events.Plugins, function(model, db, options)
+{
+  var files = options.files || Database.Defaults.files;
+
+  if ( !isObject( files ) )
+  {
+    return;
+  }
+
+  if ( !isFilesSupported() )
+  {
+    Rekord.trigger( Rekord.Events.FilesNotSupported );
+
+    return;
+  }
+
+  for (var field in files)
+  {
+    var fieldOption = files[ field ];
+
+    if ( isString( fieldOption ) )
+    {
+      fieldOption = {
+        type: fieldOption
+      };
+    }
+
+    db.decodings[ field ] = FileDecodings[ fieldOption.type ]( db, fieldOption );
+    db.encodings[ field ] = FileEncoder;
+  }
+});
+
+/**
+files: {
+  field: {
+    type: 'text', // base64, dataURL, resource
+    processor: 'processor_name',
+    capacity: 1024 * 1024, // maximum bytes
+    types: ['image/png', 'image/jpg', 'image/gif'], // acceptable MIME types
+    autoSave: true,
+    store: true,
+    save: true
+  }
+}
+**/
+
+Rekord.fileProcessors = {};
+
+Rekord.Events.FilesNotSupported = 'files-not-supported';
+Rekord.Events.FileTooLarge = 'file-too-large';
+Rekord.Events.FileWrongType = 'file-wrong-type';
+Rekord.Events.FileOffline = 'file-offline';
+
+// {
+//  fileToValue(file, model, field, callback),
+//  valueToUser(value, model, field, callback)
+// }
+Rekord.addFileProcessor = function(name, methods)
+{
+  Rekord.fileProcessors[ name ] = methods;
+};
+
+Rekord.fileProperties =
+[
+  'lastModifiedDate', 'name', 'size', 'type'
+];
+
+function isFilesSupported()
+{
+  return global.File && global.FileReader && global.FileList;
+}
+
+function toFile(input)
+{
+  if ( input instanceof global.File )
+  {
+    return input;
+  }
+  else if ( input instanceof global.Blob )
+  {
+    return input;
+  }
+  else if ( input instanceof global.FileList && input.length > 0 )
+  {
+    return input[0];
+  }
+
+  return false;
+}
+
+function convertNone(x)
+{
+  return x;
+}
+
+function convertBase64(x)
+{
+  var i = isString( x ) ? x.indexOf(';base64,') : -1;
+
+  return i === -1 ? x : x.substring( i + 8 );
+}
+
+function trySave(model, options)
+{
+  if ( options.autoSave && model.$isSaved() )
+  {
+    model.$save();
+  }
+}
+
+function putFileCache(model, property, value, file, options)
+{
+  model.$files = model.$files || {};
+  model.$files[ property ] = {
+    value: value,
+    user: value,
+    file: file,
+    options: options
+  };
+}
+
+function setFilesValue(processor, value, model, property, options)
+{
+  var result = undefined;
+  var done = false;
+
+  if ( processor && processor.valueToUser )
+  {
+    processor.valueToUser( value, model, property, function(user)
+    {
+      model.$files[ property ].user = user;
+
+      if ( done )
+      {
+        model[ property ] = user;
+        trySave( model, options );
+      }
+      else
+      {
+        result = user;
+      }
+    });
+  }
+  else
+  {
+    result = value;
+  }
+
+  done = true;
+
+  return result;
+}
+
+function fileReader(method, converter, options)
+{
+  var processor = Rekord.fileProcessors[ options.processor ];
+
+  if ( !(method in global.FileReader.prototype) )
+  {
+    Rekord.trigger( Rekord.Events.FilesNotSupported );
+  }
+
+  return function(input, model, property)
+  {
+    var file = toFile( input );
+
+    if ( file !== false )
+    {
+      var reader = new global.FileReader();
+      var result = undefined;
+      var done = false;
+
+      reader.onload = function(e)
+      {
+        var value = converter( e.target.result );
+
+        putFileCache( model, property, value, file, options );
+
+        result = setFilesValue( processor, value, model, property, options );
+
+        if ( done )
+        {
+          model[ property ] = result;
+          trySave( model, options );
+        }
+      };
+
+      reader[ method ]( file );
+
+      done = true;
+
+      return result;
+    }
+    else if ( isObject( input ) && input.FILE )
+    {
+      var result = undefined;
+
+      var setter = function(value)
+      {
+          result = value;
+      };
+
+      Rekord.trigger( Rekord.Events.FileOffline, [input, model, property, setter] );
+
+      return result;
+    }
+    else
+    {
+      putFileCache( model, property, input, null, options );
+
+      return setFilesValue( processor, input, model, property, options );
+    }
+  };
+}
+
+var FileDecodings =
+{
+  text: function(db, options)
+  {
+    return fileReader( 'readAsText', convertNone, options );
+  },
+  dataURL: function(db, options)
+  {
+    return fileReader( 'readAsDataURL', convertNone, options );
+  },
+  base64: function(db, options)
+  {
+    return fileReader( 'readAsDataURL', convertBase64, options );
+  },
+  resource: function(db, options)
+  {
+    return function(input, model, property)
+    {
+      var file = toFile( input );
+      var processor = Rekord.fileProcessors[ options.processor ];
+
+      if ( !processor )
+      {
+        throw 'Processor required for resource files.';
+      }
+
+      if ( file !== false )
+      {
+        if ( isNumber( options.capacity ) && isNumber( file.size ) && file.size > options.capacity )
+        {
+          Rekord.trigger( Rekord.Events.FileTooLarge, [file, model, property] );
+
+          return undefined;
+        }
+
+        if ( isArray( options.types ) && isString( file.type ) && indexOf( options.types, file.type ) === false )
+        {
+          Rekord.trigger( Rekord.Events.FileWrongType, [file, model, property] );
+
+          return undefined;
+        }
+
+        var result = undefined;
+        var done = false;
+
+        processor.fileToValue( file, model, property, function(value)
+        {
+          putFileCache( model, property, value, file, options );
+
+          result = setFilesValue( processor, value, model, property, options );
+
+          if ( done )
+          {
+            model[ property ] = result;
+            trySave( model, options );
+          }
+        });
+
+        done = true;
+
+        return result;
+      }
+      else if ( isObject( input ) && input.FILE )
+      {
+        Rekord.trigger( Rekord.Events.FileOffline, [input, model, property] );
+      }
+      else
+      {
+        putFileCache( model, property, input, null, options );
+
+        return setFilesValue( processor, input, model, property, options );
+      }
+    };
+  }
+};
+
+function FileEncoder(input, model, field, forSaving)
+{
+  if ( model.$files && field in model.$files )
+  {
+    var cached = model.$files[ field ];
+
+    if ( (forSaving && cached.save === false) || (!forSaving && cached.store === false) )
+    {
+      return undefined;
+    }
+
+    if ( !forSaving && cached.file )
+    {
+      var props = grab( cached.file, Rekord.fileProperties, false );
+
+      props.FILE = true;
+
+      return props;
+    }
+
+    if ( input === cached.user )
+    {
+      if ( forSaving && cached.file )
+      {
+        model.$once( Model.Events.RemoteSave, function()
+        {
+          delete cached.file;
+
+          model.$addOperation( SaveLocal, Cascade.Local );
+        });
+      }
+
+      return cached.value;
+    }
+  }
+
+  return input;
+}
+
+Rekord.on( Rekord.Events.Plugins, function(model, db, options)
+{
+
+  model.filtered = function(whereProperties, whereValue, whereEquals)
+  {
+    return db.models.filtered( whereProperties, whereValue, whereEquals );
+  };
+});
+
+Rekord.on( Rekord.Events.Plugins, function(model, db, options)
+{
+  model.find = function(whereProperties, whereValue, whereEquals)
+  {
+    return db.models.firstWhere( whereProperties, whereValue, whereEquals );
+  };
+});
+Rekord.on( Rekord.Events.Plugins, function(model, db, options)
+{
+
+  /**
+   * Returns the model instance identified with the given input. This includes
+   * saved and unsaved models. If a `callback` is given the model will be passed
+   * to the function. The `callback` method is useful for waiting for Rekord
+   * to finish initializing (which includes loading models from local storage
+   * followed by remote storage if configured) and returning a model instance.
+   * If Rekord has finished initializing and the model doesn't exist locally
+   * then it is fetched from the remoute source using {@link Rekord.rest}.
+   *
+   * ```javascript
+   * var Task = Rekord({
+   *  fields: ['name']
+   * });
+   * var t0 = Task.get( 34 ); // only looks at models currently loaded
+   * var t1 = Task.get( 23, function(model) {
+   *   model; // local or remotely loaded if it didn't exist locally - could be null if it doesn't exist at all
+   * })
+   * ```
+   *
+   * @method get
+   * @memberof Rekord.Model
+   * @param {modelInput} input -
+   *    The model input used to determine the key and load the model.
+   * @param {Function} [callback] -
+   *    The function to invoke passing the reference of the model when it's
+   *    successfully found.
+   * @param {Object} [context] -
+   *    The context (this) for the callback.
+   * @return {Rekord.Model} -
+   *    The model instance if `callback` is not given - or undefined if the
+   *    input doesn't resolve to a model or `callback` is given.
+   */
+  model.get = function( input, callback, context )
+  {
+    if ( isFunction( callback ) )
+    {
+      db.grabModel( input, callback, context );
+    }
+    else
+    {
+      return db.get( input );
+    }
+  };
+});
+
+Rekord.on( Rekord.Events.Plugins, function(model, db, options)
+{
+
+  /**
+   * Gets the model instance identified with the given input and passes it to the
+   * `callback` function. If Rekord is not finished initializing this function
+   * will wait until it is and check for the model. If it still doesn't exist
+   * locally it is loaded from a remote source using {@link Rekord.rest}. If the
+   * model doesn't exist at all a null value will be returned to the function.
+   *
+   * ```javascript
+   * var Task = Rekord({
+   *  fields: ['name']
+   * });
+   * var t1 = Task.grab( 23, function(model) {
+   *   model; // local or remotely loaded if it didn't exist locally - could be null if it doesn't exist at all
+   * })
+   * ```
+   *
+   * @method grab
+   * @memberof Rekord.Model
+   * @param {modelInput} input -
+   *    The model input used to determine the key and load the model.
+   * @param {Function} callback -
+   *    The function to invoke passing the reference of the model when it's
+   *    successfully found.
+   * @param {Object} [context] -
+   *    The context (this) for the callback.
+   * @return {Rekord.Model} -
+   *    The model instance of it exists locally at the moment, or undefined
+   *    if the model hasn't been loaded yet.
+   */
+  model.grab = function( input, callback, context )
+  {
+    var callbackContext = context || this;
+    var instance = db.get( input );
+
+    if ( instance )
+    {
+      callback.call( callbackContext, instance );
+    }
+    else
+    {
+      db.grabModel( input, function(instance)
+      {
+        if ( instance )
+        {
+          callback.call( callbackContext, instance )
+        }
+        else
+        {
+          model.fetch( input, callback, context );
+        }
+      });
+    }
+
+    return instance;
+  };
+});
+
+Rekord.on( Rekord.Events.Plugins, function(model, db, options)
+{
+
+  /**
+   * Gets all model instances currently loaded, locally loaded, or remotely
+   * loaded and passes it to the `callback` function.
+   *
+   * ```javascript
+   * var Task = Rekord({
+   *  fields: ['name']
+   * });
+   * var tasks = Task.grabAll( function(models) {
+   *   models; // local or remotely loaded if it didn't exist locally.
+   * })
+   * ```
+   *
+   * @method grabAll
+   * @memberof Rekord.Model
+   * @param {Function} callback -
+   *    The function to invoke passing the reference of the model collection
+   *    when it's loaded.
+   * @param {Object} [context] -
+   *    The context (this) for the callback.
+   * @return {Rekord.Model} -
+   *    The model collection of it exists locally at the moment, or undefined
+   *    if models haven't been loaded yet.
+   */
+  model.grabAll = function( callback, context )
+  {
+    var callbackContext = context || this;
+    var models = db.models;
+
+    if ( models.length )
+    {
+      callback.call( callbackContext, models );
+    }
+    else
+    {
+      db.ready(function()
+      {
+        if ( models.length )
+        {
+          callback.call( callbackContext, models );
+        }
+        else
+        {
+          db.refresh(function()
+          {
+            callback.call( callbackContext, models );
+          });
+        }
+      });
+    }
+
+    return models;
+  };
+});
+
+Rekord.on( Rekord.Events.Plugins, function(model, db, options)
+{
+  var methods = collapse( options.methods, Database.Defaults.methods );
+
+  if ( !isEmpty( methods ) )
+  {
+    addMethods( model.prototype, methods );
+  }
+});
+
+Rekord.on( Rekord.Events.Plugins, function(model, db, options)
+{
+
+  /**
+   * Invokes a function when Rekord has loaded. It's considered loaded when
+   * it's loaded locally, remotely, or neither (depending on the options
+   * passed to the database). The `callback` can also be invoked `persistent`ly
+   * on any load event - which includes {@link Rekord.Database#refresh}.
+   *
+   * ```javascript
+   * var Task = Rekord({
+   *  fields: ['name']
+   * });
+   * Task.ready( function(db) {
+   *  // Tasks have been loaded, lets do something about it!
+   * });
+   * ```
+   *
+   * @method ready
+   * @memberof Rekord.Model
+   * @param {Function} callback -
+   *    The function to invoke passing the reference of the database when it's
+   *    loaded.
+   * @param {Object} [context] -
+   *    The context (this) for the callback.
+   * @param {Boolean} [persistent=false] -
+   *    Whether the `callback` function should be invoked multiple times.
+   *    Depending on the state of initializing, the callback can be invoked when
+   *    models are loaded locally (if the `cache` is not equal to `None`),
+   *    models are loaded remotely (if `loadRemote` is true), and every time
+   *    {@link Rekord.Database#refresh} is called manually OR if `autoRefresh`
+   *    is specified as true and the application changes from offline to online.
+   */
+  model.ready = function( callback, context, persistent )
+  {
+    db.ready( callback, context, persistent );
+  };
+});
+
+Rekord.on( Rekord.Events.Plugins, function(model, db, options)
+{
+
+  /**
+   * Refreshs the model database from the remote source by calling
+   * {@link Rekord.Database#refresh}. A `callback` can be passed to be invoked
+   * when the model database has refreshed (or failed to refresh) where all
+   * models that have been loaded will be passed as the first argument.
+   *
+   * ```javascript
+   * var Task = Rekord({
+   *  fields: ['name']
+   * });
+   * Task.refresh( function(models) {
+   *  models; // The collection of models loaded remotely (or current models if it failed to load them remotely.
+   * });
+   * ```
+   *
+   * @method refresh
+   * @memberof Rekord.Model
+   * @param {Function} callback -
+   *    The function to invoke passing the reference model collection.
+   * @param {Object} [context] -
+   *    The context (this) for the callback.
+   */
+  model.refresh = function( callback, context )
+  {
+    return db.refresh( callback, context );
+  };
+});
+
+Rekord.on( Rekord.Events.Plugins, function(model, db, options)
+{
+
+  /**
+   * Creates a new search for model instances. A search is an object with
+   * properties that are passed to a configurable {@link Rekord.rest} function
+   * which expect an array of models to be returned from the remote call that
+   * match the search parameters.
+   *
+   * ```javascript
+   * var Task = Rekord({
+   *  fields: ['name', 'done']
+   * });
+   * var search = Task.search('/api/task/search');
+   * search.name = 'like this';
+   * search.done = true;
+   * search.anyProperty = [1, 3, 4];
+   * var promise = search.$run();
+   * promise.success( function(search) {
+   *   search.$results; // collection of returned results
+   * });
+   * ```
+   *
+   * @method search
+   * @memberof Rekord.Model
+   * @param {String} url -
+   *    A URL to send the search data to.
+   * @param {searchOptions} [options] -
+   *    Options for the search.
+   * @param {Object} [props] -
+   *    Initial set of properties on the search.
+   * @param {Boolean} [run=false] -
+   *    Whether or not to run the search immediately.
+   * @return {Rekord.Search} -
+   *    A new search for models.
+   */
+  model.search = function(url, options, props, run)
+  {
+    return new Search( db, url, options, props, run );
+  };
+});
+
+Rekord.on( Rekord.Events.Plugins, function(model, db, options)
+{
+
+  /**
+   * Creates a new search with pagination for model instances. A paginated
+   * search is an object with properties that are passed to a configurable
+   * {@link Rekord.rest} function which expect an array of models to be returned
+   * as well as paging information from the remote call. Special properties are
+   * passed to the server (`page_index`, `page_size`) which dictate which
+   * chunk of data should be returned. A special `total` property is expected to
+   * be returned with `results` which tells the search how many records would've
+   * been returned without the pagination.
+   *
+   * ```javascript
+   * var Task = Rekord({
+   *  fields: ['name', 'done']
+   * });
+   * var search = Task.searchPaged('/api/task/searchPaged');
+   * search.name = 'like this';
+   * search.done = true;
+   * search.anyProperty = [1, 3, 4];
+   * var promise = search.$run();
+   * promise.success( function(search) {
+   *   search.$results; // collection of returned results
+   *   search.total; // number of results that would've been returned without pagination
+   *   search.page_index; // the zero-based page index
+   *   search.page_size; // the number of results to be returned
+   * });
+   * search.$next(); // increase page_index, get the next page
+   * ```
+   *
+   * @method searchPaged
+   * @memberof Rekord.Model
+   * @param {String} url -
+   *    A URL to send the search data to.
+   * @param {searchPageOptions} [options] -
+   *    Options for the search.
+   * @param {Object} [props] -
+   *    Initial set of properties on the search.
+   * @param {Boolean} [run=false] -
+   *    Whether or not to run the search immediately.
+   * @return {Rekord.SearchPaged} -
+   *    A new paginated search for models.
+   */
+  model.searchPaged = function(url, options, props, run)
+  {
+    return new SearchPaged( db, url, options, props, run );
+  };
+});
+
+Rekord.on( Rekord.Events.Options, function(options)
+{
+  var shard = options.shard || Database.Defaults.shard;
+
+  if ( !isObject( shard ) )
+  {
+    return;
+  }
+
+  options.createRest = Rekord.shard( shard );
+});
+
+Rekord.on( Rekord.Events.Plugins, function(model, db, options)
+{
+  var time = options.timestamps || Database.Defaults.timestamps;
+  var timeAsDate = options.timestampsAsDate || Database.Defaults.timestampsAsDate;
+  var currentTimestamp = timeAsDate ? currentDate : currentTime;
+
+  if ( !time )
+  {
+    return;
+  }
+
+  function currentTime()
+  {
+    return new Date().getTime();
+  }
+
+  function currentDate()
+  {
+    return new Date();
+  }
+
+  function encode(x)
+  {
+    return x instanceof Date ? x.getTime() : x;
+  }
+
+  function decode(x)
+  {
+    return isNumber( x ) ? new Date( x ) : (isString( x ) && Date.parse ? Date.parse( x ) : x);
+  }
+
+  function addTimestamp(field)
+  {
+    var i = indexOf( db.fields, field );
+
+    if ( i === false )
+    {
+      db.fields.push( field );
+      db.saveFields.push( field );
+    }
+
+    if ( !(field in db.defaults) )
+    {
+      db.defaults[ field ] = currentTimestamp;
+    }
+
+    if ( timeAsDate )
+    {
+      if ( !(field in db.encodings) )
+      {
+        db.encodings[ field ] = encode;
+      }
+      if ( !(field in db.decodings ) )
+      {
+        db.decodings[ field ] = decode;
+      }
+    }
+  }
+
+  function addCreatedAt(field)
+  {
+    addTimestamp( field );
+
+    db.ignoredFields[ field ] = true;
+  }
+
+  function addUpdatedAt(field)
+  {
+    addTimestamp( field );
+
+    db.ignoredFields[ field ] = true;
+
+    var $save = model.prototype.$save;
+
+    addMethod( model.prototype, '$save', function()
+    {
+      this[ field ] = currentTimestamp();
+
+      $save.apply( this, arguments );
+    });
+  }
+
+  function addTimestampField(type, field)
+  {
+    switch (type) {
+      case 'created_at':
+        return addCreatedAt( field );
+      case 'updated_at':
+        return addUpdatedAt( field );
+      default:
+        return addTimestamp( field );
+    }
+  }
+
+  if ( isString( time ) )
+  {
+    addTimestampField( time, time );
+  }
+  else if ( isArray( time ) )
+  {
+    for (var i = 0; i < time.length; i++)
+    {
+      addTimestampField( time[ i ], time[ i ] );
+    }
+  }
+  else if ( isObject( time ) )
+  {
+    for (var prop in time)
+    {
+      addTimestampField( prop, time[ prop ] );
+    }
+  }
+  else
+  {
+    addCreatedAt( 'created_at' );
+    addUpdatedAt( 'updated_at' );
+  }
+});
+
+Rekord.on( Rekord.Events.Plugins, function(model, db, options)
+{
+  var validation = options.validation || Database.Defaults.validation;
+
+  if ( isEmpty( validation ) )
+  {
+    return;
+  }
+
+  var rules = validation.rules || {};
+  var messages = validation.messages || {};
+  var aliases = validation.aliases || {};
+  var required = !!validation.required;
+
+  function getAlias(field)
+  {
+    return aliases[ field ] || field;
+  }
+
+  db.validations = {};
+
+  for ( var field in rules )
+  {
+    db.validations[ field ] = Validation.parseRules( rules[ field ], field, db, getAlias, messages[ field ] )
+  }
+
+  addMethod( model.prototype, '$validate', function()
+  {
+    var $this = this;
+
+    this.$trigger( Model.Events.PreValidate, [this] );
+
+    this.$valid = true;
+    this.$validations = {};
+    this.$validationMessages.length = 0;
+
+    for (var field in db.validations)
+    {
+      var chain = db.validations[ field ];
+      var value = this.$get( field );
+      var fieldValid = true;
+
+      var setMessage = function(message)
+      {
+        // Only accept for the first valid message
+        if ( message && fieldValid )
+        {
+          fieldValid = false;
+
+          $this.$validations[ field ] = message;
+          $this.$validationMessages.push( message );
+          $this.$valid = false;
+        }
+      };
+
+      for (var i = 0; i < chain.length && fieldValid && value !== Validation.Stop; i++)
+      {
+        value = chain[ i ]( value, this, setMessage );
+      }
+    }
+
+    this.$trigger( this.$valid ? Model.Events.ValidatePass : Model.Events.ValidateFail, [this] );
+
+    return this.$valid;
+  });
+
+  replaceMethod( model.prototype, '$init', function($init)
+  {
+    return function()
+    {
+      this.$valid = undefined;
+      this.$validations = {};
+      this.$validationMessages = [];
+
+      return $init.apply( this, arguments );
+    };
+  });
+
+  if ( required )
+  {
+    replaceMethod( model.prototype, '$save', function($save)
+    {
+      return function()
+      {
+        if ( this.$isDeleted() )
+        {
+          Rekord.debug( Rekord.Debugs.SAVE_DELETED, this.$db, this );
+
+          return Promise.resolve( this );
+        }
+
+        if ( !this.$validate() )
+        {
+          return Promise.resolve( this );
+        }
+
+        return $save.apply( this, arguments );
+      };
+    });
+  }
+});
+
+Model.Events.PreValidate = 'pre-validate';
+
+Model.Events.ValidatePass = 'validate-pass';
+
+Model.Events.ValidateFail = 'validate-fail';
+
+var Validation =
+{
+  Rules: {},
+  Expression: {},
+  Expressions: [],
+  Delimiter: /([|])/,
+  Escape: '\\',
+  RuleSeparator: ':',
+  Stop: {},
+
+  parseRules: function(rules, field, database, getAlias, message)
+  {
+    var validators = [];
+
+    if ( isString( rules ) )
+    {
+      rules = split( rules, this.Delimiter, this.Escape );
+    }
+
+    if ( isArray( rules ) )
+    {
+      for (var i = 0; i < rules.length; i++)
+      {
+        var rule = rules[ i ];
+        var validator = this.parseRule( rule, field, database, getAlias, message );
+
+        validators.push( validator );
+      }
+    }
+    else if ( isObject( rules ) )
+    {
+      for (var rule in rules)
+      {
+        var ruleMessage = rules[ rule ];
+        var validator = this.parseRule( rule, field, database, getAlias, ruleMessage || message );
+
+        validators.push( validator );
+      }
+    }
+
+    return validators;
+  },
+
+  parseRule: function(rule, field, database, getAlias, message)
+  {
+    var colon = rule.indexOf( this.RuleSeparator );
+    var ruleName = colon === -1 ? rule : rule.substring( 0, colon );
+
+    if ( ruleName.charAt( 0 ) === '$' )
+    {
+      return this.customValidator( ruleName, field, database, getAlias, message );
+    }
+
+    var ruleParams = colon === -1 ? undefined : rule.substring( colon + 1 );
+    var validatorFactory = Validation.Rules[ ruleName ];
+
+    if ( !validatorFactory )
+    {
+      throw ruleName + ' is not a valid rule';
+    }
+
+    return validatorFactory( field, ruleParams, database, getAlias, message );
+  },
+
+  parseExpression: function(expr, database)
+  {
+    var parsers = Validation.Expressions;
+
+    for (var i = 0; i < parsers.length; i++)
+    {
+      var parser = parsers[ i ];
+      var expressionFunction = parser( expr, database );
+
+      if ( isFunction( expressionFunction ) )
+      {
+        return expressionFunction; // (value, model)
+      }
+    }
+
+    return noop;
+  },
+
+  customValidator: function(functionName, field, database, getAlias, message)
+  {
+    return function(value, model, setMessage)
+    {
+      var result = model[ functionName ]( value, getAlias, message );
+
+      if ( isString( result ) )
+      {
+        setMessage( result );
+      }
+
+      return value;
+    };
+  }
+};
+
+// Export
+
+Rekord.Validation = Validation;
+
+Rekord.ruleGenerator = ruleGenerator;
+Rekord.rangeRuleGenerator = rangeRuleGenerator;
+Rekord.collectionRuleGenerator = collectionRuleGenerator;
+Rekord.dateRuleGenerator = dateRuleGenerator;
+Rekord.fieldListRuleGenerator = fieldListRuleGenerator;
+Rekord.fieldsRuleGenerator = fieldsRuleGenerator;
+Rekord.foreignRuleGenerator = foreignRuleGenerator;
+Rekord.subRuleGenerator = subRuleGenerator;
+Rekord.listRuleGenerator = listRuleGenerator;
+Rekord.regexRuleGenerator = regexRuleGenerator;
+Rekord.sizeRuleGenerator = sizeRuleGenerator;
+
+Rekord.joinFriendly = joinFriendly;
+Rekord.tryParseFloat = tryParseFloat;
+Rekord.tryParseInt = tryParseInt;
+Rekord.tryParseDate = tryParseDate;
+Rekord.startOfDay = startOfDay;
+Rekord.endOfDay = endOfDay;
+Rekord.determineMessage = determineMessage;
+Rekord.mapFromArray = mapFromArray;
+Rekord.checkNoParams = checkNoParams;
+Rekord.generateMessage = generateMessage;
+
+function tryParseFloat(x)
+{
+  var parsed = parseFloat( x );
+
+  if ( !isNaN( parsed ) )
+  {
+    x = parsed;
+  }
+
+  return x;
+}
+
+function tryParseInt(x)
+{
+  var parsed = parseInt( x );
+
+  if ( !isNaN( parsed ) )
+  {
+    x = parsed;
+  }
+
+  return x;
+}
+
+function tryParseDate(x)
+{
+  if ( isDate( x ) )
+  {
+    x = x.getTime();
+  }
+  else if ( isString( x ) )
+  {
+    if ( Date.parse )
+    {
+      var parsed = Date.parse( x );
+
+      if ( !isNaN( parsed ) )
+      {
+        x = parsed;
+      }
+    }
+    else
+    {
+      var parsed = new Date( x );
+
+      if ( !isNaN( parsed.getTime() ) )
+      {
+        x = parsed;
+      }
+    }
+  }
+
+  return x;
+}
+
+function startOfDay(d)
+{
+  if ( isDate( d ) )
+  {
+    d.setHours( 0, 0, 0, 0 );
+  }
+  else if ( isNumber( d ) )
+  {
+    d = d - (d % 86400000);
+  }
+
+  return d;
+}
+
+function endOfDay(d)
+{
+  if ( isDate( d ) )
+  {
+    d.setHours( 23, 59, 59, 999 );
+  }
+  else if ( isNumber( d ) )
+  {
+    d = d - (d % 86400000) + 86400000 - 1;
+  }
+
+  return d;
+}
+
+function ruleGenerator(ruleName, defaultMessage, isInvalid)
+{
+  Validation.Rules[ ruleName ] = function(field, params, database, getAlias, message)
+  {
+    checkNoParams( ruleName, field, params );
+
+    var messageTemplate = determineMessage( ruleName, message );
+
+    return function(value, model, setMessage)
+    {
+      function setValue( newValue )
+      {
+        value = newValue;
+      }
+
+      if ( isInvalid( value, model, setValue ) )
+      {
+        setMessage( generateMessage( field, getAlias( field ), value, model, messageTemplate ) );
+      }
+
+      return value;
+    };
+  };
+
+  Validation.Rules[ ruleName ].message = defaultMessage;
+}
+
+function determineMessage(ruleName, message)
+{
+  return message || Validation.Rules[ ruleName ].message;
+}
+
+function joinFriendly(arr, lastSeparator, itemSeparator, getAlias)
+{
+  var copy = arr.slice();
+
+  if ( getAlias )
+  {
+    for (var i = 0; i < copy.length; i++)
+    {
+      copy[ i ] = getAlias( copy[ i ] );
+    }
+  }
+
+  var last = copy.pop();
+  var lastSeparator = lastSeparator || 'and';
+  var itemSeparator = itemSeparator || ', ';
+
+  switch (copy.length) {
+    case 0:
+      return last;
+    case 1:
+      return copy[ 0 ] + ' ' + lastSeparator + ' ' + last;
+    default:
+      return copy.join( itemSeparator ) + itemSeparator + lastSeparator + ' ' + last;
+  }
+}
+
+function mapFromArray(arr, value)
+{
+  var map = {};
+
+  for (var i = 0; i < arr.length; i++)
+  {
+    map[ arr[ i ] ] = value;
+  }
+
+  return map;
+}
+
+function checkNoParams(ruleName, field, params)
+{
+  if ( params )
+  {
+    throw 'the rule ' + ruleName + ' for field ' + field + ' has no arguments';
+  }
+}
+
+function generateMessage(field, alias, value, model, message, extra)
+{
+  if ( isFunction( message ) )
+  {
+    message = message( field, alias, value, model, extra );
+  }
+
+  var base = {};
+  base.$field = field;
+  base.$alias = alias;
+  base.$value = value;
+
+  transfer( model, base );
+
+  if ( isObject( extra ) )
+  {
+    transfer( extra, base );
+  }
+
+  return format( message, base );
+}
+
+Validation.Expression.date =
+Validation.Expressions.push(function(expr, database)
+{
+  var parsed = tryParseDate( expr );
+
+  if ( !isNaN(parsed) )
+  {
+    return function(value, model)
+    {
+      return parsed;
+    };
+  }
+}) - 1;
+
+Validation.Expression.field =
+Validation.Expressions.push(function(expr, database)
+{
+  if ( indexOf( database.fields, expr ) )
+  {
+    return function(value, model)
+    {
+      return model.$get( expr );
+    };
+  }
+}) - 1;
+
+
+var RELATIVE_REGEX = /^([+-]\d+(\.\d+)?)\s*(.+)$/;
+
+var RELATIVE_UNITS = {
+  ms: 1,
+  millisecond: 1,
+  milliseconds: 1,
+  s: 1000,
+  second: 1000,
+  seconds: 1000,
+  min: 1000 * 60,
+  mins: 1000 * 60,
+  minute: 1000 * 60,
+  minutes: 1000 * 60,
+  hr: 1000 * 60 * 60,
+  hour: 1000 * 60 * 60,
+  hours: 1000 * 60 * 60,
+  day: 1000 * 60 * 60 * 24,
+  days: 1000 * 60 * 60 * 24,
+  wk: 1000 * 60 * 60 * 24 * 7,
+  week: 1000 * 60 * 60 * 24 * 7,
+  weeks: 1000 * 60 * 60 * 24 * 7,
+  month: ['getMonth', 'setMonth'],
+  months: ['getMonth', 'setMonth'],
+  yr: ['getFullYear', 'setFullYear'],
+  year: ['getFullYear', 'setFullYear'],
+  years: ['getFullYear', 'setFullYear']
+};
+
+Validation.Expression.relative =
+Validation.Expressions.push(function(expr, database)
+{
+  var parsed = RELATIVE_REGEX.exec( expr );
+
+  if ( parsed !== null )
+  {
+    var amount = parseFloat( parsed[ 1 ] );
+    var unit = parsed[ 3 ];
+    var unitScale = RELATIVE_UNITS[ unit ];
+
+    if ( !unitScale )
+    {
+      throw unit + ' is not a valid unit.';
+    }
+
+    return function(value, model)
+    {
+      var relative = new Date();
+
+      if ( isNumber( unitScale ) )
+      {
+        relative.setTime( relative.getTime() + unitScale * amount );
+      }
+      else
+      {
+        var getter = unitScale[0];
+        var setter = unitScale[1];
+
+        relative[ setter ]( relative[ getter ]() + amount );
+      }
+
+      return relative.getTime();
+    };
+  }
+}) - 1;
+
+Validation.Expression.today =
+Validation.Expressions.push(function(expr, database)
+{
+  if ( expr === 'today' )
+  {
+    return function(value, model)
+    {
+      var today = new Date();
+
+      today.setHours( 0, 0, 0, 0 );
+
+      return today.getTime();
+    };
+  }
+}) - 1;
+
+Validation.Expression.tomorrow =
+Validation.Expressions.push(function(expr, database)
+{
+  if ( expr === 'tomorrow' )
+  {
+    return function(value, model)
+    {
+      var tomorrow = new Date();
+
+      tomorrow.setDate( tomorrow.getDate() + 1 );
+      tomorrow.setHours( 0, 0, 0, 0 );
+
+      return tomorrow.getTime();
+    };
+  }
+}) - 1;
+
+Validation.Expression.yesterday =
+Validation.Expressions.push(function(expr, database)
+{
+  if ( expr === 'yesterday' )
+  {
+    return function(value, model)
+    {
+      var yesterday = new Date();
+
+      yesterday.setDate( yesterday.getDate() - 1 );
+      yesterday.setHours( 0, 0, 0, 0 );
+
+      return yesterday.getTime();
+    };
+  }
+}) - 1;
+
+// accepted
+Validation.Rules.accepted = function(field, params, database, getAlias, message)
+{
+  checkNoParams( 'accepted', field, params );
+
+  var messageTemplate = determineMessage( 'accepted', message );
+  var acceptable = Validation.Rules.accepted.acceptable;
+
+  return function(value, model, setMessage)
+  {
+    var valueString = (value + '').toLowerCase();
+    var accepted = acceptable[ valueString ];
+
+    if ( !accepted )
+    {
+      setMessage( generateMessage( field, getAlias( field ), value, model, messageTemplate ) );
+    }
+
+    return value;
+  };
+};
+
+Validation.Rules.accepted.message = '{$alias} has not been accepted.';
+
+Validation.Rules.accepted.acceptable =
+{
+  '1':    true,
+  'yes':  true,
+  'on':   true,
+  'y':    true,
+  'true': true
+};
+
+// between:3,10
+rangeRuleGenerator('between', {
+    'string': '{$alias} must have between {$start} to {$end} characters.',
+    'number': '{$alias} must be between {$start} and {$end}.',
+    'object': '{$alias} must have between {$start} to {$end} items.'
+  },
+  function isInvalid(value, start, end) {
+    return value < start || value > end;
+  }
+);
+
+// not_between
+rangeRuleGenerator('not_between', {
+    'string': '{$alias} must not have between {$start} to {$end} characters.',
+    'number': '{$alias} must not be between {$start} and {$end}.',
+    'object': '{$alias} must not have between {$start} to {$end} items.'
+  },
+  function isInvalid(value, start, end) {
+    return value >= start && value <= end;
+  }
+);
+
+function rangeRuleGenerator(ruleName, defaultMessages, isInvalid)
+{
+  Validation.Rules[ ruleName ] = function(field, params, database, getAlias, message)
+  {
+    if ( !params )
+    {
+      throw ruleName + ' validation rule requires a range argument';
+    }
+
+    var range = split( params, /(\s*,\s*)/, '\\' );
+    var start = parseFloat( range[0] );
+    var end = parseFloat( range[1] );
+
+    if ( isNaN( start ) || isNaN( end ) )
+    {
+      throw params + ' is not a valid range of numbers for the ' + ruleName + ' rule';
+    }
+
+    if ( isString( message ) )
+    {
+      message = {
+        'string': message,
+        'number': message,
+        'object': message
+      };
+    }
+
+    var messageTemplate = determineMessage( ruleName, message );
+    var extra = {
+      $start: start,
+      $end: end
+    };
+
+    return function(value, model, setMessage)
+    {
+      var size = sizeof( value );
+      var type = typeof( value );
+      var typeMessage = messageTemplate[ type ];
+
+      if ( typeMessage && isInvalid( size, start, end ) )
+      {
+        extra.$size = size;
+
+        setMessage( generateMessage( field, getAlias( field ), value, model, typeMessage, extra ) );
+      }
+
+      return value;
+    };
+  };
+
+  Validation.Rules[ ruleName ].message = defaultMessages;
+}
+
+// contains:field,value
+collectionRuleGenerator('contains',
+  '{$alias} does not contain an item whose {$matchAlias} equals {$matchValue}.',
+  function isInvalid(value, model, matchField, matchValue)
+  {
+    return !value.contains(function isMatch(m)
+    {
+      return m !== model && equalsCompare( matchValue, m.$get( matchField ) );
+    });
+  }
+);
+
+// not_contains:field,value
+collectionRuleGenerator('not_contains',
+  '{$alias} contains an item whose {$matchAlias} equals {$matchValue}.',
+  function isInvalid(value, model, matchField, matchValue)
+  {
+    return value.contains(function isMatch(m)
+    {
+      return m !== model && equalsCompare( matchValue, m.$get( matchField ) );
+    });
+  }
+);
+
+function collectionRuleGenerator(ruleName, defaultMessage, isInvalid)
+{
+  Validation.Rules[ ruleName ] = function(field, params, database, getAlias, message)
+  {
+    if ( !params )
+    {
+      throw ruleName + ' validation rule requires field & value arguments';
+    }
+
+    var comma = params.indexOf(',');
+
+    if ( comma === -1 )
+    {
+      throw ruleName + ' validation rule requires field & value arguments';
+    }
+
+    var matchField = params.substring( 0, comma );
+    var matchValue = params.substring( comma + 1 );
+
+    if ( indexOf( database.fields, matchField ) === -1 )
+    {
+      throw otherField + ' is not a valid field for the ' + ruleName + ' rule';
+    }
+
+    var messageTemplate = determineMessage( ruleName, message );
+    var extra = {
+      $matchField: matchField,
+      $matchAlias: getAlias( matchField ),
+      $matchValue: matchValue
+    };
+
+    return function(value, model, setMessage)
+    {
+      if ( isInvalid( value, model, matchField, matchValue ) )
+      {
+        setMessage( generateMessage( field, getAlias( field ), value, model, messageTemplate, extra ) );
+      }
+
+      return value;
+    };
+  };
+
+  Validation.Rules[ ruleName ].message = defaultMessage;
+}
+
+Validation.Rules.validate = function(field, params, database, getAlias, message)
+{
+  // message, models, validations
+  var messageOption = params || 'message';
+  var messageTemplate = determineMessage( 'validate', message );
+
+  return function(value, model, setMessage)
+  {
+    if ( isArray( value ) )
+    {
+      var invalid = new Collection();
+
+      for (var i = 0; i < value.length; i++)
+      {
+        var model = value[ i ];
+
+        if ( model && model.$validate && !model.$validate() )
+        {
+          invalid.push( model );
+        }
+      }
+
+      if ( invalid.length )
+      {
+        switch (messageOption)
+        {
+          case 'models':
+            setMessage( invalid );
+            break;
+          case 'validations':
+            setMessage( invalid.pluck( '$validations', '$$key' ) );
+            break;
+          default: // message
+            setMessage( generateMessage( field, getAlias( field ), value, model, messageTemplate ) );
+            break;
+        }
+      }
+    }
+
+    return value;
+  };
+};
+
+Validation.Rules.validate.message = '{$alias} is not valid.';
+
+// after:today
+dateRuleGenerator('after',
+  '{$alias} must be after {$date}.',
+  function isInvalid(value, date) {
+    return value < endOfDay( date );
+  }
+);
+
+// after_on:tomorrow
+dateRuleGenerator('after_on',
+  '{$alias} must be after or equal to {$date}.',
+  function isInvalid(value, date) {
+    return value < date;
+  }
+);
+
+// before:yesterday
+dateRuleGenerator('before',
+  '{$alias} must be before {$date}.',
+  function isInvalid(value, date) {
+    return value > date;
+  }
+);
+
+// before_on:+2days
+dateRuleGenerator('before_on',
+  '{$alias} must be before or equal to {$date}.',
+  function isInvalid(value, date) {
+    return value > endOfDay( date );
+  }
+);
+
+// date
+ruleGenerator('date_like',
+  '{$alias} must be a valid date.',
+  function isInvalid(value, model, setValue) {
+    var parsed = tryParseDate( value );
+    var invalid = !isNumber( parsed );
+    if ( !invalid ) {
+      setValue( parsed );
+    }
+    return invalid;
+  }
+);
+
+function dateRuleGenerator(ruleName, defaultMessage, isInvalid)
+{
+  Validation.Rules[ ruleName ] = function(field, params, database, getAlias, message)
+  {
+    if ( !params )
+    {
+      throw ruleName + ' validation rule requires a date expression argument';
+    }
+
+    var dateExpression = Validation.parseExpression( params, database );
+
+    if ( dateExpression === noop )
+    {
+      throw params + ' is not a valid date expression for the ' + ruleName + ' rule';
+    }
+
+    var messageTemplate = determineMessage( ruleName, message );
+    var extra = {
+      $date: params
+    };
+
+    return function(value, model, setMessage)
+    {
+      value = tryParseDate( value );
+
+      if ( isNumber( value ) )
+      {
+        var date = dateExpression( value, model );
+
+        if ( isNumber( date ) && isInvalid( value, date ) )
+        {
+          setMessage( generateMessage( field, getAlias( field ), value, model, messageTemplate, extra ) );
+        }
+      }
+
+      return value;
+    };
+  };
+
+  Validation.Rules[ ruleName ].message = defaultMessage;
+}
+
+
+// required_if:X,Y,...
+fieldListRuleGenerator('required_if',
+  '{$alias} is required.',
+  function isInvalid(value, model, field, values, map) {
+    var required = map[ model.$get( field ) ];
+
+    return required && isEmpty( value );
+  }
+);
+
+// required_unless:X,Y,...
+fieldListRuleGenerator('required_unless',
+  '{$alias} is required.',
+  function isInvalid(value, model, field, values, map) {
+    var required = !map[ model.$get( field ) ];
+
+    return required && isEmpty( value );
+  }
+);
+
+function fieldListRuleGenerator(ruleName, defaultMessage, isInvalid)
+{
+  Validation.Rules[ ruleName ] = function(field, params, database, getAlias, message)
+  {
+    if ( !params )
+    {
+      throw ruleName + ' validation rule requires a field and list arguments';
+    }
+
+    var parts = split( params, /(,)/, '\\' );
+    var matchField = parts.shift();
+    var matchValues = parts;
+
+    if ( indexOf( database.fields, matchField ) === false )
+    {
+      throw matchField + ' is not a valid field for the ' + ruleName + ' rule';
+    }
+
+    var messageTemplate = determineMessage( ruleName, message );
+    var list = joinFriendly( matchValues );
+    var extra = {
+      $params: params,
+      $matchField: matchField,
+      $matchAlias: getAlias( matchField ),
+      $list: list
+    };
+    var map = mapFromArray( matchValues, true );
+
+    return function(value, model, setMessage)
+    {
+      if ( isInvalid( value, model, matchField, matchValues, map ) )
+      {
+        setMessage( generateMessage( field, getAlias( field ), value, model, messageTemplate, extra ) );
+      }
+
+      return value;
+    };
+  };
+
+  Validation.Rules[ ruleName ].message = defaultMessage;
+}
+
+// confirmed:X
+fieldsRuleGenerator('confirmed',
+  '{$alias} must match {$fieldAliases}.',
+  function isInvalid(value, model, fields, setValue) {
+    var confirmed = true;
+
+    for (var i = 0; i < fields.length; i++)
+    {
+      if ( !equals( value, model.$get( fields[ i ] ) ) )
+      {
+        confirmed = false;
+      }
+    }
+
+    return !confirmed;
+  }
+);
+
+// different:X
+fieldsRuleGenerator('different',
+  '{$alias} must not match {$fieldAliases}.',
+  function isInvalid(value, model, fields, setValue) {
+    var different = false;
+
+    for (var i = 0; i < fields.length; i++)
+    {
+      if ( !equals( value, model.$get( fields[ i ] ) ) )
+      {
+        different = true;
+      }
+    }
+
+    return !different;
+  }
+);
+
+// if_valid:X
+fieldsRuleGenerator('if_valid',
+  '',
+  function isInvalid(value, model, fields, setValue) {
+    var valid = true;
+
+    for (var i = 0; i < fields.length && valid; i++)
+    {
+      if ( model.$validations[ fields[ i ] ] )
+      {
+        valid = false;
+      }
+    }
+
+    if ( !valid )
+    {
+      setValue( Validation.Stop );
+    }
+
+    return false;
+  }
+);
+
+// The field under validation must be present only if any of the other specified fields are present.
+// required_with:X,Y,...
+fieldsRuleGenerator('required_with',
+  '{$alias} is required.',
+  function isInvalid(value, model, fields, setValue) {
+    var required = false;
+
+    for (var i = 0; i < fields.length && !required; i++)
+    {
+      if ( !isEmpty( model.$get( fields[ i ] ) ) )
+      {
+        required = true;
+      }
+    }
+
+    return required && isEmpty( value );
+  }
+);
+
+// The field under validation must be present only if all of the other specified fields are present.
+// required_with_all:X,Y,...
+fieldsRuleGenerator('required_with_all',
+  '{$alias} is required.',
+  function isInvalid(value, model, fields, setValue) {
+    var required = true;
+
+    for (var i = 0; i < fields.length && required; i++)
+    {
+      if ( isEmpty( model.$get( fields[ i ] ) ) )
+      {
+        required = false;
+      }
+    }
+
+    return required && isEmpty( value );
+  }
+);
+
+// The field under validation must be present only when any of the other specified fields are not present.
+// required_without:X,Y,...
+fieldsRuleGenerator('required_without',
+  '{$alias} is required.',
+  function isInvalid(value, model, fields, setValue) {
+    var required = false;
+
+    for (var i = 0; i < fields.length && !required; i++)
+    {
+      if ( isEmpty( model.$get( fields[ i ] ) ) )
+      {
+        required = true;
+      }
+    }
+
+    return required && isEmpty( value );
+  }
+);
+
+// The field under validation must be present only when all of the other specified fields are not present.
+// required_without_all:X,Y,...
+fieldsRuleGenerator('required_without_all',
+  '{$alias} is required.',
+  function isInvalid(value, model, fields, setValue) {
+    var required = true;
+
+    for (var i = 0; i < fields.length && required; i++)
+    {
+      if ( !isEmpty( model.$get( fields[ i ] ) ) )
+      {
+        required = false;
+      }
+    }
+
+    return required && isEmpty( value );
+  }
+);
+
+function fieldsRuleGenerator(ruleName, defaultMessage, isInvalid)
+{
+  Validation.Rules[ ruleName ] = function(field, params, database, getAlias, message)
+  {
+    if ( !params )
+    {
+      throw ruleName + ' validation rule requires an array of fields argument';
+    }
+
+    var fields = split( params, /(\s*,\s*)/, '\\' );
+
+    for (var i = 0; i < fields.length; i++)
+    {
+      if ( indexOf( database.fields, fields[ i ] ) === -1 )
+      {
+        throw fields[ i ] + ' is not a valid field for the ' + ruleName + ' rule';
+      }
+    }
+
+    var messageTemplate = determineMessage( ruleName, message );
+    var fieldNames = joinFriendly( fields );
+    var fieldAliases = joinFriendly( fields, false, false, getAlias );
+    var extra = {
+      $fields: fieldNames,
+      $fieldAliases: fieldAliases
+    };
+
+    return function(value, model, setMessage)
+    {
+      function setValue( newValue )
+      {
+        value = newValue;
+      }
+
+      if ( isInvalid( value, model, fields, setValue ) )
+      {
+        setMessage( generateMessage( field, getAlias( field ), value, model, messageTemplate, extra ) );
+      }
+
+      return value;
+    };
+  };
+
+  Validation.Rules[ ruleName ].message = defaultMessage;
+};
+
+// exists:X,Y
+foreignRuleGenerator('exists',
+  '{$alias} must match an existing {$matchAlias} in a {$class}',
+  function isInvalid(value, model, models, fieldName)
+  {
+    return !models.contains(function isDifferentMatch(m)
+    {
+      return m !== model && equals( value, m.$get( fieldName ) );
+    });
+  }
+);
+
+// unique:X,Y
+foreignRuleGenerator('unique',
+  '{$alias} must be a unique {$matchAlias} in a {$class}',
+  function isInvalid(value, model, models, fieldName)
+  {
+    return models.contains(function isDifferentMatch(m)
+    {
+      return m !== model && equals( value, m.$get( fieldName ) );
+    });
+  }
+);
+
+function foreignRuleGenerator(ruleName, defaultMessage, isInvalid)
+{
+  Validation.Rules[ ruleName ] = function(field, params, database, getAlias, message)
+  {
+    var parts = split( params || '', /(\s*,\s*)/, '\\' );
+    var modelName = parts[0] || database.name;
+    var fieldName = parts[1] || field;
+    var models = null;
+
+    if ( indexOf( database.fields, fieldName ) === false )
+    {
+      throw fieldName + ' is not a valid field for the ' + ruleName + ' rule';
+    }
+
+    Rekord.get( modelName ).success(function(modelClass)
+    {
+      models = modelClass.all();
+    });
+
+    var messageTemplate = determineMessage( ruleName, message );
+    var extra = {
+      $class: modelName,
+      $matchField: fieldName,
+      $matchAlias: getAlias( fieldName )
+    };
+
+    return function(value, model, setMessage)
+    {
+      if ( models && isValue( value ) )
+      {
+        if ( isInvalid( value, model, models, fieldName ) )
+        {
+          setMessage( generateMessage( field, getAlias( field ), value, model, messageTemplate, extra ) );
+        }
+      }
+
+      return value;
+    };
+  };
+
+  Validation.Rules[ ruleName ].message = defaultMessage;
+}
+
+// if:due_date:before:today|required
+
+// if all rules pass for the given field, continue with remaining rules
+subRuleGenerator('if',
+  function isInvalid(invalidCount, totalCount) {
+    return invalidCount > 0;
+  }
+);
+
+// if any rules pass for the given field, continue with remaining rules
+subRuleGenerator('if_any',
+  function isInvalid(invalidCount, totalCount) {
+    return invalidCount >= totalCount;
+  }
+);
+
+// if no rules pass for the given field, continue with remaining rules
+subRuleGenerator('if_not',
+  function isInvalid(invalidCount, totalCount) {
+    return invalidCount < totalCount;
+  }
+);
+
+
+
+function subRuleGenerator(ruleName, isInvalid)
+{
+  Validation.Rules[ ruleName ] = function(field, params, database, getAlias, message)
+  {
+    if ( !params )
+    {
+      throw ruleName + ' validation rule requires a validation rule argument';
+    }
+
+    var colon = params.indexOf( ':' );
+
+    if ( colon === -1 )
+    {
+      throw params + ' is not a valid argument for the ' + ruleName + ' rule';
+    }
+
+    var otherField = params.substring( 0, colon );
+    var otherRules = params.substring( colon + 1 );
+
+    if ( indexOf( database.fields, otherField ) === -1 )
+    {
+      throw otherField + ' is not a valid field for the ' + ruleName + ' rule';
+    }
+
+    var validators = Validation.parseRules( otherRules, otherField, database, getAlias );
+
+    return function(value, model, setMessage)
+    {
+      var invalids = 0;
+
+      var setInvalid = function(message)
+      {
+        if ( message )
+        {
+          invalids++;
+        }
+      };
+
+      for (var i = 0; i < validators.length; i++)
+      {
+        validators[ i ]( value, model, setInvalid );
+      }
+
+      return isInvalid( invalids, validators.length ) ? Validation.Stop : value;
+    };
+  };
+}
+
+// in:X,Y,Z,...
+listRuleGenerator('in',
+  '{$alias} must be one of {$list}.',
+  function isInvalid(value, model, values, map)
+  {
+    return !map[ value ];
+  }
+);
+
+// not_in:X,Y,Z,...
+listRuleGenerator('not_in',
+  '{$alias} must not be one of {$list}.',
+  function isInvalid(value, model, values, map)
+  {
+    return map[ value ];
+  }
+);
+
+function listRuleGenerator(ruleName, defaultMessage, isInvalid)
+{
+  Validation.Rules[ ruleName ] = function(field, params, database, getAlias, message)
+  {
+    if ( !params )
+    {
+      throw ruleName + ' validation rule requires a list argument';
+    }
+
+    var values = split( params, /(,)/, '\\' );
+
+    if ( values.length === 0 )
+    {
+      throw params + ' is not a valid list of values for the ' + ruleName + ' rule';
+    }
+
+    var messageTemplate = determineMessage( ruleName, message );
+    var list = joinFriendly( values, 'or' );
+    var extra = {
+      $params: params,
+      $list: list
+    };
+    var map = mapFromArray( values, true );
+
+    return function(value, model, setMessage)
+    {
+      if ( isInvalid( value, model, values, map ) )
+      {
+        setMessage( generateMessage( field, getAlias( field ), value, model, messageTemplate, extra ) );
+      }
+
+      return value;
+    };
+  };
+
+
+  Validation.Rules[ ruleName ].message = defaultMessage;
+}
+
+
+
+regexRuleGenerator('alpha',
+  '{$alias} should only contain alphabetic characters.',
+    /^[a-zA-Z]*$/
+);
+
+regexRuleGenerator('alpha_dash',
+  '{$alias} should only contain alpha-numeric characters, dashes, and underscores.',
+  /^[a-zA-Z0-9_-]*$/
+);
+
+regexRuleGenerator('alpha_num',
+  '{$alias} should only contain alpha-numeric characters.',
+  /^[a-zA-Z0-9]*$/
+);
+
+regexRuleGenerator('email',
+  '{$alias} is not a valid email.',
+  /^.+@.+\..+$/
+);
+
+regexRuleGenerator('url',
+  '{$alias} is not a valid URL.',
+  /^(https?:\/\/)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)$/
+);
+
+regexRuleGenerator('uri',
+  '{$alias} is not a valid URI.',
+  /^(\w+:\/\/)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)$/
+);
+
+regexRuleGenerator('phone',
+  '{$alias} is not a valid phone number.',
+  /^1?\W*([2-9][0-8][0-9])\W*([2-9][0-9]{2})\W*([0-9]{4})(\se?x?t?(\d*))?$/
+);
+
+function regexRuleGenerator(ruleName, defaultMessage, regex)
+{
+  Validation.Rules[ ruleName ] = function(field, params, database, getAlias, message)
+  {
+    checkNoParams( ruleName, field, params );
+
+    var messageTemplate = determineMessage( ruleName, message );
+
+    return function(value, model, setMessage)
+    {
+      if ( !regex.test( value ) )
+      {
+        setMessage( generateMessage( field, getAlias( field ), value, model, messageTemplate ) );
+      }
+
+      return value;
+    };
+  };
+
+  Validation.Rules[ ruleName ].message = defaultMessage;
+}
+
+Validation.Rules.regex = function(field, params, database, getAlias, message)
+{
+  var parsed = /^\/(.*)\/([gmi]*)$/.exec( params );
+
+  if ( !parsed )
+  {
+    throw params + ' is not a valid regular expression for the regex rule';
+  }
+
+  var regex = new RegExp( parsed[1], parsed[2] );
+  var messageTemplate = determineMessage( 'regex', message );
+
+  return function(value, model, setMessage)
+  {
+    if ( !regex.test( value ) )
+    {
+      setMessage( generateMessage( field, getAlias( field ), value, model, messageTemplate ) );
+    }
+
+    return value;
+  };
+};
+
+Validation.Rules.regex.message = '{$alias} is not a valid value.';
+
+// required
+ruleGenerator('required',
+  '{$alias} is required.',
+  function isInvalid(value) {
+    return isEmpty( value );
+  }
+);
+
+// min:3
+sizeRuleGenerator('min', {
+    'string': '{$alias} must have a minimum of {$number} characters.',
+    'number': '{$alias} must be at least {$number}.',
+    'object': '{$alias} must have at least {$number} items.'
+  },
+  function isInvalid(value, number) {
+    return value < number;
+  }
+);
+
+// greater_than:0
+sizeRuleGenerator('greater_than', {
+    'string': '{$alias} must have more than {$number} characters.',
+    'number': '{$alias} must be greater than {$number}.',
+    'object': '{$alias} must have more than {$number} items.'
+  },
+  function isInvalid(value, number) {
+    return value <= number;
+  }
+);
+
+// max:10
+sizeRuleGenerator('max', {
+    'string': '{$alias} must have no more than {$number} characters.',
+    'number': '{$alias} must be no more than {$number}.',
+    'object': '{$alias} must have no more than {$number} items.'
+  },
+  function isInvalid(value, number) {
+    return value > number;
+  }
+);
+
+// less_than:5
+sizeRuleGenerator('less_than', {
+    'string': '{$alias} must have less than {$number} characters.',
+    'number': '{$alias} must be less than {$number}.',
+    'object': '{$alias} must have less than {$number} items.'
+  },
+  function isInvalid(value, number) {
+    return value >= number;
+  }
+);
+
+// equal:4.5
+sizeRuleGenerator('equal', {
+    'string': '{$alias} must have {$number} characters.',
+    'number': '{$alias} must equal {$number}.',
+    'object': '{$alias} must have {$number} items.'
+  },
+  function isInvalid(value, number) {
+    return value !== number;
+  }
+);
+
+// not_equal:0
+sizeRuleGenerator('not_equal', {
+    'string': '{$alias} must not have {$number} characters.',
+    'number': '{$alias} must not equal {$number}.',
+    'object': '{$alias} must not have {$number} items.'
+  },
+  function isInvalid(value, number) {
+    return value === number;
+  }
+);
+
+function sizeRuleGenerator(ruleName, defaultMessages, isInvalid)
+{
+  Validation.Rules[ ruleName ] = function(field, params, database, getAlias, message)
+  {
+    if ( !params )
+    {
+      throw ruleName + ' validation rule requires a number argument';
+    }
+
+    var number = parseFloat( params );
+
+    if ( isNaN( number ) )
+    {
+      throw params + ' is not a valid number for the ' + ruleName + ' rule';
+    }
+
+    if ( isString( message ) )
+    {
+      message = {
+        'string': message,
+        'number': message,
+        'object': message
+      };
+    }
+
+    var messageTemplate = determineMessage( ruleName, message );
+    var extra = {
+      $number: params
+    };
+
+    return function(value, model, setMessage)
+    {
+      var size = sizeof( value );
+      var type = typeof( value );
+      var typeMessage = messageTemplate[ type ];
+
+      if ( typeMessage && isInvalid( size, number ) )
+      {
+        extra.$size = size;
+
+        setMessage( generateMessage( field, getAlias( field ), value, model, typeMessage, extra ) );
+      }
+
+      return value;
+    };
+  };
+
+  Validation.Rules[ ruleName ].message = defaultMessages;
+}
+
+
+ruleGenerator('array',
+  '{$alias} must be an array.',
+  function isInvalid(value) {
+    return !isArray( value );
+  }
+);
+
+ruleGenerator('object',
+  '{$alias} must be an object.',
+  function isInvalid(value) {
+    return !isObject( value );
+  }
+);
+
+ruleGenerator('string',
+  '{$alias} must be a string.',
+  function isInvalid(value) {
+    return !isString( value );
+  }
+);
+
+ruleGenerator('number',
+  '{$alias} must be a number.',
+  function isInvalid(value) {
+    return !isNumber( value );
+  }
+);
+
+ruleGenerator('boolean',
+  '{$alias} must be a true or false.',
+  function isInvalid(value) {
+    return !isBoolean( value );
+  }
+);
+
+ruleGenerator('model',
+  '{$alias} must have a value.',
+  function isInvalid(value) {
+    return !(value instanceof Model);
+  }
+);
+
+ruleGenerator('whole',
+  '{$alias} must be a whole number.',
+  function isInvalid(value, model, setValue) {
+    var parsed = tryParseInt( value );
+    var numeric = parseFloat( value );
+    var invalid = !isNumber( parsed );
+    if ( !invalid ) {
+      invalid = Math.floor( parsed ) !== numeric;
+      if ( !invalid ) {
+        setValue( parsed );
+      }
+    }
+    return invalid;
+  }
+);
+
+ruleGenerator('numeric',
+  '{$alias} must be numeric.',
+  function isInvalid(value, model, setValue) {
+    var parsed = tryParseFloat( value );
+    var invalid = !isNumber( parsed );
+    if ( !invalid ) {
+      setValue( parsed );
+    }
+    return invalid;
+  }
+);
+
+ruleGenerator('yesno',
+  '{$alias} must be a yes or no.',
+  function isInvalid(value, model, setValue) {
+    var mapped = Validation.Rules.yesno.map[ value ];
+    var invalid = !isBoolean( mapped );
+    if ( !invalid ) {
+      setValue( mapped );
+    }
+    return invalid;
+  }
+);
+
+Validation.Rules.yesno.map =
+{
+  'true':   true,
+  't':      true,
+  'yes':    true,
+  'y':      true,
+  '1':      true,
+  'false':  false,
+  'f':      false,
+  'no':     false,
+  'n':      false,
+  '0':      false
+};
+
+Validation.Rules.ceil = function(field, params, database, alias, message)
+{
+  return function(value, model, setMessage)
+  {
+    value = tryParseFloat( value );
+    
+    if ( isNumber( value ) )
+    {
+      value = Math.ceil( value );
+    }
+
+    return value;
+  };
+};
+
+Validation.Rules.floor = function(field, params, database, alias, message)
+{
+  return function(value, model, setMessage)
+  {
+    value = tryParseFloat( value );
+    
+    if ( isNumber( value ) )
+    {
+      value = Math.floor( value );
+    }
+
+    return value;
+  };
+};
+
+Validation.Rules.trim = function(field, params, database, alias, message)
+{
+  // String.trim polyfill
+  if ( !String.prototype.trim )
+  {
+    var regex = /^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g;
+
+    String.prototype.trim = function()
+    {
+      return this.replace( regex, '' );
+    };
+  }
+
+  return function(value, model, setMessage)
+  {
+    if ( isString( value ) )
+    {
+      value = value.trim();
+    }
+
+    return value;
+  };
+};
+
 
   /* Top-Level Function */
   global.Rekord = Rekord;
@@ -15001,7 +16707,7 @@ addMethods( Shard.prototype,
   Rekord.HasManyThrough = HasManyThrough;
   Rekord.HasRemote = HasRemote;
 
-  /* Utility Functions */
+  /* Common Functions */
   Rekord.isRekord = isRekord;
   Rekord.isDefined = isDefined;
   Rekord.isFunction = isFunction;
@@ -15013,62 +16719,80 @@ addMethods( Shard.prototype,
   Rekord.isArray = isArray;
   Rekord.isObject = isObject;
   Rekord.isValue = isValue;
-
+  Rekord.noop = noop;
+  Rekord.bind = bind;
   Rekord.uuid = uuid;
-  Rekord.indexOf = indexOf;
-  Rekord.propsMatch = propsMatch;
-  Rekord.hasFields = hasFields;
+  Rekord.sizeof = sizeof;
+  Rekord.isEmpty = isEmpty;
+  Rekord.evaluate = evaluate;
+
+  /* Array Functions */
   Rekord.toArray = toArray;
+  Rekord.indexOf = indexOf;
+  Rekord.collect = collect;
+  Rekord.swap = swap;
+  Rekord.reverse = reverse;
+  Rekord.isSorted = isSorted;
+  Rekord.isPrimitiveArray = isPrimitiveArray;
 
-  Rekord.addEventful = addEventful;
-
+  /* Class Functions */
   Rekord.extend = extend;
   Rekord.extendArray = extendArray;
+  Rekord.addMethod = addMethod;
+  Rekord.addMethods = addMethods;
+  Rekord.replaceMethod = replaceMethod;
   Rekord.copyConstructor = copyConstructor;
   Rekord.factory = factory;
 
-  Rekord.transfer = transfer;
-  Rekord.collapse = collapse;
-  Rekord.swap = swap;
-  Rekord.reverse = reverse;
-  Rekord.grab = grab;
-  Rekord.pull = pull;
-  Rekord.copy = copy;
-  Rekord.noop = noop;
-  Rekord.bind = bind;
-  Rekord.diff = diff;
-  Rekord.sizeof = sizeof;
-  Rekord.isEmpty = isEmpty;
-  Rekord.collect = collect;
-  Rekord.applyOptions = applyOptions;
-  Rekord.toCamelCase = toCamelCase;
-  Rekord.evaluate = evaluate;
+  /* Comparator Functions */
+  Rekord.Comparators = Comparators;
+  Rekord.saveComparator = saveComparator;
+  Rekord.addComparator = addComparator;
+  Rekord.createComparator = createComparator;
 
-  Rekord.clean = clean;
-  Rekord.cleanFunctions = cleanFunctions;
-
-  Rekord.compare = compare;
-  Rekord.compareNumbers = compareNumbers;
-  Rekord.equals = equals;
+  /* Comparison Functions */
   Rekord.equalsStrict = equalsStrict;
   Rekord.equalsCompare = equalsCompare;
+  Rekord.equals = equals;
+  Rekord.compareNumbers = compareNumbers;
+  Rekord.compare = compare;
 
-  Rekord.isSorted = isSorted;
-  Rekord.saveComparator = saveComparator;
-  Rekord.createComparator = createComparator;
-  Rekord.addComparator = addComparator;
+  /* Eventful Functions */
+  Rekord.addEventFunction = addEventFunction;
+  Rekord.addEventful = addEventful;
 
-  Rekord.saveWhere = saveWhere;
-  Rekord.createWhere = createWhere;
+  /* Object Functions */
+  Rekord.applyOptions = applyOptions;
+  Rekord.propsMatch = propsMatch;
+  Rekord.hasFields = hasFields;
+  Rekord.grab = grab;
+  Rekord.pull = pull;
+  Rekord.transfer = transfer;
+  Rekord.collapse = collapse;
+  Rekord.clean = clean;
+  Rekord.cleanFunctions = cleanFunctions;
+  Rekord.copy = copy;
+  Rekord.diff = diff;
 
-  Rekord.savePropertyResolver = savePropertyResolver;
-  Rekord.createPropertyResolver = createPropertyResolver;
-
-  Rekord.saveNumberResolver = saveNumberResolver;
-  Rekord.createNumberResolver = createNumberResolver;
-
+  /* Parse Functions */
   Rekord.parse = parse;
   Rekord.format = format;
   Rekord.createFormatter = createFormatter;
+
+  /* Resolver Functions */
+  Rekord.NumberResolvers = NumberResolvers;
+  Rekord.saveNumberResolver = saveNumberResolver;
+  Rekord.createNumberResolver = createNumberResolver;
+  Rekord.PropertyResolvers = PropertyResolvers;
+  Rekord.savePropertyResolver = savePropertyResolver;
+  Rekord.createPropertyResolver = createPropertyResolver;
+
+  /* String Functions */
+  Rekord.toCamelCase = toCamelCase;
+
+  /* Where Functions */
+  Rekord.Wheres = Wheres;
+  Rekord.saveWhere = saveWhere;
+  Rekord.createWhere = createWhere;
 
 })(this);

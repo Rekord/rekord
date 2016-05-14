@@ -15,7 +15,6 @@ var build = {
     './src/header.js',
     './src/lib/functions/*',
     './src/lib/Rekord.js',
-    './src/lib/plugins/*.js',
     './src/lib/debug.js',
     './src/lib/rest.js',
     './src/lib/store.js',
@@ -56,6 +55,8 @@ var build = {
     './src/lib/relations/HasRemote.js',
     './src/lib/relations/Polymorphic.js',
     './src/lib/Shard.js',
+    './src/lib/plugins/*.js',
+    './src/lib/validation/**/*.js',
     './src/footer.js'
   ]
 };
