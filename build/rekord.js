@@ -10867,6 +10867,11 @@ addMethods( Relation.prototype,
 
     if ( this.discriminated )
     {
+      if ( !Polymorphic )
+      {
+        throw 'Polymorphic feature is required to use the discriminated option.';
+      }
+
       addMethods( this, Polymorphic );
     }
 
@@ -10993,6 +10998,11 @@ addMethods( Relation.prototype,
 
   executeQuery: function(model)
   {
+    if ( !Search )
+    {
+      throw 'Search feature is required to use the query option.';
+    }
+
     var queryOption = this.query;
     var queryOptions = this.queryOptions;
     var queryData = this.queryData;
@@ -14915,7 +14925,22 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 
   function decode(x)
   {
-    return isNumber( x ) ? new Date( x ) : (isString( x ) && Date.parse ? Date.parse( x ) : x);
+    if ( isString( x ) && Date.parse )
+    {
+      var parsed = Date.parse( x );
+
+      if ( !isNaN( parsed ) )
+      {
+        x = parsed;
+      }
+    }
+
+    if ( isNumber( x ) )
+    {
+      return new Date( x );
+    }
+
+    return x;
   }
 
   function addTimestamp(field)
@@ -14959,13 +14984,14 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 
     db.ignoredFields[ field ] = true;
 
-    var $save = model.prototype.$save;
-
-    addMethod( model.prototype, '$save', function()
+    replaceMethod( model.prototype, '$save', function($save)
     {
-      this[ field ] = currentTimestamp();
+      return function()
+      {
+        this[ field ] = currentTimestamp();
 
-      $save.apply( this, arguments );
+        $save.apply( this, arguments );
+      };
     });
   }
 
@@ -15004,6 +15030,7 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
     addCreatedAt( 'created_at' );
     addUpdatedAt( 'updated_at' );
   }
+
 });
 
 Rekord.on( Rekord.Events.Plugins, function(model, db, options)
@@ -15523,7 +15550,7 @@ Validation.Expressions.push(function(expr, database)
     {
       var today = new Date();
 
-      today.setHours( 0, 0, 0, 0 );
+      startOfDay( today );
 
       return today.getTime();
     };
@@ -15540,7 +15567,7 @@ Validation.Expressions.push(function(expr, database)
       var tomorrow = new Date();
 
       tomorrow.setDate( tomorrow.getDate() + 1 );
-      tomorrow.setHours( 0, 0, 0, 0 );
+      startOfDay( tomorrow );
 
       return tomorrow.getTime();
     };
@@ -15557,7 +15584,7 @@ Validation.Expressions.push(function(expr, database)
       var yesterday = new Date();
 
       yesterday.setDate( yesterday.getDate() - 1 );
-      yesterday.setHours( 0, 0, 0, 0 );
+      startOfDay( yesterday );
 
       return yesterday.getTime();
     };

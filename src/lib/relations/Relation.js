@@ -52,6 +52,11 @@ addMethods( Relation.prototype,
 
     if ( this.discriminated )
     {
+      if ( !Polymorphic )
+      {
+        throw 'Polymorphic feature is required to use the discriminated option.';
+      }
+
       addMethods( this, Polymorphic );
     }
 
@@ -178,6 +183,11 @@ addMethods( Relation.prototype,
 
   executeQuery: function(model)
   {
+    if ( !Search )
+    {
+      throw 'Search feature is required to use the query option.';
+    }
+
     var queryOption = this.query;
     var queryOptions = this.queryOptions;
     var queryData = this.queryData;
