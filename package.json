@@ -22,6 +22,7 @@
     "gulp-util": "^3.0.7",
     "gulp-watch": "^4.3.5",
     "jaguarjs-jsdoc": "0.0.1",
-    "jsdoc": "^3.4.0"
+    "jsdoc": "^3.4.0",
+    "merge-stream": "^1.0.0"
   }
 }
