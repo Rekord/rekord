@@ -223,7 +223,6 @@ Rekord.sizeRuleGenerator = sizeRuleGenerator;
 Rekord.joinFriendly = joinFriendly;
 Rekord.tryParseFloat = tryParseFloat;
 Rekord.tryParseInt = tryParseInt;
-Rekord.tryParseDate = tryParseDate;
 Rekord.startOfDay = startOfDay;
 Rekord.endOfDay = endOfDay;
 Rekord.determineMessage = determineMessage;

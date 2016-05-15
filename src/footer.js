@@ -103,6 +103,7 @@
   Rekord.parse = parse;
   Rekord.format = format;
   Rekord.createFormatter = createFormatter;
+  Rekord.parseDate = parseDate;
 
   /* Resolver Functions */
   Rekord.NumberResolvers = NumberResolvers;

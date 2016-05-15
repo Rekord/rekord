@@ -1056,8 +1056,7 @@ test( 'timestamps default', function(assert)
     name: prefix + 'todo',
     fields: ['name', 'done'],
     defaults: { done: false },
-    timestamps: true,
-    timestampsAsDate: true
+    timestamps: true
   });
 
   Todo.Database.defaults.updated_at = currentDate();
@@ -1100,7 +1099,6 @@ test( 'timestamps default global default', function(assert)
   var prefix = 'timestamps_default_default_';
 
   Rekord.Database.Defaults.timestamps = true;
-  Rekord.Database.Defaults.timestampsAsDate = true;
 
   var Todo = Rekord({
     name: prefix + 'todo',
@@ -1141,7 +1139,6 @@ test( 'timestamps default global default', function(assert)
   }, 2 );
 
   delete Rekord.Database.Defaults.timestamps;
-  delete Rekord.Database.Defaults.timestampsAsDate;
 });
 
 test( 'timestamps custom', function(assert)
@@ -1161,7 +1158,162 @@ test( 'timestamps custom', function(assert)
 
   strictEqual( t0.name, 't0' );
   strictEqual( t0.done, false );
-  isType( t0.done_at, 'number' );
+  isInstance( t0.done_at, Date );
+});
+
+test( 'timestamps type date', function(assert)
+{
+  var prefix = 'timestamps_type_date_';
+
+  var Todo = Rekord({
+    name: prefix + 'todo',
+    fields: ['name', 'done'],
+    defaults: { done: false },
+    timestamps: 'done_at',
+    timestampType: Rekord.Timestamp.Date
+  });
+
+  deepEqual( Todo.Database.fields, ['id', 'name', 'done', 'done_at'] );
+
+  var t0 = Todo.boot({id: 1, name: 't0', done_at: '01/02/2003'});
+
+  isInstance( t0.done_at, Date );
+});
+
+test( 'timestamps type millis', function(assert)
+{
+  var prefix = 'timestamps_type_millis_';
+
+  var Todo = Rekord({
+    name: prefix + 'todo',
+    fields: ['name', 'done'],
+    defaults: { done: false },
+    timestamps: 'done_at',
+    timestampType: Rekord.Timestamp.Millis
+  });
+
+  deepEqual( Todo.Database.fields, ['id', 'name', 'done', 'done_at'] );
+
+  var t0 = Todo.boot({id: 1, name: 't0', done_at: '01/02/2003'});
+
+  strictEqual( t0.done_at, 1041483600000 );
+});
+
+test( 'timestamps type seconds', function(assert)
+{
+  var prefix = 'timestamps_type_seconds_';
+
+  var Todo = Rekord({
+    name: prefix + 'todo',
+    fields: ['name', 'done'],
+    defaults: { done: false },
+    timestamps: 'done_at',
+    timestampType: Rekord.Timestamp.Seconds
+  });
+
+  deepEqual( Todo.Database.fields, ['id', 'name', 'done', 'done_at'] );
+
+  var t0 = Todo.boot({id: 1, name: 't0', done_at: '01/02/2003'});
+
+  strictEqual( t0.done_at, 1041483600 );
+});
+
+test( 'timestamps type custom', function(assert)
+{
+  var prefix = 'timestamps_type_custom_';
+
+  Rekord.formatDate = function(date, format) {
+    // format = 'yyyy-m-d'
+    return date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + date.getDate();
+  };
+
+  var Todo = Rekord({
+    name: prefix + 'todo',
+    fields: ['name', 'done'],
+    defaults: { done: false },
+    timestamps: 'done_at',
+    timestampType: 'yyyy-m-d'
+  });
+
+  deepEqual( Todo.Database.fields, ['id', 'name', 'done', 'done_at'] );
+
+  var t0 = Todo.boot({id: 1, name: 't0', done_at: '01/02/2003'});
+
+  strictEqual( t0.done_at, '2003-1-2' );
+});
+
+test( 'timestamps format millis', function(assert)
+{
+  var prefix = 'timestamps_format_millis_';
+
+  var Todo = Rekord({
+    name: prefix + 'todo',
+    fields: ['name', 'done'],
+    defaults: { done: false },
+    timestamps: 'done_at',
+    timestampFormat: Rekord.Timestamp.Millis
+  });
+
+  deepEqual( Todo.Database.fields, ['id', 'name', 'done', 'done_at'] );
+
+  var t0 = Todo.boot({id: 1, name: 't0', done_at: '01/02/2003'});
+
+  isInstance( t0.done_at, Date );
+
+  var e0 = t0.$toJSON(true);
+
+  strictEqual( e0.done_at, 1041483600000 );
+});
+
+test( 'timestamps format seconds', function(assert)
+{
+  var prefix = 'timestamps_format_seconds_';
+
+  var Todo = Rekord({
+    name: prefix + 'todo',
+    fields: ['name', 'done'],
+    defaults: { done: false },
+    timestamps: 'done_at',
+    timestampFormat: Rekord.Timestamp.Seconds
+  });
+
+  deepEqual( Todo.Database.fields, ['id', 'name', 'done', 'done_at'] );
+
+  var t0 = Todo.boot({id: 1, name: 't0', done_at: '01/02/2003'});
+
+  isInstance( t0.done_at, Date );
+
+  var e0 = t0.$toJSON(true);
+
+  strictEqual( e0.done_at, 1041483600 );
+});
+
+test( 'timestamps format custom', function(assert)
+{
+  var prefix = 'timestamps_format_custom_';
+
+  Rekord.formatDate = function(date, format) {
+    // format = 'yyyy-m-d'
+    return date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + date.getDate();
+  };
+
+  var Todo = Rekord({
+    name: prefix + 'todo',
+    fields: ['name', 'done'],
+    defaults: { done: false },
+    timestamps: 'done_at',
+    timestampFormat: 'yyyy-m-d'
+  });
+
+  deepEqual( Todo.Database.fields, ['id', 'name', 'done', 'done_at'] );
+
+  var t0 = Todo.boot({id: 1, name: 't0', done_at: '01/02/2003'});
+
+  isInstance( t0.done_at, Date );
+
+  var e0 = t0.$toJSON(true);
+
+  strictEqual( e0.done_at, '2003-1-2' );
 });
 
 test( 'timestamps updated_at saving skipped', function(assert)
@@ -1196,8 +1348,7 @@ test( 'timestamps renamed', function(assert)
     name: prefix + 'todo',
     fields: ['name', 'done'],
     defaults: { done: false },
-    timestamps: {created_at: 'created_tms', updated_at: 'updated_tms'},
-    timestampsAsDate: true
+    timestamps: {created_at: 'created_tms', updated_at: 'updated_tms'}
   });
 
   Todo.Database.defaults.updated_tms = currentDate();

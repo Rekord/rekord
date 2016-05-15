@@ -45,10 +45,10 @@ var ModelClass = Rekord({
   // saves with only updated_at.
   timestamps: true, // default: false
 
-  // (boolean) The option which determines whether encodings and decodings are added for the timestamp fields determined
-  // above. They are converted to the Date object if their remote value is a UNIX timestamp or date string. They are
-  // converted from Date objects to UNIX timestamps on save.
-  timestampsAsDate: true, // default: false
+  // TODO document
+  timestampFormat: Rekord.Timestamp.Millis, // default: 'millis'
+  timestampType: Rekord.Timestamp.Date, // default: 'date'
+  timestampUTC: false, // default: false
 
   // (Rekord) This class can optionally extend another class. All fields are copied over, options that aren't specified
   // in this class are copied from the parent (or merged if objects).

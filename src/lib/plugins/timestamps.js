@@ -1,47 +1,32 @@
 Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 {
   var time = options.timestamps || Database.Defaults.timestamps;
-  var timeAsDate = options.timestampsAsDate || Database.Defaults.timestampsAsDate;
-  var currentTimestamp = timeAsDate ? currentDate : currentTime;
+  var timeFormat = options.timestampFormat || Database.Defaults.timestampFormat;
+  var timeType = options.timestampType || Database.Defaults.timestampType;
+  var timeUTC = options.timestampUTC || Database.Defaults.timestampUTC;
 
   if ( !time )
   {
     return;
   }
 
-  function currentTime()
+  function currentTimestamp()
   {
-    return new Date().getTime();
-  }
-
-  function currentDate()
-  {
-    return new Date();
+    return convertDate( new Date(), timeType );
   }
 
   function encode(x)
   {
-    return x instanceof Date ? x.getTime() : x;
+    var encoded = convertDate( x, timeFormat );
+
+    return encoded || x;
   }
 
   function decode(x)
   {
-    if ( isString( x ) && Date.parse )
-    {
-      var parsed = Date.parse( x );
+    var decoded = convertDate( x, timeType, timeUTC );
 
-      if ( !isNaN( parsed ) )
-      {
-        x = parsed;
-      }
-    }
-
-    if ( isNumber( x ) )
-    {
-      return new Date( x );
-    }
-
-    return x;
+    return decoded || x;
   }
 
   function addTimestamp(field)
@@ -58,17 +43,13 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
     {
       db.defaults[ field ] = currentTimestamp;
     }
-
-    if ( timeAsDate )
+    if ( timeFormat && !(field in db.encodings) )
     {
-      if ( !(field in db.encodings) )
-      {
-        db.encodings[ field ] = encode;
-      }
-      if ( !(field in db.decodings ) )
-      {
-        db.decodings[ field ] = decode;
-      }
+      db.encodings[ field ] = encode;
+    }
+    if ( timeType && !(field in db.decodings ) )
+    {
+      db.decodings[ field ] = decode;
     }
   }
 
@@ -133,3 +114,44 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
   }
 
 });
+
+var Timestamp = {
+  Date: 'date',
+  Millis: 'millis',
+  Seconds: 'seconds'
+};
+
+Database.Defaults.timestampFormat = Timestamp.Millis;
+Database.Defaults.timestampType = Timestamp.Date;
+Database.Defaults.timestampUTC = false;
+
+function convertDate(x, to, utc)
+{
+  var date = parseDate( x, utc );
+
+  if ( date === false )
+  {
+    return false;
+  }
+
+  if ( !to )
+  {
+    return date;
+  }
+
+  switch (to)
+  {
+    case Timestamp.Date:
+      return date;
+    case Timestamp.Millis:
+      return date.getTime();
+    case Timestamp.Seconds:
+      return Math.floor( date.getTime() / 1000 );
+    default:
+      return Rekord.formatDate( date, to );
+  }
+}
+
+Rekord.Timestamp = Timestamp;
+Rekord.formatDate = noop;
+Rekord.convertDate = convertDate;

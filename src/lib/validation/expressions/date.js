@@ -1,13 +1,15 @@
 Validation.Expression.date =
 Validation.Expressions.push(function(expr, database)
 {
-  var parsed = tryParseDate( expr );
+  var parsed = parseDate( expr );
 
-  if ( !isNaN(parsed) )
+  if ( parsed !== false )
   {
+    var parsedTime = parsed.getTime();
+
     return function(value, model)
     {
-      return parsed;
+      return parsedTime;
     };
   }
 }) - 1;

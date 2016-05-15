@@ -1627,6 +1627,26 @@ function createFormatter(template)
   };
 }
 
+function parseDate(x, utc)
+{
+  if ( isString( x ) )
+  {
+    if ( utc ) x += ' UTC';
+
+    x = Date.parse ? Date.parse( x ) : new Date( x );
+  }
+  if ( isNumber( x ) )
+  {
+    x = new Date( x );
+  }
+  if ( isDate( x ) && isNumber( x.getTime() ) )
+  {
+    return x;
+  }
+
+  return false;
+}
+
 
 
 /**
@@ -14900,47 +14920,32 @@ Rekord.on( Rekord.Events.Options, function(options)
 Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 {
   var time = options.timestamps || Database.Defaults.timestamps;
-  var timeAsDate = options.timestampsAsDate || Database.Defaults.timestampsAsDate;
-  var currentTimestamp = timeAsDate ? currentDate : currentTime;
+  var timeFormat = options.timestampFormat || Database.Defaults.timestampFormat;
+  var timeType = options.timestampType || Database.Defaults.timestampType;
+  var timeUTC = options.timestampUTC || Database.Defaults.timestampUTC;
 
   if ( !time )
   {
     return;
   }
 
-  function currentTime()
+  function currentTimestamp()
   {
-    return new Date().getTime();
-  }
-
-  function currentDate()
-  {
-    return new Date();
+    return convertDate( new Date(), timeType );
   }
 
   function encode(x)
   {
-    return x instanceof Date ? x.getTime() : x;
+    var encoded = convertDate( x, timeFormat );
+
+    return encoded || x;
   }
 
   function decode(x)
   {
-    if ( isString( x ) && Date.parse )
-    {
-      var parsed = Date.parse( x );
+    var decoded = convertDate( x, timeType, timeUTC );
 
-      if ( !isNaN( parsed ) )
-      {
-        x = parsed;
-      }
-    }
-
-    if ( isNumber( x ) )
-    {
-      return new Date( x );
-    }
-
-    return x;
+    return decoded || x;
   }
 
   function addTimestamp(field)
@@ -14957,17 +14962,13 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
     {
       db.defaults[ field ] = currentTimestamp;
     }
-
-    if ( timeAsDate )
+    if ( timeFormat && !(field in db.encodings) )
     {
-      if ( !(field in db.encodings) )
-      {
-        db.encodings[ field ] = encode;
-      }
-      if ( !(field in db.decodings ) )
-      {
-        db.decodings[ field ] = decode;
-      }
+      db.encodings[ field ] = encode;
+    }
+    if ( timeType && !(field in db.decodings ) )
+    {
+      db.decodings[ field ] = decode;
     }
   }
 
@@ -15032,6 +15033,47 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
   }
 
 });
+
+var Timestamp = {
+  Date: 'date',
+  Millis: 'millis',
+  Seconds: 'seconds'
+};
+
+Database.Defaults.timestampFormat = Timestamp.Millis;
+Database.Defaults.timestampType = Timestamp.Date;
+Database.Defaults.timestampUTC = false;
+
+function convertDate(x, to, utc)
+{
+  var date = parseDate( x, utc );
+
+  if ( date === false )
+  {
+    return false;
+  }
+
+  if ( !to )
+  {
+    return date;
+  }
+
+  switch (to)
+  {
+    case Timestamp.Date:
+      return date;
+    case Timestamp.Millis:
+      return date.getTime();
+    case Timestamp.Seconds:
+      return Math.floor( date.getTime() / 1000 );
+    default:
+      return Rekord.formatDate( date, to );
+  }
+}
+
+Rekord.Timestamp = Timestamp;
+Rekord.formatDate = noop;
+Rekord.convertDate = convertDate;
 
 Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 {
@@ -15258,7 +15300,6 @@ Rekord.sizeRuleGenerator = sizeRuleGenerator;
 Rekord.joinFriendly = joinFriendly;
 Rekord.tryParseFloat = tryParseFloat;
 Rekord.tryParseInt = tryParseInt;
-Rekord.tryParseDate = tryParseDate;
 Rekord.startOfDay = startOfDay;
 Rekord.endOfDay = endOfDay;
 Rekord.determineMessage = determineMessage;
@@ -15285,37 +15326,6 @@ function tryParseInt(x)
   if ( !isNaN( parsed ) )
   {
     x = parsed;
-  }
-
-  return x;
-}
-
-function tryParseDate(x)
-{
-  if ( isDate( x ) )
-  {
-    x = x.getTime();
-  }
-  else if ( isString( x ) )
-  {
-    if ( Date.parse )
-    {
-      var parsed = Date.parse( x );
-
-      if ( !isNaN( parsed ) )
-      {
-        x = parsed;
-      }
-    }
-    else
-    {
-      var parsed = new Date( x );
-
-      if ( !isNaN( parsed.getTime() ) )
-      {
-        x = parsed;
-      }
-    }
   }
 
   return x;
@@ -15452,13 +15462,15 @@ function generateMessage(field, alias, value, model, message, extra)
 Validation.Expression.date =
 Validation.Expressions.push(function(expr, database)
 {
-  var parsed = tryParseDate( expr );
+  var parsed = parseDate( expr );
 
-  if ( !isNaN(parsed) )
+  if ( parsed !== false )
   {
+    var parsedTime = parsed.getTime();
+
     return function(value, model)
     {
-      return parsed;
+      return parsedTime;
     };
   }
 }) - 1;
@@ -15849,10 +15861,10 @@ dateRuleGenerator('before_on',
 ruleGenerator('date_like',
   '{$alias} must be a valid date.',
   function isInvalid(value, model, setValue) {
-    var parsed = tryParseDate( value );
-    var invalid = !isNumber( parsed );
+    var parsed = parseDate( value );
+    var invalid = parsed === false;
     if ( !invalid ) {
-      setValue( parsed );
+      setValue( parsed.getTime() );
     }
     return invalid;
   }
@@ -15881,10 +15893,12 @@ function dateRuleGenerator(ruleName, defaultMessage, isInvalid)
 
     return function(value, model, setMessage)
     {
-      value = tryParseDate( value );
+      var parsed = parseDate( value );
 
-      if ( isNumber( value ) )
+      if ( parsed !== false )
       {
+        value = parsed.getTime();
+
         var date = dateExpression( value, model );
 
         if ( isNumber( date ) && isInvalid( value, date ) )
@@ -16805,6 +16819,7 @@ Validation.Rules.trim = function(field, params, database, alias, message)
   Rekord.parse = parse;
   Rekord.format = format;
   Rekord.createFormatter = createFormatter;
+  Rekord.parseDate = parseDate;
 
   /* Resolver Functions */
   Rekord.NumberResolvers = NumberResolvers;

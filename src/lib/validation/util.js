@@ -22,37 +22,6 @@ function tryParseInt(x)
   return x;
 }
 
-function tryParseDate(x)
-{
-  if ( isDate( x ) )
-  {
-    x = x.getTime();
-  }
-  else if ( isString( x ) )
-  {
-    if ( Date.parse )
-    {
-      var parsed = Date.parse( x );
-
-      if ( !isNaN( parsed ) )
-      {
-        x = parsed;
-      }
-    }
-    else
-    {
-      var parsed = new Date( x );
-
-      if ( !isNaN( parsed.getTime() ) )
-      {
-        x = parsed;
-      }
-    }
-  }
-
-  return x;
-}
-
 function startOfDay(d)
 {
   if ( isDate( d ) )

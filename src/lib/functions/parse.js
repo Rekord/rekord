@@ -65,3 +65,23 @@ function createFormatter(template)
     return format( template, base );
   };
 }
+
+function parseDate(x, utc)
+{
+  if ( isString( x ) )
+  {
+    if ( utc ) x += ' UTC';
+
+    x = Date.parse ? Date.parse( x ) : new Date( x );
+  }
+  if ( isNumber( x ) )
+  {
+    x = new Date( x );
+  }
+  if ( isDate( x ) && isNumber( x.getTime() ) )
+  {
+    return x;
+  }
+
+  return false;
+}

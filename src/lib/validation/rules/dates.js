@@ -34,10 +34,10 @@ dateRuleGenerator('before_on',
 ruleGenerator('date_like',
   '{$alias} must be a valid date.',
   function isInvalid(value, model, setValue) {
-    var parsed = tryParseDate( value );
-    var invalid = !isNumber( parsed );
+    var parsed = parseDate( value );
+    var invalid = parsed === false;
     if ( !invalid ) {
-      setValue( parsed );
+      setValue( parsed.getTime() );
     }
     return invalid;
   }
@@ -66,10 +66,12 @@ function dateRuleGenerator(ruleName, defaultMessage, isInvalid)
 
     return function(value, model, setMessage)
     {
-      value = tryParseDate( value );
+      var parsed = parseDate( value );
 
-      if ( isNumber( value ) )
+      if ( parsed !== false )
       {
+        value = parsed.getTime();
+
         var date = dateExpression( value, model );
 
         if ( isNumber( date ) && isInvalid( value, date ) )
