@@ -59,14 +59,27 @@ function regexRuleGenerator(ruleName, defaultMessage, regex)
 
 Validation.Rules.regex = function(field, params, database, getAlias, message)
 {
-  var parsed = /^\/(.*)\/([gmi]*)$/.exec( params );
+  var regex;
 
-  if ( !parsed )
+  if ( isString( params ) )
+  {
+    var parsed = /^\/(.*)\/([gmi]*)$/.exec( params );
+
+    if ( parsed )
+    {
+      regex = new RegExp( parsed[1], parsed[2] );
+    }
+  }
+  else if ( isRegExp( params ) )
+  {
+    regex = params;
+  }
+
+  if ( !regex )
   {
     throw params + ' is not a valid regular expression for the regex rule';
   }
 
-  var regex = new RegExp( parsed[1], parsed[2] );
   var messageTemplate = determineMessage( 'regex', message );
 
   return function(value, model, setMessage)

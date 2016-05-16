@@ -1,18 +1,18 @@
 // in:X,Y,Z,...
 listRuleGenerator('in',
   '{$alias} must be one of {$list}.',
-  function isInvalid(value, model, values, map)
+  function isInvalid(value, model, inList)
   {
-    return !map[ value ];
+    return !inList( value, model );
   }
 );
 
 // not_in:X,Y,Z,...
 listRuleGenerator('not_in',
   '{$alias} must not be one of {$list}.',
-  function isInvalid(value, model, values, map)
+  function isInvalid(value, model, inList)
   {
-    return map[ value ];
+    return inList( value, model )
   }
 );
 
@@ -25,11 +25,44 @@ function listRuleGenerator(ruleName, defaultMessage, isInvalid)
       throw ruleName + ' validation rule requires a list argument';
     }
 
-    var values = split( params, /(,)/, '\\' );
+    var values, inList = false;
 
-    if ( values.length === 0 )
+    if ( isString( params ) )
     {
-      throw params + ' is not a valid list of values for the ' + ruleName + ' rule';
+      values = split( params, /(,)/, '\\' );
+    }
+    else if ( isArray( params ) )
+    {
+      values = params;
+    }
+    else if ( isFunction( params ) )
+    {
+      values = inList;
+    }
+
+    if ( inList !== false )
+    {
+      if ( !values || values.length === 0 )
+      {
+        throw params + ' is not a valid list of values for the ' + ruleName + ' rule';
+      }
+    }
+
+    if ( isPrimitiveArray( values ) )
+    {
+      var map = mapFromArray( values, true );
+
+      inList = function(value)
+      {
+        return map[ value ];
+      };
+    }
+    else
+    {
+      inList = function(value)
+      {
+        return indexOf( values, value, equals );
+      };
     }
 
     var messageTemplate = determineMessage( ruleName, message );
@@ -38,11 +71,12 @@ function listRuleGenerator(ruleName, defaultMessage, isInvalid)
       $params: params,
       $list: list
     };
-    var map = mapFromArray( values, true );
+
+
 
     return function(value, model, setMessage)
     {
-      if ( isInvalid( value, model, values, map ) )
+      if ( isInvalid( value, model, inList ) )
       {
         setMessage( generateMessage( field, getAlias( field ), value, model, messageTemplate, extra ) );
       }

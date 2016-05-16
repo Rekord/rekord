@@ -32,19 +32,39 @@ function subRuleGenerator(ruleName, isInvalid)
       throw ruleName + ' validation rule requires a validation rule argument';
     }
 
-    var colon = params.indexOf( ':' );
+    var otherField, otherRules;
 
-    if ( colon === -1 )
+    if ( isString( params ) )
     {
-      throw params + ' is not a valid argument for the ' + ruleName + ' rule';
-    }
+      var colon = params.indexOf( ':' );
 
-    var otherField = params.substring( 0, colon );
-    var otherRules = params.substring( colon + 1 );
+      if ( colon === -1 )
+      {
+        throw params + ' is not a valid argument for the ' + ruleName + ' rule';
+      }
+
+      otherField = params.substring( 0, colon ) || field;
+      otherRules = params.substring( colon + 1 );
+    }
+    else if ( isArray( params ) )
+    {
+      otherField = params.shift() || field;
+      otherRules = params;
+    }
+    else if ( isObject( params ) )
+    {
+      otherField = params.field || field;
+      otherRules = params.rules;
+    }
 
     if ( indexOf( database.fields, otherField ) === -1 )
     {
       throw otherField + ' is not a valid field for the ' + ruleName + ' rule';
+    }
+
+    if ( !otherRules )
+    {
+      throw 'rules are required for the ' + ruleName + ' rule';
     }
 
     var validators = Validation.parseRules( otherRules, otherField, database, getAlias );

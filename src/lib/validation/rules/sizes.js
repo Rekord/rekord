@@ -68,16 +68,20 @@ function sizeRuleGenerator(ruleName, defaultMessages, isInvalid)
 {
   Validation.Rules[ ruleName ] = function(field, params, database, getAlias, message)
   {
-    if ( !params )
-    {
-      throw ruleName + ' validation rule requires a number argument';
-    }
+    var number;
 
-    var number = parseFloat( params );
+    if ( isString( params ) )
+    {
+      number = parseFloat( params );
+    }
+    else if ( isNumber( params ) )
+    {
+      number = params;
+    }
 
     if ( isNaN( number ) )
     {
-      throw params + ' is not a valid number for the ' + ruleName + ' rule';
+      throw '"' + params + '" is not a valid number for the ' + ruleName + ' rule';
     }
 
     if ( isString( message ) )

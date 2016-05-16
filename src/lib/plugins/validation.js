@@ -139,8 +139,15 @@ var Validation =
     {
       for (var rule in rules)
       {
-        var ruleMessage = rules[ rule ];
-        var validator = this.parseRule( rule, field, database, getAlias, ruleMessage || message );
+        var ruleMessageOrData = rules[ rule ];
+
+        var ruleMessage = isObject( ruleMessageOrData ) ? ruleMessageOrData.message :
+          ( isString( ruleMessageOrData ) ? ruleMessageOrData : undefined );
+
+        var ruleInput = isObject( ruleMessageOrData ) && ruleMessageOrData.message ? ruleMessageOrData.input :
+          ( isString( ruleMessageOrData ) ? undefined : ruleMessageOrData );
+
+        var validator = this.parseRule( rule, field, database, getAlias, ruleMessage || message, ruleInput );
 
         validators.push( validator );
       }
@@ -149,7 +156,7 @@ var Validation =
     return validators;
   },
 
-  parseRule: function(rule, field, database, getAlias, message)
+  parseRule: function(rule, field, database, getAlias, message, input)
   {
     var colon = rule.indexOf( this.RuleSeparator );
     var ruleName = colon === -1 ? rule : rule.substring( 0, colon );
@@ -159,7 +166,7 @@ var Validation =
       return this.customValidator( ruleName, field, database, getAlias, message );
     }
 
-    var ruleParams = colon === -1 ? undefined : rule.substring( colon + 1 );
+    var ruleParams = colon === -1 ? input : rule.substring( colon + 1 );
     var validatorFactory = Validation.Rules[ ruleName ];
 
     if ( !validatorFactory )

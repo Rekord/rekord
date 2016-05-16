@@ -329,6 +329,45 @@ test( 'rule after override message', function(assert)
   pop();
 });
 
+test( 'rule after raw params', function(assert)
+{
+  var prefix = 'rule_after_raw_params_';
+
+  var msInDay = 86400000;
+  var now = Date.now();
+  var yesterday = new Date( now - msInDay );
+  var expectedMessage = 'due_date must be after yesterday.';
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['name', 'due_date'],
+    validation: {
+      rules: {
+        due_date: {
+          after: yesterday
+        }
+      },
+      messages: {
+        due_date: expectedMessage
+      }
+    }
+  });
+
+  var a = Task.create({name: 'a', due_date: now - msInDay * 2 });
+
+  notOk( a.$validate() );
+  notOk( a.$valid );
+  deepEqual( a.$validations, {due_date: expectedMessage} );
+  deepEqual( a.$validationMessages, [expectedMessage] );
+
+  a.due_date = now;
+
+  ok( a.$validate() );
+  ok( a.$valid );
+  deepEqual( a.$validations, {} );
+  deepEqual( a.$validationMessages, [] );
+});
+
 test( 'rule after missing date', function(assert)
 {
   var prefix = 'rule_after_missing_date_';
@@ -520,6 +559,45 @@ test( 'rule after_on override message', function(assert)
   deepEqual( a.$validationMessages, [] );
 
   pop();
+});
+
+test( 'rule after_on raw params', function(assert)
+{
+  var prefix = 'rule_after_on_raw_params_';
+
+  var msInDay = 86400000;
+  var now = Date.now();
+  var today = now;
+  var expectedMessage = 'due_date must be after or equal to today.';
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['name', 'due_date'],
+    validation: {
+      rules: {
+        due_date: {
+          after_on: today
+        }
+      },
+      messages: {
+        due_date: expectedMessage
+      }
+    }
+  });
+
+  var a = Task.create({name: 'a', due_date: now - msInDay });
+
+  notOk( a.$validate() );
+  notOk( a.$valid );
+  deepEqual( a.$validations, {due_date: expectedMessage} );
+  deepEqual( a.$validationMessages, [expectedMessage] );
+
+  a.due_date = now;
+
+  ok( a.$validate() );
+  ok( a.$valid );
+  deepEqual( a.$validations, {} );
+  deepEqual( a.$validationMessages, [] );
 });
 
 test( 'rule after_on missing date', function(assert)
@@ -715,6 +793,45 @@ test( 'rule before override message', function(assert)
   pop();
 });
 
+test( 'rule before raw params', function(assert)
+{
+  var prefix = 'rule_before_raw_params_';
+
+  var msInDay = 86400000;
+  var now = Date.now();
+  var tomorrow = now + msInDay - 1;
+  var expectedMessage = 'due_date must be before tomorrow.';
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['name', 'due_date'],
+    validation: {
+      rules: {
+        due_date: {
+          before: tomorrow
+        }
+      },
+      messages: {
+        due_date: expectedMessage
+      }
+    }
+  });
+
+  var a = Task.create({name: 'a', due_date: now + msInDay });
+
+  notOk( a.$validate() );
+  notOk( a.$valid );
+  deepEqual( a.$validations, {due_date: expectedMessage} );
+  deepEqual( a.$validationMessages, [expectedMessage] );
+
+  a.due_date = now;
+
+  ok( a.$validate() );
+  ok( a.$valid );
+  deepEqual( a.$validations, {} );
+  deepEqual( a.$validationMessages, [] );
+});
+
 test( 'rule before missing date', function(assert)
 {
   var prefix = 'rule_before_missing_date_';
@@ -906,6 +1023,45 @@ test( 'rule before_on override message', function(assert)
   deepEqual( a.$validationMessages, [] );
 
   pop();
+});
+
+test( 'rule before_on raw params', function(assert)
+{
+  var prefix = 'rule_before_on_raw_params_';
+
+  var msInDay = 86400000;
+  var now = Date.now();
+  var tomorrow = now + msInDay;
+  var expectedMessage = 'due_date must be before or equal to tomorrow.';
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['name', 'due_date'],
+    validation: {
+      rules: {
+        due_date: {
+          before_on: tomorrow
+        }
+      },
+      messages: {
+        due_date: expectedMessage
+      }
+    }
+  });
+
+  var a = Task.create({name: 'a', due_date: now + msInDay * 2 });
+
+  notOk( a.$validate() );
+  notOk( a.$valid );
+  deepEqual( a.$validations, {due_date: expectedMessage} );
+  deepEqual( a.$validationMessages, [expectedMessage] );
+
+  a.due_date = now;
+
+  ok( a.$validate() );
+  ok( a.$valid );
+  deepEqual( a.$validations, {} );
+  deepEqual( a.$validationMessages, [] );
 });
 
 test( 'rule before_on missing date', function(assert)
@@ -1185,6 +1341,37 @@ test( 'rule min array', function(assert)
   deepEqual( a.$validationMessages, [] );
 });
 
+test( 'rule min raw params', function(assert)
+{
+  var prefix = 'rule_min_raw_params_';
+
+  var expectedMessage = 'name must have a minimum of 3 characters.';
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['name'],
+    validation: {
+      rules: {
+        name: {min: 3}
+      }
+    }
+  });
+
+  var a = Task.create({name: '22'});
+
+  notOk( a.$validate() );
+  notOk( a.$valid );
+  deepEqual( a.$validations, {name: expectedMessage} );
+  deepEqual( a.$validationMessages, [expectedMessage] );
+
+  a.name = '333';
+
+  ok( a.$validate() );
+  ok( a.$valid );
+  deepEqual( a.$validations, {} );
+  deepEqual( a.$validationMessages, [] );
+});
+
 test( 'rule min invalid arguments', function(assert)
 {
   var prefix = 'rule_min_invalid_arguments_';
@@ -1367,6 +1554,7 @@ test( 'rule greater_than invalid arguments', function(assert)
 // rule greater_than custom message
 // rule greater_than aliased message
 // rule greater_than override message
+// rule greater_than raw params
 
 test( 'rule max string', function(assert)
 {
@@ -1505,6 +1693,7 @@ test( 'rule max invalid arguments', function(assert)
 // rule max custom message
 // rule max aliased message
 // rule max override message
+// rule max raw params
 
 test( 'rule less_than string', function(assert)
 {
@@ -1643,6 +1832,7 @@ test( 'rule less_than invalid arguments', function(assert)
 // rule less_than custom message
 // rule less_than aliased message
 // rule less_than override message
+// rule less_than raw params
 
 test( 'rule equal string', function(assert)
 {
@@ -1781,6 +1971,7 @@ test( 'rule equal invalid arguments', function(assert)
 // rule equal custom message
 // rule equal aliased message
 // rule equal override message
+// rule equal raw params
 
 test( 'rule not_equal string', function(assert)
 {
@@ -1919,6 +2110,7 @@ test( 'rule not_equal invalid arguments', function(assert)
 // rule not_equal custom message
 // rule not_equal aliased message
 // rule not_equal override message
+// rule not_equal raw params
 
 test( 'rule array custom message', function(assert)
 {
@@ -2374,6 +2566,100 @@ test( 'rule between array', function(assert)
   deepEqual( a.$validationMessages, [] );
 });
 
+test( 'rule between raw params', function(assert)
+{
+  var prefix = 'rule_between_raw_params_';
+
+  var expectedMessage = 'count must be between 3 and 8.';
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['count'],
+    validation: {
+      rules: {
+        count: {
+          between: [3, 8]
+        }
+      }
+    }
+  });
+
+  var a = Task.create({count: 2});
+
+  notOk( a.$validate() );
+  notOk( a.$valid );
+  deepEqual( a.$validations, {count: expectedMessage} );
+  deepEqual( a.$validationMessages, [expectedMessage] );
+
+  a.count = 9;
+
+  notOk( a.$validate() );
+  notOk( a.$valid );
+  deepEqual( a.$validations, {count: expectedMessage} );
+  deepEqual( a.$validationMessages, [expectedMessage] );
+
+  a.count = 3;
+
+  ok( a.$validate() );
+  ok( a.$valid );
+  deepEqual( a.$validations, {} );
+  deepEqual( a.$validationMessages, [] );
+
+  a.count = 8;
+
+  ok( a.$validate() );
+  ok( a.$valid );
+  deepEqual( a.$validations, {} );
+  deepEqual( a.$validationMessages, [] );
+});
+
+test( 'rule between raw params object', function(assert)
+{
+  var prefix = 'rule_between_raw_params_object_';
+
+  var expectedMessage = 'count must be between 3 and 8.';
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['count'],
+    validation: {
+      rules: {
+        count: {
+          between: {start: 3, end: 8}
+        }
+      }
+    }
+  });
+
+  var a = Task.create({count: 2});
+
+  notOk( a.$validate() );
+  notOk( a.$valid );
+  deepEqual( a.$validations, {count: expectedMessage} );
+  deepEqual( a.$validationMessages, [expectedMessage] );
+
+  a.count = 9;
+
+  notOk( a.$validate() );
+  notOk( a.$valid );
+  deepEqual( a.$validations, {count: expectedMessage} );
+  deepEqual( a.$validationMessages, [expectedMessage] );
+
+  a.count = 3;
+
+  ok( a.$validate() );
+  ok( a.$valid );
+  deepEqual( a.$validations, {} );
+  deepEqual( a.$validationMessages, [] );
+
+  a.count = 8;
+
+  ok( a.$validate() );
+  ok( a.$valid );
+  deepEqual( a.$validations, {} );
+  deepEqual( a.$validationMessages, [] );
+});
+
 test( 'rule between invalid arguments', function(assert)
 {
   var prefix = 'rule_between_invalid_arguments_';
@@ -2571,6 +2857,100 @@ test( 'rule not_between array', function(assert)
   deepEqual( a.$validationMessages, [] );
 
   a.options = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+
+  ok( a.$validate() );
+  ok( a.$valid );
+  deepEqual( a.$validations, {} );
+  deepEqual( a.$validationMessages, [] );
+});
+
+test( 'rule not_between raw params', function(assert)
+{
+  var prefix = 'rule_not_between_raw_params_';
+
+  var expectedMessage = 'name must not have between 3 to 8 characters.';
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['name'],
+    validation: {
+      rules: {
+        name: {
+          not_between: [3, 8]
+        }
+      }
+    }
+  });
+
+  var a = Task.create({name: '333'});
+
+  notOk( a.$validate() );
+  notOk( a.$valid );
+  deepEqual( a.$validations, {name: expectedMessage} );
+  deepEqual( a.$validationMessages, [expectedMessage] );
+
+  a.name = '88888888';
+
+  notOk( a.$validate() );
+  notOk( a.$valid );
+  deepEqual( a.$validations, {name: expectedMessage} );
+  deepEqual( a.$validationMessages, [expectedMessage] );
+
+  a.name = '22';
+
+  ok( a.$validate() );
+  ok( a.$valid );
+  deepEqual( a.$validations, {} );
+  deepEqual( a.$validationMessages, [] );
+
+  a.name = '999999999';
+
+  ok( a.$validate() );
+  ok( a.$valid );
+  deepEqual( a.$validations, {} );
+  deepEqual( a.$validationMessages, [] );
+});
+
+test( 'rule not_between raw params object', function(assert)
+{
+  var prefix = 'rule_not_between_raw_params_object_';
+
+  var expectedMessage = 'name must not have between 3 to 8 characters.';
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['name'],
+    validation: {
+      rules: {
+        name: {
+          not_between: {start: 3, end: 8}
+        }
+      }
+    }
+  });
+
+  var a = Task.create({name: '333'});
+
+  notOk( a.$validate() );
+  notOk( a.$valid );
+  deepEqual( a.$validations, {name: expectedMessage} );
+  deepEqual( a.$validationMessages, [expectedMessage] );
+
+  a.name = '88888888';
+
+  notOk( a.$validate() );
+  notOk( a.$valid );
+  deepEqual( a.$validations, {name: expectedMessage} );
+  deepEqual( a.$validationMessages, [expectedMessage] );
+
+  a.name = '22';
+
+  ok( a.$validate() );
+  ok( a.$valid );
+  deepEqual( a.$validations, {} );
+  deepEqual( a.$validationMessages, [] );
+
+  a.name = '999999999';
 
   ok( a.$validate() );
   ok( a.$valid );
@@ -3318,6 +3698,53 @@ test( 'rule regex default message', function(assert)
   deepEqual( a.$validationMessages, [] );
 });
 
+test( 'rule regex raw params', function(assert)
+{
+  var prefix = 'rule_regex_raw_params_';
+
+  var expectedMessage = 'text is not a valid value.';
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['text'],
+    validation: {
+      rules: {
+        text: {
+          regex: /^[a-z][0-9][_-]$/i
+        }
+      }
+    }
+  });
+
+  var a = Task.create({text: 'z0'});
+
+  notOk( a.$validate() );
+  notOk( a.$valid );
+  deepEqual( a.$validations, {text: expectedMessage} );
+  deepEqual( a.$validationMessages, [expectedMessage] );
+
+  a.text = 'r1.';
+
+  notOk( a.$validate() );
+  notOk( a.$valid );
+  deepEqual( a.$validations, {text: expectedMessage} );
+  deepEqual( a.$validationMessages, [expectedMessage] );
+
+  a.text = 'Q4_';
+
+  ok( a.$validate() );
+  ok( a.$valid );
+  deepEqual( a.$validations, {} );
+  deepEqual( a.$validationMessages, [] );
+
+  a.text = 't3-';
+
+  ok( a.$validate() );
+  ok( a.$valid );
+  deepEqual( a.$validations, {} );
+  deepEqual( a.$validationMessages, [] );
+});
+
 // rule regex custom message
 // rule regex aliased message
 // rule regex override message
@@ -3590,6 +4017,59 @@ test( 'rule exists custom message', function(assert)
   deepEqual( a.$validationMessages, [] );
 });
 
+test( 'rule exists raw params', function(assert)
+{
+  var prefix = 'rule_exists_raw_params';
+
+  var expectedMessage = 'Value must match an existing value.';
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['value'],
+    validation: {
+      rules: {
+        value: {
+          exists: {field: 'value'}
+        }
+      },
+      messages: {
+        value: expectedMessage
+      }
+    }
+  });
+
+  Task.create({value: 'exists'});
+  Task.create({value: 'also exists'});
+
+  var a = Task.create({value: 'not exists'});
+
+  notOk( a.$validate() );
+  notOk( a.$valid );
+  deepEqual( a.$validations, {value: expectedMessage} );
+  deepEqual( a.$validationMessages, [expectedMessage] );
+
+  a.value = 'does not exist either';
+
+  notOk( a.$validate() );
+  notOk( a.$valid );
+  deepEqual( a.$validations, {value: expectedMessage} );
+  deepEqual( a.$validationMessages, [expectedMessage] );
+
+  a.value = 'exists';
+
+  ok( a.$validate() );
+  ok( a.$valid );
+  deepEqual( a.$validations, {} );
+  deepEqual( a.$validationMessages, [] );
+
+  a.value = 'also exists';
+
+  ok( a.$validate() );
+  ok( a.$valid );
+  deepEqual( a.$validations, {} );
+  deepEqual( a.$validationMessages, [] );
+});
+
 // rule exists foreign class
 // rule exists different field
 // rule exists foreign class field
@@ -3597,6 +4077,8 @@ test( 'rule exists custom message', function(assert)
 // rule exists default message
 // rule exists aliased message
 // rule exists override message
+// rule exists raw params model class
+// rule exists raw params models array
 // rule exists invalid arguments
 
 test( 'rule unique custom message', function(assert)
@@ -3650,6 +4132,59 @@ test( 'rule unique custom message', function(assert)
   deepEqual( a.$validationMessages, [] );
 });
 
+test( 'rule unique raw params', function(assert)
+{
+  var prefix = 'rule_unique_raw_params_';
+
+  var expectedMessage = 'Value must be unique.';
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['value'],
+    validation: {
+      rules: {
+        value: {
+          unique: {field: 'value'}
+        }
+      },
+      messages: {
+        value: expectedMessage
+      }
+    }
+  });
+
+  Task.create({value: 'unique1'});
+  Task.create({value: 'unique2'});
+
+  var a = Task.create({value: 'unique1'});
+
+  notOk( a.$validate() );
+  notOk( a.$valid );
+  deepEqual( a.$validations, {value: expectedMessage} );
+  deepEqual( a.$validationMessages, [expectedMessage] );
+
+  a.value = 'unique2';
+
+  notOk( a.$validate() );
+  notOk( a.$valid );
+  deepEqual( a.$validations, {value: expectedMessage} );
+  deepEqual( a.$validationMessages, [expectedMessage] );
+
+  a.value = 'unique3';
+
+  ok( a.$validate() );
+  ok( a.$valid );
+  deepEqual( a.$validations, {} );
+  deepEqual( a.$validationMessages, [] );
+
+  a.value = '';
+
+  ok( a.$validate() );
+  ok( a.$valid );
+  deepEqual( a.$validations, {} );
+  deepEqual( a.$validationMessages, [] );
+});
+
 // rule unique foreign class
 // rule unique different field
 // rule unique foreign class field
@@ -3657,6 +4192,8 @@ test( 'rule unique custom message', function(assert)
 // rule unique default message
 // rule unique aliased message
 // rule unique override message
+// rule unique raw params model class
+// rule unique raw params models array
 // rule unique invalid arguments
 
 test( 'rule contains default message', function(assert)
@@ -3676,6 +4213,138 @@ test( 'rule contains default message', function(assert)
     validation: {
       rules: {
         tasks: 'contains:done,true'
+      }
+    },
+    hasMany: {
+      tasks: {
+        model: Task,
+        foreign: 'list_id'
+      }
+    }
+  });
+
+  var t0 = Task.create({name: 't0', done: false});
+  var t1 = Task.create({name: 't1'});
+  var a = TaskList.create({
+    name: 'list1',
+    tasks: [ t0, t1 ]
+  });
+
+  notOk( a.$validate() );
+  notOk( a.$valid );
+  deepEqual( a.$validations, {tasks: expectedMessage} );
+  deepEqual( a.$validationMessages, [expectedMessage] );
+
+  t0.done = 1;
+
+  notOk( a.$validate() );
+  notOk( a.$valid );
+  deepEqual( a.$validations, {tasks: expectedMessage} );
+  deepEqual( a.$validationMessages, [expectedMessage] );
+
+  t1.done = true;
+
+  ok( a.$validate() );
+  ok( a.$valid );
+  deepEqual( a.$validations, {} );
+  deepEqual( a.$validationMessages, [] );
+
+  t0.done = true;
+  t1.done = false;
+
+  ok( a.$validate() );
+  ok( a.$valid );
+  deepEqual( a.$validations, {} );
+  deepEqual( a.$validationMessages, [] );
+});
+
+test( 'rule contains raw params', function(assert)
+{
+  var prefix = 'rule_contains_raw_params_';
+
+  var expectedMessage = 'tasks does not contain an item whose done equals true.';
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['name', 'done', 'list_id']
+  });
+
+  var TaskList = Rekord({
+    name: prefix + 'task_list',
+    fields: ['name'],
+    validation: {
+      rules: {
+        tasks: {
+          contains: {
+            field: 'done',
+            value: true,
+            equals: Rekord.equals
+          }
+        }
+      }
+    },
+    hasMany: {
+      tasks: {
+        model: Task,
+        foreign: 'list_id'
+      }
+    }
+  });
+
+  var t0 = Task.create({name: 't0', done: false});
+  var t1 = Task.create({name: 't1'});
+  var a = TaskList.create({
+    name: 'list1',
+    tasks: [ t0, t1 ]
+  });
+
+  notOk( a.$validate() );
+  notOk( a.$valid );
+  deepEqual( a.$validations, {tasks: expectedMessage} );
+  deepEqual( a.$validationMessages, [expectedMessage] );
+
+  t0.done = 1;
+
+  notOk( a.$validate() );
+  notOk( a.$valid );
+  deepEqual( a.$validations, {tasks: expectedMessage} );
+  deepEqual( a.$validationMessages, [expectedMessage] );
+
+  t1.done = true;
+
+  ok( a.$validate() );
+  ok( a.$valid );
+  deepEqual( a.$validations, {} );
+  deepEqual( a.$validationMessages, [] );
+
+  t0.done = true;
+  t1.done = false;
+
+  ok( a.$validate() );
+  ok( a.$valid );
+  deepEqual( a.$validations, {} );
+  deepEqual( a.$validationMessages, [] );
+});
+
+test( 'rule contains raw params array', function(assert)
+{
+  var prefix = 'rule_contains_raw_params_array_';
+
+  var expectedMessage = 'tasks does not contain an item whose done equals true.';
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['name', 'done', 'list_id']
+  });
+
+  var TaskList = Rekord({
+    name: prefix + 'task_list',
+    fields: ['name'],
+    validation: {
+      rules: {
+        tasks: {
+          contains: ['done', true, Rekord.equals]
+        }
       }
     },
     hasMany: {
@@ -3788,6 +4457,138 @@ test( 'rule not_contains default message', function(assert)
   deepEqual( a.$validationMessages, [] );
 });
 
+test( 'rule not_contains raw params', function(assert)
+{
+  var prefix = 'rule_not_contains_raw_params_';
+
+  var expectedMessage = 'tasks contains an item whose done equals true.';
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['name', 'done', 'list_id']
+  });
+
+  var TaskList = Rekord({
+    name: prefix + 'task_list',
+    fields: ['name'],
+    validation: {
+      rules: {
+        tasks: {
+          not_contains: {
+            field: 'done',
+            value: true,
+            equals: Rekord.equals
+          }
+        }
+      }
+    },
+    hasMany: {
+      tasks: {
+        model: Task,
+        foreign: 'list_id'
+      }
+    }
+  });
+
+  var t0 = Task.create({name: 't0', done: true});
+  var t1 = Task.create({name: 't1'});
+  var a = TaskList.create({
+    name: 'list1',
+    tasks: [ t0, t1 ]
+  });
+
+  notOk( a.$validate() );
+  notOk( a.$valid );
+  deepEqual( a.$validations, {tasks: expectedMessage} );
+  deepEqual( a.$validationMessages, [expectedMessage] );
+
+  t0.done = false;
+  t1.done = true;
+
+  notOk( a.$validate() );
+  notOk( a.$valid );
+  deepEqual( a.$validations, {tasks: expectedMessage} );
+  deepEqual( a.$validationMessages, [expectedMessage] );
+
+  t1.done = false;
+
+  ok( a.$validate() );
+  ok( a.$valid );
+  deepEqual( a.$validations, {} );
+  deepEqual( a.$validationMessages, [] );
+
+  t0.done = null;
+
+  ok( a.$validate() );
+  ok( a.$valid );
+  deepEqual( a.$validations, {} );
+  deepEqual( a.$validationMessages, [] );
+});
+
+test( 'rule not_contains raw params array', function(assert)
+{
+  var prefix = 'rule_not_contains_raw_params_array_';
+
+  var expectedMessage = 'tasks contains an item whose done equals true.';
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['name', 'done', 'list_id']
+  });
+
+  var TaskList = Rekord({
+    name: prefix + 'task_list',
+    fields: ['name'],
+    validation: {
+      rules: {
+        tasks: {
+          not_contains: ['done', true, Rekord.equals]
+        }
+      }
+    },
+    hasMany: {
+      tasks: {
+        model: Task,
+        foreign: 'list_id'
+      }
+    }
+  });
+
+  var t0 = Task.create({name: 't0', done: true});
+  var t1 = Task.create({name: 't1'});
+  var a = TaskList.create({
+    name: 'list1',
+    tasks: [ t0, t1 ]
+  });
+
+  notOk( a.$validate() );
+  notOk( a.$valid );
+  deepEqual( a.$validations, {tasks: expectedMessage} );
+  deepEqual( a.$validationMessages, [expectedMessage] );
+
+  t0.done = false;
+  t1.done = true;
+
+  notOk( a.$validate() );
+  notOk( a.$valid );
+  deepEqual( a.$validations, {tasks: expectedMessage} );
+  deepEqual( a.$validationMessages, [expectedMessage] );
+
+  t1.done = false;
+
+  ok( a.$validate() );
+  ok( a.$valid );
+  deepEqual( a.$validations, {} );
+  deepEqual( a.$validationMessages, [] );
+
+  t0.done = null;
+
+  ok( a.$validate() );
+  ok( a.$valid );
+  deepEqual( a.$validations, {} );
+  deepEqual( a.$validationMessages, [] );
+});
+
 // rule not_contains custom message
 // rule not_contains aliased message
 // rule not_contains override message
@@ -3845,10 +4646,65 @@ test( 'rule in default message', function(assert)
   deepEqual( a.$validationMessages, [] );
 });
 
+test( 'rule in raw params', function(assert)
+{
+  var prefix = 'rule_in_raw_params_';
+
+  var expectedMessage = 'value must be one of A, B, C, or true.';
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['value'],
+    validation: {
+      rules: {
+        value: {
+          in: ['A', 'B', 'C', true]
+        }
+      }
+    }
+  });
+
+  var a = Task.create({value: ''});
+
+  notOk( a.$validate() );
+  notOk( a.$valid );
+  deepEqual( a.$validations, {value: expectedMessage} );
+  deepEqual( a.$validationMessages, [expectedMessage] );
+
+  a.value = 'D';
+
+  notOk( a.$validate() );
+  notOk( a.$valid );
+  deepEqual( a.$validations, {value: expectedMessage} );
+  deepEqual( a.$validationMessages, [expectedMessage] );
+
+  a.value = 'A';
+
+  ok( a.$validate() );
+  ok( a.$valid );
+  deepEqual( a.$validations, {} );
+  deepEqual( a.$validationMessages, [] );
+
+  a.value = 'B';
+
+  ok( a.$validate() );
+  ok( a.$valid );
+  deepEqual( a.$validations, {} );
+  deepEqual( a.$validationMessages, [] );
+
+  a.value = true;
+
+  ok( a.$validate() );
+  ok( a.$valid );
+  deepEqual( a.$validations, {} );
+  deepEqual( a.$validationMessages, [] );
+});
+
 // rule in custom message
 // rule in aliased message
 // rule in override message
 // rule in invalid arguments
+// rule in raw params function
 
 test( 'rule not_in default message', function(assert)
 {
@@ -3902,10 +4758,65 @@ test( 'rule not_in default message', function(assert)
   deepEqual( a.$validationMessages, [] );
 });
 
+test( 'rule not_in raw params', function(assert)
+{
+  var prefix = 'rule_not_in_raw_params_';
+
+  var expectedMessage = 'value must not be one of A, B, C, or true.';
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['value'],
+    validation: {
+      rules: {
+        value: {
+          not_in: ['A', 'B', 'C', true]
+        }
+      }
+    }
+  });
+
+  var a = Task.create({value: 'A'});
+
+  notOk( a.$validate() );
+  notOk( a.$valid );
+  deepEqual( a.$validations, {value: expectedMessage} );
+  deepEqual( a.$validationMessages, [expectedMessage] );
+
+  a.value = true;
+
+  notOk( a.$validate() );
+  notOk( a.$valid );
+  deepEqual( a.$validations, {value: expectedMessage} );
+  deepEqual( a.$validationMessages, [expectedMessage] );
+
+  a.value = 'D';
+
+  ok( a.$validate() );
+  ok( a.$valid );
+  deepEqual( a.$validations, {} );
+  deepEqual( a.$validationMessages, [] );
+
+  a.value = false;
+
+  ok( a.$validate() );
+  ok( a.$valid );
+  deepEqual( a.$validations, {} );
+  deepEqual( a.$validationMessages, [] );
+
+  a.value = null;
+
+  ok( a.$validate() );
+  ok( a.$valid );
+  deepEqual( a.$validations, {} );
+  deepEqual( a.$validationMessages, [] );
+});
+
 // rule not_in custom message
 // rule not_in aliased message
 // rule not_in override message
 // rule not_in invalid arguments
+// rule not_in raw params function
 
 test( 'rule yesno default message', function(assert)
 {
@@ -4026,6 +4937,121 @@ test( 'rule required_if default message', function(assert)
   deepEqual( a.$validationMessages, [] );
 });
 
+test( 'rule required_if raw params', function(assert)
+{
+  var prefix = 'rule_required_if_raw_params_';
+
+  var expectedMessage = 'due_date is required.';
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['due_date', 'done'],
+    validation: {
+      rules: {
+        due_date: {
+          required_if: {
+            field: 'done',
+            values: [true, 1]
+          }
+        }
+      }
+    }
+  });
+
+  var a = Task.create({due_date: '', done: true});
+
+  notOk( a.$validate() );
+  notOk( a.$valid );
+  deepEqual( a.$validations, {due_date: expectedMessage} );
+  deepEqual( a.$validationMessages, [expectedMessage] );
+
+  a.due_date = null;
+
+  notOk( a.$validate() );
+  notOk( a.$valid );
+  deepEqual( a.$validations, {due_date: expectedMessage} );
+  deepEqual( a.$validationMessages, [expectedMessage] );
+
+  a.due_date = '01/01/2000';
+  a.done = true;
+
+  ok( a.$validate() );
+  ok( a.$valid );
+  deepEqual( a.$validations, {} );
+  deepEqual( a.$validationMessages, [] );
+
+  a.done = 1;
+
+  ok( a.$validate() );
+  ok( a.$valid );
+  deepEqual( a.$validations, {} );
+  deepEqual( a.$validationMessages, [] );
+
+  a.due_date = '';
+  a.done = false;
+
+  ok( a.$validate() );
+  ok( a.$valid );
+  deepEqual( a.$validations, {} );
+  deepEqual( a.$validationMessages, [] );
+});
+
+test( 'rule required_if raw params array', function(assert)
+{
+  var prefix = 'rule_required_if_raw_params_array_';
+
+  var expectedMessage = 'due_date is required.';
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['due_date', 'done'],
+    validation: {
+      rules: {
+        due_date: {
+          required_if: ['done', true, 1]
+        }
+      }
+    }
+  });
+
+  var a = Task.create({due_date: '', done: true});
+
+  notOk( a.$validate() );
+  notOk( a.$valid );
+  deepEqual( a.$validations, {due_date: expectedMessage} );
+  deepEqual( a.$validationMessages, [expectedMessage] );
+
+  a.due_date = null;
+
+  notOk( a.$validate() );
+  notOk( a.$valid );
+  deepEqual( a.$validations, {due_date: expectedMessage} );
+  deepEqual( a.$validationMessages, [expectedMessage] );
+
+  a.due_date = '01/01/2000';
+  a.done = true;
+
+  ok( a.$validate() );
+  ok( a.$valid );
+  deepEqual( a.$validations, {} );
+  deepEqual( a.$validationMessages, [] );
+
+  a.done = 1;
+
+  ok( a.$validate() );
+  ok( a.$valid );
+  deepEqual( a.$validations, {} );
+  deepEqual( a.$validationMessages, [] );
+
+  a.due_date = '';
+  a.done = false;
+
+  ok( a.$validate() );
+  ok( a.$valid );
+  deepEqual( a.$validations, {} );
+  deepEqual( a.$validationMessages, [] );
+});
+
 // rule required_if custom message
 // rule required_if aliased message
 // rule required_if override message
@@ -4043,6 +5069,121 @@ test( 'rule required_unless default message', function(assert)
     validation: {
       rules: {
         due_date: 'required_unless:done,false,0'
+      }
+    }
+  });
+
+  var a = Task.create({due_date: '', done: true});
+
+  notOk( a.$validate() );
+  notOk( a.$valid );
+  deepEqual( a.$validations, {due_date: expectedMessage} );
+  deepEqual( a.$validationMessages, [expectedMessage] );
+
+  a.due_date = null;
+
+  notOk( a.$validate() );
+  notOk( a.$valid );
+  deepEqual( a.$validations, {due_date: expectedMessage} );
+  deepEqual( a.$validationMessages, [expectedMessage] );
+
+  a.due_date = '01/01/2000';
+  a.done = true;
+
+  ok( a.$validate() );
+  ok( a.$valid );
+  deepEqual( a.$validations, {} );
+  deepEqual( a.$validationMessages, [] );
+
+  a.done = 1;
+
+  ok( a.$validate() );
+  ok( a.$valid );
+  deepEqual( a.$validations, {} );
+  deepEqual( a.$validationMessages, [] );
+
+  a.due_date = '';
+  a.done = false;
+
+  ok( a.$validate() );
+  ok( a.$valid );
+  deepEqual( a.$validations, {} );
+  deepEqual( a.$validationMessages, [] );
+});
+
+test( 'rule required_unless raw params', function(assert)
+{
+  var prefix = 'rule_required_unless_raw_params_';
+
+  var expectedMessage = 'due_date is required.';
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['due_date', 'done'],
+    validation: {
+      rules: {
+        due_date: {
+          required_unless: {
+            field: 'done',
+            values: [false, 0]
+          }
+        }
+      }
+    }
+  });
+
+  var a = Task.create({due_date: '', done: true});
+
+  notOk( a.$validate() );
+  notOk( a.$valid );
+  deepEqual( a.$validations, {due_date: expectedMessage} );
+  deepEqual( a.$validationMessages, [expectedMessage] );
+
+  a.due_date = null;
+
+  notOk( a.$validate() );
+  notOk( a.$valid );
+  deepEqual( a.$validations, {due_date: expectedMessage} );
+  deepEqual( a.$validationMessages, [expectedMessage] );
+
+  a.due_date = '01/01/2000';
+  a.done = true;
+
+  ok( a.$validate() );
+  ok( a.$valid );
+  deepEqual( a.$validations, {} );
+  deepEqual( a.$validationMessages, [] );
+
+  a.done = 1;
+
+  ok( a.$validate() );
+  ok( a.$valid );
+  deepEqual( a.$validations, {} );
+  deepEqual( a.$validationMessages, [] );
+
+  a.due_date = '';
+  a.done = false;
+
+  ok( a.$validate() );
+  ok( a.$valid );
+  deepEqual( a.$validations, {} );
+  deepEqual( a.$validationMessages, [] );
+});
+
+test( 'rule required_unless raw params array', function(assert)
+{
+  var prefix = 'rule_required_unless_raw_params_array_';
+
+  var expectedMessage = 'due_date is required.';
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['due_date', 'done'],
+    validation: {
+      rules: {
+        due_date: {
+          required_unless: ['done', false, 0]
+        }
       }
     }
   });
@@ -4388,6 +5529,69 @@ test( 'rule if default message', function(assert)
   deepEqual( a.$validationMessages, [] );
 });
 
+test( 'rule if raw params', function(assert)
+{
+  var prefix = 'rule_if_raw_params_';
+
+  var expectedMessage = 'value must be odd when over 6.';
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['value'],
+    validation: {
+      rules: {
+        value: {
+          if: {
+            field: 'value',
+            rules: {
+              min: 6
+            }
+          },
+          regex: /[13579]$/ // odd
+        }
+      },
+      messages: {
+        value: expectedMessage
+      }
+    }
+  });
+
+  var a = Task.create({value: 8});
+
+  notOk( a.$validate() );
+  notOk( a.$valid );
+  deepEqual( a.$validations, {value: expectedMessage} );
+  deepEqual( a.$validationMessages, [expectedMessage] );
+
+  a.value = 10;
+
+  notOk( a.$validate() );
+  notOk( a.$valid );
+  deepEqual( a.$validations, {value: expectedMessage} );
+  deepEqual( a.$validationMessages, [expectedMessage] );
+
+  a.value = 4;
+
+  ok( a.$validate() );
+  ok( a.$valid );
+  deepEqual( a.$validations, {} );
+  deepEqual( a.$validationMessages, [] );
+
+  a.value = 7;
+
+  ok( a.$validate() );
+  ok( a.$valid );
+  deepEqual( a.$validations, {} );
+  deepEqual( a.$validationMessages, [] );
+
+  a.value = 21;
+
+  ok( a.$validate() );
+  ok( a.$valid );
+  deepEqual( a.$validations, {} );
+  deepEqual( a.$validationMessages, [] );
+});
+
 test( 'rule if all', function(assert)
 {
   var prefix = 'rule_if_all_';
@@ -4443,10 +5647,75 @@ test( 'rule if all', function(assert)
   deepEqual( a.$validationMessages, [] );
 });
 
+test( 'rule if all raw params', function(assert)
+{
+  var prefix = 'rule_if_all_raw_params_';
+
+  var expectedMessage = 'value must be odd when over 6 and under 12.';
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['value'],
+    validation: {
+      rules: {
+        value: {
+          if: {
+            rules: {
+              min: 6,
+              max: 12
+            }
+          },
+          regex: /[13579]$/ // odd
+        }
+      },
+      messages: {
+        value: expectedMessage
+      }
+    }
+  });
+
+  var a = Task.create({value: 8});
+
+  notOk( a.$validate() );
+  notOk( a.$valid );
+  deepEqual( a.$validations, {value: expectedMessage} );
+  deepEqual( a.$validationMessages, [expectedMessage] );
+
+  a.value = 10;
+
+  notOk( a.$validate() );
+  notOk( a.$valid );
+  deepEqual( a.$validations, {value: expectedMessage} );
+  deepEqual( a.$validationMessages, [expectedMessage] );
+
+  a.value = 11;
+
+  ok( a.$validate() );
+  ok( a.$valid );
+  deepEqual( a.$validations, {} );
+  deepEqual( a.$validationMessages, [] );
+
+  a.value = 7;
+
+  ok( a.$validate() );
+  ok( a.$valid );
+  deepEqual( a.$validations, {} );
+  deepEqual( a.$validationMessages, [] );
+
+  a.value = 14;
+
+  ok( a.$validate() );
+  ok( a.$valid );
+  deepEqual( a.$validations, {} );
+  deepEqual( a.$validationMessages, [] );
+});
+
 // rule if custom message
 // rule if aliased message
 // rule if override message
 // rule if invalid arguments
+// rule if raw params array
+// rule if default field
 
 test( 'rule if_any default message', function(assert)
 {
@@ -4503,10 +5772,72 @@ test( 'rule if_any default message', function(assert)
   deepEqual( a.$validationMessages, [] );
 });
 
+test( 'rule if_any raw params', function(assert)
+{
+  var prefix = 'rule_if_any_raw_params_';
+
+  var expectedMessage = 'value must be odd when over 6 or an array.';
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['value'],
+    validation: {
+      rules: {
+        value: {
+          if_any: {
+            rules: 'min:6|array'
+          },
+          regex: /[13579]$/ // odd
+        }
+      },
+      messages: {
+        value: expectedMessage
+      }
+    }
+  });
+
+  var a = Task.create({value: 8});
+
+  notOk( a.$validate() );
+  notOk( a.$valid );
+  deepEqual( a.$validations, {value: expectedMessage} );
+  deepEqual( a.$validationMessages, [expectedMessage] );
+
+  a.value = [1,2,3,4,5,6,7,8];
+
+  notOk( a.$validate() );
+  notOk( a.$valid );
+  deepEqual( a.$validations, {value: expectedMessage} );
+  deepEqual( a.$validationMessages, [expectedMessage] );
+
+  a.value = 11;
+
+  ok( a.$validate() );
+  ok( a.$valid );
+  deepEqual( a.$validations, {} );
+  deepEqual( a.$validationMessages, [] );
+
+  a.value = [1,2,3,4,5,6,7];
+
+  ok( a.$validate() );
+  ok( a.$valid );
+  deepEqual( a.$validations, {} );
+  deepEqual( a.$validationMessages, [] );
+
+  a.value = 4;
+
+  ok( a.$validate() );
+  ok( a.$valid );
+  deepEqual( a.$validations, {} );
+  deepEqual( a.$validationMessages, [] );
+});
+
 // rule if_any custom message
 // rule if_any aliased message
 // rule if_any override message
 // rule if_any invalid arguments
+// rule if_any raw params array
+// rule if_any default field
 
 test( 'rule if_not default message', function(assert)
 {
@@ -4563,10 +5894,74 @@ test( 'rule if_not default message', function(assert)
   deepEqual( a.$validationMessages, [] );
 });
 
+test( 'rule if_not raw params', function(assert)
+{
+  var prefix = 'rule_if_not_raw_params_';
+
+  var expectedMessage = 'value must be odd when under 6.';
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['value'],
+    validation: {
+      rules: {
+        value: {
+          if_not: {
+            rules: {
+              min: 6
+            }
+          },
+          regex: /[13579]$/ // odd
+        }
+      },
+      messages: {
+        value: expectedMessage
+      }
+    }
+  });
+
+  var a = Task.create({value: 4});
+
+  notOk( a.$validate() );
+  notOk( a.$valid );
+  deepEqual( a.$validations, {value: expectedMessage} );
+  deepEqual( a.$validationMessages, [expectedMessage] );
+
+  a.value = 2;
+
+  notOk( a.$validate() );
+  notOk( a.$valid );
+  deepEqual( a.$validations, {value: expectedMessage} );
+  deepEqual( a.$validationMessages, [expectedMessage] );
+
+  a.value = 3;
+
+  ok( a.$validate() );
+  ok( a.$valid );
+  deepEqual( a.$validations, {} );
+  deepEqual( a.$validationMessages, [] );
+
+  a.value = 7;
+
+  ok( a.$validate() );
+  ok( a.$valid );
+  deepEqual( a.$validations, {} );
+  deepEqual( a.$validationMessages, [] );
+
+  a.value = 1;
+
+  ok( a.$validate() );
+  ok( a.$valid );
+  deepEqual( a.$validations, {} );
+  deepEqual( a.$validationMessages, [] );
+});
+
 // rule if_not custom message
 // rule if_not aliased message
 // rule if_not override message
 // rule if_not invalid arguments
+// rule if_not raw params array
+// rule if_not default field
 
 test( 'rule validate message', function(assert)
 {

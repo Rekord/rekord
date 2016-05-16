@@ -29,9 +29,25 @@ function rangeRuleGenerator(ruleName, defaultMessages, isInvalid)
       throw ruleName + ' validation rule requires a range argument';
     }
 
-    var range = split( params, /(\s*,\s*)/, '\\' );
-    var start = parseFloat( range[0] );
-    var end = parseFloat( range[1] );
+    var start, end;
+
+    if ( isString( params ) )
+    {
+      var range = split( params, /(\s*,\s*)/, '\\' );
+
+      start = parseFloat( range[0] );
+      end = parseFloat( range[1] );
+    }
+    else if ( isArray( params ) )
+    {
+      start = params[ 0 ];
+      end = params[ 1 ];
+    }
+    else if ( isObject( params ) )
+    {
+      start = params.start;
+      end = params.end;
+    }
 
     if ( isNaN( start ) || isNaN( end ) )
     {

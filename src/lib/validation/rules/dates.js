@@ -52,9 +52,32 @@ function dateRuleGenerator(ruleName, defaultMessage, isInvalid)
       throw ruleName + ' validation rule requires a date expression argument';
     }
 
-    var dateExpression = Validation.parseExpression( params, database );
+    var dateExpression;
 
-    if ( dateExpression === noop )
+    if ( isString( params ) )
+    {
+      dateExpression = Validation.parseExpression( params, database );
+    }
+    else if ( isFunction( params ) )
+    {
+      dateExpression = params;
+    }
+    else
+    {
+      var parsed = parseDate( params );
+
+      if ( parsed !== false )
+      {
+        var parsedTime = parsed.getTime();
+
+        dateExpression = function()
+        {
+          return parsedTime;
+        };
+      }
+    }
+
+    if ( !dateExpression || dateExpression === noop )
     {
       throw params + ' is not a valid date expression for the ' + ruleName + ' rule';
     }

@@ -1,11 +1,11 @@
 // contains:field,value
 collectionRuleGenerator('contains',
   '{$alias} does not contain an item whose {$matchAlias} equals {$matchValue}.',
-  function isInvalid(value, model, matchField, matchValue)
+  function isInvalid(value, model, matchField, matchValue, equality)
   {
     return !value.contains(function isMatch(m)
     {
-      return m !== model && equalsCompare( matchValue, m.$get( matchField ) );
+      return m !== model && equality( matchValue, m.$get( matchField ) );
     });
   }
 );
@@ -13,11 +13,11 @@ collectionRuleGenerator('contains',
 // not_contains:field,value
 collectionRuleGenerator('not_contains',
   '{$alias} contains an item whose {$matchAlias} equals {$matchValue}.',
-  function isInvalid(value, model, matchField, matchValue)
+  function isInvalid(value, model, matchField, matchValue, equality)
   {
     return value.contains(function isMatch(m)
     {
-      return m !== model && equalsCompare( matchValue, m.$get( matchField ) );
+      return m !== model && equality( matchValue, m.$get( matchField ) );
     });
   }
 );
@@ -31,15 +31,37 @@ function collectionRuleGenerator(ruleName, defaultMessage, isInvalid)
       throw ruleName + ' validation rule requires field & value arguments';
     }
 
-    var comma = params.indexOf(',');
+    var matchField, matchValue, equality;
 
-    if ( comma === -1 )
+    if ( isString( params ) )
     {
-      throw ruleName + ' validation rule requires field & value arguments';
+      var comma = params.indexOf(',');
+
+      if ( comma === -1 )
+      {
+        throw ruleName + ' validation rule requires field & value arguments';
+      }
+
+      matchField = params.substring( 0, comma );
+      matchValue = params.substring( comma + 1 );
+    }
+    else if ( isArray( params ) )
+    {
+      matchField = params[ 0 ];
+      matchValue = params[ 1 ];
+      equality = params[ 2 ];
+    }
+    else if ( isObject( params ) )
+    {
+      matchField = params.field;
+      matchValue = params.value;
+      equality = params.equals;
     }
 
-    var matchField = params.substring( 0, comma );
-    var matchValue = params.substring( comma + 1 );
+    if ( !isFunction( equality ) )
+    {
+      equality = equalsCompare;
+    }
 
     if ( indexOf( database.fields, matchField ) === -1 )
     {
@@ -55,7 +77,7 @@ function collectionRuleGenerator(ruleName, defaultMessage, isInvalid)
 
     return function(value, model, setMessage)
     {
-      if ( isInvalid( value, model, matchField, matchValue ) )
+      if ( isInvalid( value, model, matchField, matchValue, equality ) )
       {
         setMessage( generateMessage( field, getAlias( field ), value, model, messageTemplate, extra ) );
       }

@@ -28,9 +28,25 @@ function fieldListRuleGenerator(ruleName, defaultMessage, isInvalid)
       throw ruleName + ' validation rule requires a field and list arguments';
     }
 
-    var parts = split( params, /(,)/, '\\' );
-    var matchField = parts.shift();
-    var matchValues = parts;
+    var matchField, matchValues;
+
+    if ( isString( params ) )
+    {
+      var parts = split( params, /(,)/, '\\' );
+
+      matchField = parts.shift();
+      matchValues = parts;
+    }
+    else if ( isArray( params ) )
+    {
+      matchField = params.shift();
+      matchValues = params;
+    }
+    else if ( isObject( params ) )
+    {
+      matchField = params.field;
+      matchValues = params.values;
+    }
 
     if ( indexOf( database.fields, matchField ) === false )
     {

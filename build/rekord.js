@@ -15216,8 +15216,15 @@ var Validation =
     {
       for (var rule in rules)
       {
-        var ruleMessage = rules[ rule ];
-        var validator = this.parseRule( rule, field, database, getAlias, ruleMessage || message );
+        var ruleMessageOrData = rules[ rule ];
+
+        var ruleMessage = isObject( ruleMessageOrData ) ? ruleMessageOrData.message :
+          ( isString( ruleMessageOrData ) ? ruleMessageOrData : undefined );
+
+        var ruleInput = isObject( ruleMessageOrData ) && ruleMessageOrData.message ? ruleMessageOrData.input :
+          ( isString( ruleMessageOrData ) ? undefined : ruleMessageOrData );
+
+        var validator = this.parseRule( rule, field, database, getAlias, ruleMessage || message, ruleInput );
 
         validators.push( validator );
       }
@@ -15226,7 +15233,7 @@ var Validation =
     return validators;
   },
 
-  parseRule: function(rule, field, database, getAlias, message)
+  parseRule: function(rule, field, database, getAlias, message, input)
   {
     var colon = rule.indexOf( this.RuleSeparator );
     var ruleName = colon === -1 ? rule : rule.substring( 0, colon );
@@ -15236,7 +15243,7 @@ var Validation =
       return this.customValidator( ruleName, field, database, getAlias, message );
     }
 
-    var ruleParams = colon === -1 ? undefined : rule.substring( colon + 1 );
+    var ruleParams = colon === -1 ? input : rule.substring( colon + 1 );
     var validatorFactory = Validation.Rules[ ruleName ];
 
     if ( !validatorFactory )
@@ -15636,89 +15643,14 @@ Validation.Rules.accepted.acceptable =
   'true': true
 };
 
-// between:3,10
-rangeRuleGenerator('between', {
-    'string': '{$alias} must have between {$start} to {$end} characters.',
-    'number': '{$alias} must be between {$start} and {$end}.',
-    'object': '{$alias} must have between {$start} to {$end} items.'
-  },
-  function isInvalid(value, start, end) {
-    return value < start || value > end;
-  }
-);
-
-// not_between
-rangeRuleGenerator('not_between', {
-    'string': '{$alias} must not have between {$start} to {$end} characters.',
-    'number': '{$alias} must not be between {$start} and {$end}.',
-    'object': '{$alias} must not have between {$start} to {$end} items.'
-  },
-  function isInvalid(value, start, end) {
-    return value >= start && value <= end;
-  }
-);
-
-function rangeRuleGenerator(ruleName, defaultMessages, isInvalid)
-{
-  Validation.Rules[ ruleName ] = function(field, params, database, getAlias, message)
-  {
-    if ( !params )
-    {
-      throw ruleName + ' validation rule requires a range argument';
-    }
-
-    var range = split( params, /(\s*,\s*)/, '\\' );
-    var start = parseFloat( range[0] );
-    var end = parseFloat( range[1] );
-
-    if ( isNaN( start ) || isNaN( end ) )
-    {
-      throw params + ' is not a valid range of numbers for the ' + ruleName + ' rule';
-    }
-
-    if ( isString( message ) )
-    {
-      message = {
-        'string': message,
-        'number': message,
-        'object': message
-      };
-    }
-
-    var messageTemplate = determineMessage( ruleName, message );
-    var extra = {
-      $start: start,
-      $end: end
-    };
-
-    return function(value, model, setMessage)
-    {
-      var size = sizeof( value );
-      var type = typeof( value );
-      var typeMessage = messageTemplate[ type ];
-
-      if ( typeMessage && isInvalid( size, start, end ) )
-      {
-        extra.$size = size;
-
-        setMessage( generateMessage( field, getAlias( field ), value, model, typeMessage, extra ) );
-      }
-
-      return value;
-    };
-  };
-
-  Validation.Rules[ ruleName ].message = defaultMessages;
-}
-
 // contains:field,value
 collectionRuleGenerator('contains',
   '{$alias} does not contain an item whose {$matchAlias} equals {$matchValue}.',
-  function isInvalid(value, model, matchField, matchValue)
+  function isInvalid(value, model, matchField, matchValue, equality)
   {
     return !value.contains(function isMatch(m)
     {
-      return m !== model && equalsCompare( matchValue, m.$get( matchField ) );
+      return m !== model && equality( matchValue, m.$get( matchField ) );
     });
   }
 );
@@ -15726,11 +15658,11 @@ collectionRuleGenerator('contains',
 // not_contains:field,value
 collectionRuleGenerator('not_contains',
   '{$alias} contains an item whose {$matchAlias} equals {$matchValue}.',
-  function isInvalid(value, model, matchField, matchValue)
+  function isInvalid(value, model, matchField, matchValue, equality)
   {
     return value.contains(function isMatch(m)
     {
-      return m !== model && equalsCompare( matchValue, m.$get( matchField ) );
+      return m !== model && equality( matchValue, m.$get( matchField ) );
     });
   }
 );
@@ -15744,15 +15676,37 @@ function collectionRuleGenerator(ruleName, defaultMessage, isInvalid)
       throw ruleName + ' validation rule requires field & value arguments';
     }
 
-    var comma = params.indexOf(',');
+    var matchField, matchValue, equality;
 
-    if ( comma === -1 )
+    if ( isString( params ) )
     {
-      throw ruleName + ' validation rule requires field & value arguments';
+      var comma = params.indexOf(',');
+
+      if ( comma === -1 )
+      {
+        throw ruleName + ' validation rule requires field & value arguments';
+      }
+
+      matchField = params.substring( 0, comma );
+      matchValue = params.substring( comma + 1 );
+    }
+    else if ( isArray( params ) )
+    {
+      matchField = params[ 0 ];
+      matchValue = params[ 1 ];
+      equality = params[ 2 ];
+    }
+    else if ( isObject( params ) )
+    {
+      matchField = params.field;
+      matchValue = params.value;
+      equality = params.equals;
     }
 
-    var matchField = params.substring( 0, comma );
-    var matchValue = params.substring( comma + 1 );
+    if ( !isFunction( equality ) )
+    {
+      equality = equalsCompare;
+    }
 
     if ( indexOf( database.fields, matchField ) === -1 )
     {
@@ -15768,7 +15722,7 @@ function collectionRuleGenerator(ruleName, defaultMessage, isInvalid)
 
     return function(value, model, setMessage)
     {
-      if ( isInvalid( value, model, matchField, matchValue ) )
+      if ( isInvalid( value, model, matchField, matchValue, equality ) )
       {
         setMessage( generateMessage( field, getAlias( field ), value, model, messageTemplate, extra ) );
       }
@@ -15879,9 +15833,32 @@ function dateRuleGenerator(ruleName, defaultMessage, isInvalid)
       throw ruleName + ' validation rule requires a date expression argument';
     }
 
-    var dateExpression = Validation.parseExpression( params, database );
+    var dateExpression;
 
-    if ( dateExpression === noop )
+    if ( isString( params ) )
+    {
+      dateExpression = Validation.parseExpression( params, database );
+    }
+    else if ( isFunction( params ) )
+    {
+      dateExpression = params;
+    }
+    else
+    {
+      var parsed = parseDate( params );
+
+      if ( parsed !== false )
+      {
+        var parsedTime = parsed.getTime();
+
+        dateExpression = function()
+        {
+          return parsedTime;
+        };
+      }
+    }
+
+    if ( !dateExpression || dateExpression === noop )
     {
       throw params + ' is not a valid date expression for the ' + ruleName + ' rule';
     }
@@ -15944,9 +15921,25 @@ function fieldListRuleGenerator(ruleName, defaultMessage, isInvalid)
       throw ruleName + ' validation rule requires a field and list arguments';
     }
 
-    var parts = split( params, /(,)/, '\\' );
-    var matchField = parts.shift();
-    var matchValues = parts;
+    var matchField, matchValues;
+
+    if ( isString( params ) )
+    {
+      var parts = split( params, /(,)/, '\\' );
+
+      matchField = parts.shift();
+      matchValues = parts;
+    }
+    else if ( isArray( params ) )
+    {
+      matchField = params.shift();
+      matchValues = params;
+    }
+    else if ( isObject( params ) )
+    {
+      matchField = params.field;
+      matchValues = params.values;
+    }
 
     if ( indexOf( database.fields, matchField ) === false )
     {
@@ -16182,24 +16175,67 @@ foreignRuleGenerator('unique',
   }
 );
 
+// 'ruleName'
+// 'ruleName:name'
+// 'ruleName:,field'
+// 'ruleName:name,field'
+// 'ruleName:name,field': '...'
+// 'ruleName': {input: {field: 'field', model: 'name'}, message: '...'}
+// 'ruleName': {input: {field: 'field', model: ModelClass}, message: '...'}
+// 'ruleName': {input: {field: 'field', models: [...]}, message: '...'}
+// 'ruleName': {field: 'field', model: 'name'}
+// 'ruleName': {field: 'field', model: ModelClass}
+// 'ruleName': {field: 'field', models: [...]}
 function foreignRuleGenerator(ruleName, defaultMessage, isInvalid)
 {
   Validation.Rules[ ruleName ] = function(field, params, database, getAlias, message)
   {
-    var parts = split( params || '', /(\s*,\s*)/, '\\' );
-    var modelName = parts[0] || database.name;
-    var fieldName = parts[1] || field;
-    var models = null;
+    var modelName, models, fieldName;
+
+    if ( !isValue( params ) || isString( params ) )
+    {
+      var parts = split( params || '', /(\s*,\s*)/, '\\' );
+      modelName = parts[0] || database.name;
+      fieldName = parts[1] || field;
+      models = null;
+    }
+    else if ( isArray( params ) )
+    {
+      modelName = isString( params[0] ) ? params.shift() : database.name;
+      fieldName = isString( params[0] ) ? params.shift() : field;
+      models = new ModelCollection( database, params );
+    }
+    else if ( isObject( params ) )
+    {
+      modelName = params.model || database.name;
+      fieldName = params.field || field;
+      models = params.models;
+    }
+
+    if ( !models )
+    {
+      if ( !modelName )
+      {
+        throw 'model, model class, or models is required for ' + ruleName + ' rule';
+      }
+
+      if ( isString( modelName ) )
+      {
+        Rekord.get( modelName ).success(function(modelClass)
+        {
+          models = modelClass.all();
+        });
+      }
+      else if ( isRekord( modelName ) )
+      {
+        models = modelName.all();
+      }
+    }
 
     if ( indexOf( database.fields, fieldName ) === false )
     {
       throw fieldName + ' is not a valid field for the ' + ruleName + ' rule';
     }
-
-    Rekord.get( modelName ).success(function(modelClass)
-    {
-      models = modelClass.all();
-    });
 
     var messageTemplate = determineMessage( ruleName, message );
     var extra = {
@@ -16259,19 +16295,39 @@ function subRuleGenerator(ruleName, isInvalid)
       throw ruleName + ' validation rule requires a validation rule argument';
     }
 
-    var colon = params.indexOf( ':' );
+    var otherField, otherRules;
 
-    if ( colon === -1 )
+    if ( isString( params ) )
     {
-      throw params + ' is not a valid argument for the ' + ruleName + ' rule';
-    }
+      var colon = params.indexOf( ':' );
 
-    var otherField = params.substring( 0, colon );
-    var otherRules = params.substring( colon + 1 );
+      if ( colon === -1 )
+      {
+        throw params + ' is not a valid argument for the ' + ruleName + ' rule';
+      }
+
+      otherField = params.substring( 0, colon ) || field;
+      otherRules = params.substring( colon + 1 );
+    }
+    else if ( isArray( params ) )
+    {
+      otherField = params.shift() || field;
+      otherRules = params;
+    }
+    else if ( isObject( params ) )
+    {
+      otherField = params.field || field;
+      otherRules = params.rules;
+    }
 
     if ( indexOf( database.fields, otherField ) === -1 )
     {
       throw otherField + ' is not a valid field for the ' + ruleName + ' rule';
+    }
+
+    if ( !otherRules )
+    {
+      throw 'rules are required for the ' + ruleName + ' rule';
     }
 
     var validators = Validation.parseRules( otherRules, otherField, database, getAlias );
@@ -16301,18 +16357,18 @@ function subRuleGenerator(ruleName, isInvalid)
 // in:X,Y,Z,...
 listRuleGenerator('in',
   '{$alias} must be one of {$list}.',
-  function isInvalid(value, model, values, map)
+  function isInvalid(value, model, inList)
   {
-    return !map[ value ];
+    return !inList( value, model );
   }
 );
 
 // not_in:X,Y,Z,...
 listRuleGenerator('not_in',
   '{$alias} must not be one of {$list}.',
-  function isInvalid(value, model, values, map)
+  function isInvalid(value, model, inList)
   {
-    return map[ value ];
+    return inList( value, model )
   }
 );
 
@@ -16325,11 +16381,44 @@ function listRuleGenerator(ruleName, defaultMessage, isInvalid)
       throw ruleName + ' validation rule requires a list argument';
     }
 
-    var values = split( params, /(,)/, '\\' );
+    var values, inList = false;
 
-    if ( values.length === 0 )
+    if ( isString( params ) )
     {
-      throw params + ' is not a valid list of values for the ' + ruleName + ' rule';
+      values = split( params, /(,)/, '\\' );
+    }
+    else if ( isArray( params ) )
+    {
+      values = params;
+    }
+    else if ( isFunction( params ) )
+    {
+      values = inList;
+    }
+
+    if ( inList !== false )
+    {
+      if ( !values || values.length === 0 )
+      {
+        throw params + ' is not a valid list of values for the ' + ruleName + ' rule';
+      }
+    }
+
+    if ( isPrimitiveArray( values ) )
+    {
+      var map = mapFromArray( values, true );
+
+      inList = function(value)
+      {
+        return map[ value ];
+      };
+    }
+    else
+    {
+      inList = function(value)
+      {
+        return indexOf( values, value, equals );
+      };
     }
 
     var messageTemplate = determineMessage( ruleName, message );
@@ -16338,11 +16427,12 @@ function listRuleGenerator(ruleName, defaultMessage, isInvalid)
       $params: params,
       $list: list
     };
-    var map = mapFromArray( values, true );
+
+
 
     return function(value, model, setMessage)
     {
-      if ( isInvalid( value, model, values, map ) )
+      if ( isInvalid( value, model, inList ) )
       {
         setMessage( generateMessage( field, getAlias( field ), value, model, messageTemplate, extra ) );
       }
@@ -16353,6 +16443,97 @@ function listRuleGenerator(ruleName, defaultMessage, isInvalid)
 
 
   Validation.Rules[ ruleName ].message = defaultMessage;
+}
+
+// between:3,10
+rangeRuleGenerator('between', {
+    'string': '{$alias} must have between {$start} to {$end} characters.',
+    'number': '{$alias} must be between {$start} and {$end}.',
+    'object': '{$alias} must have between {$start} to {$end} items.'
+  },
+  function isInvalid(value, start, end) {
+    return value < start || value > end;
+  }
+);
+
+// not_between
+rangeRuleGenerator('not_between', {
+    'string': '{$alias} must not have between {$start} to {$end} characters.',
+    'number': '{$alias} must not be between {$start} and {$end}.',
+    'object': '{$alias} must not have between {$start} to {$end} items.'
+  },
+  function isInvalid(value, start, end) {
+    return value >= start && value <= end;
+  }
+);
+
+function rangeRuleGenerator(ruleName, defaultMessages, isInvalid)
+{
+  Validation.Rules[ ruleName ] = function(field, params, database, getAlias, message)
+  {
+    if ( !params )
+    {
+      throw ruleName + ' validation rule requires a range argument';
+    }
+
+    var start, end;
+
+    if ( isString( params ) )
+    {
+      var range = split( params, /(\s*,\s*)/, '\\' );
+
+      start = parseFloat( range[0] );
+      end = parseFloat( range[1] );
+    }
+    else if ( isArray( params ) )
+    {
+      start = params[ 0 ];
+      end = params[ 1 ];
+    }
+    else if ( isObject( params ) )
+    {
+      start = params.start;
+      end = params.end;
+    }
+
+    if ( isNaN( start ) || isNaN( end ) )
+    {
+      throw params + ' is not a valid range of numbers for the ' + ruleName + ' rule';
+    }
+
+    if ( isString( message ) )
+    {
+      message = {
+        'string': message,
+        'number': message,
+        'object': message
+      };
+    }
+
+    var messageTemplate = determineMessage( ruleName, message );
+    var extra = {
+      $start: start,
+      $end: end
+    };
+
+    return function(value, model, setMessage)
+    {
+      var size = sizeof( value );
+      var type = typeof( value );
+      var typeMessage = messageTemplate[ type ];
+
+      if ( typeMessage && isInvalid( size, start, end ) )
+      {
+        extra.$size = size;
+
+        setMessage( generateMessage( field, getAlias( field ), value, model, typeMessage, extra ) );
+      }
+
+      return value;
+    };
+  };
+
+  Validation.Rules[ ruleName ].message = defaultMessages;
 }
 
 
@@ -16416,14 +16597,27 @@ function regexRuleGenerator(ruleName, defaultMessage, regex)
 
 Validation.Rules.regex = function(field, params, database, getAlias, message)
 {
-  var parsed = /^\/(.*)\/([gmi]*)$/.exec( params );
+  var regex;
 
-  if ( !parsed )
+  if ( isString( params ) )
+  {
+    var parsed = /^\/(.*)\/([gmi]*)$/.exec( params );
+
+    if ( parsed )
+    {
+      regex = new RegExp( parsed[1], parsed[2] );
+    }
+  }
+  else if ( isRegExp( params ) )
+  {
+    regex = params;
+  }
+
+  if ( !regex )
   {
     throw params + ' is not a valid regular expression for the regex rule';
   }
 
-  var regex = new RegExp( parsed[1], parsed[2] );
   var messageTemplate = determineMessage( 'regex', message );
 
   return function(value, model, setMessage)
@@ -16517,16 +16711,20 @@ function sizeRuleGenerator(ruleName, defaultMessages, isInvalid)
 {
   Validation.Rules[ ruleName ] = function(field, params, database, getAlias, message)
   {
-    if ( !params )
-    {
-      throw ruleName + ' validation rule requires a number argument';
-    }
+    var number;
 
-    var number = parseFloat( params );
+    if ( isString( params ) )
+    {
+      number = parseFloat( params );
+    }
+    else if ( isNumber( params ) )
+    {
+      number = params;
+    }
 
     if ( isNaN( number ) )
     {
-      throw params + ' is not a valid number for the ' + ruleName + ' rule';
+      throw '"' + params + '" is not a valid number for the ' + ruleName + ' rule';
     }
 
     if ( isString( message ) )
