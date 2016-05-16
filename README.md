@@ -11,6 +11,8 @@ Rekord is a javascript REST ORM that is offline and real-time capable.
 **Features**
 - Relationships `hasOne`, `belongsTo`, `hasMany`, `hasManyThrough`, & `hasRemote`
 - Polymorphic relationships for `hasOne`, `belongsTo` & `hasMany`
+- Validation (59 rules, 6 expressions, 13 transforms, and custom functions)
+- Batch REST execution for any/all types and operations
 - Inheritance (with `extend` option)
 - Horizontal scaling with `shard`ing
 - Supports composite keys

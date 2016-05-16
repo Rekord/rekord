@@ -72,8 +72,6 @@ function listRuleGenerator(ruleName, defaultMessage, isInvalid)
       $list: list
     };
 
-
-
     return function(value, model, setMessage)
     {
       if ( isInvalid( value, model, inList ) )
