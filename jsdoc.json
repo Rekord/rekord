@@ -8,6 +8,7 @@
       "src/lib/store.js",
       "src/lib/live.js",
       "src/lib/offline.js",
+      "src/lib/batch.js",
       "src/lib/Gate.js",
       "src/lib/Database.js",
       "src/lib/Model.js",

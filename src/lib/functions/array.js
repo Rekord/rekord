@@ -10,6 +10,8 @@ var AP = Array.prototype;
  * ```javascript
  * Rekord.toArray([1, 2, 3]); // [1, 2, 3]
  * Rekord.toArray('1,2,3', ','); // ['1', '2', '3']
+ * Rekord.toArray(1); // [1]
+ * Rekord.toArray(null); // []
  * ```
  *
  * @memberof Rekord
@@ -22,7 +24,20 @@ var AP = Array.prototype;
  */
 function toArray(x, delimiter)
 {
-  return x instanceof Array ? x : x.split( delimiter );
+  if ( x instanceof Array )
+  {
+    return x;
+  }
+  if ( isString( x ) )
+  {
+    return x.split( delimiter );
+  }
+  if ( isValue( x ) )
+  {
+    return [ x ];
+  }
+
+  return [];
 }
 
 /**

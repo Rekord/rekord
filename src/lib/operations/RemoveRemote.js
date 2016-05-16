@@ -26,7 +26,11 @@ extend( Operation, RemoveRemote,
     {
       model.$status = Model.Status.RemovePending;
 
+      batchStart();
+
       db.rest.remove( model, this.success(), this.failure() );
+
+      batchEnd();
     }
   },
 

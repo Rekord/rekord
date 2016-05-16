@@ -866,6 +866,8 @@ addMethods( Database.prototype,
   {
     var db = this;
 
+    batchStart();
+
     for (var key in db.loaded)
     {
       var model = db.loaded[ key ];
@@ -892,6 +894,8 @@ addMethods( Database.prototype,
         db.models.put( key, model, true );
       }
     }
+
+    batchEnd();
 
     db.loaded = {};
     db.updated();
@@ -1093,7 +1097,11 @@ addMethods( Database.prototype,
       promise.reject( db.models );
     }
 
+    batchStart();
+
     db.rest.all( onModels, onLoadError );
+
+    batchEnd();
 
     return promise;
   },

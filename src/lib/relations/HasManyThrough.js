@@ -162,6 +162,8 @@ extend( RelationMultiple, HasManyThrough,
   {
     var relation = model.$relations[ this.name ];
 
+    batchStart();
+
     if ( relation && this.cascadeSave )
     {
       var throughs = relation.throughs.values;
@@ -199,6 +201,8 @@ extend( RelationMultiple, HasManyThrough,
       relation.saving = false;
       relation.delaySaving = false;
     }
+
+    batchEnd();
   },
 
   preRemove: function(model)
@@ -208,6 +212,8 @@ extend( RelationMultiple, HasManyThrough,
     if ( relation && this.cascadeRemove )
     {
       Rekord.debug( Rekord.Debugs.HASMANYTHRU_PREREMOVE, this, model, relation );
+
+      batchStart();
 
       this.bulk( relation, function()
       {
@@ -220,6 +226,8 @@ extend( RelationMultiple, HasManyThrough,
           through.$remove( this.cascadeRemove );
         }
       });
+
+      batchEnd();
     }
   },
 

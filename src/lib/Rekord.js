@@ -26,6 +26,8 @@ function Rekord(options)
   database.Model = model;
   model.Database = database;
 
+  Rekord.classes[ database.name ] = model;
+
   Rekord.trigger( Rekord.Events.Plugins, [model, database, options] );
 
   if ( Rekord.autoload )
@@ -50,6 +52,8 @@ function Rekord(options)
 
   return model;
 }
+
+Rekord.classes = {};
 
 Rekord.autoload = false;
 

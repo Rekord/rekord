@@ -22,7 +22,11 @@ extend( Operation, GetRemote,
     }
     else if ( this.canCascade() )
     {
+      batchStart();
+
       db.rest.get( model, this.success(), this.failure() );
+
+      batchEnd();
     }
     else
     {

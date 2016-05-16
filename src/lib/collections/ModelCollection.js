@@ -818,6 +818,8 @@ extendArray( Collection, ModelCollection,
     var where = createWhere( whereProperties, whereValue, whereEquals );
     var removed = out || this.cloneEmpty();
 
+    batchStart();
+
     for (var i = 0; i < this.length; i++)
     {
       var model = this[ i ];
@@ -835,6 +837,8 @@ extendArray( Collection, ModelCollection,
         }
       }
     }
+
+    batchEnd();
 
     this.trigger( Collection.Events.Removes, [this, removed] );
 
@@ -870,6 +874,8 @@ extendArray( Collection, ModelCollection,
    */
   update: function(props, value, remoteData, avoidSave)
   {
+    batchStart();
+
     for (var i = 0; i < this.length; i++)
     {
       var model = this[ i ];
@@ -881,6 +887,8 @@ extendArray( Collection, ModelCollection,
         model.$save();
       }
     }
+
+    batchEnd();
 
     this.trigger( Collection.Events.Updates, [this, this] );
     this.sort();
@@ -916,6 +924,8 @@ extendArray( Collection, ModelCollection,
   {
     var updated = [];
 
+    batchStart();
+
     for (var i = 0; i < this.length; i++)
     {
       var model = this[ i ];
@@ -932,6 +942,8 @@ extendArray( Collection, ModelCollection,
         updated.push( model );
       }
     }
+
+    batchEnd();
 
     this.trigger( Collection.Events.Updates, [this, updated] );
     this.sort();
@@ -1054,7 +1066,13 @@ extendArray( Collection, ModelCollection,
       model.$cancel( reset );
     }
 
-    return this.eachWhere( cancelIt, properties, value, equals );
+    batchStart();
+
+    this.eachWhere( cancelIt, properties, value, equals );
+
+    batchEnd();
+
+    return this;
   },
 
   /**
@@ -1081,7 +1099,13 @@ extendArray( Collection, ModelCollection,
       model.$refresh();
     }
 
-    return this.eachWhere( refreshIt, properties, value, equals );
+    batchStart();
+
+    this.eachWhere( refreshIt, properties, value, equals );
+
+    batchEnd();
+
+    return this;
   },
 
   /**

@@ -149,6 +149,8 @@ extend( RelationMultiple, HasMany,
     {
       Rekord.debug( Rekord.Debugs.HASMANY_POSTSAVE, this, model, relation );
 
+      batchStart();
+
       relation.saving = true;
       relation.delaySaving = true;
 
@@ -166,6 +168,8 @@ extend( RelationMultiple, HasMany,
 
       relation.saving = false;
       relation.delaySaving = false;
+
+      batchEnd();
     }
   },
 
@@ -176,6 +180,8 @@ extend( RelationMultiple, HasMany,
     if ( relation && this.cascadeRemove )
     {
       Rekord.debug( Rekord.Debugs.HASMANY_PREREMOVE, this, model, relation );
+
+      batchStart();
 
       this.bulk( relation, function()
       {
@@ -188,6 +194,8 @@ extend( RelationMultiple, HasMany,
           related.$remove( this.cascadeRemove );
         }
       });
+
+      batchEnd();
     }
   },
 

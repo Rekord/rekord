@@ -412,6 +412,8 @@ addMethods( Model.prototype,
 
     return Promise.singularity( promise, this, function(singularity)
     {
+      batchStart();
+
       this.$db.addReference( this );
 
       this.$set( setProperties, setValue );
@@ -421,6 +423,8 @@ addMethods( Model.prototype,
       this.$db.save( this, cascade );
 
       this.$trigger( Model.Events.PostSave, [this] );
+
+      batchEnd();
     });
   },
 
@@ -443,11 +447,15 @@ addMethods( Model.prototype,
 
     return Promise.singularity( promise, this, function(singularity)
     {
+      batchStart();
+
       this.$trigger( Model.Events.PreRemove, [this] );
 
       this.$db.remove( this, cascade );
 
       this.$trigger( Model.Events.PostRemove, [this] );
+
+      batchEnd();
     });
   },
 

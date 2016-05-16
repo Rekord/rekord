@@ -35,6 +35,8 @@ extend( Operation, SaveRemote,
     {
       model.$status = Model.Status.SavePending;
 
+      batchStart();
+
       if ( model.$saved )
       {
         db.rest.update( model, model.$saving, this.success(), this.failure() );
@@ -43,6 +45,8 @@ extend( Operation, SaveRemote,
       {
         db.rest.create( model, model.$saving, this.success(), this.failure() );
       }
+
+      batchEnd();
     }
   },
 
