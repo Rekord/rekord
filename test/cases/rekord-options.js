@@ -1189,14 +1189,15 @@ test( 'timestamps type millis', function(assert)
     fields: ['name', 'done'],
     defaults: { done: false },
     timestamps: 'done_at',
-    timestampType: Rekord.Timestamp.Millis
+    timestampType: Rekord.Timestamp.Millis,
+    timestampUTC: true
   });
 
   deepEqual( Todo.Database.fields, ['id', 'name', 'done', 'done_at'] );
 
   var t0 = Todo.boot({id: 1, name: 't0', done_at: '01/02/2003'});
 
-  strictEqual( t0.done_at, 1041483600000 );
+  strictEqual( t0.done_at, 1041465600000 );
 });
 
 test( 'timestamps type seconds', function(assert)
@@ -1208,14 +1209,15 @@ test( 'timestamps type seconds', function(assert)
     fields: ['name', 'done'],
     defaults: { done: false },
     timestamps: 'done_at',
-    timestampType: Rekord.Timestamp.Seconds
+    timestampType: Rekord.Timestamp.Seconds,
+    timestampUTC: true
   });
 
   deepEqual( Todo.Database.fields, ['id', 'name', 'done', 'done_at'] );
 
   var t0 = Todo.boot({id: 1, name: 't0', done_at: '01/02/2003'});
 
-  strictEqual( t0.done_at, 1041483600 );
+  strictEqual( t0.done_at, 1041465600 );
 });
 
 test( 'timestamps type custom', function(assert)
@@ -1251,7 +1253,8 @@ test( 'timestamps format millis', function(assert)
     fields: ['name', 'done'],
     defaults: { done: false },
     timestamps: 'done_at',
-    timestampFormat: Rekord.Timestamp.Millis
+    timestampFormat: Rekord.Timestamp.Millis,
+    timestampUTC: true
   });
 
   deepEqual( Todo.Database.fields, ['id', 'name', 'done', 'done_at'] );
@@ -1262,7 +1265,7 @@ test( 'timestamps format millis', function(assert)
 
   var e0 = t0.$toJSON(true);
 
-  strictEqual( e0.done_at, 1041483600000 );
+  strictEqual( e0.done_at, 1041465600000 );
 });
 
 test( 'timestamps format seconds', function(assert)
@@ -1274,7 +1277,8 @@ test( 'timestamps format seconds', function(assert)
     fields: ['name', 'done'],
     defaults: { done: false },
     timestamps: 'done_at',
-    timestampFormat: Rekord.Timestamp.Seconds
+    timestampFormat: Rekord.Timestamp.Seconds,
+    timestampUTC: true
   });
 
   deepEqual( Todo.Database.fields, ['id', 'name', 'done', 'done_at'] );
@@ -1285,7 +1289,7 @@ test( 'timestamps format seconds', function(assert)
 
   var e0 = t0.$toJSON(true);
 
-  strictEqual( e0.done_at, 1041483600 );
+  strictEqual( e0.done_at, 1041465600 );
 });
 
 test( 'timestamps format custom', function(assert)

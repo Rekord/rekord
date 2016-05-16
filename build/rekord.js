@@ -16858,6 +16858,44 @@ Validation.Rules.yesno.map =
   '0':      false
 };
 
+Validation.Rules.abs = function(field, params, database, alias, message)
+{
+  return function(value, model, setMessage)
+  {
+    value = tryParseFloat( value );
+
+    if ( isNumber( value ) )
+    {
+      value = Math.abs( value );
+    }
+
+    return value;
+  };
+};
+
+Validation.Rules.apply = function(field, params, database, alias, message)
+{
+  return function(value, model, setMessage)
+  {
+    model.$set( field, value );
+    
+    return value;
+  };
+};
+
+Validation.Rules.base64 = function(field, params, database, alias, message)
+{
+  return function(value, model, setMessage)
+  {
+    if ( global.btoa )
+    {
+      value = global.btoa( value );
+    }
+
+    return value;
+  };
+};
+
 Validation.Rules.ceil = function(field, params, database, alias, message)
 {
   return function(value, model, setMessage)
@@ -16867,6 +16905,43 @@ Validation.Rules.ceil = function(field, params, database, alias, message)
     if ( isNumber( value ) )
     {
       value = Math.ceil( value );
+    }
+
+    return value;
+  };
+};
+
+Validation.Rules.endOfDay = function(field, params, database, alias, message)
+{
+  return function(value, model, setMessage)
+  {
+    return endOfDay( value );
+  };
+};
+
+Validation.Rules.filter = function(field, params, database, alias, message)
+{
+  return function(value, model, setMessage)
+  {
+    if ( isArray( value ) )
+    {
+      for (var i = value.length - 1; i >= 0; i--)
+      {
+        if ( !isValue( value[ i ] ) )
+        {
+          value.splice( i, 1 );
+        }
+      }
+    }
+    else if ( isObject( value ) )
+    {
+      for (var prop in value)
+      {
+        if ( !isValue( value[ prop ] ) )
+        {
+          delete value[ prop ];
+        }
+      }
     }
 
     return value;
@@ -16888,6 +16963,61 @@ Validation.Rules.floor = function(field, params, database, alias, message)
   };
 };
 
+Validation.Rules.mod = function(field, params, database, alias, message)
+{
+  var number = tryParseFloat( params );
+
+  if ( !isNumber( number ) )
+  {
+    throw '"' + number + '" is not a valid number for the mod rule.';
+  }
+
+  return function(value, model, setMessage)
+  {
+    value = tryParseFloat( value );
+
+    if ( isNumber( value ) )
+    {
+      value = value % number;
+    }
+
+    return value;
+  };
+};
+
+Validation.Rules.null = function(field, params, database, alias, message)
+{
+  return function(value, model, setMessage)
+  {
+    model.$set( field, null );
+
+    return null;
+  };
+};
+
+Validation.Rules.round = function(field, params, database, alias, message)
+{
+  return function(value, model, setMessage)
+  {
+    value = tryParseFloat( value );
+
+    if ( isNumber( value ) )
+    {
+      value = Math.round( value );
+    }
+
+    return value;
+  };
+};
+
+Validation.Rules.startOfDay = function(field, params, database, alias, message)
+{
+  return function(value, model, setMessage)
+  {
+    return startOfDay( value );
+  };
+};
+
 Validation.Rules.trim = function(field, params, database, alias, message)
 {
   // String.trim polyfill
@@ -16906,6 +17036,19 @@ Validation.Rules.trim = function(field, params, database, alias, message)
     if ( isString( value ) )
     {
       value = value.trim();
+    }
+
+    return value;
+  };
+};
+
+Validation.Rules.unbase64 = function(field, params, database, alias, message)
+{
+  return function(value, model, setMessage)
+  {
+    if ( global.atob )
+    {
+      value = global.atob( value );
     }
 
     return value;

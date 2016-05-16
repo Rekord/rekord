@@ -6501,3 +6501,265 @@ test( 'transform trim', function(assert)
   deepEqual( a.$validations, {} );
   deepEqual( a.$validationMessages, [] );
 });
+
+test( 'transform round', function(assert)
+{
+  var prefix = 'transform_round_';
+
+  var expectedMessage = 'value must be over 3.5';
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['value'],
+    validation: {
+      rules: {
+        value: 'round|min:3.5'
+      },
+      messages: {
+        value: expectedMessage
+      }
+    }
+  });
+
+  var a = Task.create({value: 3.4});
+
+  notOk( a.$validate() );
+  notOk( a.$valid );
+  deepEqual( a.$validations, {value: expectedMessage} );
+  deepEqual( a.$validationMessages, [expectedMessage] );
+
+  a.value = 4;
+
+  ok( a.$validate() );
+  ok( a.$valid );
+  deepEqual( a.$validations, {} );
+  deepEqual( a.$validationMessages, [] );
+});
+
+test( 'transform mod', function(assert)
+{
+  var prefix = 'transform_mod_';
+
+  var expectedMessage = 'value must be even';
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['value'],
+    validation: {
+      rules: {
+        value: 'mod:2|equal:0'
+      },
+      messages: {
+        value: expectedMessage
+      }
+    }
+  });
+
+  var a = Task.create({value: 3});
+
+  notOk( a.$validate() );
+  notOk( a.$valid );
+  deepEqual( a.$validations, {value: expectedMessage} );
+  deepEqual( a.$validationMessages, [expectedMessage] );
+
+  a.value = 4;
+
+  ok( a.$validate() );
+  ok( a.$valid );
+  deepEqual( a.$validations, {} );
+  deepEqual( a.$validationMessages, [] );
+});
+
+test( 'transform abs', function(assert)
+{
+  var prefix = 'transform_abs_';
+
+  var expectedMessage = 'value must be over 3.5';
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['value'],
+    validation: {
+      rules: {
+        value: 'abs|floor|min:3.5'
+      },
+      messages: {
+        value: expectedMessage
+      }
+    }
+  });
+
+  var a = Task.create({value: -3.9});
+
+  notOk( a.$validate() );
+  notOk( a.$valid );
+  deepEqual( a.$validations, {value: expectedMessage} );
+  deepEqual( a.$validationMessages, [expectedMessage] );
+
+  a.value = 4;
+
+  ok( a.$validate() );
+  ok( a.$valid );
+  deepEqual( a.$validations, {} );
+  deepEqual( a.$validationMessages, [] );
+});
+
+test( 'transform apply', function(assert)
+{
+  var prefix = 'transform_apply_';
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['value'],
+    validation: {
+      rules: {
+        value: 'abs|floor|apply'
+      }
+    }
+  });
+
+  var a = Task.create({value: '-3.9'});
+
+  ok( a.$validate() );
+
+  strictEqual( a.value, 3 );
+});
+
+test( 'transform filter', function(assert)
+{
+  var prefix = 'transform_filter_';
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['value'],
+    validation: {
+      rules: {
+        value: 'filter|apply'
+      }
+    }
+  });
+
+  var a = Task.create({value: [null, 1, 2, null, 3, 4, null]});
+
+  ok( a.$validate() );
+
+  deepEqual( a.value, [1, 2, 3, 4] );
+});
+
+test( 'transform startOfDay', function(assert)
+{
+  var prefix = 'transform_startOfDay_';
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['value'],
+    validation: {
+      rules: {
+        value: 'startOfDay'
+      }
+    }
+  });
+
+  var d = new Date();
+
+  var a = Task.create({value: d});
+
+  ok( a.$validate() );
+
+  strictEqual( a.value.getHours(), 0 );
+});
+
+test( 'transform endOfDay', function(assert)
+{
+  var prefix = 'transform_endOfDay_';
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['value'],
+    validation: {
+      rules: {
+        value: 'endOfDay'
+      }
+    }
+  });
+
+  var d = new Date();
+
+  var a = Task.create({value: d});
+
+  ok( a.$validate() );
+
+  strictEqual( a.value.getHours(), 23 );
+});
+
+test( 'transform base64', function(assert)
+{
+  var prefix = 'transform_base64_';
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['value'],
+    validation: {
+      rules: {
+        value: 'base64|apply'
+      }
+    }
+  });
+
+  var a = Task.create({value: 'Hello World'});
+
+  ok( a.$validate() );
+
+  strictEqual( a.value, 'SGVsbG8gV29ybGQ=' );
+});
+
+test( 'transform unbase64', function(assert)
+{
+  var prefix = 'transform_unbase64_';
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['value'],
+    validation: {
+      rules: {
+        value: 'unbase64|apply'
+      }
+    }
+  });
+
+  var a = Task.create({value: 'SGVsbG8gV29ybGQ='});
+
+  ok( a.$validate() );
+
+  strictEqual( a.value, 'Hello World' );
+});
+
+test( 'transform null', function(assert)
+{
+  var prefix = 'transform_null_';
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['value'],
+    validation: {
+      rules: {
+        value: 'if::equal:0|null'
+      }
+    }
+  });
+
+  var a = Task.create({value: 'notnull'});
+
+  ok( a.$validate() );
+
+  strictEqual( a.value, 'notnull' );
+
+  a.value = 0;
+
+  ok( a.$validate() );
+
+  strictEqual( a.value, null );
+});
+
+
+// transform null
