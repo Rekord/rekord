@@ -26,11 +26,11 @@ extend( Operation, RemoveRemote,
     {
       model.$status = Model.Status.RemovePending;
 
-      batchStart();
+      batchExecute(function()
+      {
+        db.rest.remove( model, this.success(), this.failure() );
 
-      db.rest.remove( model, this.success(), this.failure() );
-
-      batchEnd();
+      }, this );
     }
   },
 

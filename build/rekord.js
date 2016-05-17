@@ -2691,17 +2691,19 @@ Rekord.checkNetworkStatus = function()
 var batchDepth = 0;
 var batches = [];
 var batchHandlers = [];
+var batchOverwrites = [];
 
 function batch(namesInput, operationsInput, handler)
 {
   var names = toArray( namesInput, /\s*,\s/ );
   var operations = toArray( operationsInput, /\s*,\s/ );
   var batchID = batchHandlers.push( handler ) - 1;
+  var batch = batches[ batchID ] = new Collection();
 
   for (var i = 0; i < names.length; i++)
   {
     var modelName = names[ i ];
-    var modelHandler = createModelHandler( operations, batchID );
+    var modelHandler = createModelHandler( operations, batch );
 
     if ( isString( modelName ) )
     {
@@ -2730,7 +2732,7 @@ function batch(namesInput, operationsInput, handler)
     }
     else if ( modelName === true )
     {
-      for (databaseName in Rekord.classes)
+      for (var databaseName in Rekord.classes)
       {
         modelHandler( Rekord.classes[ databaseName ] );
       }
@@ -2744,24 +2746,25 @@ function batch(namesInput, operationsInput, handler)
   }
 }
 
-function createModelHandler(operations, batchID)
+function createModelHandler(operations, batch)
 {
   return function(modelClass)
   {
     var db = modelClass.Database;
     var rest = db.rest;
-    var currentBatch = batches[ batchID ] = [];
 
     for (var i = 0; i < operations.length; i++)
     {
       var op = operations[ i ];
+
+      batchOverwrites.push( rest, op, rest[ op ] );
 
       switch (op)
       {
         case 'all':
           rest.all = function(success, failure)
           {
-            currentBatch.push({
+            batch.push({
               database: db,
               class: modelClass,
               operation: 'all',
@@ -2773,7 +2776,7 @@ function createModelHandler(operations, batchID)
         case 'get':
           rest.get = function(model, success, failure)
           {
-            currentBatch.push({
+            batch.push({
               database: db,
               class: modelClass,
               operation: 'get',
@@ -2786,7 +2789,7 @@ function createModelHandler(operations, batchID)
         case 'create':
           rest.create = function(model, encoded, success, failure)
           {
-            currentBatch.push({
+            batch.push({
               database: db,
               class: modelClass,
               operation: 'create',
@@ -2800,7 +2803,7 @@ function createModelHandler(operations, batchID)
         case 'update':
           rest.update = function(model, encoded, success, failure)
           {
-            currentBatch.push({
+            batch.push({
               database: db,
               class: modelClass,
               operation: 'update',
@@ -2814,7 +2817,7 @@ function createModelHandler(operations, batchID)
         case 'remove':
           rest.remove = function(model, success, failure)
           {
-            currentBatch.push({
+            batch.push({
               database: db,
               class: modelClass,
               operation: 'remove',
@@ -2827,7 +2830,7 @@ function createModelHandler(operations, batchID)
         case 'query':
           rest.query = function(url, query, success, failure)
           {
-            currentBatch.push({
+            batch.push({
               database: db,
               class: modelClass,
               operation: 'query',
@@ -2856,7 +2859,7 @@ function batchRun()
     {
       handler( batch );
 
-      batch.length = 0;
+      batch.clear();
     }
   }
 }
@@ -2876,10 +2879,47 @@ function batchEnd()
   }
 }
 
+function batchClear()
+{
+  for (var i = 0; i < batchOverwrites.length; i += 3)
+  {
+    var rest = batchOverwrites[ i + 0 ];
+    var prop = batchOverwrites[ i + 1 ];
+    var func = batchOverwrites[ i + 2 ];
+
+    rest[ prop ] = func;
+  }
+
+  batches.length = 0;
+  batchHandlers.length = 0;
+  batchOverwrites.length = 0;
+}
+
+function batchExecute(func, context)
+{
+  try
+  {
+    batchStart();
+
+    func.apply( context );
+  }
+  catch (e)
+  {
+    throw e;
+  }
+  finally
+  {
+    batchEnd();
+  }
+}
+
 Rekord.batch = batch;
 Rekord.batchRun = batchRun;
 Rekord.batchStart = batchStart;
 Rekord.batchEnd = batchEnd;
+Rekord.batchClear = batchClear;
+Rekord.batchExecute = batchExecute;
+Rekord.batchDepth = function() { return batchDepth; };
 
 
 function Gate(callback)
@@ -3787,36 +3827,35 @@ addMethods( Database.prototype,
   {
     var db = this;
 
-    batchStart();
-
-    for (var key in db.loaded)
+    batchExecute(function()
     {
-      var model = db.loaded[ key ];
-
-      if ( model.$status === Model.Status.RemovePending )
+      for (var key in db.loaded)
       {
-        Rekord.debug( Rekord.Debugs.LOCAL_RESUME_DELETE, db, model );
+        var model = db.loaded[ key ];
 
-        model.$addOperation( RemoveRemote );
-      }
-      else
-      {
-        if ( model.$status === Model.Status.SavePending )
+        if ( model.$status === Model.Status.RemovePending )
         {
-          Rekord.debug( Rekord.Debugs.LOCAL_RESUME_SAVE, db, model );
+          Rekord.debug( Rekord.Debugs.LOCAL_RESUME_DELETE, db, model );
 
-          model.$addOperation( SaveRemote );
+          model.$addOperation( RemoveRemote );
         }
         else
         {
-          Rekord.debug( Rekord.Debugs.LOCAL_LOAD_SAVED, db, model );
+          if ( model.$status === Model.Status.SavePending )
+          {
+            Rekord.debug( Rekord.Debugs.LOCAL_RESUME_SAVE, db, model );
+
+            model.$addOperation( SaveRemote );
+          }
+          else
+          {
+            Rekord.debug( Rekord.Debugs.LOCAL_LOAD_SAVED, db, model );
+          }
+
+          db.models.put( key, model, true );
         }
-
-        db.models.put( key, model, true );
       }
-    }
-
-    batchEnd();
+    });
 
     db.loaded = {};
     db.updated();
@@ -4018,11 +4057,10 @@ addMethods( Database.prototype,
       promise.reject( db.models );
     }
 
-    batchStart();
-
-    db.rest.all( onModels, onLoadError );
-
-    batchEnd();
+    batchExecute(function()
+    {
+      db.rest.all( onModels, onLoadError );
+    });
 
     return promise;
   },
@@ -4580,19 +4618,19 @@ addMethods( Model.prototype,
 
     return Promise.singularity( promise, this, function(singularity)
     {
-      batchStart();
+      batchExecute(function()
+      {
+        this.$db.addReference( this );
 
-      this.$db.addReference( this );
+        this.$set( setProperties, setValue );
 
-      this.$set( setProperties, setValue );
+        this.$trigger( Model.Events.PreSave, [this] );
 
-      this.$trigger( Model.Events.PreSave, [this] );
+        this.$db.save( this, cascade );
 
-      this.$db.save( this, cascade );
+        this.$trigger( Model.Events.PostSave, [this] );
 
-      this.$trigger( Model.Events.PostSave, [this] );
-
-      batchEnd();
+      }, this );
     });
   },
 
@@ -4615,15 +4653,15 @@ addMethods( Model.prototype,
 
     return Promise.singularity( promise, this, function(singularity)
     {
-      batchStart();
+      batchExecute(function()
+      {
+        this.$trigger( Model.Events.PreRemove, [this] );
 
-      this.$trigger( Model.Events.PreRemove, [this] );
+        this.$db.remove( this, cascade );
 
-      this.$db.remove( this, cascade );
+        this.$trigger( Model.Events.PostRemove, [this] );
 
-      this.$trigger( Model.Events.PostRemove, [this] );
-
-      batchEnd();
+      }, this );
     });
   },
 
@@ -8673,27 +8711,27 @@ extendArray( Collection, ModelCollection,
     var where = createWhere( whereProperties, whereValue, whereEquals );
     var removed = out || this.cloneEmpty();
 
-    batchStart();
-
-    for (var i = 0; i < this.length; i++)
+    batchExecute(function()
     {
-      var model = this[ i ];
-      var key = model.$key();
-
-      if ( where( model ) )
+      for (var i = 0; i < this.length; i++)
       {
-        this.map.remove( key );
-        removed.push( model );
-        i--;
+        var model = this[ i ];
+        var key = model.$key();
 
-        if ( callRemove )
+        if ( where( model ) )
         {
-          model.$remove();
+          this.map.remove( key );
+          removed.push( model );
+          i--;
+
+          if ( callRemove )
+          {
+            model.$remove();
+          }
         }
       }
-    }
 
-    batchEnd();
+    }, this );
 
     this.trigger( Collection.Events.Removes, [this, removed] );
 
@@ -8729,21 +8767,21 @@ extendArray( Collection, ModelCollection,
    */
   update: function(props, value, remoteData, avoidSave)
   {
-    batchStart();
-
-    for (var i = 0; i < this.length; i++)
+    batchExecute(function()
     {
-      var model = this[ i ];
-
-      model.$set( props, value, remoteData );
-
-      if ( !avoidSave )
+      for (var i = 0; i < this.length; i++)
       {
-        model.$save();
-      }
-    }
+        var model = this[ i ];
 
-    batchEnd();
+        model.$set( props, value, remoteData );
+
+        if ( !avoidSave )
+        {
+          model.$save();
+        }
+      }
+
+    }, this );
 
     this.trigger( Collection.Events.Updates, [this, this] );
     this.sort();
@@ -8779,26 +8817,26 @@ extendArray( Collection, ModelCollection,
   {
     var updated = [];
 
-    batchStart();
-
-    for (var i = 0; i < this.length; i++)
+    batchExecute(function()
     {
-      var model = this[ i ];
-
-      if ( where( model ) )
+      for (var i = 0; i < this.length; i++)
       {
-        model.$set( props, value, remoteData );
+        var model = this[ i ];
 
-        if ( !avoidSave )
+        if ( where( model ) )
         {
-          model.$save();
+          model.$set( props, value, remoteData );
+
+          if ( !avoidSave )
+          {
+            model.$save();
+          }
+
+          updated.push( model );
         }
-
-        updated.push( model );
       }
-    }
 
-    batchEnd();
+    }, this );
 
     this.trigger( Collection.Events.Updates, [this, updated] );
     this.sort();
@@ -8921,11 +8959,11 @@ extendArray( Collection, ModelCollection,
       model.$cancel( reset );
     }
 
-    batchStart();
+    batchExecute(function()
+    {
+      this.eachWhere( cancelIt, properties, value, equals );
 
-    this.eachWhere( cancelIt, properties, value, equals );
-
-    batchEnd();
+    }, this );
 
     return this;
   },
@@ -8954,11 +8992,47 @@ extendArray( Collection, ModelCollection,
       model.$refresh();
     }
 
-    batchStart();
+    batchExecute(function()
+    {
+      this.eachWhere( refreshIt, properties, value, equals );
 
-    this.eachWhere( refreshIt, properties, value, equals );
+    }, this );
 
-    batchEnd();
+    return this;
+  },
+
+  /**
+   * Calls {@link Rekord.Model#$save} on models in this collection that meet
+   * the given where expression.
+   *
+   * @method
+   * @memberof Rekord.ModelCollection#
+   * @param {whereInput} [properties] -
+   *    See {@link Rekord.createWhere}
+   * @param {Any} [value] -
+   *    See {@link Rekord.createWhere}
+   * @param {equalityCallback} [equals=Rekord.equalsStrict] -
+   *    See {@link Rekord.createWhere}
+   * @param {Object} [props={}] -
+   *    Properties to apply to each model in the collection that pass the where
+   *    expression.
+   * @return {Rekord.ModelCollection} -
+   *    The reference to this collection.
+   * @see Rekord.createWhere
+   * @see Rekord.Model#$refresh
+   */
+  saveWhere: function(properties, value, equals, props)
+  {
+    function saveIt(model)
+    {
+      model.$save( props );
+    }
+
+    batchExecute(function()
+    {
+      this.eachWhere( saveIt, properties, value, equals );
+
+    }, this );
 
     return this;
   },
@@ -9523,13 +9597,13 @@ addMethods( Search.prototype,
     var success = bind( this, this.$handleSuccess );
     var failure = bind( this, this.$handleFailure );
 
-    batchStart();
+    batchExecute(function()
+    {
+      this.$cancel();
+      this.$promise = new Promise();
+      this.$db.rest.query( this.$url, encoded, success, failure );
 
-    this.$cancel();
-    this.$promise = new Promise();
-    this.$db.rest.query( this.$url, encoded, success, failure );
-
-    batchEnd();
+    }, this );
 
     return this.$promise;
   },
@@ -10371,11 +10445,11 @@ extend( Operation, GetRemote,
     }
     else if ( this.canCascade() )
     {
-      batchStart();
+      batchExecute(function()
+      {
+        db.rest.get( model, this.success(), this.failure() );
 
-      db.rest.get( model, this.success(), this.failure() );
-
-      batchEnd();
+      }, this );
     }
     else
     {
@@ -10612,11 +10686,11 @@ extend( Operation, RemoveRemote,
     {
       model.$status = Model.Status.RemovePending;
 
-      batchStart();
+      batchExecute(function()
+      {
+        db.rest.remove( model, this.success(), this.failure() );
 
-      db.rest.remove( model, this.success(), this.failure() );
-
-      batchEnd();
+      }, this );
     }
   },
 
@@ -10914,18 +10988,18 @@ extend( Operation, SaveRemote,
     {
       model.$status = Model.Status.SavePending;
 
-      batchStart();
-
-      if ( model.$saved )
+      batchExecute(function()
       {
-        db.rest.update( model, model.$saving, this.success(), this.failure() );
-      }
-      else
-      {
-        db.rest.create( model, model.$saving, this.success(), this.failure() );
-      }
+        if ( model.$saved )
+        {
+          db.rest.update( model, model.$saving, this.success(), this.failure() );
+        }
+        else
+        {
+          db.rest.create( model, model.$saving, this.success(), this.failure() );
+        }
 
-      batchEnd();
+      }, this );
     }
   },
 
@@ -12503,27 +12577,27 @@ extend( RelationMultiple, HasMany,
     {
       Rekord.debug( Rekord.Debugs.HASMANY_POSTSAVE, this, model, relation );
 
-      batchStart();
-
-      relation.saving = true;
-      relation.delaySaving = true;
-
-      var models = relation.related;
-
-      for (var i = 0; i < models.length; i++)
+      batchExecute(function()
       {
-        var related = models[ i ];
+        relation.saving = true;
+        relation.delaySaving = true;
 
-        if ( !related.$isDeleted() && related.$hasChanges() )
+        var models = relation.related;
+
+        for (var i = 0; i < models.length; i++)
         {
-          related.$save( this.cascadeSave );
+          var related = models[ i ];
+
+          if ( !related.$isDeleted() && related.$hasChanges() )
+          {
+            related.$save( this.cascadeSave );
+          }
         }
-      }
 
-      relation.saving = false;
-      relation.delaySaving = false;
+        relation.saving = false;
+        relation.delaySaving = false;
 
-      batchEnd();
+      }, this );
     }
   },
 
@@ -12535,21 +12609,21 @@ extend( RelationMultiple, HasMany,
     {
       Rekord.debug( Rekord.Debugs.HASMANY_PREREMOVE, this, model, relation );
 
-      batchStart();
-
-      this.bulk( relation, function()
+      batchExecute(function()
       {
-        var models = relation.related;
-
-        for (var i = models.length - 1; i >= 0; i--)
+        this.bulk( relation, function()
         {
-          var related = models[ i ];
+          var models = relation.related;
 
-          related.$remove( this.cascadeRemove );
-        }
-      });
+          for (var i = models.length - 1; i >= 0; i--)
+          {
+            var related = models[ i ];
 
-      batchEnd();
+            related.$remove( this.cascadeRemove );
+          }
+        });
+
+      }, this );
     }
   },
 
@@ -12857,47 +12931,47 @@ extend( RelationMultiple, HasManyThrough,
   {
     var relation = model.$relations[ this.name ];
 
-    batchStart();
-
-    if ( relation && this.cascadeSave )
+    batchExecute(function()
     {
-      var throughs = relation.throughs.values;
-
-      for (var i = 0; i < throughs.length; i++)
+      if ( relation && this.cascadeSave )
       {
-        var through = throughs[ i ];
+        var throughs = relation.throughs.values;
 
-        if ( !through.$isDeleted() && through.$hasChanges() )
+        for (var i = 0; i < throughs.length; i++)
         {
-          through.$save( this.cascadeSave );
-        }
-      }
-    }
+          var through = throughs[ i ];
 
-    if ( relation && this.cascadeSaveRelated )
-    {
-      Rekord.debug( Rekord.Debugs.HASMANYTHRU_PRESAVE, this, model, relation );
-
-      relation.saving = true;
-      relation.delaySaving = true;
-
-      var models = relation.related;
-
-      for (var i = 0; i < models.length; i++)
-      {
-        var related = models[ i ];
-
-        if ( !related.$isDeleted() && related.$hasChanges() )
-        {
-          related.$save( this.cascadeSaveRelated );
+          if ( !through.$isDeleted() && through.$hasChanges() )
+          {
+            through.$save( this.cascadeSave );
+          }
         }
       }
 
-      relation.saving = false;
-      relation.delaySaving = false;
-    }
+      if ( relation && this.cascadeSaveRelated )
+      {
+        Rekord.debug( Rekord.Debugs.HASMANYTHRU_PRESAVE, this, model, relation );
 
-    batchEnd();
+        relation.saving = true;
+        relation.delaySaving = true;
+
+        var models = relation.related;
+
+        for (var i = 0; i < models.length; i++)
+        {
+          var related = models[ i ];
+
+          if ( !related.$isDeleted() && related.$hasChanges() )
+          {
+            related.$save( this.cascadeSaveRelated );
+          }
+        }
+
+        relation.saving = false;
+        relation.delaySaving = false;
+      }
+
+    }, this );
   },
 
   preRemove: function(model)
@@ -12908,21 +12982,21 @@ extend( RelationMultiple, HasManyThrough,
     {
       Rekord.debug( Rekord.Debugs.HASMANYTHRU_PREREMOVE, this, model, relation );
 
-      batchStart();
-
-      this.bulk( relation, function()
+      batchExecute(function()
       {
-        var throughs = relation.throughs.values;
-
-        for (var i = 0; i < throughs.length; i++)
+        this.bulk( relation, function()
         {
-          var through = throughs[ i ];
+          var throughs = relation.throughs.values;
 
-          through.$remove( this.cascadeRemove );
-        }
-      });
+          for (var i = 0; i < throughs.length; i++)
+          {
+            var through = throughs[ i ];
 
-      batchEnd();
+            through.$remove( this.cascadeRemove );
+          }
+        });
+
+      }, this );
     }
   },
 
@@ -15751,6 +15825,150 @@ function generateMessage(field, alias, value, model, message, extra)
   return format( message, base );
 }
 
+Validation.Expression.date =
+Validation.Expressions.push(function(expr, database)
+{
+  var parsed = parseDate( expr );
+
+  if ( parsed !== false )
+  {
+    var parsedTime = parsed.getTime();
+
+    return function(value, model)
+    {
+      return parsedTime;
+    };
+  }
+}) - 1;
+
+Validation.Expression.field =
+Validation.Expressions.push(function(expr, database)
+{
+  if ( indexOf( database.fields, expr ) )
+  {
+    return function(value, model)
+    {
+      return model.$get( expr );
+    };
+  }
+}) - 1;
+
+
+var RELATIVE_REGEX = /^([+-]\d+(\.\d+)?)\s*(.+)$/;
+
+var RELATIVE_UNITS = {
+  ms: 1,
+  millisecond: 1,
+  milliseconds: 1,
+  s: 1000,
+  second: 1000,
+  seconds: 1000,
+  min: 1000 * 60,
+  mins: 1000 * 60,
+  minute: 1000 * 60,
+  minutes: 1000 * 60,
+  hr: 1000 * 60 * 60,
+  hour: 1000 * 60 * 60,
+  hours: 1000 * 60 * 60,
+  day: 1000 * 60 * 60 * 24,
+  days: 1000 * 60 * 60 * 24,
+  wk: 1000 * 60 * 60 * 24 * 7,
+  week: 1000 * 60 * 60 * 24 * 7,
+  weeks: 1000 * 60 * 60 * 24 * 7,
+  month: ['getMonth', 'setMonth'],
+  months: ['getMonth', 'setMonth'],
+  yr: ['getFullYear', 'setFullYear'],
+  year: ['getFullYear', 'setFullYear'],
+  years: ['getFullYear', 'setFullYear']
+};
+
+Validation.Expression.relative =
+Validation.Expressions.push(function(expr, database)
+{
+  var parsed = RELATIVE_REGEX.exec( expr );
+
+  if ( parsed !== null )
+  {
+    var amount = parseFloat( parsed[ 1 ] );
+    var unit = parsed[ 3 ];
+    var unitScale = RELATIVE_UNITS[ unit ];
+
+    if ( !unitScale )
+    {
+      throw unit + ' is not a valid unit.';
+    }
+
+    return function(value, model)
+    {
+      var relative = new Date();
+
+      if ( isNumber( unitScale ) )
+      {
+        relative.setTime( relative.getTime() + unitScale * amount );
+      }
+      else
+      {
+        var getter = unitScale[0];
+        var setter = unitScale[1];
+
+        relative[ setter ]( relative[ getter ]() + amount );
+      }
+
+      return relative.getTime();
+    };
+  }
+}) - 1;
+
+Validation.Expression.today =
+Validation.Expressions.push(function(expr, database)
+{
+  if ( expr === 'today' )
+  {
+    return function(value, model)
+    {
+      var today = new Date();
+
+      startOfDay( today );
+
+      return today.getTime();
+    };
+  }
+}) - 1;
+
+Validation.Expression.tomorrow =
+Validation.Expressions.push(function(expr, database)
+{
+  if ( expr === 'tomorrow' )
+  {
+    return function(value, model)
+    {
+      var tomorrow = new Date();
+
+      tomorrow.setDate( tomorrow.getDate() + 1 );
+      startOfDay( tomorrow );
+
+      return tomorrow.getTime();
+    };
+  }
+}) - 1;
+
+Validation.Expression.yesterday =
+Validation.Expressions.push(function(expr, database)
+{
+  if ( expr === 'yesterday' )
+  {
+    return function(value, model)
+    {
+      var yesterday = new Date();
+
+      yesterday.setDate( yesterday.getDate() - 1 );
+      startOfDay( yesterday );
+
+      return yesterday.getTime();
+    };
+  }
+}) - 1;
+
 // accepted
 Validation.Rules.accepted = function(field, params, database, getAlias, message)
 {
@@ -16996,150 +17214,6 @@ Validation.Rules.yesno.map =
   'n':      false,
   '0':      false
 };
-
-Validation.Expression.date =
-Validation.Expressions.push(function(expr, database)
-{
-  var parsed = parseDate( expr );
-
-  if ( parsed !== false )
-  {
-    var parsedTime = parsed.getTime();
-
-    return function(value, model)
-    {
-      return parsedTime;
-    };
-  }
-}) - 1;
-
-Validation.Expression.field =
-Validation.Expressions.push(function(expr, database)
-{
-  if ( indexOf( database.fields, expr ) )
-  {
-    return function(value, model)
-    {
-      return model.$get( expr );
-    };
-  }
-}) - 1;
-
-
-var RELATIVE_REGEX = /^([+-]\d+(\.\d+)?)\s*(.+)$/;
-
-var RELATIVE_UNITS = {
-  ms: 1,
-  millisecond: 1,
-  milliseconds: 1,
-  s: 1000,
-  second: 1000,
-  seconds: 1000,
-  min: 1000 * 60,
-  mins: 1000 * 60,
-  minute: 1000 * 60,
-  minutes: 1000 * 60,
-  hr: 1000 * 60 * 60,
-  hour: 1000 * 60 * 60,
-  hours: 1000 * 60 * 60,
-  day: 1000 * 60 * 60 * 24,
-  days: 1000 * 60 * 60 * 24,
-  wk: 1000 * 60 * 60 * 24 * 7,
-  week: 1000 * 60 * 60 * 24 * 7,
-  weeks: 1000 * 60 * 60 * 24 * 7,
-  month: ['getMonth', 'setMonth'],
-  months: ['getMonth', 'setMonth'],
-  yr: ['getFullYear', 'setFullYear'],
-  year: ['getFullYear', 'setFullYear'],
-  years: ['getFullYear', 'setFullYear']
-};
-
-Validation.Expression.relative =
-Validation.Expressions.push(function(expr, database)
-{
-  var parsed = RELATIVE_REGEX.exec( expr );
-
-  if ( parsed !== null )
-  {
-    var amount = parseFloat( parsed[ 1 ] );
-    var unit = parsed[ 3 ];
-    var unitScale = RELATIVE_UNITS[ unit ];
-
-    if ( !unitScale )
-    {
-      throw unit + ' is not a valid unit.';
-    }
-
-    return function(value, model)
-    {
-      var relative = new Date();
-
-      if ( isNumber( unitScale ) )
-      {
-        relative.setTime( relative.getTime() + unitScale * amount );
-      }
-      else
-      {
-        var getter = unitScale[0];
-        var setter = unitScale[1];
-
-        relative[ setter ]( relative[ getter ]() + amount );
-      }
-
-      return relative.getTime();
-    };
-  }
-}) - 1;
-
-Validation.Expression.today =
-Validation.Expressions.push(function(expr, database)
-{
-  if ( expr === 'today' )
-  {
-    return function(value, model)
-    {
-      var today = new Date();
-
-      startOfDay( today );
-
-      return today.getTime();
-    };
-  }
-}) - 1;
-
-Validation.Expression.tomorrow =
-Validation.Expressions.push(function(expr, database)
-{
-  if ( expr === 'tomorrow' )
-  {
-    return function(value, model)
-    {
-      var tomorrow = new Date();
-
-      tomorrow.setDate( tomorrow.getDate() + 1 );
-      startOfDay( tomorrow );
-
-      return tomorrow.getTime();
-    };
-  }
-}) - 1;
-
-Validation.Expression.yesterday =
-Validation.Expressions.push(function(expr, database)
-{
-  if ( expr === 'yesterday' )
-  {
-    return function(value, model)
-    {
-      var yesterday = new Date();
-
-      yesterday.setDate( yesterday.getDate() - 1 );
-      startOfDay( yesterday );
-
-      return yesterday.getTime();
-    };
-  }
-}) - 1;
 
 Validation.Rules.abs = function(field, params, database, alias, message)
 {

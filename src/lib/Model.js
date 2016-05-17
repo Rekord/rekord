@@ -412,19 +412,19 @@ addMethods( Model.prototype,
 
     return Promise.singularity( promise, this, function(singularity)
     {
-      batchStart();
+      batchExecute(function()
+      {
+        this.$db.addReference( this );
 
-      this.$db.addReference( this );
+        this.$set( setProperties, setValue );
 
-      this.$set( setProperties, setValue );
+        this.$trigger( Model.Events.PreSave, [this] );
 
-      this.$trigger( Model.Events.PreSave, [this] );
+        this.$db.save( this, cascade );
 
-      this.$db.save( this, cascade );
+        this.$trigger( Model.Events.PostSave, [this] );
 
-      this.$trigger( Model.Events.PostSave, [this] );
-
-      batchEnd();
+      }, this );
     });
   },
 
@@ -447,15 +447,15 @@ addMethods( Model.prototype,
 
     return Promise.singularity( promise, this, function(singularity)
     {
-      batchStart();
+      batchExecute(function()
+      {
+        this.$trigger( Model.Events.PreRemove, [this] );
 
-      this.$trigger( Model.Events.PreRemove, [this] );
+        this.$db.remove( this, cascade );
 
-      this.$db.remove( this, cascade );
+        this.$trigger( Model.Events.PostRemove, [this] );
 
-      this.$trigger( Model.Events.PostRemove, [this] );
-
-      batchEnd();
+      }, this );
     });
   },
 

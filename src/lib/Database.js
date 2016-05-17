@@ -866,36 +866,35 @@ addMethods( Database.prototype,
   {
     var db = this;
 
-    batchStart();
-
-    for (var key in db.loaded)
+    batchExecute(function()
     {
-      var model = db.loaded[ key ];
-
-      if ( model.$status === Model.Status.RemovePending )
+      for (var key in db.loaded)
       {
-        Rekord.debug( Rekord.Debugs.LOCAL_RESUME_DELETE, db, model );
+        var model = db.loaded[ key ];
 
-        model.$addOperation( RemoveRemote );
-      }
-      else
-      {
-        if ( model.$status === Model.Status.SavePending )
+        if ( model.$status === Model.Status.RemovePending )
         {
-          Rekord.debug( Rekord.Debugs.LOCAL_RESUME_SAVE, db, model );
+          Rekord.debug( Rekord.Debugs.LOCAL_RESUME_DELETE, db, model );
 
-          model.$addOperation( SaveRemote );
+          model.$addOperation( RemoveRemote );
         }
         else
         {
-          Rekord.debug( Rekord.Debugs.LOCAL_LOAD_SAVED, db, model );
+          if ( model.$status === Model.Status.SavePending )
+          {
+            Rekord.debug( Rekord.Debugs.LOCAL_RESUME_SAVE, db, model );
+
+            model.$addOperation( SaveRemote );
+          }
+          else
+          {
+            Rekord.debug( Rekord.Debugs.LOCAL_LOAD_SAVED, db, model );
+          }
+
+          db.models.put( key, model, true );
         }
-
-        db.models.put( key, model, true );
       }
-    }
-
-    batchEnd();
+    });
 
     db.loaded = {};
     db.updated();
@@ -1097,11 +1096,10 @@ addMethods( Database.prototype,
       promise.reject( db.models );
     }
 
-    batchStart();
-
-    db.rest.all( onModels, onLoadError );
-
-    batchEnd();
+    batchExecute(function()
+    {
+      db.rest.all( onModels, onLoadError );
+    });
 
     return promise;
   },

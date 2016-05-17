@@ -162,47 +162,47 @@ extend( RelationMultiple, HasManyThrough,
   {
     var relation = model.$relations[ this.name ];
 
-    batchStart();
-
-    if ( relation && this.cascadeSave )
+    batchExecute(function()
     {
-      var throughs = relation.throughs.values;
-
-      for (var i = 0; i < throughs.length; i++)
+      if ( relation && this.cascadeSave )
       {
-        var through = throughs[ i ];
+        var throughs = relation.throughs.values;
 
-        if ( !through.$isDeleted() && through.$hasChanges() )
+        for (var i = 0; i < throughs.length; i++)
         {
-          through.$save( this.cascadeSave );
-        }
-      }
-    }
+          var through = throughs[ i ];
 
-    if ( relation && this.cascadeSaveRelated )
-    {
-      Rekord.debug( Rekord.Debugs.HASMANYTHRU_PRESAVE, this, model, relation );
-
-      relation.saving = true;
-      relation.delaySaving = true;
-
-      var models = relation.related;
-
-      for (var i = 0; i < models.length; i++)
-      {
-        var related = models[ i ];
-
-        if ( !related.$isDeleted() && related.$hasChanges() )
-        {
-          related.$save( this.cascadeSaveRelated );
+          if ( !through.$isDeleted() && through.$hasChanges() )
+          {
+            through.$save( this.cascadeSave );
+          }
         }
       }
 
-      relation.saving = false;
-      relation.delaySaving = false;
-    }
+      if ( relation && this.cascadeSaveRelated )
+      {
+        Rekord.debug( Rekord.Debugs.HASMANYTHRU_PRESAVE, this, model, relation );
 
-    batchEnd();
+        relation.saving = true;
+        relation.delaySaving = true;
+
+        var models = relation.related;
+
+        for (var i = 0; i < models.length; i++)
+        {
+          var related = models[ i ];
+
+          if ( !related.$isDeleted() && related.$hasChanges() )
+          {
+            related.$save( this.cascadeSaveRelated );
+          }
+        }
+
+        relation.saving = false;
+        relation.delaySaving = false;
+      }
+
+    }, this );
   },
 
   preRemove: function(model)
@@ -213,21 +213,21 @@ extend( RelationMultiple, HasManyThrough,
     {
       Rekord.debug( Rekord.Debugs.HASMANYTHRU_PREREMOVE, this, model, relation );
 
-      batchStart();
-
-      this.bulk( relation, function()
+      batchExecute(function()
       {
-        var throughs = relation.throughs.values;
-
-        for (var i = 0; i < throughs.length; i++)
+        this.bulk( relation, function()
         {
-          var through = throughs[ i ];
+          var throughs = relation.throughs.values;
 
-          through.$remove( this.cascadeRemove );
-        }
-      });
+          for (var i = 0; i < throughs.length; i++)
+          {
+            var through = throughs[ i ];
 
-      batchEnd();
+            through.$remove( this.cascadeRemove );
+          }
+        });
+
+      }, this );
     }
   },
 

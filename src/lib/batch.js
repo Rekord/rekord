@@ -2,17 +2,19 @@
 var batchDepth = 0;
 var batches = [];
 var batchHandlers = [];
+var batchOverwrites = [];
 
 function batch(namesInput, operationsInput, handler)
 {
   var names = toArray( namesInput, /\s*,\s/ );
   var operations = toArray( operationsInput, /\s*,\s/ );
   var batchID = batchHandlers.push( handler ) - 1;
+  var batch = batches[ batchID ] = new Collection();
 
   for (var i = 0; i < names.length; i++)
   {
     var modelName = names[ i ];
-    var modelHandler = createModelHandler( operations, batchID );
+    var modelHandler = createModelHandler( operations, batch );
 
     if ( isString( modelName ) )
     {
@@ -41,7 +43,7 @@ function batch(namesInput, operationsInput, handler)
     }
     else if ( modelName === true )
     {
-      for (databaseName in Rekord.classes)
+      for (var databaseName in Rekord.classes)
       {
         modelHandler( Rekord.classes[ databaseName ] );
       }
@@ -55,24 +57,25 @@ function batch(namesInput, operationsInput, handler)
   }
 }
 
-function createModelHandler(operations, batchID)
+function createModelHandler(operations, batch)
 {
   return function(modelClass)
   {
     var db = modelClass.Database;
     var rest = db.rest;
-    var currentBatch = batches[ batchID ] = new Collection();
 
     for (var i = 0; i < operations.length; i++)
     {
       var op = operations[ i ];
+
+      batchOverwrites.push( rest, op, rest[ op ] );
 
       switch (op)
       {
         case 'all':
           rest.all = function(success, failure)
           {
-            currentBatch.push({
+            batch.push({
               database: db,
               class: modelClass,
               operation: 'all',
@@ -84,7 +87,7 @@ function createModelHandler(operations, batchID)
         case 'get':
           rest.get = function(model, success, failure)
           {
-            currentBatch.push({
+            batch.push({
               database: db,
               class: modelClass,
               operation: 'get',
@@ -97,7 +100,7 @@ function createModelHandler(operations, batchID)
         case 'create':
           rest.create = function(model, encoded, success, failure)
           {
-            currentBatch.push({
+            batch.push({
               database: db,
               class: modelClass,
               operation: 'create',
@@ -111,7 +114,7 @@ function createModelHandler(operations, batchID)
         case 'update':
           rest.update = function(model, encoded, success, failure)
           {
-            currentBatch.push({
+            batch.push({
               database: db,
               class: modelClass,
               operation: 'update',
@@ -125,7 +128,7 @@ function createModelHandler(operations, batchID)
         case 'remove':
           rest.remove = function(model, success, failure)
           {
-            currentBatch.push({
+            batch.push({
               database: db,
               class: modelClass,
               operation: 'remove',
@@ -138,7 +141,7 @@ function createModelHandler(operations, batchID)
         case 'query':
           rest.query = function(url, query, success, failure)
           {
-            currentBatch.push({
+            batch.push({
               database: db,
               class: modelClass,
               operation: 'query',
@@ -187,7 +190,44 @@ function batchEnd()
   }
 }
 
+function batchClear()
+{
+  for (var i = 0; i < batchOverwrites.length; i += 3)
+  {
+    var rest = batchOverwrites[ i + 0 ];
+    var prop = batchOverwrites[ i + 1 ];
+    var func = batchOverwrites[ i + 2 ];
+
+    rest[ prop ] = func;
+  }
+
+  batches.length = 0;
+  batchHandlers.length = 0;
+  batchOverwrites.length = 0;
+}
+
+function batchExecute(func, context)
+{
+  try
+  {
+    batchStart();
+
+    func.apply( context );
+  }
+  catch (e)
+  {
+    throw e;
+  }
+  finally
+  {
+    batchEnd();
+  }
+}
+
 Rekord.batch = batch;
 Rekord.batchRun = batchRun;
 Rekord.batchStart = batchStart;
 Rekord.batchEnd = batchEnd;
+Rekord.batchClear = batchClear;
+Rekord.batchExecute = batchExecute;
+Rekord.batchDepth = function() { return batchDepth; };

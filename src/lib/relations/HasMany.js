@@ -149,27 +149,27 @@ extend( RelationMultiple, HasMany,
     {
       Rekord.debug( Rekord.Debugs.HASMANY_POSTSAVE, this, model, relation );
 
-      batchStart();
-
-      relation.saving = true;
-      relation.delaySaving = true;
-
-      var models = relation.related;
-
-      for (var i = 0; i < models.length; i++)
+      batchExecute(function()
       {
-        var related = models[ i ];
+        relation.saving = true;
+        relation.delaySaving = true;
 
-        if ( !related.$isDeleted() && related.$hasChanges() )
+        var models = relation.related;
+
+        for (var i = 0; i < models.length; i++)
         {
-          related.$save( this.cascadeSave );
+          var related = models[ i ];
+
+          if ( !related.$isDeleted() && related.$hasChanges() )
+          {
+            related.$save( this.cascadeSave );
+          }
         }
-      }
 
-      relation.saving = false;
-      relation.delaySaving = false;
+        relation.saving = false;
+        relation.delaySaving = false;
 
-      batchEnd();
+      }, this );
     }
   },
 
@@ -181,21 +181,21 @@ extend( RelationMultiple, HasMany,
     {
       Rekord.debug( Rekord.Debugs.HASMANY_PREREMOVE, this, model, relation );
 
-      batchStart();
-
-      this.bulk( relation, function()
+      batchExecute(function()
       {
-        var models = relation.related;
-
-        for (var i = models.length - 1; i >= 0; i--)
+        this.bulk( relation, function()
         {
-          var related = models[ i ];
+          var models = relation.related;
 
-          related.$remove( this.cascadeRemove );
-        }
-      });
+          for (var i = models.length - 1; i >= 0; i--)
+          {
+            var related = models[ i ];
 
-      batchEnd();
+            related.$remove( this.cascadeRemove );
+          }
+        });
+
+      }, this );
     }
   },
 

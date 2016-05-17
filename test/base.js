@@ -3,6 +3,8 @@
 
 Rekord.autoload = true;
 
+QUnit.config.reorder = false;
+
 // Extra Assertions
 
 function isInstance(model, Class, message)

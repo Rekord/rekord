@@ -66,13 +66,13 @@ addMethods( Search.prototype,
     var success = bind( this, this.$handleSuccess );
     var failure = bind( this, this.$handleFailure );
 
-    batchStart();
+    batchExecute(function()
+    {
+      this.$cancel();
+      this.$promise = new Promise();
+      this.$db.rest.query( this.$url, encoded, success, failure );
 
-    this.$cancel();
-    this.$promise = new Promise();
-    this.$db.rest.query( this.$url, encoded, success, failure );
-
-    batchEnd();
+    }, this );
 
     return this.$promise;
   },

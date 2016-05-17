@@ -818,27 +818,27 @@ extendArray( Collection, ModelCollection,
     var where = createWhere( whereProperties, whereValue, whereEquals );
     var removed = out || this.cloneEmpty();
 
-    batchStart();
-
-    for (var i = 0; i < this.length; i++)
+    batchExecute(function()
     {
-      var model = this[ i ];
-      var key = model.$key();
-
-      if ( where( model ) )
+      for (var i = 0; i < this.length; i++)
       {
-        this.map.remove( key );
-        removed.push( model );
-        i--;
+        var model = this[ i ];
+        var key = model.$key();
 
-        if ( callRemove )
+        if ( where( model ) )
         {
-          model.$remove();
+          this.map.remove( key );
+          removed.push( model );
+          i--;
+
+          if ( callRemove )
+          {
+            model.$remove();
+          }
         }
       }
-    }
 
-    batchEnd();
+    }, this );
 
     this.trigger( Collection.Events.Removes, [this, removed] );
 
@@ -874,21 +874,21 @@ extendArray( Collection, ModelCollection,
    */
   update: function(props, value, remoteData, avoidSave)
   {
-    batchStart();
-
-    for (var i = 0; i < this.length; i++)
+    batchExecute(function()
     {
-      var model = this[ i ];
-
-      model.$set( props, value, remoteData );
-
-      if ( !avoidSave )
+      for (var i = 0; i < this.length; i++)
       {
-        model.$save();
-      }
-    }
+        var model = this[ i ];
 
-    batchEnd();
+        model.$set( props, value, remoteData );
+
+        if ( !avoidSave )
+        {
+          model.$save();
+        }
+      }
+
+    }, this );
 
     this.trigger( Collection.Events.Updates, [this, this] );
     this.sort();
@@ -924,26 +924,26 @@ extendArray( Collection, ModelCollection,
   {
     var updated = [];
 
-    batchStart();
-
-    for (var i = 0; i < this.length; i++)
+    batchExecute(function()
     {
-      var model = this[ i ];
-
-      if ( where( model ) )
+      for (var i = 0; i < this.length; i++)
       {
-        model.$set( props, value, remoteData );
+        var model = this[ i ];
 
-        if ( !avoidSave )
+        if ( where( model ) )
         {
-          model.$save();
+          model.$set( props, value, remoteData );
+
+          if ( !avoidSave )
+          {
+            model.$save();
+          }
+
+          updated.push( model );
         }
-
-        updated.push( model );
       }
-    }
 
-    batchEnd();
+    }, this );
 
     this.trigger( Collection.Events.Updates, [this, updated] );
     this.sort();
@@ -1066,11 +1066,11 @@ extendArray( Collection, ModelCollection,
       model.$cancel( reset );
     }
 
-    batchStart();
+    batchExecute(function()
+    {
+      this.eachWhere( cancelIt, properties, value, equals );
 
-    this.eachWhere( cancelIt, properties, value, equals );
-
-    batchEnd();
+    }, this );
 
     return this;
   },
@@ -1099,11 +1099,47 @@ extendArray( Collection, ModelCollection,
       model.$refresh();
     }
 
-    batchStart();
+    batchExecute(function()
+    {
+      this.eachWhere( refreshIt, properties, value, equals );
 
-    this.eachWhere( refreshIt, properties, value, equals );
+    }, this );
 
-    batchEnd();
+    return this;
+  },
+
+  /**
+   * Calls {@link Rekord.Model#$save} on models in this collection that meet
+   * the given where expression.
+   *
+   * @method
+   * @memberof Rekord.ModelCollection#
+   * @param {whereInput} [properties] -
+   *    See {@link Rekord.createWhere}
+   * @param {Any} [value] -
+   *    See {@link Rekord.createWhere}
+   * @param {equalityCallback} [equals=Rekord.equalsStrict] -
+   *    See {@link Rekord.createWhere}
+   * @param {Object} [props={}] -
+   *    Properties to apply to each model in the collection that pass the where
+   *    expression.
+   * @return {Rekord.ModelCollection} -
+   *    The reference to this collection.
+   * @see Rekord.createWhere
+   * @see Rekord.Model#$refresh
+   */
+  saveWhere: function(properties, value, equals, props)
+  {
+    function saveIt(model)
+    {
+      model.$save( props );
+    }
+
+    batchExecute(function()
+    {
+      this.eachWhere( saveIt, properties, value, equals );
+
+    }, this );
 
     return this;
   },
