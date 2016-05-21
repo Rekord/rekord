@@ -202,6 +202,18 @@ test( 'where', function(assert)
   strictEqual( w[1].name, 'Robert' );
 });
 
+test( 'where regex', function(assert)
+{
+  var c = createRekordCollection();
+  var w = c.where('name', /[e]/, Rekord.equals);
+
+  strictEqual( w.length, 4 );
+  strictEqual( w[0].name, 'Nicole' );
+  strictEqual( w[1].name, 'Ashley' );
+  strictEqual( w[2].name, 'Robert' );
+  strictEqual( w[3].name, 'Andrea' );
+});
+
 test( 'add', function(assert)
 {
   var c = createRekordCollection();

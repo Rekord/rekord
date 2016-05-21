@@ -56,6 +56,12 @@ function equals(a, b)
 
   var at = typeof a;
   var bt = typeof b;
+  var ar = isRegExp(a);
+  var br = isRegExp(b);
+
+  if (at === 'string' && br) return b.test(a);
+  if (bt === 'string' && ar) return a.test(b);
+
   if (at !== bt) return false;
 
   var aa = isArray(a);
@@ -75,8 +81,8 @@ function equals(a, b)
   if (isDate(a)) {
     return isDate(b) && equals( a.getTime(), b.getTime() );
   }
-  if (isRegExp(a)) {
-    return isRegExp(b) && a.toString() === b.toString();
+  if (ar) {
+    return br && a.toString() === b.toString();
   }
 
   if (at === 'object') {
