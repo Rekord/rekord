@@ -485,3 +485,33 @@ test( 'change', function(assert)
   db.updated();
 
 });
+
+test( 'override refresh', function(assert)
+{
+  var prefix = 'override_refresh_';
+
+  var TaskName = prefix + 'task';
+  var TaskRest = Rekord.rest[ TaskName ] = new TestRest();
+
+  TaskRest.queries.put('/url', [
+    {id: 1, name: 't0', done: false},
+    {id: 2, name: 't1', done: false}
+  ]);
+
+  var Task = Rekord({
+    name: TaskName,
+    fields: ['name', 'done'],
+    executeRefresh: function(success, failure) {
+      this.rest.query('/url', {}, success, failure);
+    }
+  });
+
+  var t0 = Task.get(1);
+  var t1 = Task.get(2);
+
+  ok( t0 );
+  ok( t1 );
+  strictEqual( Task.all().length, 2 );
+  strictEqual( t0.name, 't0' );
+  strictEqual( t1.name, 't1' );
+});

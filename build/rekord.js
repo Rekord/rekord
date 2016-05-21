@@ -3978,15 +3978,11 @@ addMethods( Database.prototype,
     }
   },
 
-  // Loads all data remotely
-  refresh: function(callback, context)
+  handleRefreshSuccess: function(promise)
   {
     var db = this;
-    var promise = new Promise();
 
-    promise.complete( callback, context || db );
-
-    function onModels(response)
+    return function onRefreshSuccess(response)
     {
       var models = db.resolveModels( response );
       var mapped = {};
@@ -4030,9 +4026,14 @@ addMethods( Database.prototype,
       Rekord.debug( Rekord.Debugs.REMOTE_LOAD, db, models );
 
       promise.resolve( db.models );
-    }
+    };
+  },
 
-    function onLoadError(response, status)
+  handleRefreshFailure: function(promise)
+  {
+    var db = this;
+
+    return function onRefreshFailure(response, status)
     {
       if ( status === 0 )
       {
@@ -4055,11 +4056,27 @@ addMethods( Database.prototype,
       }
 
       promise.reject( db.models );
-    }
+    };
+  },
+
+  executeRefresh: function(success, failure)
+  {
+    this.rest.all( success, failure );
+  },
+
+  // Loads all data remotely
+  refresh: function(callback, context)
+  {
+    var db = this;
+    var promise = new Promise();
+    var success = this.handleRefreshSuccess( promise );
+    var failure = this.handleRefreshFailure( promise );
+
+    promise.complete( callback, context || db );
 
     batchExecute(function()
     {
-      db.rest.all( onModels, onLoadError );
+      db.executeRefresh( success, failure );
     });
 
     return promise;
