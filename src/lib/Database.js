@@ -194,6 +194,7 @@ Database.Defaults =
   fields:               [],
   ignoredFields:        {},
   defaults:             {},
+  publishAlways:        [],
   comparator:           null,
   comparatorNullsFirst: null,
   revision:             null,

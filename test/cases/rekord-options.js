@@ -1516,3 +1516,24 @@ test( 'prepare global default', function(assert)
 
   strictEqual( Todo.Database.api, '/api/1.0/prepare_default_todo' );
 });
+
+test( 'publishAlways', function(assert)
+{
+  var prefix = 'publishAlways_';
+
+  var Todo = Rekord({
+    name: prefix + 'todo',
+    fields: ['name', 'updated_at'],
+    publishAlways: ['updated_at']
+  });
+
+  var TodoLive = Todo.Database.live;
+
+  var t0 = Todo.create({id: 4, name: 't0', updated_at: 23});
+
+  deepEqual( TodoLive.lastMessage.model, {id: 4, name: 't0', updated_at: 23} );
+
+  t0.$save('name', 't1');
+
+  deepEqual( TodoLive.lastMessage.model, {name: 't1', updated_at: 23} );
+});

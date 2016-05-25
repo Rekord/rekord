@@ -3161,6 +3161,7 @@ Database.Defaults =
   fields:               [],
   ignoredFields:        {},
   defaults:             {},
+  publishAlways:        [],
   comparator:           null,
   comparatorNullsFirst: null,
   revision:             null,
@@ -3225,7 +3226,6 @@ addMethods( Database.prototype,
 
       if ( result !== false && !promise.isComplete() )
       {
-        // If we aren't supposed to load remote,
         if ( !db.loadRemote && !db.remoteLoaded && (result === null || !result.$isSaved()) && db.initialized )
         {
           if ( !result )
@@ -10887,11 +10887,36 @@ extend( Operation, SaveLocal,
     var changes = model.$getChanges( remote );
 
     var saving = db.fullSave ? remote : changes;
-    var publish = db.fullPublish ? remote : changes;
+    var publish = db.fullPublish ? remote : this.publishAlways( db, changes, remote );
 
     model.$status = Model.Status.SavePending;
     model.$saving = saving;
     model.$publish = publish;
+  },
+
+  publishAlways: function(db, changes, encoded)
+  {
+    var changesCopy = null;
+
+    if ( db.publishAlways.length )
+    {
+      for (var i = 0; i < db.publishAlways.length; i++)
+      {
+        var prop = db.publishAlways[ i ];
+
+        if ( !(prop in changes) )
+        {
+          if ( !changesCopy )
+          {
+            changesCopy = copy( changes );
+          }
+
+          changesCopy[ prop ] = encoded[ prop ];
+        }
+      }
+    }
+
+    return changesCopy || changes;
   },
 
   clearLocal: function(model)
