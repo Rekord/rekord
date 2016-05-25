@@ -362,3 +362,65 @@ test( 'cached Rekord', function(assert)
   strictEqual( Task0, Task1 );
   deepEqual( Task1.Database.fields, ['id', 'name', 'done'] );
 });
+
+test( 'load related before initialize with loadRemote', function(assert)
+{
+  var prefix = 'load_related_before_initialize_with_loadRemote_';
+  var timer = assert.timer();
+
+  var ItemName = prefix + 'item';
+  var ListItemName = prefix + 'list_item';
+
+  var ItemStore = Rekord.store[ ItemName ] = new TestStore();
+  var ListItemStore = Rekord.store[ ListItemName ] = new TestStore();
+
+  ItemStore.delay = 2;
+  ItemStore.map.put(3, {
+    id: 3, name: 'item3',
+    $status: 0, $saved: {
+      id: 3, name: 'item3'
+    }
+  });
+
+  ListItemStore.map.put(4, {
+    id: 4, amount: 23, item_id: 3,
+    $status: 0, $saved: {
+      id: 4, amount: 23, item_id: 3
+    }
+  });
+
+  var Item = Rekord({
+    name: ItemName,
+    fields: ['name'],
+    loadRemote: false
+  });
+
+  var ListItem = Rekord({
+    name: ListItemName,
+    fields: ['amount', 'item_id'],
+    loadRemote: false,
+    belongsTo: {
+      item: {
+        model: ItemName,
+        local: 'item_id'
+      }
+    }
+  });
+
+  var l0 = ListItem.get(4);
+  var i0 = Item.get(3);
+
+  ok( l0 );
+  notOk( l0.item );
+  notOk( i0 );
+
+  wait(3, function()
+  {
+    var i0 = Item.get(3);
+
+    ok( i0 );
+    strictEqual( l0.item, i0 );
+  });
+
+  timer.run();
+});

@@ -258,7 +258,7 @@ addMethods( Database.prototype,
 
       if ( result !== false && !promise.isComplete() )
       {
-        if ( !db.loadRemote && !db.remoteLoaded && (result === null || !result.$isSaved()) )
+        if ( !db.loadRemote && !db.remoteLoaded && (result === null || !result.$isSaved()) && db.initialized )
         {
           if ( !result )
           {
@@ -280,7 +280,7 @@ addMethods( Database.prototype,
 
           result.$refresh();
         }
-        else
+        else if ( db.initialized )
         {
           promise.resolve( result );
         }
