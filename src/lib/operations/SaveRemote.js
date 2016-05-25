@@ -175,7 +175,7 @@ extend( Operation, SaveRemote,
       db.putRemoteData( data, model.$key(), model );
     }
 
-    this.liveSave();
+    this.liveSave( data );
     this.markSynced( model, false, Model.Events.RemoteSave, null );
 
     if ( db.cache === Cache.Pending )
@@ -188,10 +188,15 @@ extend( Operation, SaveRemote,
     }
   },
 
-  liveSave: function()
+  liveSave: function(data)
   {
     var db = this.db;
     var model = this.model;
+
+    if ( isObject(data) )
+    {
+      transfer( data, model.$publish );
+    }
 
     if ( this.canCascade( Cascade.Live ) && db.hasData( model.$publish ) )
     {

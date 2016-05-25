@@ -36,3 +36,24 @@ test( 'live removing', function(assert)
 
   ok( t0.$isDeleted() );
 });
+
+test( 'saved returned fields published', function(assert)
+{
+  var prefix = 'saved_returned_fields_published_';
+
+  var Todo = Rekord({
+    name: prefix + 'todo',
+    fields: ['name', 'updated_at']
+  });
+
+  var rest = Todo.Database.rest;
+  var live = Todo.Database.live;
+
+  rest.returnValue = {updated_at: 23};
+
+  deepEqual( live.lastMessage, null );
+
+  Todo.create({id: 4, name: 'taco'});
+
+  deepEqual( live.lastMessage.model, {id: 4, name: 'taco', updated_at: 23} );
+});
