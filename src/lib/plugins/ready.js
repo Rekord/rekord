@@ -27,7 +27,7 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
    *    Whether the `callback` function should be invoked multiple times.
    *    Depending on the state of initializing, the callback can be invoked when
    *    models are loaded locally (if the `cache` is not equal to `None`),
-   *    models are loaded remotely (if `loadRemote` is true), and every time
+   *    models are loaded remotely (if `load` is Rekord.Load.All), and every time
    *    {@link Rekord.Database#refresh} is called manually OR if `autoRefresh`
    *    is specified as true and the application changes from offline to online.
    */

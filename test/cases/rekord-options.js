@@ -346,58 +346,58 @@ test( 'revision', function(assert)
   strictEqual( t0.done, true );
 });
 
-test( 'loadRemote true', function(assert)
+test( 'load all', function(assert)
 {
   var timer = assert.timer();
   var done = assert.async();
 
-  var rest = Rekord.rest.loadRemote_true = new TestRest();
+  var rest = Rekord.rest.load_all = new TestRest();
   rest.map.put( 1, {id: 1, name: 'name1' } );
   rest.map.put( 2, {id: 2, name: 'name2' } );
   rest.map.put( 3, {id: 3, name: 'name3' } );
   rest.map.put( 4, {id: 4, name: 'name4' } );
   rest.delay = 1;
 
-  var loadRemote_true = Rekord({
-    name: 'loadRemote_true',
+  var load_all = Rekord({
+    name: 'load_all',
     fields: ['id', 'name'],
-    loadRemote: true
+    load: Rekord.Load.All
   });
 
-  strictEqual( loadRemote_true.all().length, 0 );
+  strictEqual( load_all.all().length, 0 );
 
   wait(2, function()
   {
-    strictEqual( loadRemote_true.all().length, 4 );
+    strictEqual( load_all.all().length, 4 );
     done();
   });
 
   timer.run();
 });
 
-test( 'loadRemote false', function(assert)
+test( 'load none', function(assert)
 {
   var timer = assert.timer();
   var done = assert.async();
 
-  var rest = Rekord.rest.loadRemote_false = new TestRest();
+  var rest = Rekord.rest.load_none = new TestRest();
   rest.map.put( 1, {id: 1, name: 'name1' } );
   rest.map.put( 2, {id: 2, name: 'name2' } );
   rest.map.put( 3, {id: 3, name: 'name3' } );
   rest.map.put( 4, {id: 4, name: 'name4' } );
   rest.delay = 1;
 
-  var loadRemote_false = Rekord({
-    name: 'loadRemote_false',
+  var load_none = Rekord({
+    name: 'load_none',
     fields: ['id', 'name'],
-    loadRemote: false
+    load: Rekord.Load.None
   });
 
-  strictEqual( loadRemote_false.all().length, 0 );
+  strictEqual( load_none.all().length, 0 );
 
   wait(2, function()
   {
-    strictEqual( loadRemote_false.all().length, 0 );
+    strictEqual( load_none.all().length, 0 );
     done();
   });
 
@@ -1401,7 +1401,7 @@ test( 'extend', function(assert)
     fields: ['name', 'done', 'created_by'],
     defaults: { done: false },
     timestamps: true,
-    loadRemote: false,
+    load: Rekord.Load.None,
     comparator: 'name',
     belongsTo: {
       creator: {
@@ -1415,7 +1415,7 @@ test( 'extend', function(assert)
     name: prefix + 'todo_extended',
     extend: Todo,
     fields: ['updated_by'],
-    loadRemote: true,
+    load: Rekord.Load.All,
     belongsTo: {
       updater: {
         model: User,
@@ -1427,7 +1427,7 @@ test( 'extend', function(assert)
   var db = TodoUpdatable.Database;
 
   deepEqual( db.fields, ['id', 'name', 'done', 'created_by', 'created_at', 'updated_at', 'updated_by'] );
-  strictEqual( db.loadRemote, true );
+  strictEqual( db.load, Rekord.Load.All );
   ok( 'created_at' in db.defaults );
   ok( 'updated_at' in db.defaults );
   ok( 'done' in db.defaults );
@@ -1449,7 +1449,7 @@ test( 'extend global default', function(assert)
     fields: ['name', 'done', 'created_by'],
     defaults: { done: false },
     timestamps: true,
-    loadRemote: false,
+    load: Rekord.Load.None,
     comparator: 'name',
     belongsTo: {
       creator: {
@@ -1464,7 +1464,7 @@ test( 'extend global default', function(assert)
   var TodoUpdatable = Rekord({
     name: prefix + 'todo_extended',
     fields: ['updated_by'],
-    loadRemote: true,
+    load: Rekord.Load.All,
     belongsTo: {
       updater: {
         model: User,
@@ -1476,7 +1476,7 @@ test( 'extend global default', function(assert)
   var db = TodoUpdatable.Database;
 
   deepEqual( db.fields, ['id', 'name', 'done', 'created_by', 'created_at', 'updated_at', 'updated_by'] );
-  strictEqual( db.loadRemote, true );
+  strictEqual( db.load, Rekord.Load.All );
   ok( 'created_at' in db.defaults );
   ok( 'updated_at' in db.defaults );
   ok( 'done' in db.defaults );

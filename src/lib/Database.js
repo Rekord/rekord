@@ -198,8 +198,8 @@ Database.Defaults =
   comparator:           null,
   comparatorNullsFirst: null,
   revision:             null,
+  load:                 Load.None,
   loadRelations:        true,
-  loadRemote:           true,
   autoRefresh:          true,
   cache:                Cache.All,
   fullSave:             false,
@@ -257,9 +257,13 @@ addMethods( Database.prototype,
     {
       var result = db.parseModel( input, remoteData );
 
-      if ( result !== false && !promise.isComplete() )
+      if ( result !== false && !promise.isComplete() && db.initialized )
       {
-        if ( !db.loadRemote && !db.remoteLoaded && (result === null || !result.$isSaved()) && db.initialized )
+        var remoteLoaded = db.remoteLoaded || !db.hasLoad( Load.All );
+        var missingModel = (result === null || !result.$isSaved());
+        var lazyLoad = db.hasLoad( Load.Lazy );
+
+        if ( lazyLoad && remoteLoaded && missingModel )
         {
           if ( !result )
           {
@@ -281,7 +285,7 @@ addMethods( Database.prototype,
 
           result.$refresh();
         }
-        else if ( db.initialized )
+        else
         {
           promise.resolve( result );
         }
@@ -314,7 +318,7 @@ addMethods( Database.prototype,
   parseModel: function(input, remoteData)
   {
     var db = this;
-    var hasRemote = db.remoteLoaded || !db.loadRemote;
+    var hasRemote = db.remoteLoaded || !db.hasLoad( Load.All );
 
     if ( !isValue( input ) )
     {
@@ -900,7 +904,7 @@ addMethods( Database.prototype,
     db.loaded = {};
     db.updated();
 
-    if ( db.loadRemote )
+    if ( db.hasLoad( Load.All ) )
     {
       if ( db.pendingOperations === 0 )
       {
@@ -911,6 +915,11 @@ addMethods( Database.prototype,
         db.firstRefresh = true;
       }
     }
+  },
+
+  hasLoad: function(load)
+  {
+    return (this.load & load) !== 0;
   },
 
   loadBegin: function(onLoaded)
@@ -951,7 +960,7 @@ addMethods( Database.prototype,
       onLoaded( false, db );
     }
 
-    if ( db.loadRemote && db.autoRefresh )
+    if ( db.hasLoad( Load.All ) && db.autoRefresh )
     {
       Rekord.after( Rekord.Events.Online, db.onOnline, db );
     }
@@ -981,7 +990,7 @@ addMethods( Database.prototype,
   {
     var db = this;
 
-    if ( db.loadRemote )
+    if ( db.hasLoad( Load.All ) )
     {
       db.refresh();
     }

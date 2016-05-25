@@ -69,7 +69,7 @@ var User = Rekord({
   name: 'user',
   api: '/api/1.0/user/',
   fields: ['name', 'email'],
-  loadRemote: false,
+  load: Rekord.Load.None,
   hasMany: {
     created: {
       model: 'Task',
@@ -88,7 +88,7 @@ var Task = Rekord({
   fields: ['task_list_id', 'name', 'done', 'created_by', 'assigned_to'],
   defaults: { done: false },
   timestamps: true,
-  loadRemote: false,
+  load: Rekord.Load.None,
   belongsTo: {
     creator: {
       model: 'User',

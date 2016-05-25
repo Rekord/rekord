@@ -76,10 +76,10 @@ var ModelClass = Rekord({
 
   // (boolean) Whether all models should be remotely fetched via a REST call as soon as the models are loaded from local
   // storage (if cache is not set to Rekord.Cache.None).
-  loadRemote: false, // default: true
+  load: Rekord.Load.Lazy, // default: Rekord.Load.None
 
   // (boolean) Whether all models should be remotely fetched after an application is offline, gets back online, and is
-  // finished syncing all local changes to REST & real-time interfaces. This option is ignored if loadRemote is false.
+  // finished syncing all local changes to REST & real-time interfaces. This option is ignored if load is not All
   autoRefresh: true, // default: true
 
   // (string) Determines if models are stored in local storage all the time (Rekord.Cache.All or 'all'), never

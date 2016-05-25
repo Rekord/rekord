@@ -55,7 +55,7 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
   tryMerge( 'defaults' );
   tryMerge( 'ignoredFields' );
   tryOverwrite( 'loadRelations' );
-  tryOverwrite( 'loadRemote' );
+  tryOverwrite( 'load' );
   tryOverwrite( 'autoRefresh' );
   tryOverwrite( 'cache' );
   tryOverwrite( 'fullSave' );

@@ -2239,6 +2239,14 @@ var Save =
   Keys:   6
 };
 
+var Load =
+{
+  None:   0,
+  All:    1,
+  Lazy:   2,
+  Both:   3
+};
+
 
 Rekord.debug = function(event, source)  /*, data.. */
 {
@@ -3165,8 +3173,8 @@ Database.Defaults =
   comparator:           null,
   comparatorNullsFirst: null,
   revision:             null,
+  load:                 Load.None,
   loadRelations:        true,
-  loadRemote:           true,
   autoRefresh:          true,
   cache:                Cache.All,
   fullSave:             false,
@@ -3224,9 +3232,13 @@ addMethods( Database.prototype,
     {
       var result = db.parseModel( input, remoteData );
 
-      if ( result !== false && !promise.isComplete() )
+      if ( result !== false && !promise.isComplete() && db.initialized )
       {
-        if ( !db.loadRemote && !db.remoteLoaded && (result === null || !result.$isSaved()) && db.initialized )
+        var remoteLoaded = db.remoteLoaded || !db.hasLoad( Load.All );
+        var missingModel = (result === null || !result.$isSaved());
+        var lazyLoad = db.hasLoad( Load.Lazy );
+
+        if ( lazyLoad && remoteLoaded && missingModel )
         {
           if ( !result )
           {
@@ -3248,7 +3260,7 @@ addMethods( Database.prototype,
 
           result.$refresh();
         }
-        else if ( db.initialized )
+        else
         {
           promise.resolve( result );
         }
@@ -3281,7 +3293,7 @@ addMethods( Database.prototype,
   parseModel: function(input, remoteData)
   {
     var db = this;
-    var hasRemote = db.remoteLoaded || !db.loadRemote;
+    var hasRemote = db.remoteLoaded || !db.hasLoad( Load.All );
 
     if ( !isValue( input ) )
     {
@@ -3867,7 +3879,7 @@ addMethods( Database.prototype,
     db.loaded = {};
     db.updated();
 
-    if ( db.loadRemote )
+    if ( db.hasLoad( Load.All ) )
     {
       if ( db.pendingOperations === 0 )
       {
@@ -3878,6 +3890,11 @@ addMethods( Database.prototype,
         db.firstRefresh = true;
       }
     }
+  },
+
+  hasLoad: function(load)
+  {
+    return (this.load & load) !== 0;
   },
 
   loadBegin: function(onLoaded)
@@ -3918,7 +3935,7 @@ addMethods( Database.prototype,
       onLoaded( false, db );
     }
 
-    if ( db.loadRemote && db.autoRefresh )
+    if ( db.hasLoad( Load.All ) && db.autoRefresh )
     {
       Rekord.after( Rekord.Events.Online, db.onOnline, db );
     }
@@ -3948,7 +3965,7 @@ addMethods( Database.prototype,
   {
     var db = this;
 
-    if ( db.loadRemote )
+    if ( db.hasLoad( Load.All ) )
     {
       db.refresh();
     }
@@ -14509,7 +14526,7 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
   tryMerge( 'defaults' );
   tryMerge( 'ignoredFields' );
   tryOverwrite( 'loadRelations' );
-  tryOverwrite( 'loadRemote' );
+  tryOverwrite( 'load' );
   tryOverwrite( 'autoRefresh' );
   tryOverwrite( 'cache' );
   tryOverwrite( 'fullSave' );
@@ -15210,7 +15227,7 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
    *    Whether the `callback` function should be invoked multiple times.
    *    Depending on the state of initializing, the callback can be invoked when
    *    models are loaded locally (if the `cache` is not equal to `None`),
-   *    models are loaded remotely (if `loadRemote` is true), and every time
+   *    models are loaded remotely (if `load` is Rekord.Load.All), and every time
    *    {@link Rekord.Database#refresh} is called manually OR if `autoRefresh`
    *    is specified as true and the application changes from offline to online.
    */
@@ -15752,158 +15769,6 @@ Rekord.mapFromArray = mapFromArray;
 Rekord.checkNoParams = checkNoParams;
 Rekord.generateMessage = generateMessage;
 
-function tryParseFloat(x)
-{
-  var parsed = parseFloat( x );
-
-  if ( !isNaN( parsed ) )
-  {
-    x = parsed;
-  }
-
-  return x;
-}
-
-function tryParseInt(x)
-{
-  var parsed = parseInt( x );
-
-  if ( !isNaN( parsed ) )
-  {
-    x = parsed;
-  }
-
-  return x;
-}
-
-function startOfDay(d)
-{
-  if ( isDate( d ) )
-  {
-    d.setHours( 0, 0, 0, 0 );
-  }
-  else if ( isNumber( d ) )
-  {
-    d = d - (d % 86400000);
-  }
-
-  return d;
-}
-
-function endOfDay(d)
-{
-  if ( isDate( d ) )
-  {
-    d.setHours( 23, 59, 59, 999 );
-  }
-  else if ( isNumber( d ) )
-  {
-    d = d - (d % 86400000) + 86400000 - 1;
-  }
-
-  return d;
-}
-
-function ruleGenerator(ruleName, defaultMessage, isInvalid)
-{
-  Validation.Rules[ ruleName ] = function(field, params, database, getAlias, message)
-  {
-    checkNoParams( ruleName, field, params );
-
-    var messageTemplate = determineMessage( ruleName, message );
-
-    return function(value, model, setMessage)
-    {
-      function setValue( newValue )
-      {
-        value = newValue;
-      }
-
-      if ( isInvalid( value, model, setValue ) )
-      {
-        setMessage( generateMessage( field, getAlias( field ), value, model, messageTemplate ) );
-      }
-
-      return value;
-    };
-  };
-
-  Validation.Rules[ ruleName ].message = defaultMessage;
-}
-
-function determineMessage(ruleName, message)
-{
-  return message || Validation.Rules[ ruleName ].message;
-}
-
-function joinFriendly(arr, lastSeparator, itemSeparator, getAlias)
-{
-  var copy = arr.slice();
-
-  if ( getAlias )
-  {
-    for (var i = 0; i < copy.length; i++)
-    {
-      copy[ i ] = getAlias( copy[ i ] );
-    }
-  }
-
-  var last = copy.pop();
-  var lastSeparator = lastSeparator || 'and';
-  var itemSeparator = itemSeparator || ', ';
-
-  switch (copy.length) {
-    case 0:
-      return last;
-    case 1:
-      return copy[ 0 ] + ' ' + lastSeparator + ' ' + last;
-    default:
-      return copy.join( itemSeparator ) + itemSeparator + lastSeparator + ' ' + last;
-  }
-}
-
-function mapFromArray(arr, value)
-{
-  var map = {};
-
-  for (var i = 0; i < arr.length; i++)
-  {
-    map[ arr[ i ] ] = value;
-  }
-
-  return map;
-}
-
-function checkNoParams(ruleName, field, params)
-{
-  if ( params )
-  {
-    throw 'the rule ' + ruleName + ' for field ' + field + ' has no arguments';
-  }
-}
-
-function generateMessage(field, alias, value, model, message, extra)
-{
-  if ( isFunction( message ) )
-  {
-    message = message( field, alias, value, model, extra );
-  }
-
-  var base = {};
-  base.$field = field;
-  base.$alias = alias;
-  base.$value = value;
-
-  transfer( model, base );
-
-  if ( isObject( extra ) )
-  {
-    transfer( extra, base );
-  }
-
-  return format( message, base );
-}
-
 Validation.Expression.date =
 Validation.Expressions.push(function(expr, database)
 {
@@ -16047,6 +15912,203 @@ Validation.Expressions.push(function(expr, database)
     };
   }
 }) - 1;
+
+Validation.Rules.abs = function(field, params, database, alias, message)
+{
+  return function(value, model, setMessage)
+  {
+    value = tryParseFloat( value );
+
+    if ( isNumber( value ) )
+    {
+      value = Math.abs( value );
+    }
+
+    return value;
+  };
+};
+
+Validation.Rules.apply = function(field, params, database, alias, message)
+{
+  return function(value, model, setMessage)
+  {
+    model.$set( field, value );
+    
+    return value;
+  };
+};
+
+Validation.Rules.base64 = function(field, params, database, alias, message)
+{
+  return function(value, model, setMessage)
+  {
+    if ( global.btoa )
+    {
+      value = global.btoa( value );
+    }
+
+    return value;
+  };
+};
+
+Validation.Rules.ceil = function(field, params, database, alias, message)
+{
+  return function(value, model, setMessage)
+  {
+    value = tryParseFloat( value );
+    
+    if ( isNumber( value ) )
+    {
+      value = Math.ceil( value );
+    }
+
+    return value;
+  };
+};
+
+Validation.Rules.endOfDay = function(field, params, database, alias, message)
+{
+  return function(value, model, setMessage)
+  {
+    return endOfDay( value );
+  };
+};
+
+Validation.Rules.filter = function(field, params, database, alias, message)
+{
+  return function(value, model, setMessage)
+  {
+    if ( isArray( value ) )
+    {
+      for (var i = value.length - 1; i >= 0; i--)
+      {
+        if ( !isValue( value[ i ] ) )
+        {
+          value.splice( i, 1 );
+        }
+      }
+    }
+    else if ( isObject( value ) )
+    {
+      for (var prop in value)
+      {
+        if ( !isValue( value[ prop ] ) )
+        {
+          delete value[ prop ];
+        }
+      }
+    }
+
+    return value;
+  };
+};
+
+Validation.Rules.floor = function(field, params, database, alias, message)
+{
+  return function(value, model, setMessage)
+  {
+    value = tryParseFloat( value );
+    
+    if ( isNumber( value ) )
+    {
+      value = Math.floor( value );
+    }
+
+    return value;
+  };
+};
+
+Validation.Rules.mod = function(field, params, database, alias, message)
+{
+  var number = tryParseFloat( params );
+
+  if ( !isNumber( number ) )
+  {
+    throw '"' + number + '" is not a valid number for the mod rule.';
+  }
+
+  return function(value, model, setMessage)
+  {
+    value = tryParseFloat( value );
+
+    if ( isNumber( value ) )
+    {
+      value = value % number;
+    }
+
+    return value;
+  };
+};
+
+Validation.Rules.null = function(field, params, database, alias, message)
+{
+  return function(value, model, setMessage)
+  {
+    model.$set( field, null );
+
+    return null;
+  };
+};
+
+Validation.Rules.round = function(field, params, database, alias, message)
+{
+  return function(value, model, setMessage)
+  {
+    value = tryParseFloat( value );
+
+    if ( isNumber( value ) )
+    {
+      value = Math.round( value );
+    }
+
+    return value;
+  };
+};
+
+Validation.Rules.startOfDay = function(field, params, database, alias, message)
+{
+  return function(value, model, setMessage)
+  {
+    return startOfDay( value );
+  };
+};
+
+Validation.Rules.trim = function(field, params, database, alias, message)
+{
+  // String.trim polyfill
+  if ( !String.prototype.trim )
+  {
+    var regex = /^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g;
+
+    String.prototype.trim = function()
+    {
+      return this.replace( regex, '' );
+    };
+  }
+
+  return function(value, model, setMessage)
+  {
+    if ( isString( value ) )
+    {
+      value = value.trim();
+    }
+
+    return value;
+  };
+};
+
+Validation.Rules.unbase64 = function(field, params, database, alias, message)
+{
+  return function(value, model, setMessage)
+  {
+    if ( global.atob )
+    {
+      value = global.atob( value );
+    }
+
+    return value;
+  };
+};
 
 // accepted
 Validation.Rules.accepted = function(field, params, database, getAlias, message)
@@ -17294,202 +17356,157 @@ Validation.Rules.yesno.map =
   '0':      false
 };
 
-Validation.Rules.abs = function(field, params, database, alias, message)
+function tryParseFloat(x)
 {
-  return function(value, model, setMessage)
+  var parsed = parseFloat( x );
+
+  if ( !isNaN( parsed ) )
   {
-    value = tryParseFloat( value );
-
-    if ( isNumber( value ) )
-    {
-      value = Math.abs( value );
-    }
-
-    return value;
-  };
-};
-
-Validation.Rules.apply = function(field, params, database, alias, message)
-{
-  return function(value, model, setMessage)
-  {
-    model.$set( field, value );
-    
-    return value;
-  };
-};
-
-Validation.Rules.base64 = function(field, params, database, alias, message)
-{
-  return function(value, model, setMessage)
-  {
-    if ( global.btoa )
-    {
-      value = global.btoa( value );
-    }
-
-    return value;
-  };
-};
-
-Validation.Rules.ceil = function(field, params, database, alias, message)
-{
-  return function(value, model, setMessage)
-  {
-    value = tryParseFloat( value );
-    
-    if ( isNumber( value ) )
-    {
-      value = Math.ceil( value );
-    }
-
-    return value;
-  };
-};
-
-Validation.Rules.endOfDay = function(field, params, database, alias, message)
-{
-  return function(value, model, setMessage)
-  {
-    return endOfDay( value );
-  };
-};
-
-Validation.Rules.filter = function(field, params, database, alias, message)
-{
-  return function(value, model, setMessage)
-  {
-    if ( isArray( value ) )
-    {
-      for (var i = value.length - 1; i >= 0; i--)
-      {
-        if ( !isValue( value[ i ] ) )
-        {
-          value.splice( i, 1 );
-        }
-      }
-    }
-    else if ( isObject( value ) )
-    {
-      for (var prop in value)
-      {
-        if ( !isValue( value[ prop ] ) )
-        {
-          delete value[ prop ];
-        }
-      }
-    }
-
-    return value;
-  };
-};
-
-Validation.Rules.floor = function(field, params, database, alias, message)
-{
-  return function(value, model, setMessage)
-  {
-    value = tryParseFloat( value );
-    
-    if ( isNumber( value ) )
-    {
-      value = Math.floor( value );
-    }
-
-    return value;
-  };
-};
-
-Validation.Rules.mod = function(field, params, database, alias, message)
-{
-  var number = tryParseFloat( params );
-
-  if ( !isNumber( number ) )
-  {
-    throw '"' + number + '" is not a valid number for the mod rule.';
+    x = parsed;
   }
 
-  return function(value, model, setMessage)
-  {
-    value = tryParseFloat( value );
+  return x;
+}
 
-    if ( isNumber( value ) )
+function tryParseInt(x)
+{
+  var parsed = parseInt( x );
+
+  if ( !isNaN( parsed ) )
+  {
+    x = parsed;
+  }
+
+  return x;
+}
+
+function startOfDay(d)
+{
+  if ( isDate( d ) )
+  {
+    d.setHours( 0, 0, 0, 0 );
+  }
+  else if ( isNumber( d ) )
+  {
+    d = d - (d % 86400000);
+  }
+
+  return d;
+}
+
+function endOfDay(d)
+{
+  if ( isDate( d ) )
+  {
+    d.setHours( 23, 59, 59, 999 );
+  }
+  else if ( isNumber( d ) )
+  {
+    d = d - (d % 86400000) + 86400000 - 1;
+  }
+
+  return d;
+}
+
+function ruleGenerator(ruleName, defaultMessage, isInvalid)
+{
+  Validation.Rules[ ruleName ] = function(field, params, database, getAlias, message)
+  {
+    checkNoParams( ruleName, field, params );
+
+    var messageTemplate = determineMessage( ruleName, message );
+
+    return function(value, model, setMessage)
     {
-      value = value % number;
-    }
+      function setValue( newValue )
+      {
+        value = newValue;
+      }
 
-    return value;
-  };
-};
+      if ( isInvalid( value, model, setValue ) )
+      {
+        setMessage( generateMessage( field, getAlias( field ), value, model, messageTemplate ) );
+      }
 
-Validation.Rules.null = function(field, params, database, alias, message)
-{
-  return function(value, model, setMessage)
-  {
-    model.$set( field, null );
-
-    return null;
-  };
-};
-
-Validation.Rules.round = function(field, params, database, alias, message)
-{
-  return function(value, model, setMessage)
-  {
-    value = tryParseFloat( value );
-
-    if ( isNumber( value ) )
-    {
-      value = Math.round( value );
-    }
-
-    return value;
-  };
-};
-
-Validation.Rules.startOfDay = function(field, params, database, alias, message)
-{
-  return function(value, model, setMessage)
-  {
-    return startOfDay( value );
-  };
-};
-
-Validation.Rules.trim = function(field, params, database, alias, message)
-{
-  // String.trim polyfill
-  if ( !String.prototype.trim )
-  {
-    var regex = /^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g;
-
-    String.prototype.trim = function()
-    {
-      return this.replace( regex, '' );
+      return value;
     };
+  };
+
+  Validation.Rules[ ruleName ].message = defaultMessage;
+}
+
+function determineMessage(ruleName, message)
+{
+  return message || Validation.Rules[ ruleName ].message;
+}
+
+function joinFriendly(arr, lastSeparator, itemSeparator, getAlias)
+{
+  var copy = arr.slice();
+
+  if ( getAlias )
+  {
+    for (var i = 0; i < copy.length; i++)
+    {
+      copy[ i ] = getAlias( copy[ i ] );
+    }
   }
 
-  return function(value, model, setMessage)
-  {
-    if ( isString( value ) )
-    {
-      value = value.trim();
-    }
+  var last = copy.pop();
+  var lastSeparator = lastSeparator || 'and';
+  var itemSeparator = itemSeparator || ', ';
 
-    return value;
-  };
-};
+  switch (copy.length) {
+    case 0:
+      return last;
+    case 1:
+      return copy[ 0 ] + ' ' + lastSeparator + ' ' + last;
+    default:
+      return copy.join( itemSeparator ) + itemSeparator + lastSeparator + ' ' + last;
+  }
+}
 
-Validation.Rules.unbase64 = function(field, params, database, alias, message)
+function mapFromArray(arr, value)
 {
-  return function(value, model, setMessage)
-  {
-    if ( global.atob )
-    {
-      value = global.atob( value );
-    }
+  var map = {};
 
-    return value;
-  };
-};
+  for (var i = 0; i < arr.length; i++)
+  {
+    map[ arr[ i ] ] = value;
+  }
+
+  return map;
+}
+
+function checkNoParams(ruleName, field, params)
+{
+  if ( params )
+  {
+    throw 'the rule ' + ruleName + ' for field ' + field + ' has no arguments';
+  }
+}
+
+function generateMessage(field, alias, value, model, message, extra)
+{
+  if ( isFunction( message ) )
+  {
+    message = message( field, alias, value, model, extra );
+  }
+
+  var base = {};
+  base.$field = field;
+  base.$alias = alias;
+  base.$value = value;
+
+  transfer( model, base );
+
+  if ( isObject( extra ) )
+  {
+    transfer( extra, base );
+  }
+
+  return format( message, base );
+}
 
 
   /* Top-Level Function */
@@ -17509,6 +17526,7 @@ Validation.Rules.unbase64 = function(field, params, database, alias, message)
   Rekord.Cache = Cache;
   Rekord.Store = Store;
   Rekord.Save = Save;
+  Rekord.Load = Load;
 
   /* Collections */
   Rekord.Map = Map;

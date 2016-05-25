@@ -16,6 +16,7 @@
   Rekord.Cache = Cache;
   Rekord.Store = Store;
   Rekord.Save = Save;
+  Rekord.Load = Load;
 
   /* Collections */
   Rekord.Map = Map;

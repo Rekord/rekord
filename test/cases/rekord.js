@@ -264,14 +264,14 @@ test( 'remove while iterating related', function(assert)
   deepEqual( names, ['t0', 't1', 't2', 't3'] );
 });
 
-test( 'loadRemote false get by object', function(assert)
+test( 'load lazy get by object', function(assert)
 {
-  var prefix = 'Rekord_loadRemote_false_get_by_object_';
+  var prefix = 'Rekord_load_lazy_get_by_object_';
 
   var Task = Rekord({
     name: prefix + 'task',
     fields: ['name', 'done'],
-    loadRemote: false
+    load: Rekord.Load.Lazy
   });
 
   Task.Database.rest.map.put( 2, {id: 2, name: 't2', done: true} );
@@ -286,14 +286,14 @@ test( 'loadRemote false get by object', function(assert)
   });
 });
 
-test( 'loadRemote false get by id', function(assert)
+test( 'load lazy get by id', function(assert)
 {
-  var prefix = 'Rekord_loadRemote_false_get_by_id_';
+  var prefix = 'Rekord_load_lazy_get_by_id_';
 
   var Task = Rekord({
     name: prefix + 'task',
     fields: ['name', 'done'],
-    loadRemote: false
+    load: Rekord.Load.Lazy
   });
 
   Task.Database.rest.map.put( 2, {id: 2, name: 't2', done: true} );
@@ -308,14 +308,14 @@ test( 'loadRemote false get by id', function(assert)
   });
 });
 
-test( 'loadRemote false hasOne', function(assert)
+test( 'load lazy hasOne', function(assert)
 {
-  var prefix = 'Rekord_loadRemote_false_hasOne_';
+  var prefix = 'Rekord_load_lazy_hasOne_';
 
   var User = Rekord({
     name: prefix + 'user',
     fields: ['name'],
-    loadRemote: false
+    load: Rekord.Load.Lazy
   });
 
   User.Database.rest.map.put( 1, {id: 1, name: 'u1'} );
@@ -363,9 +363,9 @@ test( 'cached Rekord', function(assert)
   deepEqual( Task1.Database.fields, ['id', 'name', 'done'] );
 });
 
-test( 'load related before initialize with loadRemote', function(assert)
+test( 'load related before initialize with load none', function(assert)
 {
-  var prefix = 'load_related_before_initialize_with_loadRemote_';
+  var prefix = 'load_related_before_initialize_with_load_none_';
   var timer = assert.timer();
 
   var ItemName = prefix + 'item';
@@ -392,13 +392,13 @@ test( 'load related before initialize with loadRemote', function(assert)
   var Item = Rekord({
     name: ItemName,
     fields: ['name'],
-    loadRemote: false
+    load: Rekord.Load.None
   });
 
   var ListItem = Rekord({
     name: ListItemName,
     fields: ['amount', 'item_id'],
-    loadRemote: false,
+    load: Rekord.Load.None,
     belongsTo: {
       item: {
         model: ItemName,

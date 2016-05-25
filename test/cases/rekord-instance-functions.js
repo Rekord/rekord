@@ -413,7 +413,7 @@ test( 'search success', function(assert)
   var Todo = Rekord({
     name: prefix + 'todo',
     fields: ['name', 'done'],
-    loadRemote: false
+    load: Rekord.Load.None
   });
 
   var remote = Todo.Database.rest;
@@ -466,7 +466,7 @@ test( 'search failure', function(assert)
   var Todo = Rekord({
     name: prefix + 'todo',
     fields: ['name', 'done'],
-    loadRemote: false
+    load: Rekord.Load.None
   });
 
   var remote = Todo.Database.rest;
@@ -521,7 +521,7 @@ test( 'search single', function(assert)
   var Todo = Rekord({
     name: prefix + 'todo',
     fields: ['name', 'done'],
-    loadRemote: false
+    load: Rekord.Load.None
   });
 
   var remote = Todo.Database.rest;
