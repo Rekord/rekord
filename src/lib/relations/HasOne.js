@@ -51,6 +51,7 @@ extend( RelationSingle, HasOne,
       loaded: false,
       dirty: false,
       saving: false,
+      child: equals( this.local, model.$db.key ),
 
       onRemoved: function()
       {
@@ -77,6 +78,17 @@ extend( RelationSingle, HasOne,
     {
       Rekord.debug( Rekord.Debugs.HASONE_INITIAL, this, model, initialValue );
 
+      if ( isObject( initialValue ) && relation.child )
+      {
+        var src = toArray( this.local );
+        var dst = toArray( this.model.Database.key );
+
+        for (var k = 0; k < src.length; k++)
+        {
+          initialValue[ dst[ k ] ] = model[ src[ k ] ];
+        }
+      }
+
       this.grabModel( initialValue, this.handleModel( relation ), remoteData );
     }
     else if ( this.query )
@@ -84,6 +96,11 @@ extend( RelationSingle, HasOne,
       relation.query = this.executeQuery( model );
     }
   }),
+
+  isDependent: function(relation, related)
+  {
+    return !relation.child;
+  },
 
   preClone: function(model, clone, properties)
   {

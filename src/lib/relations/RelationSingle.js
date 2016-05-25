@@ -135,9 +135,17 @@ extend( Relation, RelationSingle,
     relation.dirty = true;
     relation.loaded = true;
 
-    relation.parent.$dependents[ related.$uid() ] = related;
+    if ( this.isDependent( relation, related ) )
+    {
+      relation.parent.$dependents[ related.$uid() ] = related;
+    }
 
     Rekord.debug( this.debugSetModel, this, relation );
+  },
+
+  isDependent: function(relation, related)
+  {
+    return true;
   },
 
   handleModel: function(relation, remoteData)

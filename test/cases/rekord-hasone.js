@@ -416,7 +416,7 @@ test( 'more than one hasOne relationship', function(assert)
   strictEqual( t0.editor, null );
 });
 
-test( 'wait until dependents are saved', function(assert) 
+test( 'wait until dependents are saved', function(assert)
 {
   var timer = assert.timer();
   var done = assert.async();
@@ -452,19 +452,19 @@ test( 'wait until dependents are saved', function(assert)
   notOk( t0.$isSaved(), 'task not saved since user not saved' );
   notOk( u0.$isSaved(), 'user not saved' );
 
-  wait( 1, function() 
+  wait( 1, function()
   {
     notOk( t0.$isSaved(), 'task not saved since user not saved (2)' );
     notOk( u0.$isSaved(), 'user not saved (2)' );
-  }); 
+  });
 
-  wait( 3, function() 
+  wait( 3, function()
   {
     notOk( t0.$isSaved(), 'task not saved since user not saved (3)' );
     ok( u0.$isSaved(), 'user saved' );
   });
 
-  wait( 5, function() 
+  wait( 5, function()
   {
     ok( t0.$isSaved(), 'task saved since user has saved' );
     ok( u0.$isSaved(), 'user saved (2)' );
@@ -513,7 +513,45 @@ test( 'clone', function(assert)
   ok( a1.id );
   ok( u1.address_id );
   strictEqual( a1.location, 'everywhere' );
-  strictEqual( a1.id, u1.address_id );  
+  strictEqual( a1.id, u1.address_id );
   notStrictEqual( a1.id, a0.id );
 });
 
+test( 'child table', function(assert)
+{
+  var prefix = 'hasOne_child_table_';
+
+  var ItemName = prefix + 'item';
+  var ItemPreferenceName = prefix + 'item_preference';
+
+  var Item = Rekord({
+    name: ItemName,
+    fields: ['name'],
+    hasOne: {
+      preference: {
+        model: ItemPreferenceName,
+        local: 'id'
+      }
+    }
+  });
+
+  var ItemPreference = Rekord({
+    name: ItemPreferenceName,
+    key: 'item_id',
+    fields: ['brand', 'model'],
+    belongsTo: {
+      item: {
+        model: ItemName,
+        local: 'item_id'
+      }
+    }
+  });
+
+  var i0 = Item.create({name: 'i0', preference: {brand: 'Rekord', model: '#53434'}});
+  var p0 = i0.preference;
+
+  ok( p0 );
+  strictEqual( p0.item_id, i0.id );
+  ok( i0.$isSaved() );
+  ok( p0.$isSaved() );
+});
