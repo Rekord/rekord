@@ -266,6 +266,11 @@ addMethods( Relation.prototype,
     }
   },
 
+  buildKey: function(input)
+  {
+
+  },
+
   setProperty: function(relation)
   {
     if ( this.property )

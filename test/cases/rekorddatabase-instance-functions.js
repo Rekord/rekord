@@ -116,6 +116,61 @@ test( 'buildKey', function(assert)
   strictEqual( db.buildKey( b0, ['name', 'age'] ), 'name0/1' );
 });
 
+test( 'buildKey with relationships', function(assert)
+{
+  var prefix = 'buildKey_with_relationships_';
+
+  var ItemName = prefix + 'item';
+  var ListName = prefix + 'list';
+  var ListItemName = prefix + 'list_item';
+
+  var Item = Rekord({
+    name: ItemName,
+    fields: ['name']
+  });
+
+  var List = Rekord({
+    name: ListName,
+    fields: ['name']
+  });
+
+  var ListItem = Rekord({
+    name: ListItemName,
+    key: ['list_id', 'item_id'],
+    fields: ['amount'],
+    belongsTo: {
+      list: {
+        model: List,
+        local: 'list_id'
+      },
+      item: {
+        model: Item,
+        local: 'item_id'
+      }
+    }
+  });
+
+  var l0 = List.create({id: 3, name: 'l0'});
+  var i0 = Item.create({id: 4, name: 'i0'});
+
+  var input = {
+    list: l0,
+    item: i0,
+    amount: 24
+  };
+
+  var key = ListItem.Database.buildKeyFromInput(input);
+
+  strictEqual( key, '3/4' );
+  strictEqual( input.list_id, 3 );
+  strictEqual( input.item_id, 4 );
+
+  var created = ListItem.create(input);
+  var gotten = ListItem.get({list: l0, item: i0});
+
+  strictEqual( created, gotten );
+});
+
 test( 'buildKeys', function(assert)
 {
   var buildKeys = Rekord({

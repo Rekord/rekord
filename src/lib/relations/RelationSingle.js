@@ -209,6 +209,37 @@ extend( Relation, RelationSingle,
     Rekord.debug( this.debugUpdateKey, this, model, local, related, foreign );
 
     this.updateFields( model, local, related, foreign, remoteData );
+  },
+
+  buildKey: function(input)
+  {
+    var related = input[ this.name ];
+    var key = this.local;
+
+    if ( isObject( related ) && this.model )
+    {
+      var foreign = this.model.Database.key;
+
+      if ( isArray( key ) )
+      {
+        for (var i = 0; i < key.length; i++)
+        {
+          var field = key[ i ];
+
+          if ( !isValue( input[ field ] ) && isValue( related[ foreign[ i ] ] ) )
+          {
+            input[ field ] = related[ foreign[ i ] ];
+          }
+        }
+      }
+      else
+      {
+        if ( !isValue( input[ key ] ) && isValue( related[ foreign ] ) )
+        {
+          input[ key ] = related[ foreign ];
+        }
+      }
+    }
   }
 
 });

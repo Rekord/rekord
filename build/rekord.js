@@ -3328,6 +3328,8 @@ addMethods( Database.prototype,
 
       if ( isObject( input ) )
       {
+        this.buildKeyFromRelations( input );
+
         if ( remoteData )
         {
           db.putRemoteData( input, key, model );
@@ -3342,6 +3344,8 @@ addMethods( Database.prototype,
     }
     else if ( isObject( input ) )
     {
+      this.buildKeyFromRelations( input );
+
       if ( remoteData )
       {
         return db.putRemoteData( input );
@@ -3390,10 +3394,26 @@ addMethods( Database.prototype,
     return key;
   },
 
+  buildKeyFromRelations: function(input)
+  {
+    if ( isObject( input ) )
+    {
+      for (var relationName in this.relations)
+      {
+        if ( relationName in input )
+        {
+          this.relations[ relationName ].buildKey( input );
+        }
+      }
+    }
+  },
+
   // Builds a key (possibly array) from the given model and array of fields
   buildKeys: function(model, fields)
   {
     var key = null;
+
+    this.buildKeyFromRelations( model );
 
     if ( isArray( fields ) )
     {
@@ -11522,6 +11542,11 @@ addMethods( Relation.prototype,
     }
   },
 
+  buildKey: function(input)
+  {
+
+  },
+
   setProperty: function(relation)
   {
     if ( this.property )
@@ -11964,6 +11989,37 @@ extend( Relation, RelationSingle,
     Rekord.debug( this.debugUpdateKey, this, model, local, related, foreign );
 
     this.updateFields( model, local, related, foreign, remoteData );
+  },
+
+  buildKey: function(input)
+  {
+    var related = input[ this.name ];
+    var key = this.local;
+
+    if ( isObject( related ) && this.model )
+    {
+      var foreign = this.model.Database.key;
+
+      if ( isArray( key ) )
+      {
+        for (var i = 0; i < key.length; i++)
+        {
+          var field = key[ i ];
+
+          if ( !isValue( input[ field ] ) && isValue( related[ foreign[ i ] ] ) )
+          {
+            input[ field ] = related[ foreign[ i ] ];
+          }
+        }
+      }
+      else
+      {
+        if ( !isValue( input[ key ] ) && isValue( related[ foreign ] ) )
+        {
+          input[ key ] = related[ foreign ];
+        }
+      }
+    }
   }
 
 });

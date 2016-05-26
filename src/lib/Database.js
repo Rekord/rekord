@@ -346,6 +346,8 @@ addMethods( Database.prototype,
 
       if ( isObject( input ) )
       {
+        this.buildKeyFromRelations( input );
+
         if ( remoteData )
         {
           db.putRemoteData( input, key, model );
@@ -360,6 +362,8 @@ addMethods( Database.prototype,
     }
     else if ( isObject( input ) )
     {
+      this.buildKeyFromRelations( input );
+
       if ( remoteData )
       {
         return db.putRemoteData( input );
@@ -408,10 +412,26 @@ addMethods( Database.prototype,
     return key;
   },
 
+  buildKeyFromRelations: function(input)
+  {
+    if ( isObject( input ) )
+    {
+      for (var relationName in this.relations)
+      {
+        if ( relationName in input )
+        {
+          this.relations[ relationName ].buildKey( input );
+        }
+      }
+    }
+  },
+
   // Builds a key (possibly array) from the given model and array of fields
   buildKeys: function(model, fields)
   {
     var key = null;
+
+    this.buildKeyFromRelations( model );
 
     if ( isArray( fields ) )
     {
