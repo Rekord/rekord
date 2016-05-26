@@ -7,6 +7,7 @@ var gutil = require('gulp-util');
 var qunit = require('gulp-qunit');
 var shell = require('gulp-shell');
 var merge = require('merge-stream');
+var size = require('gulp-check-filesize');
 
 var build = {
   filename: 'rekord.js',
@@ -58,7 +59,6 @@ var build = {
     './src/lib/relations/Polymorphic.js',
     './src/lib/Shard.js',
     './src/lib/plugins/*.js',
-    './src/lib/validation/**/*.js',
     './src/footer.js'
   ]
 };
@@ -135,10 +135,6 @@ var modularized = {
       './src/lib/Shard.js',
       './src/lib/plugins/shard.js'
     ],
-    V: [ // validation
-      './src/lib/plugins/validation.js',
-      './src/lib/validation/**/*.js'
-    ],
     F: [ // files
       './src/lib/plugins/files.js'
     ],
@@ -169,6 +165,7 @@ var executeMinifiedBuild = function(props)
         .pipe( plugins.concat( props.minified ) )
         .pipe( plugins.uglify().on('error', gutil.log) )
       .pipe( sourcemaps.write('.') )
+      .pipe( size({enableGzip: true}) )
       .pipe( gulp.dest( props.output ) )
     ;
   };
@@ -180,6 +177,7 @@ var executeBuild = function(props)
     return gulp
       .src( props.include )
       .pipe( plugins.concat( props.filename ) )
+      .pipe( size({enableGzip: true}) )
       .pipe( gulp.dest( props.output ) )
     ;
   };

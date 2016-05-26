@@ -116,6 +116,7 @@
 
   /* String Functions */
   Rekord.toCamelCase = toCamelCase;
+  Rekord.split = split;
 
   /* Where Functions */
   Rekord.Wheres = Wheres;
