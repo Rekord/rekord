@@ -1351,12 +1351,13 @@ test( 'timestamps renamed', function(assert)
   var Todo = Rekord({
     name: prefix + 'todo',
     fields: ['name', 'done'],
-    defaults: { done: false },
+    defaults: {
+      done: false,
+      updated_tms: currentDate(),
+      created_tms: currentDate()
+    },
     timestamps: {created_at: 'created_tms', updated_at: 'updated_tms'}
   });
-
-  Todo.Database.defaults.updated_tms = currentDate();
-  Todo.Database.defaults.created_tms = currentDate();
 
   deepEqual( Todo.Database.fields, ['id', 'name', 'done', 'created_tms', 'updated_tms'] );
 

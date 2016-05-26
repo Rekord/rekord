@@ -105,7 +105,7 @@ addMethods( Search.prototype,
       return;
     }
 
-    var offline = status === 0;
+    var offline = RestStatus.Offline[ status ];
 
     if ( offline )
     {

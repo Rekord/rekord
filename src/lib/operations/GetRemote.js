@@ -59,7 +59,7 @@ extend( Operation, GetRemote,
 
     Rekord.debug( Rekord.Debugs.GET_REMOTE_ERROR, model, response, status );
 
-    if ( status === 410 || status === 404 )
+    if ( RestStatus.NotFound[ status ] )
     {
       this.insertNext( RemoveNow );
 
@@ -67,7 +67,7 @@ extend( Operation, GetRemote,
 
       model.$trigger( Model.Events.RemoteGetFailure, [model, response] );
     }
-    else if ( status === 0 )
+    else if ( RestStatus.Offline[ status ] )
     {
       model.$trigger( Model.Events.RemoteGetOffline, [model, response] );
     }

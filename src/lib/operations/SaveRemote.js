@@ -69,13 +69,13 @@ extend( Operation, SaveRemote,
     var model = this.model;
 
     // A non-zero status means a real problem occurred
-    if ( status === 409 ) // 409 Conflict
+    if ( RestStatus.Conflict[ status ] ) // 409 Conflict
     {
       Rekord.debug( Rekord.Debugs.SAVE_CONFLICT, model, data );
 
       this.handleData( data );
     }
-    else if ( status === 410 || status === 404 ) // 410 Gone, 404 Not Found
+    else if ( RestStatus.NotFound[ status ] )
     {
       Rekord.debug( Rekord.Debugs.SAVE_UPDATE_FAIL, model );
 
@@ -85,13 +85,7 @@ extend( Operation, SaveRemote,
 
       model.$trigger( Model.Events.RemoteSaveFailure, [model, response] );
     }
-    else if ( status !== 0 )
-    {
-      Rekord.debug( Rekord.Debugs.SAVE_ERROR, model, status );
-
-      this.markSynced( model, true, Model.Events.RemoteSaveFailure, response );
-    }
-    else
+    else if ( RestStatus.Offline[ status ] )
     {
       // Check the network status right now
       Rekord.checkNetworkStatus();
@@ -109,6 +103,12 @@ extend( Operation, SaveRemote,
       }
 
       Rekord.debug( Rekord.Debugs.SAVE_OFFLINE, model, response );
+    }
+    else
+    {
+      Rekord.debug( Rekord.Debugs.SAVE_ERROR, model, status );
+
+      this.markSynced( model, true, Model.Events.RemoteSaveFailure, response );
     }
   },
 

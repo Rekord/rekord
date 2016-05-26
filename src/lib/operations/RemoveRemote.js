@@ -44,19 +44,13 @@ extend( Operation, RemoveRemote,
     var model = this.model;
     var key = model.$key();
 
-    if ( status === 404 || status === 410 )
+    if ( RestStatus.NotFound[ status ] )
     {
       Rekord.debug( Rekord.Debugs.REMOVE_MISSING, model, key );
 
       this.finishRemove( true );
     }
-    else if ( status !== 0 )
-    {
-      Rekord.debug( Rekord.Debugs.REMOVE_ERROR, model, status, key, response );
-
-      model.$trigger( Model.Events.RemoteRemoveFailure, [model, response] );
-    }
-    else
+    else if ( RestStatus.Offline[ status ] )
     {
       // Looks like we're offline!
       Rekord.checkNetworkStatus();
@@ -74,6 +68,12 @@ extend( Operation, RemoveRemote,
       }
 
       Rekord.debug( Rekord.Debugs.REMOVE_OFFLINE, model, response );
+    }
+    else
+    {
+      Rekord.debug( Rekord.Debugs.REMOVE_ERROR, model, status, key, response );
+
+      model.$trigger( Model.Events.RemoteRemoveFailure, [model, response] );
     }
   },
 

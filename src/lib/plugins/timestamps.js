@@ -70,7 +70,7 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
     {
       return function()
       {
-        this[ field ] = currentTimestamp();
+        this[ field ] = evaluate( db.defaults[ field ] );
 
         $save.apply( this, arguments );
       };

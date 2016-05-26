@@ -2247,6 +2247,13 @@ var Load =
   Both:   3
 };
 
+var RestStatus =
+{
+  Conflict:   {409: true},
+  NotFound:   {404: true, 410: true},
+  Offline:    {0: true}
+};
+
 
 Rekord.debug = function(event, source)  /*, data.. */
 {
@@ -9677,7 +9684,7 @@ addMethods( Search.prototype,
       return;
     }
 
-    var offline = status === 0;
+    var offline = RestStatus.Offline[ status ];
 
     if ( offline )
     {
@@ -10523,7 +10530,7 @@ extend( Operation, GetRemote,
 
     Rekord.debug( Rekord.Debugs.GET_REMOTE_ERROR, model, response, status );
 
-    if ( status === 410 || status === 404 )
+    if ( RestStatus.NotFound[ status ] )
     {
       this.insertNext( RemoveNow );
 
@@ -10531,7 +10538,7 @@ extend( Operation, GetRemote,
 
       model.$trigger( Model.Events.RemoteGetFailure, [model, response] );
     }
-    else if ( status === 0 )
+    else if ( RestStatus.Offline[ status ] )
     {
       model.$trigger( Model.Events.RemoteGetOffline, [model, response] );
     }
@@ -10745,19 +10752,13 @@ extend( Operation, RemoveRemote,
     var model = this.model;
     var key = model.$key();
 
-    if ( status === 404 || status === 410 )
+    if ( RestStatus.NotFound[ status ] )
     {
       Rekord.debug( Rekord.Debugs.REMOVE_MISSING, model, key );
 
       this.finishRemove( true );
     }
-    else if ( status !== 0 )
-    {
-      Rekord.debug( Rekord.Debugs.REMOVE_ERROR, model, status, key, response );
-
-      model.$trigger( Model.Events.RemoteRemoveFailure, [model, response] );
-    }
-    else
+    else if ( RestStatus.Offline[ status ] )
     {
       // Looks like we're offline!
       Rekord.checkNetworkStatus();
@@ -10775,6 +10776,12 @@ extend( Operation, RemoveRemote,
       }
 
       Rekord.debug( Rekord.Debugs.REMOVE_OFFLINE, model, response );
+    }
+    else
+    {
+      Rekord.debug( Rekord.Debugs.REMOVE_ERROR, model, status, key, response );
+
+      model.$trigger( Model.Events.RemoteRemoveFailure, [model, response] );
     }
   },
 
@@ -11088,13 +11095,13 @@ extend( Operation, SaveRemote,
     var model = this.model;
 
     // A non-zero status means a real problem occurred
-    if ( status === 409 ) // 409 Conflict
+    if ( RestStatus.Conflict[ status ] ) // 409 Conflict
     {
       Rekord.debug( Rekord.Debugs.SAVE_CONFLICT, model, data );
 
       this.handleData( data );
     }
-    else if ( status === 410 || status === 404 ) // 410 Gone, 404 Not Found
+    else if ( RestStatus.NotFound[ status ] )
     {
       Rekord.debug( Rekord.Debugs.SAVE_UPDATE_FAIL, model );
 
@@ -11104,13 +11111,7 @@ extend( Operation, SaveRemote,
 
       model.$trigger( Model.Events.RemoteSaveFailure, [model, response] );
     }
-    else if ( status !== 0 )
-    {
-      Rekord.debug( Rekord.Debugs.SAVE_ERROR, model, status );
-
-      this.markSynced( model, true, Model.Events.RemoteSaveFailure, response );
-    }
-    else
+    else if ( RestStatus.Offline[ status ] )
     {
       // Check the network status right now
       Rekord.checkNetworkStatus();
@@ -11128,6 +11129,12 @@ extend( Operation, SaveRemote,
       }
 
       Rekord.debug( Rekord.Debugs.SAVE_OFFLINE, model, response );
+    }
+    else
+    {
+      Rekord.debug( Rekord.Debugs.SAVE_ERROR, model, status );
+
+      this.markSynced( model, true, Model.Events.RemoteSaveFailure, response );
     }
   },
 
@@ -15444,7 +15451,7 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
     {
       return function()
       {
-        this[ field ] = currentTimestamp();
+        this[ field ] = evaluate( db.defaults[ field ] );
 
         $save.apply( this, arguments );
       };
