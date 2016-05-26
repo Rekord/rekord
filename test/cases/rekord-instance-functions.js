@@ -605,3 +605,113 @@ test( 'fetchAll', function(assert)
 
   timer.run();
 });
+
+test( 'findOrCreate', function(assert)
+{
+  var prefix = 'Rekord_findOrCreate_';
+
+  var Item = Rekord({
+    name: prefix + 'item',
+    fields: ['name']
+  });
+
+  var List = Rekord({
+    name: prefix + 'list',
+    fields: ['name']
+  });
+
+  var ListItem = Rekord({
+    name: prefix + 'list_item',
+    key: ['list_id', 'item_id'],
+    fields: ['quantity'],
+    belongsTo: {
+      list: {
+        model: List,
+        local: 'list_id'
+      },
+      item: {
+        model: Item,
+        local: 'item_id'
+      }
+    }
+  });
+
+  var l1 = List.create({id: 1, name: 'list1'});
+  var i2 = Item.create({id: 2, name: 'item2'});
+
+  var li0 = ListItem.findOrCreate({
+    list: l1,
+    item: i2,
+    quantity: 3
+  });
+
+  ok( li0.$isSaved() );
+  strictEqual( li0.list_id, 1 );
+  strictEqual( li0.item_id, 2 );
+  strictEqual( li0.quantity, 3 );
+
+  var li1 = ListItem.findOrCreate({
+    list: l1,
+    item: i2,
+    quantity: 4
+  });
+
+  strictEqual( li0, li1 );
+  strictEqual( li0.quantity, 4 );
+  strictEqual( li0.$saved.quantity, 3 );
+});
+
+test( 'persist', function(assert)
+{
+  var prefix = 'Rekord_persist_';
+
+  var Item = Rekord({
+    name: prefix + 'item',
+    fields: ['name']
+  });
+
+  var List = Rekord({
+    name: prefix + 'list',
+    fields: ['name']
+  });
+
+  var ListItem = Rekord({
+    name: prefix + 'list_item',
+    key: ['list_id', 'item_id'],
+    fields: ['quantity'],
+    belongsTo: {
+      list: {
+        model: List,
+        local: 'list_id'
+      },
+      item: {
+        model: Item,
+        local: 'item_id'
+      }
+    }
+  });
+
+  var l1 = List.create({id: 1, name: 'list1'});
+  var i2 = Item.create({id: 2, name: 'item2'});
+
+  var li0 = ListItem.persist({
+    list: l1,
+    item: i2,
+    quantity: 3
+  });
+
+  ok( li0.$isSaved() );
+  strictEqual( li0.list_id, 1 );
+  strictEqual( li0.item_id, 2 );
+  strictEqual( li0.quantity, 3 );
+
+  var li1 = ListItem.persist({
+    list: l1,
+    item: i2,
+    quantity: 4
+  });
+
+  strictEqual( li0, li1 );
+  strictEqual( li0.quantity, 4 );
+  strictEqual( li0.$saved.quantity, 4 );
+});
