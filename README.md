@@ -11,7 +11,8 @@ Rekord is a javascript REST ORM that is offline and real-time capable.
 **Features**
 - Relationships `hasOne`, `belongsTo`, `hasMany`, `hasManyThrough`, & `hasRemote`
 - Polymorphic relationships for `hasOne`, `belongsTo` & `hasMany`
-- Validation (59 rules, 6 expressions, 13 transforms, and custom functions)
+- Validation (59 rules, 6 expressions, 13 transforms, and custom functions) through [rekord-validation](https://github.com/Rekord/rekord-validation)
+- Migrations through [rekord-migrations](https://github.com/Rekord/rekord-migrations)
 - Batch REST execution for any/all types and operations
 - Inheritance (with `extend` option)
 - Horizontal scaling with `shard`ing
@@ -66,6 +67,9 @@ The `Rekord.Model` and `Rekord.Search` classes can have custom properties theref
 
 The easiest way to install rekord is through bower via `bower install rekord`.
 
+- `rekord.js` is `373KB` (`64.83KB` gzipped)
+- `rekord.min.js` is `109KB` (`27.69KB` gzipped)
+
 **Examples**
 
 Examples exist in a separate project: https://github.com/Rekord/rekord-examples
@@ -81,6 +85,13 @@ Bindings are used to implement core pieces of functionality in rekord - these in
 - [PouchDB](https://github.com/Rekord/rekord-pouchdb) - implements `Rekord.store`, `Rekord.rest`, & `Rekord.live`
 - [jQuery](https://github.com/Rekord/rekord-jquery) - implements `Rekord.rest`
 - [Debugging](https://github.com/Rekord/rekord-debug) - implements `Rekord.debug`
+
+**Add-Ons**
+
+Add-Ons add new functionality to Rekord.
+
+- [Validation](https://github.com/Rekord/rekord-validation) - adds `validation` option
+- [Migrations](https://github.com/Rekord/rekord-migrations) - adds `Rekord.migration` function
 
 **Rekord's Life Cycle:**
 
