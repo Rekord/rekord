@@ -2572,6 +2572,25 @@ Rekord.store = function(database)
     all: function(success, failure)
     {
       success( [], [] );
+    },
+
+
+    /**
+     * Resets the store so it contains ONLY the given keys & record pairs.
+     *
+     * @param {String[]} keys -
+     *    The array of keys.
+     * @param {Object[]} records -
+     *    The array of records to save.
+     * @param  {function} success
+     *         The function to invoke with the array of records and an array
+     *         of keys.
+     * @param  {function} failure
+     *         The function to invoke with the error that occurred if available.
+     */
+    reset: function(keys, records, succcess, failure)
+    {
+      success( keys, records );
     }
 
   };
