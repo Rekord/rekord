@@ -375,7 +375,8 @@ test( 'remove remote only local', function(assert)
 
   var Task = Rekord({
     name: prefix + 'task',
-    fields: ['name', 'done', 'list_id']
+    fields: ['name', 'done', 'list_id'],
+    allComplete: true
   });
 
   var TaskList = Rekord({

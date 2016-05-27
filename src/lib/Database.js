@@ -199,6 +199,7 @@ Database.Defaults =
   comparatorNullsFirst: null,
   revision:             null,
   load:                 Load.None,
+  allComplete:          false,
   loadRelations:        true,
   autoRefresh:          true,
   cache:                Cache.All,
@@ -1068,21 +1069,24 @@ addMethods( Database.prototype,
         }
       }
 
-      var keys = db.models.keys();
-
-      for (var i = 0; i < keys.length; i++)
+      if ( db.allComplete )
       {
-        var k = keys[ i ];
+        var keys = db.models.keys().slice();
 
-        if ( !(k in mapped) )
+        for (var i = 0; i < keys.length; i++)
         {
-          var old = db.models.get( k );
+          var k = keys[ i ];
 
-          if ( old.$saved )
+          if ( !(k in mapped) )
           {
-            Rekord.debug( Rekord.Debugs.REMOTE_LOAD_REMOVE, db, k );
+            var old = db.models.get( k );
 
-            db.destroyLocalModel( k );
+            if ( old.$saved )
+            {
+              Rekord.debug( Rekord.Debugs.REMOTE_LOAD_REMOVE, db, k );
+
+              db.destroyLocalModel( k );
+            }
           }
         }
       }
