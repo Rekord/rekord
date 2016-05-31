@@ -8,6 +8,7 @@ var qunit = require('gulp-qunit');
 var shell = require('gulp-shell');
 var merge = require('merge-stream');
 var size = require('gulp-check-filesize');
+var jshint = require('gulp-jshint');
 
 var build = {
   filename: 'rekord.js',
@@ -179,6 +180,9 @@ var executeBuild = function(props)
       .pipe( plugins.concat( props.filename ) )
       .pipe( size({enableGzip: true}) )
       .pipe( gulp.dest( props.output ) )
+      .pipe(jshint())
+      .pipe(jshint.reporter('default'))
+      .pipe(jshint.reporter('fail'))
     ;
   };
 };
@@ -230,6 +234,15 @@ var executeModular = function(def, minify)
     return modules;
   };
 };
+
+gulp.task('lint', function() {
+  return gulp
+    .src(build.output + build.filename)
+    .pipe(jshint())
+    .pipe(jshint.reporter('default'))
+    .pipe(jshint.reporter('fail'))
+  ;
+});
 
 gulp.task( 'docs', shell.task(['./node_modules/.bin/jsdoc -c jsdoc.json']));
 gulp.task( 'clean', shell.task(['rm -rf build/*.js', 'rm -rf build/*.map']));

@@ -202,9 +202,10 @@ function extendArray(parent, child, override)
 // Is directly extending an array supported?
 function extendArraySupported()
 {
+  function EA() {}
+
   if ( extendArraySupported.supported === undefined )
   {
-    function EA() {};
     EA.prototype = [];
     var eq = new EA();
     eq.push(0);
@@ -255,7 +256,7 @@ function replaceMethod(target, methodName, methodFactory)
 // return an instance and doesn't invoke the original constructor.
 function copyConstructor(func)
 {
-  function F() {};
+  function F() {}
   F.prototype = func.prototype;
   return F;
 }
@@ -576,7 +577,7 @@ function uuid()
 
 function S4()
 {
-  return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
+  return ((1+Math.random())*0x10000).toString(16).substring(1);
 }
 
 
@@ -591,7 +592,7 @@ function sizeof(x)
   {
     var properties = 0;
 
-    for (var prop in x)
+    for (var prop in x) // jshint ignore:line
     {
       properties++;
     }
@@ -622,10 +623,11 @@ function isEmpty(x)
   }
   if (isObject(x))
   {
-    for (var prop in x)
+    for (var prop in x) // jshint ignore:line
     {
       return false;
     }
+
     return true;
   }
 
@@ -670,14 +672,18 @@ function evaluate(x)
 
 var Comparators = {};
 
-function saveComparator(name, comparator, nullsFirst)
+function saveComparator(name, comparatorInput, nullsFirst)
 {
-  return Comparators[ name ] = createComparator( comparator, nullsFirst );
+  var comparator = createComparator( comparatorInput, nullsFirst );
+
+  Comparators[ name ] = comparator;
+
+  return comparator;
 }
 
-function addComparator(second, comparator, nullsFirst)
+function addComparator(second, comparatorInput, nullsFirst)
 {
-  var first = createComparator( comparator, nullsFirst );
+  var first = createComparator( comparatorInput, nullsFirst );
 
   if ( !isFunction( second ) )
   {
@@ -757,20 +763,20 @@ function createComparator(comparator, nullsFirst)
   }
   else if ( isArray( comparator ) )
   {
-    var parsed = [];
+    var parsedChain = [];
 
     for (var i = 0; i < comparator.length; i++)
     {
-      parsed[ i ] = createComparator( comparator[ i ], nullsFirst );
+      parsedChain[ i ] = createComparator( comparator[ i ], nullsFirst );
     }
 
     return function compareObjectsCascade(a, b)
     {
       var d = 0;
 
-      for (var i = 0; i < parsed.length && d === 0; i++)
+      for (var i = 0; i < parsedChain.length && d === 0; i++)
       {
-        d = parsed[ i ]( a, b );
+        d = parsedChain[ i ]( a, b );
       }
 
       return d;
@@ -832,56 +838,96 @@ function equalsCompare(a, b)
 
 function equals(a, b)
 {
-  if (a === b) return true;
-  if (a === null || b === null) return false;
-  if (a !== a && b !== b) return true; // NaN === NaN
+  if (a === b)
+  {
+    return true;
+  }
+  if (a === null || b === null)
+  {
+    return false;
+  }
+  if (a !== a && b !== b)
+  {
+    return true; // NaN === NaN
+  }
 
   var at = typeof a;
   var bt = typeof b;
   var ar = isRegExp(a);
   var br = isRegExp(b);
 
-  if (at === 'string' && br) return b.test(a);
-  if (bt === 'string' && ar) return a.test(b);
+  if (at === 'string' && br)
+  {
+    return b.test(a);
+  }
+  if (bt === 'string' && ar)
+  {
+    return a.test(b);
+  }
 
-  if (at !== bt) return false;
+  if (at !== bt)
+  {
+    return false;
+  }
 
   var aa = isArray(a);
   var ba = isArray(b);
-  if (aa !== ba) return false;
+  if (aa !== ba)
+  {
+    return false;
+  }
 
-  if (aa) {
-    if (a.length !== b.length) return false;
-    for (var i = 0; i < a.length; i++) {
-      if (!equals(a[i], b[i])) {
+  if (aa)
+  {
+    if (a.length !== b.length)
+    {
+      return false;
+    }
+
+    for (var i = 0; i < a.length; i++)
+    {
+      if (!equals(a[i], b[i]))
+      {
         return false;
       }
     }
+
     return true;
   }
 
-  if (isDate(a)) {
+  if (isDate(a))
+  {
     return isDate(b) && equals( a.getTime(), b.getTime() );
   }
-  if (ar) {
+  if (ar)
+  {
     return br && a.toString() === b.toString();
   }
 
-  if (at === 'object') {
-    for (var p in a) {
-      if (p.charAt(0) !== '$' && !isFunction(a[p])) {
-        if (!(p in b) || !equals(a[p], b[p])) {
+  if (at === 'object')
+  {
+    for (var ap in a)
+    {
+      if (ap.charAt(0) !== '$' && !isFunction(a[ap]))
+      {
+        if (!(ap in b) || !equals(a[ap], b[ap]))
+        {
           return false;
         }
       }
     }
-    for (var p in b) {
-      if (p.charAt(0) !== '$' && !isFunction(b[p])) {
-        if (!(p in a)) {
+
+    for (var bp in b)
+    {
+      if (bp.charAt(0) !== '$' && !isFunction(b[bp]))
+      {
+        if (!(bp in a))
+        {
           return false;
         }
       }
     }
+
     return true;
   }
 
@@ -895,7 +941,7 @@ function compareNumbers(a, b)
 
 function compare(a, b, nullsFirst)
 {
-  if (a == b)
+  if (a == b) // jshint ignore:line
   {
     return 0;
   }
@@ -926,7 +972,7 @@ function compare(a, b, nullsFirst)
   }
   if (isBoolean(a) && isBoolean(b))
   {
-    return a ? -1 : 1;
+    return (a ? -1 : 1);
   }
 
   return (a + '').localeCompare(b + '');
@@ -951,7 +997,7 @@ function addEventFunction(target, functionName, events, secret)
       {
         unlistener();
       }
-    };
+    }
 
     function unlistener()
     {
@@ -1024,14 +1070,14 @@ function addEventful(target, secret)
     */
 
   // Adds a listener to $this
-  function onListeners($this, property, events, callback, context)
+  function onListeners($this, property, eventsInput, callback, context)
   {
     if ( !isFunction( callback ) )
     {
       return noop;
     }
 
-    var events = toArray( events, ' ' );
+    var events = toArray( eventsInput, ' ' );
     var listeners = $this[ property ];
 
     if ( !listeners )
@@ -1059,7 +1105,7 @@ function addEventful(target, secret)
         offListeners( listeners, events[ i ], callback );
       }
     };
-  };
+  }
 
   /**
    * Listens for every occurrence of the given events and invokes the callback
@@ -1182,14 +1228,14 @@ function addEventful(target, secret)
    *
    * @method off
    * @for addEventful
-   * @param {String|Array|Object} [events]
+   * @param {String|Array|Object} [eventsInput]
    * @param {Function} [callback]
    * @chainable
    */
-  function off(events, callback)
+  function off(eventsInput, callback)
   {
     // Remove ALL listeners
-    if ( !isDefined( events ) )
+    if ( !isDefined( eventsInput ) )
     {
       deleteProperty( this, '$$on' );
       deleteProperty( this, '$$once' );
@@ -1197,7 +1243,7 @@ function addEventful(target, secret)
     }
     else
     {
-      var events = toArray( events, ' ' );
+      var events = toArray( eventsInput, ' ' );
 
       // Remove listeners for given events
       if ( !isFunction( callback ) )
@@ -1263,13 +1309,13 @@ function addEventful(target, secret)
    *
    * @method trigger
    * @for addEventful
-   * @param {String} event
+   * @param {String} eventsInput
    * @param {Array} args
    * @chainable
    */
-  function trigger(events, args)
+  function trigger(eventsInput, args)
   {
-    var events = toArray( events, ' ' );
+    var events = toArray( eventsInput, ' ' );
 
     for (var i = 0; i < events.length; i++)
     {
@@ -1277,7 +1323,7 @@ function addEventful(target, secret)
 
       triggerListeners( this.$$on, e, args, false );
       triggerListeners( this.$$once, e, args, true );
-      triggerListeners( this.$$after, e, args, false )
+      triggerListeners( this.$$after, e, args, false );
     }
 
     return this;
@@ -1299,7 +1345,7 @@ function addEventful(target, secret)
     addMethod( target, 'off', off );
     addMethod( target, 'trigger', trigger );
   }
-};
+}
 
 
 
@@ -1319,31 +1365,31 @@ function applyOptions( target, options, defaults, secret )
     }
   }
 
-  for (var prop in defaults)
+  for (var defaultProperty in defaults)
   {
-    var defaultValue = defaults[ prop ];
-    var option = options[ prop ];
+    var defaultValue = defaults[ defaultProperty ];
+    var option = options[ defaultProperty ];
     var valued = isValue( option );
 
     if ( !valued && defaultValue === undefined )
     {
-      throw ( prop + ' is a required option' );
+      throw ( defaultProperty + ' is a required option' );
     }
     else if ( valued )
     {
-      setProperty( prop, option );
+      setProperty( defaultProperty, option );
     }
     else
     {
-      setProperty( prop, copy( defaultValue ) );
+      setProperty( defaultProperty, copy( defaultValue ) );
     }
   }
 
-  for (var prop in options)
+  for (var optionProperty in options)
   {
-    if ( !(prop in defaults) )
+    if ( !(optionProperty in defaults) )
     {
-      setProperty( prop, options[ prop ] );
+      setProperty( optionProperty, options[ optionProperty ] );
     }
   }
 
@@ -1652,7 +1698,10 @@ function parseDate(x, utc)
 {
   if ( isString( x ) )
   {
-    if ( utc ) x += ' UTC';
+    if ( utc )
+    {
+      x += ' UTC';
+    }
 
     x = Date.parse ? Date.parse( x ) : new Date( x );
   }
@@ -1703,7 +1752,11 @@ var NumberResolvers = {};
 
 function saveNumberResolver(name, numbers)
 {
-  return NumberResolvers[ name ] = createNumberResolver( numbers );
+  var resolver = createNumberResolver( numbers );
+
+  NumberResolvers[ name ] = resolver;
+
+  return resolver;
 }
 
 function createNumberResolver(numbers)
@@ -1725,7 +1778,11 @@ var PropertyResolvers = {};
 
 function savePropertyResolver(name, properties, delim)
 {
-  return PropertyResolvers[ name ] = createPropertyResolver( properties, delim );
+  var resolver = createPropertyResolver( properties, delim );
+
+  PropertyResolvers[ name ] = resolver;
+
+  return resolver;
 }
 
 /**
@@ -1821,7 +1878,7 @@ function createPropertyResolver(properties, delim)
     return function resolveNone(model)
     {
       return model;
-    }
+    };
   }
 }
 
@@ -1940,7 +1997,11 @@ var Wheres = {};
  */
 function saveWhere(name, properties, values, equals)
 {
-  return Wheres[ name ] = createWhere( properties, values, equals );
+  var where = createWhere( properties, values, equals );
+
+  Wheres[ name ] = where;
+
+  return where;
 }
 
 /**
@@ -2073,7 +2134,7 @@ function Rekord(options)
 
   var database = new Database( options );
 
-  var model = new Function('return function ' + database.className + '(props, remoteData) { this.$init( props, remoteData ) }')();
+  var model = new Function('return function ' + database.className + '(props, remoteData) { this.$init( props, remoteData ) }')(); // jshint ignore:line
   model.prototype = new Model( database );
 
   database.Model = model;
@@ -2159,7 +2220,14 @@ Rekord.promises = {};
 
 Rekord.get = function(name)
 {
-  return Rekord.promises[ name ] = Rekord.promises[ name ] || new Promise( null, false );
+  var existing = Rekord.promises[ name ];
+
+  if ( !existing )
+  {
+    existing = Rekord.promises[ name ] = new Promise( null, false );
+  }
+
+  return existing;
 };
 
 /**
@@ -2214,7 +2282,7 @@ var Cascade =
 function canCascade(cascade, type)
 {
   return !isNumber( cascade ) || (cascade & type) === type;
-};
+}
 
 var Cache =
 {
@@ -2334,7 +2402,6 @@ Rekord.Debugs = {
   REMOVE_REMOTE: 32,          // Model
   REMOVE_CANCEL_SAVE: 47,     // Model
 
-  REMOVE_LOCAL: 33,           // Model
   REMOVE_LOCAL_ERROR: 34,     // Model, error
   REMOVE_LOCAL_BLOCKED: 44,   // Model
   REMOVE_LOCAL_NONE: 45,      // Model
@@ -2424,6 +2491,8 @@ Rekord.Debugs = {
   HASREMOVE_NINJA_SAVE: 110,        // Model, Model, relation
   HASREMOVE_QUERY: 119,             // Model, RemoteQuery, queryOption, query
   HASREMOVE_QUERY_RESULTS: 120      // Model, RemoteQuery
+
+  // 33
 };
 
 
@@ -2588,7 +2657,7 @@ Rekord.store = function(database)
      * @param  {function} failure
      *         The function to invoke with the error that occurred if available.
      */
-    reset: function(keys, records, succcess, failure)
+    reset: function(keys, records, success, failure)
     {
       success( keys, records );
     }
@@ -2671,7 +2740,7 @@ Rekord.setLive = function(factory, overwrite)
 
 
 // Initial online
-Rekord.online = window.navigator.onLine !== false;
+Rekord.online = global.navigator.onLine !== false;
 
 Rekord.forceOffline = false;
 
@@ -2691,42 +2760,43 @@ Rekord.setOffline = function()
   Rekord.trigger( Rekord.Events.Offline );
 };
 
-// This must be called manually - this will try to use built in support for 
+// This must be called manually - this will try to use built in support for
 // online/offline detection instead of solely using status codes of 0.
 Rekord.listenToNetworkStatus = function()
 {
-  if (window.addEventListener) 
+  if (global.addEventListener)
   {
-    window.addEventListener( Rekord.Events.Online, Rekord.setOnline, false );
-    window.addEventListener( Rekord.Events.Offline, Rekord.setOffline, false );
-  } 
-  else 
+    global.addEventListener( Rekord.Events.Online, Rekord.setOnline, false );
+    global.addEventListener( Rekord.Events.Offline, Rekord.setOffline, false );
+  }
+  else
   {
-    document.body.ononline = Rekord.setOnline;
-    document.body.onoffline = Rekord.setOffline;
+    global.document.body.ononline = Rekord.setOnline;
+    global.document.body.onoffline = Rekord.setOffline;
   }
 };
 
 // Check to see if the network status has changed.
 Rekord.checkNetworkStatus = function()
 {
-  var online = window.navigator.onLine;
+  var online = global.navigator.onLine;
 
-  if ( Rekord.forceOffline ) 
+  if ( Rekord.forceOffline )
   {
     online = false;
   }
 
-  if (online === true && Rekord.online === false) 
+  if (online === true && Rekord.online === false)
   {
     Rekord.setOnline();
   }
 
-  else if (online === false && Rekord.online === true) 
+  else if (online === false && Rekord.online === true)
   {
     Rekord.setOffline();
   }
 };
+
 
 var batchDepth = 0;
 var batches = [];
@@ -2753,17 +2823,7 @@ function batch(namesInput, operationsInput, handler)
       }
       else
       {
-        (function(name, modelHandler)
-        {
-          Rekord.on( Rekord.Events.Plugins, function(model, database)
-          {
-            if ( database.name === name )
-            {
-              modelHandler( model );
-            }
-          });
-
-        })( modelName, modelHandler );
+        earlyModelHandler( modelName, modelHandler );
       }
     }
     else if ( isRekord( modelName ) )
@@ -2786,6 +2846,19 @@ function batch(namesInput, operationsInput, handler)
   }
 }
 
+function earlyModelHandler(name, modelHandler)
+{
+  var off = Rekord.on( Rekord.Events.Plugins, function(model, database)
+  {
+    if ( database.name === name )
+    {
+      modelHandler( model );
+
+      off();
+    }
+  });
+}
+
 function createModelHandler(operations, batch)
 {
   return function(modelClass)
@@ -2802,7 +2875,7 @@ function createModelHandler(operations, batch)
       switch (op)
       {
         case 'all':
-          rest.all = function(success, failure)
+          rest.all = function(success, failure) // jshint ignore:line
           {
             batch.push({
               database: db,
@@ -2814,7 +2887,7 @@ function createModelHandler(operations, batch)
           };
           break;
         case 'get':
-          rest.get = function(model, success, failure)
+          rest.get = function(model, success, failure) // jshint ignore:line
           {
             batch.push({
               database: db,
@@ -2827,7 +2900,7 @@ function createModelHandler(operations, batch)
           };
           break;
         case 'create':
-          rest.create = function(model, encoded, success, failure)
+          rest.create = function(model, encoded, success, failure) // jshint ignore:line
           {
             batch.push({
               database: db,
@@ -2841,7 +2914,7 @@ function createModelHandler(operations, batch)
           };
           break;
         case 'update':
-          rest.update = function(model, encoded, success, failure)
+          rest.update = function(model, encoded, success, failure) // jshint ignore:line
           {
             batch.push({
               database: db,
@@ -2855,7 +2928,7 @@ function createModelHandler(operations, batch)
           };
           break;
         case 'remove':
-          rest.remove = function(model, success, failure)
+          rest.remove = function(model, success, failure) // jshint ignore:line
           {
             batch.push({
               database: db,
@@ -2868,7 +2941,7 @@ function createModelHandler(operations, batch)
           };
           break;
         case 'query':
-          rest.query = function(url, query, success, failure)
+          rest.query = function(url, query, success, failure) // jshint ignore:line
           {
             batch.push({
               database: db,
@@ -4618,6 +4691,14 @@ addMethods( Model.prototype,
   $isDependentsSaved: function(callbackOnSaved, contextOnSaved)
   {
     var dependents = this.$dependents;
+    var off;
+
+    var onDependentSave = function()
+    {
+      callbackOnSaved.apply( contextOnSaved || this, arguments );
+
+      off();
+    };
 
     for (var uid in dependents)
     {
@@ -4625,13 +4706,7 @@ addMethods( Model.prototype,
 
       if ( !dependent.$isSaved() )
       {
-        function onDependentSave()
-        {
-          callbackOnSaved.apply( contextOnSaved || this, arguments );
-          off();
-        }
-
-        var off = dependent.$once( Model.Events.RemoteSaves, onDependentSave );
+        off = dependent.$once( Model.Events.RemoteSaves, onDependentSave );
 
         return false;
       }
@@ -5329,10 +5404,17 @@ addMethods( Map.prototype,
 
       while (i <= j)
       {
-        while (comparator( map.values[i], pivot ) < 0) i++
-        while (comparator( map.values[j], pivot ) > 0) j--;
+        while (comparator( map.values[i], pivot ) < 0)
+        {
+          i++;
+        }
+        while (comparator( map.values[j], pivot ) > 0)
+        {
+          j--;
+        }
 
-        if (i <= j) {
+        if (i <= j)
+        {
           swap( map.values, i, j );
           swap( map.keys, i, j );
           i++;
@@ -10384,8 +10466,9 @@ addMethods( Operation.prototype,
     if ( !this.finished )
     {
       this.finished = true;
+      this.model.$operation = this.next;
 
-      if ( this.model.$operation = this.next )
+      if ( this.next )
       {
         this.next.execute();
       }
@@ -10609,7 +10692,7 @@ extend( Operation, RemoveCache,
 
   run: function(db, model)
   {
-    if ( db.cache == Cache.None )
+    if ( db.cache === Cache.None )
     {
       this.finish();
     }
@@ -11773,17 +11856,15 @@ addMethods( Relation.prototype,
         {
           return related.$local;
         }
-        else
+
+        var local = related.$toJSON( false );
+
+        if ( related.$saved )
         {
-          var local = related.$toJSON( false );
-
-          if ( related.$saved )
-          {
-            local.$saved = related.$saved;
-          }
-
-          return local;
+          local.$saved = related.$saved;
         }
+
+        return local;
 
       case Save.Key:
       case Store.Key:
@@ -11918,8 +11999,14 @@ extend( Relation, RelationSingle,
     {
       Rekord.debug( this.debugClearModel, this, relation );
 
-      if (relation.onSaved) related.$off( Model.Events.Saved, relation.onSaved );
-      if (relation.onRemoved) related.$off( Model.Events.Removed, relation.onRemoved );
+      if (relation.onSaved)
+      {
+        related.$off( Model.Events.Saved, relation.onSaved );
+      }
+      if (relation.onRemoved)
+      {
+        related.$off( Model.Events.Removed, relation.onRemoved );
+      }
 
       relation.related = null;
       relation.dirty = true;
@@ -11931,8 +12018,14 @@ extend( Relation, RelationSingle,
 
   setModel: function(relation, related)
   {
-    if (relation.onSaved) related.$on( Model.Events.Saved, relation.onSaved, this );
-    if (relation.onRemoved) related.$on( Model.Events.Removed, relation.onRemoved, this );
+    if (relation.onSaved)
+    {
+      related.$on( Model.Events.Saved, relation.onSaved, this );
+    }
+    if (relation.onRemoved)
+    {
+      related.$on( Model.Events.Removed, relation.onRemoved, this );
+    }
 
     relation.related = related;
     relation.dirty = true;
@@ -13871,7 +13964,7 @@ var Polymorphic =
     }
   },
 
-  grabModels: function(initial, callback, remoteData)
+  grabModels: function(relation, initial, callback, remoteData)
   {
     for (var i = 0; i < initial.length; i++)
     {
@@ -14181,7 +14274,7 @@ addMethods( Shard.prototype,
   {
     var successful = true;
     var failureCalled = false;
-    var failedStatus = undefined;
+    var failedStatus;
     var total = 0;
 
     function onShardComplete()
@@ -14885,7 +14978,7 @@ function putFileCache(model, property, value, file, options)
 
 function setFilesValue(processor, value, model, property, options)
 {
-  var result = undefined;
+  var result;
   var done = false;
 
   if ( processor && processor.valueToUser )
@@ -14931,7 +15024,7 @@ function fileReader(method, converter, options)
     if ( file !== false )
     {
       var reader = new global.FileReader();
-      var result = undefined;
+      var result;
       var done = false;
 
       reader.onload = function(e)
@@ -14957,7 +15050,7 @@ function fileReader(method, converter, options)
     }
     else if ( isObject( input ) && input.FILE )
     {
-      var result = undefined;
+      var result;
 
       var setter = function(value)
       {
@@ -15009,17 +15102,17 @@ var FileDecodings =
         {
           Rekord.trigger( Rekord.Events.FileTooLarge, [file, model, property] );
 
-          return undefined;
+          return;
         }
 
         if ( isArray( options.types ) && isString( file.type ) && indexOf( options.types, file.type ) === false )
         {
           Rekord.trigger( Rekord.Events.FileWrongType, [file, model, property] );
 
-          return undefined;
+          return;
         }
 
-        var result = undefined;
+        var result;
         var done = false;
 
         processor.fileToValue( file, model, property, function(value)
@@ -15061,7 +15154,7 @@ function FileEncoder(input, model, field, forSaving)
 
     if ( (forSaving && cached.save === false) || (!forSaving && cached.store === false) )
     {
-      return undefined;
+      return;
     }
 
     if ( !forSaving && cached.file )
@@ -15284,7 +15377,7 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
       {
         if ( instance )
         {
-          callback.call( callbackContext, instance )
+          callback.call( callbackContext, instance );
         }
         else
         {

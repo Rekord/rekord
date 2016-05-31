@@ -39,9 +39,10 @@ function extendArray(parent, child, override)
 // Is directly extending an array supported?
 function extendArraySupported()
 {
+  function EA() {}
+
   if ( extendArraySupported.supported === undefined )
   {
-    function EA() {};
     EA.prototype = [];
     var eq = new EA();
     eq.push(0);
@@ -92,7 +93,7 @@ function replaceMethod(target, methodName, methodFactory)
 // return an instance and doesn't invoke the original constructor.
 function copyConstructor(func)
 {
-  function F() {};
+  function F() {}
   F.prototype = func.prototype;
   return F;
 }

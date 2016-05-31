@@ -14,7 +14,7 @@ extend( Operation, RemoveCache,
 
   run: function(db, model)
   {
-    if ( db.cache == Cache.None )
+    if ( db.cache === Cache.None )
     {
       this.finish();
     }

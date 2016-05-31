@@ -17,14 +17,18 @@
 
 var Comparators = {};
 
-function saveComparator(name, comparator, nullsFirst)
+function saveComparator(name, comparatorInput, nullsFirst)
 {
-  return Comparators[ name ] = createComparator( comparator, nullsFirst );
+  var comparator = createComparator( comparatorInput, nullsFirst );
+
+  Comparators[ name ] = comparator;
+
+  return comparator;
 }
 
-function addComparator(second, comparator, nullsFirst)
+function addComparator(second, comparatorInput, nullsFirst)
 {
-  var first = createComparator( comparator, nullsFirst );
+  var first = createComparator( comparatorInput, nullsFirst );
 
   if ( !isFunction( second ) )
   {
@@ -104,20 +108,20 @@ function createComparator(comparator, nullsFirst)
   }
   else if ( isArray( comparator ) )
   {
-    var parsed = [];
+    var parsedChain = [];
 
     for (var i = 0; i < comparator.length; i++)
     {
-      parsed[ i ] = createComparator( comparator[ i ], nullsFirst );
+      parsedChain[ i ] = createComparator( comparator[ i ], nullsFirst );
     }
 
     return function compareObjectsCascade(a, b)
     {
       var d = 0;
 
-      for (var i = 0; i < parsed.length && d === 0; i++)
+      for (var i = 0; i < parsedChain.length && d === 0; i++)
       {
-        d = parsed[ i ]( a, b );
+        d = parsedChain[ i ]( a, b );
       }
 
       return d;

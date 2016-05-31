@@ -16,31 +16,31 @@ function applyOptions( target, options, defaults, secret )
     }
   }
 
-  for (var prop in defaults)
+  for (var defaultProperty in defaults)
   {
-    var defaultValue = defaults[ prop ];
-    var option = options[ prop ];
+    var defaultValue = defaults[ defaultProperty ];
+    var option = options[ defaultProperty ];
     var valued = isValue( option );
 
     if ( !valued && defaultValue === undefined )
     {
-      throw ( prop + ' is a required option' );
+      throw ( defaultProperty + ' is a required option' );
     }
     else if ( valued )
     {
-      setProperty( prop, option );
+      setProperty( defaultProperty, option );
     }
     else
     {
-      setProperty( prop, copy( defaultValue ) );
+      setProperty( defaultProperty, copy( defaultValue ) );
     }
   }
 
-  for (var prop in options)
+  for (var optionProperty in options)
   {
-    if ( !(prop in defaults) )
+    if ( !(optionProperty in defaults) )
     {
-      setProperty( prop, options[ prop ] );
+      setProperty( optionProperty, options[ optionProperty ] );
     }
   }
 

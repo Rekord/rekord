@@ -298,7 +298,7 @@ function uuid()
 
 function S4()
 {
-  return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
+  return ((1+Math.random())*0x10000).toString(16).substring(1);
 }
 
 
@@ -313,7 +313,7 @@ function sizeof(x)
   {
     var properties = 0;
 
-    for (var prop in x)
+    for (var prop in x) // jshint ignore:line
     {
       properties++;
     }
@@ -344,10 +344,11 @@ function isEmpty(x)
   }
   if (isObject(x))
   {
-    for (var prop in x)
+    for (var prop in x) // jshint ignore:line
     {
       return false;
     }
+
     return true;
   }
 

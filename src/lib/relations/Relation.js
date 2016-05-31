@@ -474,17 +474,15 @@ addMethods( Relation.prototype,
         {
           return related.$local;
         }
-        else
+
+        var local = related.$toJSON( false );
+
+        if ( related.$saved )
         {
-          var local = related.$toJSON( false );
-
-          if ( related.$saved )
-          {
-            local.$saved = related.$saved;
-          }
-
-          return local;
+          local.$saved = related.$saved;
         }
+
+        return local;
 
       case Save.Key:
       case Store.Key:

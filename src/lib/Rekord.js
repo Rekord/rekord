@@ -20,7 +20,7 @@ function Rekord(options)
 
   var database = new Database( options );
 
-  var model = new Function('return function ' + database.className + '(props, remoteData) { this.$init( props, remoteData ) }')();
+  var model = new Function('return function ' + database.className + '(props, remoteData) { this.$init( props, remoteData ) }')(); // jshint ignore:line
   model.prototype = new Model( database );
 
   database.Model = model;
@@ -106,7 +106,14 @@ Rekord.promises = {};
 
 Rekord.get = function(name)
 {
-  return Rekord.promises[ name ] = Rekord.promises[ name ] || new Promise( null, false );
+  var existing = Rekord.promises[ name ];
+
+  if ( !existing )
+  {
+    existing = Rekord.promises[ name ] = new Promise( null, false );
+  }
+
+  return existing;
 };
 
 /**
@@ -161,7 +168,7 @@ var Cascade =
 function canCascade(cascade, type)
 {
   return !isNumber( cascade ) || (cascade & type) === type;
-};
+}
 
 var Cache =
 {

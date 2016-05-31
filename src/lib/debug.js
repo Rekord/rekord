@@ -78,7 +78,6 @@ Rekord.Debugs = {
   REMOVE_REMOTE: 32,          // Model
   REMOVE_CANCEL_SAVE: 47,     // Model
 
-  REMOVE_LOCAL: 33,           // Model
   REMOVE_LOCAL_ERROR: 34,     // Model, error
   REMOVE_LOCAL_BLOCKED: 44,   // Model
   REMOVE_LOCAL_NONE: 45,      // Model
@@ -168,4 +167,6 @@ Rekord.Debugs = {
   HASREMOVE_NINJA_SAVE: 110,        // Model, Model, relation
   HASREMOVE_QUERY: 119,             // Model, RemoteQuery, queryOption, query
   HASREMOVE_QUERY_RESULTS: 120      // Model, RemoteQuery
+
+  // 33
 };

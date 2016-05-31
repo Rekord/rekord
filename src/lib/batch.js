@@ -24,17 +24,7 @@ function batch(namesInput, operationsInput, handler)
       }
       else
       {
-        (function(name, modelHandler)
-        {
-          Rekord.on( Rekord.Events.Plugins, function(model, database)
-          {
-            if ( database.name === name )
-            {
-              modelHandler( model );
-            }
-          });
-
-        })( modelName, modelHandler );
+        earlyModelHandler( modelName, modelHandler );
       }
     }
     else if ( isRekord( modelName ) )
@@ -57,6 +47,19 @@ function batch(namesInput, operationsInput, handler)
   }
 }
 
+function earlyModelHandler(name, modelHandler)
+{
+  var off = Rekord.on( Rekord.Events.Plugins, function(model, database)
+  {
+    if ( database.name === name )
+    {
+      modelHandler( model );
+
+      off();
+    }
+  });
+}
+
 function createModelHandler(operations, batch)
 {
   return function(modelClass)
@@ -73,7 +76,7 @@ function createModelHandler(operations, batch)
       switch (op)
       {
         case 'all':
-          rest.all = function(success, failure)
+          rest.all = function(success, failure) // jshint ignore:line
           {
             batch.push({
               database: db,
@@ -85,7 +88,7 @@ function createModelHandler(operations, batch)
           };
           break;
         case 'get':
-          rest.get = function(model, success, failure)
+          rest.get = function(model, success, failure) // jshint ignore:line
           {
             batch.push({
               database: db,
@@ -98,7 +101,7 @@ function createModelHandler(operations, batch)
           };
           break;
         case 'create':
-          rest.create = function(model, encoded, success, failure)
+          rest.create = function(model, encoded, success, failure) // jshint ignore:line
           {
             batch.push({
               database: db,
@@ -112,7 +115,7 @@ function createModelHandler(operations, batch)
           };
           break;
         case 'update':
-          rest.update = function(model, encoded, success, failure)
+          rest.update = function(model, encoded, success, failure) // jshint ignore:line
           {
             batch.push({
               database: db,
@@ -126,7 +129,7 @@ function createModelHandler(operations, batch)
           };
           break;
         case 'remove':
-          rest.remove = function(model, success, failure)
+          rest.remove = function(model, success, failure) // jshint ignore:line
           {
             batch.push({
               database: db,
@@ -139,7 +142,7 @@ function createModelHandler(operations, batch)
           };
           break;
         case 'query':
-          rest.query = function(url, query, success, failure)
+          rest.query = function(url, query, success, failure) // jshint ignore:line
           {
             batch.push({
               database: db,

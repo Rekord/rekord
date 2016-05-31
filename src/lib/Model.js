@@ -321,6 +321,14 @@ addMethods( Model.prototype,
   $isDependentsSaved: function(callbackOnSaved, contextOnSaved)
   {
     var dependents = this.$dependents;
+    var off;
+
+    var onDependentSave = function()
+    {
+      callbackOnSaved.apply( contextOnSaved || this, arguments );
+
+      off();
+    };
 
     for (var uid in dependents)
     {
@@ -328,13 +336,7 @@ addMethods( Model.prototype,
 
       if ( !dependent.$isSaved() )
       {
-        function onDependentSave()
-        {
-          callbackOnSaved.apply( contextOnSaved || this, arguments );
-          off();
-        }
-
-        var off = dependent.$once( Model.Events.RemoteSaves, onDependentSave );
+        off = dependent.$once( Model.Events.RemoteSaves, onDependentSave );
 
         return false;
       }

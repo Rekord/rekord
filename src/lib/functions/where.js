@@ -69,7 +69,11 @@ var Wheres = {};
  */
 function saveWhere(name, properties, values, equals)
 {
-  return Wheres[ name ] = createWhere( properties, values, equals );
+  var where = createWhere( properties, values, equals );
+
+  Wheres[ name ] = where;
+
+  return where;
 }
 
 /**

@@ -84,8 +84,9 @@ addMethods( Operation.prototype,
     if ( !this.finished )
     {
       this.finished = true;
+      this.model.$operation = this.next;
 
-      if ( this.model.$operation = this.next )
+      if ( this.next )
       {
         this.next.execute();
       }

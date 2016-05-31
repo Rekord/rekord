@@ -252,7 +252,7 @@ addMethods( Shard.prototype,
   {
     var successful = true;
     var failureCalled = false;
-    var failedStatus = undefined;
+    var failedStatus;
     var total = 0;
 
     function onShardComplete()

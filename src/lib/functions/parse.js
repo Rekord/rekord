@@ -70,7 +70,10 @@ function parseDate(x, utc)
 {
   if ( isString( x ) )
   {
-    if ( utc ) x += ' UTC';
+    if ( utc )
+    {
+      x += ' UTC';
+    }
 
     x = Date.parse ? Date.parse( x ) : new Date( x );
   }

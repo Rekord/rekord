@@ -115,8 +115,14 @@ extend( Relation, RelationSingle,
     {
       Rekord.debug( this.debugClearModel, this, relation );
 
-      if (relation.onSaved) related.$off( Model.Events.Saved, relation.onSaved );
-      if (relation.onRemoved) related.$off( Model.Events.Removed, relation.onRemoved );
+      if (relation.onSaved)
+      {
+        related.$off( Model.Events.Saved, relation.onSaved );
+      }
+      if (relation.onRemoved)
+      {
+        related.$off( Model.Events.Removed, relation.onRemoved );
+      }
 
       relation.related = null;
       relation.dirty = true;
@@ -128,8 +134,14 @@ extend( Relation, RelationSingle,
 
   setModel: function(relation, related)
   {
-    if (relation.onSaved) related.$on( Model.Events.Saved, relation.onSaved, this );
-    if (relation.onRemoved) related.$on( Model.Events.Removed, relation.onRemoved, this );
+    if (relation.onSaved)
+    {
+      related.$on( Model.Events.Saved, relation.onSaved, this );
+    }
+    if (relation.onRemoved)
+    {
+      related.$on( Model.Events.Removed, relation.onRemoved, this );
+    }
 
     relation.related = related;
     relation.dirty = true;

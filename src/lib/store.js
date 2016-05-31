@@ -85,7 +85,7 @@ Rekord.store = function(database)
      * @param  {function} failure
      *         The function to invoke with the error that occurred if available.
      */
-    reset: function(keys, records, succcess, failure)
+    reset: function(keys, records, success, failure)
     {
       success( keys, records );
     }

@@ -50,56 +50,96 @@ function equalsCompare(a, b)
 
 function equals(a, b)
 {
-  if (a === b) return true;
-  if (a === null || b === null) return false;
-  if (a !== a && b !== b) return true; // NaN === NaN
+  if (a === b)
+  {
+    return true;
+  }
+  if (a === null || b === null)
+  {
+    return false;
+  }
+  if (a !== a && b !== b)
+  {
+    return true; // NaN === NaN
+  }
 
   var at = typeof a;
   var bt = typeof b;
   var ar = isRegExp(a);
   var br = isRegExp(b);
 
-  if (at === 'string' && br) return b.test(a);
-  if (bt === 'string' && ar) return a.test(b);
+  if (at === 'string' && br)
+  {
+    return b.test(a);
+  }
+  if (bt === 'string' && ar)
+  {
+    return a.test(b);
+  }
 
-  if (at !== bt) return false;
+  if (at !== bt)
+  {
+    return false;
+  }
 
   var aa = isArray(a);
   var ba = isArray(b);
-  if (aa !== ba) return false;
+  if (aa !== ba)
+  {
+    return false;
+  }
 
-  if (aa) {
-    if (a.length !== b.length) return false;
-    for (var i = 0; i < a.length; i++) {
-      if (!equals(a[i], b[i])) {
+  if (aa)
+  {
+    if (a.length !== b.length)
+    {
+      return false;
+    }
+
+    for (var i = 0; i < a.length; i++)
+    {
+      if (!equals(a[i], b[i]))
+      {
         return false;
       }
     }
+
     return true;
   }
 
-  if (isDate(a)) {
+  if (isDate(a))
+  {
     return isDate(b) && equals( a.getTime(), b.getTime() );
   }
-  if (ar) {
+  if (ar)
+  {
     return br && a.toString() === b.toString();
   }
 
-  if (at === 'object') {
-    for (var p in a) {
-      if (p.charAt(0) !== '$' && !isFunction(a[p])) {
-        if (!(p in b) || !equals(a[p], b[p])) {
+  if (at === 'object')
+  {
+    for (var ap in a)
+    {
+      if (ap.charAt(0) !== '$' && !isFunction(a[ap]))
+      {
+        if (!(ap in b) || !equals(a[ap], b[ap]))
+        {
           return false;
         }
       }
     }
-    for (var p in b) {
-      if (p.charAt(0) !== '$' && !isFunction(b[p])) {
-        if (!(p in a)) {
+
+    for (var bp in b)
+    {
+      if (bp.charAt(0) !== '$' && !isFunction(b[bp]))
+      {
+        if (!(bp in a))
+        {
           return false;
         }
       }
     }
+
     return true;
   }
 
@@ -113,7 +153,7 @@ function compareNumbers(a, b)
 
 function compare(a, b, nullsFirst)
 {
-  if (a == b)
+  if (a == b) // jshint ignore:line
   {
     return 0;
   }
@@ -144,7 +184,7 @@ function compare(a, b, nullsFirst)
   }
   if (isBoolean(a) && isBoolean(b))
   {
-    return a ? -1 : 1;
+    return (a ? -1 : 1);
   }
 
   return (a + '').localeCompare(b + '');

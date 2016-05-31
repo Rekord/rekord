@@ -121,7 +121,7 @@ function putFileCache(model, property, value, file, options)
 
 function setFilesValue(processor, value, model, property, options)
 {
-  var result = undefined;
+  var result;
   var done = false;
 
   if ( processor && processor.valueToUser )
@@ -167,7 +167,7 @@ function fileReader(method, converter, options)
     if ( file !== false )
     {
       var reader = new global.FileReader();
-      var result = undefined;
+      var result;
       var done = false;
 
       reader.onload = function(e)
@@ -193,7 +193,7 @@ function fileReader(method, converter, options)
     }
     else if ( isObject( input ) && input.FILE )
     {
-      var result = undefined;
+      var result;
 
       var setter = function(value)
       {
@@ -245,17 +245,17 @@ var FileDecodings =
         {
           Rekord.trigger( Rekord.Events.FileTooLarge, [file, model, property] );
 
-          return undefined;
+          return;
         }
 
         if ( isArray( options.types ) && isString( file.type ) && indexOf( options.types, file.type ) === false )
         {
           Rekord.trigger( Rekord.Events.FileWrongType, [file, model, property] );
 
-          return undefined;
+          return;
         }
 
-        var result = undefined;
+        var result;
         var done = false;
 
         processor.fileToValue( file, model, property, function(value)
@@ -297,7 +297,7 @@ function FileEncoder(input, model, field, forSaving)
 
     if ( (forSaving && cached.save === false) || (!forSaving && cached.store === false) )
     {
-      return undefined;
+      return;
     }
 
     if ( !forSaving && cached.file )

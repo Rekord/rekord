@@ -33,7 +33,11 @@ var NumberResolvers = {};
 
 function saveNumberResolver(name, numbers)
 {
-  return NumberResolvers[ name ] = createNumberResolver( numbers );
+  var resolver = createNumberResolver( numbers );
+
+  NumberResolvers[ name ] = resolver;
+
+  return resolver;
 }
 
 function createNumberResolver(numbers)
@@ -55,7 +59,11 @@ var PropertyResolvers = {};
 
 function savePropertyResolver(name, properties, delim)
 {
-  return PropertyResolvers[ name ] = createPropertyResolver( properties, delim );
+  var resolver = createPropertyResolver( properties, delim );
+
+  PropertyResolvers[ name ] = resolver;
+
+  return resolver;
 }
 
 /**
@@ -151,6 +159,6 @@ function createPropertyResolver(properties, delim)
     return function resolveNone(model)
     {
       return model;
-    }
+    };
   }
 }

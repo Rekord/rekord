@@ -230,7 +230,7 @@ var Polymorphic =
     }
   },
 
-  grabModels: function(initial, callback, remoteData)
+  grabModels: function(relation, initial, callback, remoteData)
   {
     for (var i = 0; i < initial.length; i++)
     {

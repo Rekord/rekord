@@ -45,7 +45,7 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
       {
         if ( instance )
         {
-          callback.call( callbackContext, instance )
+          callback.call( callbackContext, instance );
         }
         else
         {

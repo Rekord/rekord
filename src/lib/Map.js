@@ -248,10 +248,17 @@ addMethods( Map.prototype,
 
       while (i <= j)
       {
-        while (comparator( map.values[i], pivot ) < 0) i++
-        while (comparator( map.values[j], pivot ) > 0) j--;
+        while (comparator( map.values[i], pivot ) < 0)
+        {
+          i++;
+        }
+        while (comparator( map.values[j], pivot ) > 0)
+        {
+          j--;
+        }
 
-        if (i <= j) {
+        if (i <= j)
+        {
           swap( map.values, i, j );
           swap( map.keys, i, j );
           i++;

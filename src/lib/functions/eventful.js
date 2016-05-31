@@ -17,7 +17,7 @@ function addEventFunction(target, functionName, events, secret)
       {
         unlistener();
       }
-    };
+    }
 
     function unlistener()
     {
@@ -90,14 +90,14 @@ function addEventful(target, secret)
     */
 
   // Adds a listener to $this
-  function onListeners($this, property, events, callback, context)
+  function onListeners($this, property, eventsInput, callback, context)
   {
     if ( !isFunction( callback ) )
     {
       return noop;
     }
 
-    var events = toArray( events, ' ' );
+    var events = toArray( eventsInput, ' ' );
     var listeners = $this[ property ];
 
     if ( !listeners )
@@ -125,7 +125,7 @@ function addEventful(target, secret)
         offListeners( listeners, events[ i ], callback );
       }
     };
-  };
+  }
 
   /**
    * Listens for every occurrence of the given events and invokes the callback
@@ -248,14 +248,14 @@ function addEventful(target, secret)
    *
    * @method off
    * @for addEventful
-   * @param {String|Array|Object} [events]
+   * @param {String|Array|Object} [eventsInput]
    * @param {Function} [callback]
    * @chainable
    */
-  function off(events, callback)
+  function off(eventsInput, callback)
   {
     // Remove ALL listeners
-    if ( !isDefined( events ) )
+    if ( !isDefined( eventsInput ) )
     {
       deleteProperty( this, '$$on' );
       deleteProperty( this, '$$once' );
@@ -263,7 +263,7 @@ function addEventful(target, secret)
     }
     else
     {
-      var events = toArray( events, ' ' );
+      var events = toArray( eventsInput, ' ' );
 
       // Remove listeners for given events
       if ( !isFunction( callback ) )
@@ -329,13 +329,13 @@ function addEventful(target, secret)
    *
    * @method trigger
    * @for addEventful
-   * @param {String} event
+   * @param {String} eventsInput
    * @param {Array} args
    * @chainable
    */
-  function trigger(events, args)
+  function trigger(eventsInput, args)
   {
-    var events = toArray( events, ' ' );
+    var events = toArray( eventsInput, ' ' );
 
     for (var i = 0; i < events.length; i++)
     {
@@ -343,7 +343,7 @@ function addEventful(target, secret)
 
       triggerListeners( this.$$on, e, args, false );
       triggerListeners( this.$$once, e, args, true );
-      triggerListeners( this.$$after, e, args, false )
+      triggerListeners( this.$$after, e, args, false );
     }
 
     return this;
@@ -365,4 +365,4 @@ function addEventful(target, secret)
     addMethod( target, 'off', off );
     addMethod( target, 'trigger', trigger );
   }
-};
+}
