@@ -9,7 +9,11 @@ Rekord.setOnline = function()
 {
   Rekord.online = true;
   Rekord.debug( Rekord.Debugs.ONLINE );
-  Rekord.trigger( Rekord.Events.Online );
+
+  batchExecute(function()
+  {
+    Rekord.trigger( Rekord.Events.Online );
+  });
 };
 
 // Set network status to offline and notify all listeners
