@@ -5104,6 +5104,35 @@ addMethods( Model.prototype,
     return false;
   },
 
+  $listenForOnline: function(cascade)
+  {
+    if (!this.$offline)
+    {
+      this.$offline = true;
+      this.$resumeCascade = cascade;
+
+      Rekord.once( Rekord.Events.Online, this.$resume, this );
+    }
+  },
+
+  $resume: function()
+  {
+    if (this.$status === Model.Status.RemovePending)
+    {
+      Rekord.debug( Rekord.Debugs.REMOVE_RESUME, this );
+
+      this.$addOperation( RemoveRemote, this.$resumeCascade );
+    }
+    else if (this.$status === Model.Status.SavePending)
+    {
+      Rekord.debug( Rekord.Debugs.SAVE_RESUME, this );
+
+      this.$addOperation( SaveRemote, this.$resumeCascade );
+    }
+
+    this.$offline = false;
+  },
+
   toString: function()
   {
     return this.$db.className + ' ' + JSON.stringify( this.$toJSON() );
@@ -10896,7 +10925,7 @@ extend( Operation, RemoveRemote,
       // If we are offline, wait until we're online again to resume the delete
       if (!Rekord.online)
       {
-        Rekord.once( Rekord.Events.Online, this.handleOnline, this );
+        model.$listenForOnline( this.cascade );
 
         model.$trigger( Model.Events.RemoteRemoveOffline, [model, response] );
       }
@@ -10955,15 +10984,6 @@ extend( Operation, RemoveRemote,
 
       db.live.remove( model );
     }
-  },
-
-  handleOnline: function()
-  {
-    var model = this.model;
-
-    Rekord.debug( Rekord.Debugs.REMOVE_RESUME, model );
-
-    model.$addOperation( RemoveRemote );
   }
 
 });
@@ -11249,7 +11269,7 @@ extend( Operation, SaveRemote,
       // If not online for sure, try saving once online again
       if (!Rekord.online)
       {
-        Rekord.once( Rekord.Events.Online, this.handleOnline, this );
+        model.$listenForOnline( this.cascade );
 
         model.$trigger( Model.Events.RemoteSaveOffline, [model, response] );
       }
@@ -11360,18 +11380,6 @@ extend( Operation, SaveRemote,
       Rekord.debug( Rekord.Debugs.SAVE_PUBLISH, model, model.$publish );
 
       db.live.save( model, model.$publish );
-    }
-  },
-
-  handleOnline: function()
-  {
-    var model = this.model;
-
-    if ( model.$status === Model.Status.SavePending )
-    {
-      model.$addOperation( SaveRemote, this.cascade );
-
-      Rekord.debug( Rekord.Debugs.SAVE_RESUME, model );
     }
   },
 

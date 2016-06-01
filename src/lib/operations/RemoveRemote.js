@@ -58,7 +58,7 @@ extend( Operation, RemoveRemote,
       // If we are offline, wait until we're online again to resume the delete
       if (!Rekord.online)
       {
-        Rekord.once( Rekord.Events.Online, this.handleOnline, this );
+        model.$listenForOnline( this.cascade );
 
         model.$trigger( Model.Events.RemoteRemoveOffline, [model, response] );
       }
@@ -117,15 +117,6 @@ extend( Operation, RemoveRemote,
 
       db.live.remove( model );
     }
-  },
-
-  handleOnline: function()
-  {
-    var model = this.model;
-
-    Rekord.debug( Rekord.Debugs.REMOVE_RESUME, model );
-
-    model.$addOperation( RemoveRemote );
   }
 
 });

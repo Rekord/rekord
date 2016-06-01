@@ -730,6 +730,35 @@ addMethods( Model.prototype,
     return false;
   },
 
+  $listenForOnline: function(cascade)
+  {
+    if (!this.$offline)
+    {
+      this.$offline = true;
+      this.$resumeCascade = cascade;
+
+      Rekord.once( Rekord.Events.Online, this.$resume, this );
+    }
+  },
+
+  $resume: function()
+  {
+    if (this.$status === Model.Status.RemovePending)
+    {
+      Rekord.debug( Rekord.Debugs.REMOVE_RESUME, this );
+
+      this.$addOperation( RemoveRemote, this.$resumeCascade );
+    }
+    else if (this.$status === Model.Status.SavePending)
+    {
+      Rekord.debug( Rekord.Debugs.SAVE_RESUME, this );
+
+      this.$addOperation( SaveRemote, this.$resumeCascade );
+    }
+
+    this.$offline = false;
+  },
+
   toString: function()
   {
     return this.$db.className + ' ' + JSON.stringify( this.$toJSON() );

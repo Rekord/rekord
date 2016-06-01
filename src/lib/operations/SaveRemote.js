@@ -93,7 +93,7 @@ extend( Operation, SaveRemote,
       // If not online for sure, try saving once online again
       if (!Rekord.online)
       {
-        Rekord.once( Rekord.Events.Online, this.handleOnline, this );
+        model.$listenForOnline( this.cascade );
 
         model.$trigger( Model.Events.RemoteSaveOffline, [model, response] );
       }
@@ -204,18 +204,6 @@ extend( Operation, SaveRemote,
       Rekord.debug( Rekord.Debugs.SAVE_PUBLISH, model, model.$publish );
 
       db.live.save( model, model.$publish );
-    }
-  },
-
-  handleOnline: function()
-  {
-    var model = this.model;
-
-    if ( model.$status === Model.Status.SavePending )
-    {
-      model.$addOperation( SaveRemote, this.cascade );
-
-      Rekord.debug( Rekord.Debugs.SAVE_RESUME, model );
     }
   },
 
