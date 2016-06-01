@@ -67,7 +67,7 @@ The `Rekord.Model` and `Rekord.Search` classes can have custom properties theref
 
 The easiest way to install rekord is through bower via `bower install rekord`.
 
-- `rekord.js` is `377KB` (`65KB` gzipped)
+- `rekord.js` is `379KB` (`65KB` gzipped)
 - `rekord.min.js` is `110KB` (`27KB` gzipped)
 
 **Examples**
@@ -78,7 +78,8 @@ Examples exist in a separate project: https://github.com/Rekord/rekord-examples
 
 Bindings are used to implement core pieces of functionality in rekord - these interfaces allows any library to work with rekord.
 
-- [Angular](https://github.com/Rekord/rekord-angular) - implements `Rekord.rest`
+- [Angular](https://github.com/Rekord/rekord-angular) - implements `Rekord.rest` and adds `Rekord.Bind`
+- [React](https://github.com/Rekord/rekord-react) - adds `Rekord.Bind`
 - [StorkJS](https://github.com/Rekord/rekord-storkjs) - implements `Rekord.store`
 - [PubSub](https://github.com/Rekord/rekord-pubsub) - implements `Rekord.live`
 - [Firebase](https://github.com/Rekord/rekord-firebase) - implements `Rekord.store`, `Rekord.rest`, & `Rekord.live`
