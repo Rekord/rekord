@@ -735,10 +735,11 @@ addMethods( Model.prototype,
     if (!this.$offline)
     {
       this.$offline = true;
-      this.$resumeCascade = cascade;
 
       Rekord.once( Rekord.Events.Online, this.$resume, this );
     }
+
+    this.$resumeCascade = cascade;
   },
 
   $resume: function()
