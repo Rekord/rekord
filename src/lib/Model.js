@@ -395,7 +395,7 @@ addMethods( Model.prototype,
     var cascade =
       (arguments.length === 3 ? cascade :
         (arguments.length === 2 && isObject( setProperties ) && isNumber( setValue ) ? setValue :
-          (arguments.length === 1 && isNumber( setProperties ) ?  setProperties : Cascade.All ) ) );
+          (arguments.length === 1 && isNumber( setProperties ) ?  setProperties : this.$db.cascade ) ) );
 
     if ( this.$isDeleted() )
     {
@@ -432,7 +432,7 @@ addMethods( Model.prototype,
 
   $remove: function(cascade)
   {
-    var cascade = isNumber( cascade ) ? cascade : Cascade.All;
+    var cascade = isNumber( cascade ) ? cascade : this.$db.cascade;
 
     if ( !this.$exists() )
     {

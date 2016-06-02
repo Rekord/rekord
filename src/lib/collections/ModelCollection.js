@@ -867,12 +867,14 @@ extendArray( Collection, ModelCollection,
    *    database until they're saved.
    * @param {Boolean} [avoidSave=false] -
    *    True for NOT calling {@link Rekord.Model#$save}, otherwise false.
+   * @param {Number} [cascade] -
+   *    Which operations should be performed out of: store, rest, & live.
    * @return {Rekord.ModelCollection} -
    *    The reference to this collection.
    * @emits Rekord.ModelCollection#updates
    * @emits Rekord.ModelCollection#sort
    */
-  update: function(props, value, remoteData, avoidSave)
+  update: function(props, value, remoteData, avoidSave, cascade)
   {
     batchExecute(function()
     {
@@ -884,7 +886,7 @@ extendArray( Collection, ModelCollection,
 
         if ( !avoidSave )
         {
-          model.$save();
+          model.$save( cascade );
         }
       }
 
@@ -915,12 +917,14 @@ extendArray( Collection, ModelCollection,
    *    database until they're saved.
    * @param {Boolean} [avoidSave=false] -
    *    True for NOT calling {@link Rekord.Model#$save}, otherwise false.
+   * @param {Number} [cascade] -
+   *    Which operations should be performed out of: store, rest, & live.
    * @return {Rekord.Model[]} -
    *    An array of models updated.
    * @emits Rekord.ModelCollection#updates
    * @emits Rekord.ModelCollection#sort
    */
-  updateWhere: function(where, props, value, remoteData, avoidSave)
+  updateWhere: function(where, props, value, remoteData, avoidSave, cascade)
   {
     var updated = [];
 
@@ -936,7 +940,7 @@ extendArray( Collection, ModelCollection,
 
           if ( !avoidSave )
           {
-            model.$save();
+            model.$save( cascade );
           }
 
           updated.push( model );
@@ -1123,16 +1127,18 @@ extendArray( Collection, ModelCollection,
    * @param {Object} [props={}] -
    *    Properties to apply to each model in the collection that pass the where
    *    expression.
+   * @param {Number} [cascade] -
+   *    Which operations should be performed out of: store, rest, & live.
    * @return {Rekord.ModelCollection} -
    *    The reference to this collection.
    * @see Rekord.createWhere
    * @see Rekord.Model#$refresh
    */
-  saveWhere: function(properties, value, equals, props)
+  saveWhere: function(properties, value, equals, props, cascade)
   {
     function saveIt(model)
     {
-      model.$save( props );
+      model.$save( props, cascade );
     }
 
     batchExecute(function()

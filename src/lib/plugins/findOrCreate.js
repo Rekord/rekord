@@ -32,7 +32,7 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
    *    The saved model instance or undefined if the model database has not
    *    finished loading.
    */
-  model.findOrCreate = function( input, callback, context )
+  model.findOrCreate = function( input, cascade, callback, context )
   {
     var callbackContext = context || this;
     var instance = db.get( input );
@@ -44,7 +44,7 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
       {
         if ( !grabbed )
         {
-          instance = model.create( input );
+          instance = model.create( input, cascade );
           created = true;
         }
         else
@@ -55,7 +55,7 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
           // grab model created an instance that needs to be "created"
           if ( !instance.$isSaved() )
           {
-            instance.$save();
+            instance.$save( cascade );
           }
         }
 

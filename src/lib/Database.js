@@ -198,6 +198,7 @@ Database.Defaults =
   comparator:           null,
   comparatorNullsFirst: null,
   revision:             null,
+  cascade:              Cascade.All,
   load:                 Load.None,
   allComplete:          false,
   loadRelations:        true,

@@ -23,13 +23,13 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
    * @return {Rekord.Model} -
    *    The saved model instance.
    */
-  model.create = function( props )
+  model.create = function( props, cascade )
   {
     var instance = isObject( props ) ?
       db.createModel( props ) :
       db.instantiate();
 
-    instance.$save();
+    instance.$save( cascade );
 
     return instance;
   };

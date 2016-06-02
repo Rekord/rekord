@@ -30,15 +30,15 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
    *    The saved model instance or undefined if the model database has not
    *    finished loading.
    */
-  model.persist = function( input, callback, context )
+  model.persist = function( input, cascade, callback, context )
   {
     var callbackContext = context || this;
 
-    return model.findOrCreate( input, function(instance, created)
+    return model.findOrCreate( input, cascade, function(instance, created)
     {
       if ( !created )
       {
-        instance.$save();
+        instance.$save( cascade );
       }
 
       if ( callback )

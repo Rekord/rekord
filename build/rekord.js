@@ -3276,6 +3276,7 @@ Database.Defaults =
   comparator:           null,
   comparatorNullsFirst: null,
   revision:             null,
+  cascade:              Cascade.All,
   load:                 Load.None,
   allComplete:          false,
   loadRelations:        true,
@@ -4769,7 +4770,7 @@ addMethods( Model.prototype,
     var cascade =
       (arguments.length === 3 ? cascade :
         (arguments.length === 2 && isObject( setProperties ) && isNumber( setValue ) ? setValue :
-          (arguments.length === 1 && isNumber( setProperties ) ?  setProperties : Cascade.All ) ) );
+          (arguments.length === 1 && isNumber( setProperties ) ?  setProperties : this.$db.cascade ) ) );
 
     if ( this.$isDeleted() )
     {
@@ -4806,7 +4807,7 @@ addMethods( Model.prototype,
 
   $remove: function(cascade)
   {
-    var cascade = isNumber( cascade ) ? cascade : Cascade.All;
+    var cascade = isNumber( cascade ) ? cascade : this.$db.cascade;
 
     if ( !this.$exists() )
     {
@@ -8967,12 +8968,14 @@ extendArray( Collection, ModelCollection,
    *    database until they're saved.
    * @param {Boolean} [avoidSave=false] -
    *    True for NOT calling {@link Rekord.Model#$save}, otherwise false.
+   * @param {Number} [cascade] -
+   *    Which operations should be performed out of: store, rest, & live.
    * @return {Rekord.ModelCollection} -
    *    The reference to this collection.
    * @emits Rekord.ModelCollection#updates
    * @emits Rekord.ModelCollection#sort
    */
-  update: function(props, value, remoteData, avoidSave)
+  update: function(props, value, remoteData, avoidSave, cascade)
   {
     batchExecute(function()
     {
@@ -8984,7 +8987,7 @@ extendArray( Collection, ModelCollection,
 
         if ( !avoidSave )
         {
-          model.$save();
+          model.$save( cascade );
         }
       }
 
@@ -9015,12 +9018,14 @@ extendArray( Collection, ModelCollection,
    *    database until they're saved.
    * @param {Boolean} [avoidSave=false] -
    *    True for NOT calling {@link Rekord.Model#$save}, otherwise false.
+   * @param {Number} [cascade] -
+   *    Which operations should be performed out of: store, rest, & live.
    * @return {Rekord.Model[]} -
    *    An array of models updated.
    * @emits Rekord.ModelCollection#updates
    * @emits Rekord.ModelCollection#sort
    */
-  updateWhere: function(where, props, value, remoteData, avoidSave)
+  updateWhere: function(where, props, value, remoteData, avoidSave, cascade)
   {
     var updated = [];
 
@@ -9036,7 +9041,7 @@ extendArray( Collection, ModelCollection,
 
           if ( !avoidSave )
           {
-            model.$save();
+            model.$save( cascade );
           }
 
           updated.push( model );
@@ -9223,16 +9228,18 @@ extendArray( Collection, ModelCollection,
    * @param {Object} [props={}] -
    *    Properties to apply to each model in the collection that pass the where
    *    expression.
+   * @param {Number} [cascade] -
+   *    Which operations should be performed out of: store, rest, & live.
    * @return {Rekord.ModelCollection} -
    *    The reference to this collection.
    * @see Rekord.createWhere
    * @see Rekord.Model#$refresh
    */
-  saveWhere: function(properties, value, equals, props)
+  saveWhere: function(properties, value, equals, props, cascade)
   {
     function saveIt(model)
     {
-      model.$save( props );
+      model.$save( props, cascade );
     }
 
     batchExecute(function()
@@ -14472,13 +14479,13 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
    * @return {Rekord.Model} -
    *    The saved model instance.
    */
-  model.create = function( props )
+  model.create = function( props, cascade )
   {
     var instance = isObject( props ) ?
       db.createModel( props ) :
       db.instantiate();
 
-    instance.$save();
+    instance.$save( cascade );
 
     return instance;
   };
@@ -15248,7 +15255,7 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
    *    The saved model instance or undefined if the model database has not
    *    finished loading.
    */
-  model.findOrCreate = function( input, callback, context )
+  model.findOrCreate = function( input, cascade, callback, context )
   {
     var callbackContext = context || this;
     var instance = db.get( input );
@@ -15260,7 +15267,7 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
       {
         if ( !grabbed )
         {
-          instance = model.create( input );
+          instance = model.create( input, cascade );
           created = true;
         }
         else
@@ -15271,7 +15278,7 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
           // grab model created an instance that needs to be "created"
           if ( !instance.$isSaved() )
           {
-            instance.$save();
+            instance.$save( cascade );
           }
         }
 
@@ -15503,15 +15510,15 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
    *    The saved model instance or undefined if the model database has not
    *    finished loading.
    */
-  model.persist = function( input, callback, context )
+  model.persist = function( input, cascade, callback, context )
   {
     var callbackContext = context || this;
 
-    return model.findOrCreate( input, function(instance, created)
+    return model.findOrCreate( input, cascade, function(instance, created)
     {
       if ( !created )
       {
-        instance.$save();
+        instance.$save( cascade );
       }
 
       if ( callback )
