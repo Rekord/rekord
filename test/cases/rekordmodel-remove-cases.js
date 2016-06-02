@@ -3,7 +3,6 @@ module( 'Rekord.Model remove cases' );
 test( 'delete while in the middle of save', function(assert)
 {
   var timer = assert.timer();
-  var done = assert.async();
 
   var Todo = Rekord({
     name: 'delete_mid_save',
@@ -13,6 +12,8 @@ test( 'delete while in the middle of save', function(assert)
   var rest = Todo.Database.rest;
 
   var t0 = Todo.create({name: 'todo0'});
+
+  expect(6);
 
   ok( t0.$isSaved() );
 
@@ -33,8 +34,6 @@ test( 'delete while in the middle of save', function(assert)
     strictEqual( rest.map.values.length, 0 );
     strictEqual( t0.$saved, void 0 )
     ok( t0.$isDeleted() );
-
-    done();
   });
 
   timer.run();

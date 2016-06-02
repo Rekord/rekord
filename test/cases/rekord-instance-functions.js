@@ -60,7 +60,6 @@ test( 'fetch new', function(assert)
 test( 'fetch callback', function(assert)
 {
   var timer = assert.timer();
-  var done = assert.async();
 
   var Task = Rekord({
     name: 'Rekord_fetch_callback',
@@ -72,12 +71,12 @@ test( 'fetch callback', function(assert)
   remote.delay = 1;
   remote.map.put( 4, {id: 4, name: 'This'} );
 
+  expect(3);
+
   var t0 = Task.fetch( 4, function(t1)
   {
     strictEqual( t0, t1 );
     strictEqual( t0.name, 'This' );
-
-    done();
   });
 
   strictEqual( t0.name, void 0 );
@@ -88,7 +87,6 @@ test( 'fetch callback', function(assert)
 test( 'grab', function(assert)
 {
   var timer = assert.timer();
-  var done = assert.async();
 
   var Task = Rekord({
     name: 'Rekord_grab',
@@ -100,11 +98,11 @@ test( 'grab', function(assert)
   remote.delay = 1;
   remote.map.put( 4, {id: 4, name: 'That'} );
 
+  expect(2);
+
   var t0 = Task.grab( 4, function(fetched)
   {
     strictEqual( fetched.name, 'That' );
-
-    done();
   });
 
   strictEqual( t0, void 0 );
@@ -513,7 +511,6 @@ test( 'search failure', function(assert)
 test( 'search single', function(assert)
 {
   var timer = assert.timer();
-  var done = assert.async();
   var prefix = 'Rekord_search_single_';
 
   expect( 4 );
@@ -553,8 +550,6 @@ test( 'search single', function(assert)
   wait( 2, function()
   {
     strictEqual( q.$results.length, 1, 'times up, data loaded' );
-
-    done();
   });
 
   timer.run();

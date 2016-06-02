@@ -201,7 +201,6 @@ test( 'save remote first time, check $saved', function(assert)
 test( 'save remote and cache pending should remove locally', function(assert)
 {
   var timer = assert.timer();
-  var done = assert.async();
 
   var Todo = Rekord({
     name: 'save_cache_pending',
@@ -216,6 +215,8 @@ test( 'save remote and cache pending should remove locally', function(assert)
 
   var t0 = Todo.create({name: 'name0'});
 
+  expect(7);
+
   ok( t0.$isSavedLocally() );
   notOk( t0.$isSaved() );
 
@@ -227,8 +228,6 @@ test( 'save remote and cache pending should remove locally', function(assert)
     ok( t0.$isSaved() );
     notOk( local.map.has( t0.id ) );
     ok( remote.map.has( t0.id ) );
-
-    done();
   });
 
   timer.run();
@@ -329,69 +328,6 @@ test( 'save local transaction', function(assert)
   List.Database.store.delay = 1;
 
   var txn = l0.$save( Rekord.Cascade.Local );
-  var done = false;
-
-  txn.then(function(result)
-  {
-    ok( done, 'then called' );
-    strictEqual( result, l0 );
-  });
-
-  wait( 0, function()
-  {
-    notOk( txn.isComplete() );
-  });
-
-  wait( 1, function()
-  {
-    notOk( txn.isComplete() );
-    done = true;
-  });
-
-  wait( 2, function()
-  {
-    ok( txn.isComplete() );
-  });
-
-  timer.run();
-});
-
-
-test( 'save local transaction default', function(assert)
-{
-  var timer = assert.timer();
-  var prefix = 'RekordModel_save_local_transaction_default_';
-
-  var Task = Rekord({
-    name: prefix + 'task',
-    fields: ['name', 'done', 'list_id']
-  });
-
-  var List = Rekord({
-    name: prefix + 'list',
-    fields: ['name'],
-    cascade: Rekord.Cascade.Local,
-    hasMany: {
-      tasks: {
-        model: Task,
-        foreign: 'list_id',
-        cascadeSave: Rekord.Cascade.Local
-      }
-    }
-  });
-
-  var t0 = Task.create({name: 't0', done: 0});
-  var t1 = Task.create({name: 't1', done: 1});
-  var l0 = List.create({name: 'l0', tasks: [t0, t1]});
-
-  l0.name = 'l0a';
-  t0.name = 't0a';
-  t1.$save();
-
-  Task.Database.store.delay = 2;
-  List.Database.store.delay = 1;
-
-  var txn = l0.$save();
   var done = false;
 
   txn.then(function(result)

@@ -349,7 +349,6 @@ test( 'revision', function(assert)
 test( 'load all', function(assert)
 {
   var timer = assert.timer();
-  var done = assert.async();
 
   var rest = Rekord.rest.load_all = new TestRest();
   rest.map.put( 1, {id: 1, name: 'name1' } );
@@ -364,12 +363,13 @@ test( 'load all', function(assert)
     load: Rekord.Load.All
   });
 
+  expect(2);
+
   strictEqual( load_all.all().length, 0 );
 
   wait(2, function()
   {
     strictEqual( load_all.all().length, 4 );
-    done();
   });
 
   timer.run();
@@ -378,7 +378,6 @@ test( 'load all', function(assert)
 test( 'load none', function(assert)
 {
   var timer = assert.timer();
-  var done = assert.async();
 
   var rest = Rekord.rest.load_none = new TestRest();
   rest.map.put( 1, {id: 1, name: 'name1' } );
@@ -393,12 +392,13 @@ test( 'load none', function(assert)
     load: Rekord.Load.None
   });
 
+  expect(2);
+
   strictEqual( load_none.all().length, 0 );
 
   wait(2, function()
   {
     strictEqual( load_none.all().length, 0 );
-    done();
   });
 
   timer.run();
@@ -1048,8 +1048,7 @@ test( 'encodings decodings', function(assert)
 
 test( 'timestamps default', function(assert)
 {
-  var done = assert.async();
-
+  var timer = assert.timer();
   var prefix = 'timestamps_default_';
 
   var Todo = Rekord({
@@ -1081,21 +1080,19 @@ test( 'timestamps default', function(assert)
 
   var time0 = t0.updated_at.getTime();
 
-  setTimeout(function()
+  wait(2, function()
   {
     t0.$save('done', true);
 
     notDeepEqual( t0.updated_at.getTime(), time0, t0.updated_at );
+  });
 
-    done();
-
-  }, 2 );
+  timer.run();
 });
 
 test( 'timestamps default global default', function(assert)
 {
-  var done = assert.async();
-
+  var timer = assert.timer();
   var prefix = 'timestamps_default_default_';
 
   Rekord.Database.Defaults.timestamps = true;
@@ -1128,17 +1125,16 @@ test( 'timestamps default global default', function(assert)
 
   var time0 = t0.updated_at.getTime();
 
-  setTimeout(function()
+  wait(2, function()
   {
     t0.$save('done', true);
 
     notDeepEqual( t0.updated_at.getTime(), time0, t0.updated_at );
-
-    done();
-
-  }, 2 );
+  });
 
   delete Rekord.Database.Defaults.timestamps;
+
+  timer.run();
 });
 
 test( 'timestamps custom', function(assert)

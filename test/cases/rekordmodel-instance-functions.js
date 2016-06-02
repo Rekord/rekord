@@ -453,7 +453,6 @@ test( '$isSaved', function(assert)
 test( '$isSavedLocally', function(assert)
 {
   var timer = assert.timer();
-  var done = assert.async();
 
   var Issue = Rekord({
     name: 'Model_isSavedLocally',
@@ -463,6 +462,8 @@ test( '$isSavedLocally', function(assert)
   var rest = Rekord.rest.Model_isSavedLocally;
 
   var i0 = new Issue({title: 'issue#0'});
+
+  expect(6);
 
   notOk( i0.$isSavedLocally() );
   notOk( i0.$isSaved() );
@@ -478,7 +479,6 @@ test( '$isSavedLocally', function(assert)
   {
     ok( i0.$isSavedLocally() );
     ok( i0.$isSaved() );
-    done();
   });
 
   timer.run();

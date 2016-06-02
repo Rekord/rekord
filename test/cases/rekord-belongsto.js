@@ -442,7 +442,7 @@ test( 'more than one belongsTo relationship', function(assert)
   ok( t0.$isDeleted() );
 });
 
-test( 'wait until dependents are saved', function(assert) 
+test( 'wait until dependents are saved', function(assert)
 {
   var prefix = 'belongsTo_wait_dependents_';
 

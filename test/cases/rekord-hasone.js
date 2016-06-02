@@ -419,7 +419,6 @@ test( 'more than one hasOne relationship', function(assert)
 test( 'wait until dependents are saved', function(assert)
 {
   var timer = assert.timer();
-  var done = assert.async();
   var prefix = 'hasOne_wait_dependents_';
 
   var User = Rekord({
@@ -449,6 +448,8 @@ test( 'wait until dependents are saved', function(assert)
 
   t0.$save();
 
+  expect(9);
+
   notOk( t0.$isSaved(), 'task not saved since user not saved' );
   notOk( u0.$isSaved(), 'user not saved' );
 
@@ -470,8 +471,6 @@ test( 'wait until dependents are saved', function(assert)
     ok( u0.$isSaved(), 'user saved (2)' );
 
     strictEqual( t0.creator, u0 );
-
-    done();
   });
 
   timer.run();
