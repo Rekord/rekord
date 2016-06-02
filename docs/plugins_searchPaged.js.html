@@ -1,0 +1,1312 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Source: plugins/searchPaged.js</title>
+    
+    
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <script src="scripts/jquery.min.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/bootstrap.min.css">
+    <link type="text/css" rel="stylesheet" href="styles/jaguar.css">
+    
+    
+    <script>
+    var config = {"monospaceLinks":false,"cleverLinks":true,"applicationName":"Rekord","linenums":true,"default":{"outputSourceFiles":true}};
+    </script>
+    
+
+    
+</head>
+<body>
+<div id="wrap" class="clearfix">
+    
+<div class="navigation">
+    <h3 class="applicationName"><a href="index.html">Rekord</a></h3>
+
+    <div class="search">
+        <input id="search" type="text" class="form-control input-sm" placeholder="Search Documentations">
+    </div>
+    <ul class="list">
+    
+        <li class="item" data-name="Rekord">
+            <span class="title">
+                <a href="Rekord.html">Rekord</a>
+                
+                <span class="static">static</span>
+                
+            </span>
+            <ul class="members itemMembers">
+            
+            <span class="subtitle">Members</span>
+            
+                <li data-name="Rekord.fileProcessors"><a href="Rekord.html#.fileProcessors">fileProcessors</a></li>
+            
+            </ul>
+            <ul class="typedefs itemMembers">
+            
+            </ul>
+            <ul class="methods itemMembers">
+            
+            <span class="subtitle">Methods</span>
+            
+                <li data-name="Rekord.addEventful"><a href="Rekord.html#.addEventful">addEventful</a></li>
+            
+                <li data-name="Rekord.bind"><a href="Rekord.html#.bind">bind</a></li>
+            
+                <li data-name="Rekord.collect"><a href="Rekord.html#.collect">collect</a></li>
+            
+                <li data-name="Rekord.createComparator"><a href="Rekord.html#.createComparator">createComparator</a></li>
+            
+                <li data-name="Rekord.createPropertyResolver"><a href="Rekord.html#.createPropertyResolver">createPropertyResolver</a></li>
+            
+                <li data-name="Rekord.createWhere"><a href="Rekord.html#.createWhere">createWhere</a></li>
+            
+                <li data-name="Rekord.indexOf"><a href="Rekord.html#.indexOf">indexOf</a></li>
+            
+                <li data-name="Rekord.isArray"><a href="Rekord.html#.isArray">isArray</a></li>
+            
+                <li data-name="Rekord.isBoolean"><a href="Rekord.html#.isBoolean">isBoolean</a></li>
+            
+                <li data-name="Rekord.isDate"><a href="Rekord.html#.isDate">isDate</a></li>
+            
+                <li data-name="Rekord.isDefined"><a href="Rekord.html#.isDefined">isDefined</a></li>
+            
+                <li data-name="Rekord.isFunction"><a href="Rekord.html#.isFunction">isFunction</a></li>
+            
+                <li data-name="Rekord.isNumber"><a href="Rekord.html#.isNumber">isNumber</a></li>
+            
+                <li data-name="Rekord.isObject"><a href="Rekord.html#.isObject">isObject</a></li>
+            
+                <li data-name="Rekord.isRegExp"><a href="Rekord.html#.isRegExp">isRegExp</a></li>
+            
+                <li data-name="Rekord.isRekord"><a href="Rekord.html#.isRekord">isRekord</a></li>
+            
+                <li data-name="Rekord.isString"><a href="Rekord.html#.isString">isString</a></li>
+            
+                <li data-name="Rekord.isValue"><a href="Rekord.html#.isValue">isValue</a></li>
+            
+                <li data-name="Rekord.live"><a href="Rekord.html#.live">live</a></li>
+            
+                <li data-name="Rekord.noop"><a href="Rekord.html#.noop">noop</a></li>
+            
+                <li data-name="Rekord.propsMatch"><a href="Rekord.html#.propsMatch">propsMatch</a></li>
+            
+                <li data-name="Rekord.saveWhere"><a href="Rekord.html#.saveWhere">saveWhere</a></li>
+            
+                <li data-name="Rekord.setDebug"><a href="Rekord.html#.setDebug">setDebug</a></li>
+            
+                <li data-name="Rekord.setLive"><a href="Rekord.html#.setLive">setLive</a></li>
+            
+                <li data-name="Rekord.setRest"><a href="Rekord.html#.setRest">setRest</a></li>
+            
+                <li data-name="Rekord.setStore"><a href="Rekord.html#.setStore">setStore</a></li>
+            
+                <li data-name="Rekord.store"><a href="Rekord.html#.store">store</a></li>
+            
+                <li data-name="Rekord.toArray"><a href="Rekord.html#.toArray">toArray</a></li>
+            
+                <li data-name="Rekord.uuid"><a href="Rekord.html#.uuid">uuid</a></li>
+            
+            </ul>
+            <ul class="events itemMembers">
+            
+            </ul>
+        </li>
+    
+        <li class="item" data-name="Rekord.Collection">
+            <span class="title">
+                <a href="Rekord.Collection.html">Rekord.Collection</a>
+                
+            </span>
+            <ul class="members itemMembers">
+            
+            <span class="subtitle">Members</span>
+            
+                <li data-name="Rekord.Collection.Events"><a href="Rekord.Collection.html#.Events">Events</a></li>
+            
+                <li data-name="Rekord.Collection#comparator"><a href="Rekord.Collection.html#comparator">comparator</a></li>
+            
+            </ul>
+            <ul class="typedefs itemMembers">
+            
+            </ul>
+            <ul class="methods itemMembers">
+            
+            <span class="subtitle">Methods</span>
+            
+                <li data-name="Rekord.Collection#add"><a href="Rekord.Collection.html#add">add</a></li>
+            
+                <li data-name="Rekord.Collection#addAll"><a href="Rekord.Collection.html#addAll">addAll</a></li>
+            
+                <li data-name="Rekord.Collection#addComparator"><a href="Rekord.Collection.html#addComparator">addComparator</a></li>
+            
+                <li data-name="Rekord.Collection#aggregate"><a href="Rekord.Collection.html#aggregate">aggregate</a></li>
+            
+                <li data-name="Rekord.Collection#avg"><a href="Rekord.Collection.html#avg">avg</a></li>
+            
+                <li data-name="Rekord.Collection#change"><a href="Rekord.Collection.html#change">change</a></li>
+            
+                <li data-name="Rekord.Collection#chunk"><a href="Rekord.Collection.html#chunk">chunk</a></li>
+            
+                <li data-name="Rekord.Collection#clear"><a href="Rekord.Collection.html#clear">clear</a></li>
+            
+                <li data-name="Rekord.Collection#clone"><a href="Rekord.Collection.html#clone">clone</a></li>
+            
+                <li data-name="Rekord.Collection#clone"><a href="Rekord.Collection.html#clone">clone</a></li>
+            
+                <li data-name="Rekord.Collection#cloneEmpty"><a href="Rekord.Collection.html#cloneEmpty">cloneEmpty</a></li>
+            
+                <li data-name="Rekord.Collection#cloneEmpty"><a href="Rekord.Collection.html#cloneEmpty">cloneEmpty</a></li>
+            
+                <li data-name="Rekord.Collection#complement"><a href="Rekord.Collection.html#complement">complement</a></li>
+            
+                <li data-name="Rekord.Collection#contains"><a href="Rekord.Collection.html#contains">contains</a></li>
+            
+                <li data-name="Rekord.Collection#count"><a href="Rekord.Collection.html#count">count</a></li>
+            
+                <li data-name="Rekord.Collection#countWhere"><a href="Rekord.Collection.html#countWhere">countWhere</a></li>
+            
+                <li data-name="Rekord.Collection#each"><a href="Rekord.Collection.html#each">each</a></li>
+            
+                <li data-name="Rekord.Collection#eachWhere"><a href="Rekord.Collection.html#eachWhere">eachWhere</a></li>
+            
+                <li data-name="Rekord.Collection#filtered"><a href="Rekord.Collection.html#filtered">filtered</a></li>
+            
+                <li data-name="Rekord.Collection#first"><a href="Rekord.Collection.html#first">first</a></li>
+            
+                <li data-name="Rekord.Collection#firstWhere"><a href="Rekord.Collection.html#firstWhere">firstWhere</a></li>
+            
+                <li data-name="Rekord.Collection#group"><a href="Rekord.Collection.html#group">group</a></li>
+            
+                <li data-name="Rekord.Collection#indexOf"><a href="Rekord.Collection.html#indexOf">indexOf</a></li>
+            
+                <li data-name="Rekord.Collection#insertAt"><a href="Rekord.Collection.html#insertAt">insertAt</a></li>
+            
+                <li data-name="Rekord.Collection#intersect"><a href="Rekord.Collection.html#intersect">intersect</a></li>
+            
+                <li data-name="Rekord.Collection#isSorted"><a href="Rekord.Collection.html#isSorted">isSorted</a></li>
+            
+                <li data-name="Rekord.Collection#last"><a href="Rekord.Collection.html#last">last</a></li>
+            
+                <li data-name="Rekord.Collection#lastWhere"><a href="Rekord.Collection.html#lastWhere">lastWhere</a></li>
+            
+                <li data-name="Rekord.Collection#max"><a href="Rekord.Collection.html#max">max</a></li>
+            
+                <li data-name="Rekord.Collection#maxModel"><a href="Rekord.Collection.html#maxModel">maxModel</a></li>
+            
+                <li data-name="Rekord.Collection#min"><a href="Rekord.Collection.html#min">min</a></li>
+            
+                <li data-name="Rekord.Collection#minModel"><a href="Rekord.Collection.html#minModel">minModel</a></li>
+            
+                <li data-name="Rekord.Collection#on"><a href="Rekord.Collection.html#on">on</a></li>
+            
+                <li data-name="Rekord.Collection#once"><a href="Rekord.Collection.html#once">once</a></li>
+            
+                <li data-name="Rekord.Collection#page"><a href="Rekord.Collection.html#page">page</a></li>
+            
+                <li data-name="Rekord.Collection#pluck"><a href="Rekord.Collection.html#pluck">pluck</a></li>
+            
+                <li data-name="Rekord.Collection#pop"><a href="Rekord.Collection.html#pop">pop</a></li>
+            
+                <li data-name="Rekord.Collection#push"><a href="Rekord.Collection.html#push">push</a></li>
+            
+                <li data-name="Rekord.Collection#random"><a href="Rekord.Collection.html#random">random</a></li>
+            
+                <li data-name="Rekord.Collection#reduce"><a href="Rekord.Collection.html#reduce">reduce</a></li>
+            
+                <li data-name="Rekord.Collection#remove"><a href="Rekord.Collection.html#remove">remove</a></li>
+            
+                <li data-name="Rekord.Collection#removeAll"><a href="Rekord.Collection.html#removeAll">removeAll</a></li>
+            
+                <li data-name="Rekord.Collection#removeAt"><a href="Rekord.Collection.html#removeAt">removeAt</a></li>
+            
+                <li data-name="Rekord.Collection#removeWhere"><a href="Rekord.Collection.html#removeWhere">removeWhere</a></li>
+            
+                <li data-name="Rekord.Collection#reset"><a href="Rekord.Collection.html#reset">reset</a></li>
+            
+                <li data-name="Rekord.Collection#reverse"><a href="Rekord.Collection.html#reverse">reverse</a></li>
+            
+                <li data-name="Rekord.Collection#setComparator"><a href="Rekord.Collection.html#setComparator">setComparator</a></li>
+            
+                <li data-name="Rekord.Collection#shift"><a href="Rekord.Collection.html#shift">shift</a></li>
+            
+                <li data-name="Rekord.Collection#sort"><a href="Rekord.Collection.html#sort">sort</a></li>
+            
+                <li data-name="Rekord.Collection#splice"><a href="Rekord.Collection.html#splice">splice</a></li>
+            
+                <li data-name="Rekord.Collection#subtract"><a href="Rekord.Collection.html#subtract">subtract</a></li>
+            
+                <li data-name="Rekord.Collection#sum"><a href="Rekord.Collection.html#sum">sum</a></li>
+            
+                <li data-name="Rekord.Collection#toArray"><a href="Rekord.Collection.html#toArray">toArray</a></li>
+            
+                <li data-name="Rekord.Collection#unshift"><a href="Rekord.Collection.html#unshift">unshift</a></li>
+            
+                <li data-name="Rekord.Collection#where"><a href="Rekord.Collection.html#where">where</a></li>
+            
+            </ul>
+            <ul class="events itemMembers">
+            
+            <span class="subtitle">Events</span>
+            
+                <li data-name="Rekord.Collection#event:add"><a href="Rekord.Collection.html#event:add">add</a></li>
+            
+                <li data-name="Rekord.Collection#event:adds"><a href="Rekord.Collection.html#event:adds">adds</a></li>
+            
+                <li data-name="Rekord.Collection#event:changes"><a href="Rekord.Collection.html#event:changes">changes</a></li>
+            
+                <li data-name="Rekord.Collection#event:cleared"><a href="Rekord.Collection.html#event:cleared">cleared</a></li>
+            
+                <li data-name="Rekord.Collection#event:remove"><a href="Rekord.Collection.html#event:remove">remove</a></li>
+            
+                <li data-name="Rekord.Collection#event:removes"><a href="Rekord.Collection.html#event:removes">removes</a></li>
+            
+                <li data-name="Rekord.Collection#event:reset"><a href="Rekord.Collection.html#event:reset">reset</a></li>
+            
+                <li data-name="Rekord.Collection#event:sort"><a href="Rekord.Collection.html#event:sort">sort</a></li>
+            
+                <li data-name="Rekord.Collection#event:updates"><a href="Rekord.Collection.html#event:updates">updates</a></li>
+            
+            </ul>
+        </li>
+    
+        <li class="item" data-name="Rekord.Database">
+            <span class="title">
+                <a href="Rekord.Database.html">Rekord.Database</a>
+                
+            </span>
+            <ul class="members itemMembers">
+            
+            </ul>
+            <ul class="typedefs itemMembers">
+            
+            </ul>
+            <ul class="methods itemMembers">
+            
+            <span class="subtitle">Methods</span>
+            
+                <li data-name="Rekord.Database#on"><a href="Rekord.Database.html#on">on</a></li>
+            
+                <li data-name="Rekord.Database#once"><a href="Rekord.Database.html#once">once</a></li>
+            
+            </ul>
+            <ul class="events itemMembers">
+            
+            </ul>
+        </li>
+    
+        <li class="item" data-name="Rekord.Eventful">
+            <span class="title">
+                <a href="Rekord.Eventful.html">Rekord.Eventful</a>
+                
+            </span>
+            <ul class="members itemMembers">
+            
+            </ul>
+            <ul class="typedefs itemMembers">
+            
+            </ul>
+            <ul class="methods itemMembers">
+            
+            <span class="subtitle">Methods</span>
+            
+                <li data-name="Rekord.Eventful#on"><a href="Rekord.Eventful.html#on">on</a></li>
+            
+                <li data-name="Rekord.Eventful#once"><a href="Rekord.Eventful.html#once">once</a></li>
+            
+            </ul>
+            <ul class="events itemMembers">
+            
+            </ul>
+        </li>
+    
+        <li class="item" data-name="Rekord.Eventful$">
+            <span class="title">
+                <a href="Rekord.Eventful$.html">Rekord.Eventful$</a>
+                
+            </span>
+            <ul class="members itemMembers">
+            
+            </ul>
+            <ul class="typedefs itemMembers">
+            
+            </ul>
+            <ul class="methods itemMembers">
+            
+            <span class="subtitle">Methods</span>
+            
+                <li data-name="Rekord.Eventful$#$on"><a href="Rekord.Eventful$.html#$on">$on</a></li>
+            
+                <li data-name="Rekord.Eventful$#$once"><a href="Rekord.Eventful$.html#$once">$once</a></li>
+            
+            </ul>
+            <ul class="events itemMembers">
+            
+            </ul>
+        </li>
+    
+        <li class="item" data-name="Rekord.FilteredCollection">
+            <span class="title">
+                <a href="Rekord.FilteredCollection.html">Rekord.FilteredCollection</a>
+                
+            </span>
+            <ul class="members itemMembers">
+            
+            <span class="subtitle">Members</span>
+            
+                <li data-name="Rekord.FilteredCollection#base"><a href="Rekord.FilteredCollection.html#base">base</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#comparator"><a href="Rekord.FilteredCollection.html#comparator">comparator</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#filter"><a href="Rekord.FilteredCollection.html#filter">filter</a></li>
+            
+            </ul>
+            <ul class="typedefs itemMembers">
+            
+            </ul>
+            <ul class="methods itemMembers">
+            
+            <span class="subtitle">Methods</span>
+            
+                <li data-name="Rekord.FilteredCollection#add"><a href="Rekord.FilteredCollection.html#add">add</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#addAll"><a href="Rekord.FilteredCollection.html#addAll">addAll</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#addComparator"><a href="Rekord.FilteredCollection.html#addComparator">addComparator</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#aggregate"><a href="Rekord.FilteredCollection.html#aggregate">aggregate</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#avg"><a href="Rekord.FilteredCollection.html#avg">avg</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#bind"><a href="Rekord.FilteredCollection.html#bind">bind</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#change"><a href="Rekord.FilteredCollection.html#change">change</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#chunk"><a href="Rekord.FilteredCollection.html#chunk">chunk</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#clear"><a href="Rekord.FilteredCollection.html#clear">clear</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#clone"><a href="Rekord.FilteredCollection.html#clone">clone</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#cloneEmpty"><a href="Rekord.FilteredCollection.html#cloneEmpty">cloneEmpty</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#complement"><a href="Rekord.FilteredCollection.html#complement">complement</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#connect"><a href="Rekord.FilteredCollection.html#connect">connect</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#contains"><a href="Rekord.FilteredCollection.html#contains">contains</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#count"><a href="Rekord.FilteredCollection.html#count">count</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#countWhere"><a href="Rekord.FilteredCollection.html#countWhere">countWhere</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#disconnect"><a href="Rekord.FilteredCollection.html#disconnect">disconnect</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#each"><a href="Rekord.FilteredCollection.html#each">each</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#eachWhere"><a href="Rekord.FilteredCollection.html#eachWhere">eachWhere</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#filtered"><a href="Rekord.FilteredCollection.html#filtered">filtered</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#first"><a href="Rekord.FilteredCollection.html#first">first</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#firstWhere"><a href="Rekord.FilteredCollection.html#firstWhere">firstWhere</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#group"><a href="Rekord.FilteredCollection.html#group">group</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#indexOf"><a href="Rekord.FilteredCollection.html#indexOf">indexOf</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#init"><a href="Rekord.FilteredCollection.html#init">init</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#insertAt"><a href="Rekord.FilteredCollection.html#insertAt">insertAt</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#intersect"><a href="Rekord.FilteredCollection.html#intersect">intersect</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#isSorted"><a href="Rekord.FilteredCollection.html#isSorted">isSorted</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#last"><a href="Rekord.FilteredCollection.html#last">last</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#lastWhere"><a href="Rekord.FilteredCollection.html#lastWhere">lastWhere</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#max"><a href="Rekord.FilteredCollection.html#max">max</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#maxModel"><a href="Rekord.FilteredCollection.html#maxModel">maxModel</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#min"><a href="Rekord.FilteredCollection.html#min">min</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#minModel"><a href="Rekord.FilteredCollection.html#minModel">minModel</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#on"><a href="Rekord.FilteredCollection.html#on">on</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#once"><a href="Rekord.FilteredCollection.html#once">once</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#page"><a href="Rekord.FilteredCollection.html#page">page</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#pluck"><a href="Rekord.FilteredCollection.html#pluck">pluck</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#pop"><a href="Rekord.FilteredCollection.html#pop">pop</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#push"><a href="Rekord.FilteredCollection.html#push">push</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#random"><a href="Rekord.FilteredCollection.html#random">random</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#reduce"><a href="Rekord.FilteredCollection.html#reduce">reduce</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#remove"><a href="Rekord.FilteredCollection.html#remove">remove</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#removeAll"><a href="Rekord.FilteredCollection.html#removeAll">removeAll</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#removeAt"><a href="Rekord.FilteredCollection.html#removeAt">removeAt</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#removeWhere"><a href="Rekord.FilteredCollection.html#removeWhere">removeWhere</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#reset"><a href="Rekord.FilteredCollection.html#reset">reset</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#reverse"><a href="Rekord.FilteredCollection.html#reverse">reverse</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#setComparator"><a href="Rekord.FilteredCollection.html#setComparator">setComparator</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#setFilter"><a href="Rekord.FilteredCollection.html#setFilter">setFilter</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#shift"><a href="Rekord.FilteredCollection.html#shift">shift</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#sort"><a href="Rekord.FilteredCollection.html#sort">sort</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#splice"><a href="Rekord.FilteredCollection.html#splice">splice</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#subtract"><a href="Rekord.FilteredCollection.html#subtract">subtract</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#sum"><a href="Rekord.FilteredCollection.html#sum">sum</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#sync"><a href="Rekord.FilteredCollection.html#sync">sync</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#toArray"><a href="Rekord.FilteredCollection.html#toArray">toArray</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#unshift"><a href="Rekord.FilteredCollection.html#unshift">unshift</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#where"><a href="Rekord.FilteredCollection.html#where">where</a></li>
+            
+            </ul>
+            <ul class="events itemMembers">
+            
+            <span class="subtitle">Events</span>
+            
+                <li data-name="Rekord.FilteredCollection#event:add"><a href="Rekord.FilteredCollection.html#event:add">add</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#event:adds"><a href="Rekord.FilteredCollection.html#event:adds">adds</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#event:changes"><a href="Rekord.FilteredCollection.html#event:changes">changes</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#event:cleared"><a href="Rekord.FilteredCollection.html#event:cleared">cleared</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#event:remove"><a href="Rekord.FilteredCollection.html#event:remove">remove</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#event:removes"><a href="Rekord.FilteredCollection.html#event:removes">removes</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#event:reset"><a href="Rekord.FilteredCollection.html#event:reset">reset</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#event:sort"><a href="Rekord.FilteredCollection.html#event:sort">sort</a></li>
+            
+                <li data-name="Rekord.FilteredCollection#event:updates"><a href="Rekord.FilteredCollection.html#event:updates">updates</a></li>
+            
+            </ul>
+        </li>
+    
+        <li class="item" data-name="Rekord.FilteredModelCollection">
+            <span class="title">
+                <a href="Rekord.FilteredModelCollection.html">Rekord.FilteredModelCollection</a>
+                
+            </span>
+            <ul class="members itemMembers">
+            
+            <span class="subtitle">Members</span>
+            
+                <li data-name="Rekord.FilteredModelCollection#base"><a href="Rekord.FilteredModelCollection.html#base">base</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#comparator"><a href="Rekord.FilteredModelCollection.html#comparator">comparator</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#database"><a href="Rekord.FilteredModelCollection.html#database">database</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#filter"><a href="Rekord.FilteredModelCollection.html#filter">filter</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#map"><a href="Rekord.FilteredModelCollection.html#map">map</a></li>
+            
+            </ul>
+            <ul class="typedefs itemMembers">
+            
+            </ul>
+            <ul class="methods itemMembers">
+            
+            <span class="subtitle">Methods</span>
+            
+                <li data-name="Rekord.FilteredModelCollection#add"><a href="Rekord.FilteredModelCollection.html#add">add</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#addAll"><a href="Rekord.FilteredModelCollection.html#addAll">addAll</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#addComparator"><a href="Rekord.FilteredModelCollection.html#addComparator">addComparator</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#aggregate"><a href="Rekord.FilteredModelCollection.html#aggregate">aggregate</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#avg"><a href="Rekord.FilteredModelCollection.html#avg">avg</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#bind"><a href="Rekord.FilteredModelCollection.html#bind">bind</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#buildKeyFromInput"><a href="Rekord.FilteredModelCollection.html#buildKeyFromInput">buildKeyFromInput</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#cancelWhere"><a href="Rekord.FilteredModelCollection.html#cancelWhere">cancelWhere</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#change"><a href="Rekord.FilteredModelCollection.html#change">change</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#chunk"><a href="Rekord.FilteredModelCollection.html#chunk">chunk</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#clear"><a href="Rekord.FilteredModelCollection.html#clear">clear</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#clone"><a href="Rekord.FilteredModelCollection.html#clone">clone</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#cloneEmpty"><a href="Rekord.FilteredModelCollection.html#cloneEmpty">cloneEmpty</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#complement"><a href="Rekord.FilteredModelCollection.html#complement">complement</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#connect"><a href="Rekord.FilteredModelCollection.html#connect">connect</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#contains"><a href="Rekord.FilteredModelCollection.html#contains">contains</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#count"><a href="Rekord.FilteredModelCollection.html#count">count</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#countWhere"><a href="Rekord.FilteredModelCollection.html#countWhere">countWhere</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#discardWhere"><a href="Rekord.FilteredModelCollection.html#discardWhere">discardWhere</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#disconnect"><a href="Rekord.FilteredModelCollection.html#disconnect">disconnect</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#each"><a href="Rekord.FilteredModelCollection.html#each">each</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#eachWhere"><a href="Rekord.FilteredModelCollection.html#eachWhere">eachWhere</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#filtered"><a href="Rekord.FilteredModelCollection.html#filtered">filtered</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#first"><a href="Rekord.FilteredModelCollection.html#first">first</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#firstWhere"><a href="Rekord.FilteredModelCollection.html#firstWhere">firstWhere</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#get"><a href="Rekord.FilteredModelCollection.html#get">get</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#group"><a href="Rekord.FilteredModelCollection.html#group">group</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#has"><a href="Rekord.FilteredModelCollection.html#has">has</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#indexOf"><a href="Rekord.FilteredModelCollection.html#indexOf">indexOf</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#init"><a href="Rekord.FilteredModelCollection.html#init">init</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#insertAt"><a href="Rekord.FilteredModelCollection.html#insertAt">insertAt</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#intersect"><a href="Rekord.FilteredModelCollection.html#intersect">intersect</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#isSorted"><a href="Rekord.FilteredModelCollection.html#isSorted">isSorted</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#keys"><a href="Rekord.FilteredModelCollection.html#keys">keys</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#last"><a href="Rekord.FilteredModelCollection.html#last">last</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#lastWhere"><a href="Rekord.FilteredModelCollection.html#lastWhere">lastWhere</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#max"><a href="Rekord.FilteredModelCollection.html#max">max</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#maxModel"><a href="Rekord.FilteredModelCollection.html#maxModel">maxModel</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#min"><a href="Rekord.FilteredModelCollection.html#min">min</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#minModel"><a href="Rekord.FilteredModelCollection.html#minModel">minModel</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#on"><a href="Rekord.FilteredModelCollection.html#on">on</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#once"><a href="Rekord.FilteredModelCollection.html#once">once</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#page"><a href="Rekord.FilteredModelCollection.html#page">page</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#parseModel"><a href="Rekord.FilteredModelCollection.html#parseModel">parseModel</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#pluck"><a href="Rekord.FilteredModelCollection.html#pluck">pluck</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#pop"><a href="Rekord.FilteredModelCollection.html#pop">pop</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#popWhere"><a href="Rekord.FilteredModelCollection.html#popWhere">popWhere</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#push"><a href="Rekord.FilteredModelCollection.html#push">push</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#pushWhere"><a href="Rekord.FilteredModelCollection.html#pushWhere">pushWhere</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#put"><a href="Rekord.FilteredModelCollection.html#put">put</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#random"><a href="Rekord.FilteredModelCollection.html#random">random</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#rebuild"><a href="Rekord.FilteredModelCollection.html#rebuild">rebuild</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#reduce"><a href="Rekord.FilteredModelCollection.html#reduce">reduce</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#refreshWhere"><a href="Rekord.FilteredModelCollection.html#refreshWhere">refreshWhere</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#remove"><a href="Rekord.FilteredModelCollection.html#remove">remove</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#removeAll"><a href="Rekord.FilteredModelCollection.html#removeAll">removeAll</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#removeAt"><a href="Rekord.FilteredModelCollection.html#removeAt">removeAt</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#removeWhere"><a href="Rekord.FilteredModelCollection.html#removeWhere">removeWhere</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#reset"><a href="Rekord.FilteredModelCollection.html#reset">reset</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#reverse"><a href="Rekord.FilteredModelCollection.html#reverse">reverse</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#saveWhere"><a href="Rekord.FilteredModelCollection.html#saveWhere">saveWhere</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#setComparator"><a href="Rekord.FilteredModelCollection.html#setComparator">setComparator</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#setFilter"><a href="Rekord.FilteredModelCollection.html#setFilter">setFilter</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#shift"><a href="Rekord.FilteredModelCollection.html#shift">shift</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#sort"><a href="Rekord.FilteredModelCollection.html#sort">sort</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#splice"><a href="Rekord.FilteredModelCollection.html#splice">splice</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#subtract"><a href="Rekord.FilteredModelCollection.html#subtract">subtract</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#sum"><a href="Rekord.FilteredModelCollection.html#sum">sum</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#sync"><a href="Rekord.FilteredModelCollection.html#sync">sync</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#toArray"><a href="Rekord.FilteredModelCollection.html#toArray">toArray</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#unshift"><a href="Rekord.FilteredModelCollection.html#unshift">unshift</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#update"><a href="Rekord.FilteredModelCollection.html#update">update</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#updateWhere"><a href="Rekord.FilteredModelCollection.html#updateWhere">updateWhere</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#where"><a href="Rekord.FilteredModelCollection.html#where">where</a></li>
+            
+            </ul>
+            <ul class="events itemMembers">
+            
+            <span class="subtitle">Events</span>
+            
+                <li data-name="Rekord.FilteredModelCollection#event:add"><a href="Rekord.FilteredModelCollection.html#event:add">add</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#event:adds"><a href="Rekord.FilteredModelCollection.html#event:adds">adds</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#event:changes"><a href="Rekord.FilteredModelCollection.html#event:changes">changes</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#event:cleared"><a href="Rekord.FilteredModelCollection.html#event:cleared">cleared</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#event:remove"><a href="Rekord.FilteredModelCollection.html#event:remove">remove</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#event:removes"><a href="Rekord.FilteredModelCollection.html#event:removes">removes</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#event:reset"><a href="Rekord.FilteredModelCollection.html#event:reset">reset</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#event:sort"><a href="Rekord.FilteredModelCollection.html#event:sort">sort</a></li>
+            
+                <li data-name="Rekord.FilteredModelCollection#event:updates"><a href="Rekord.FilteredModelCollection.html#event:updates">updates</a></li>
+            
+            </ul>
+        </li>
+    
+        <li class="item" data-name="Rekord.Map">
+            <span class="title">
+                <a href="Rekord.Map.html">Rekord.Map</a>
+                
+            </span>
+            <ul class="members itemMembers">
+            
+            <span class="subtitle">Members</span>
+            
+                <li data-name="Rekord.Map#indices"><a href="Rekord.Map.html#indices">indices</a></li>
+            
+                <li data-name="Rekord.Map#keys"><a href="Rekord.Map.html#keys">keys</a></li>
+            
+                <li data-name="Rekord.Map#values"><a href="Rekord.Map.html#values">values</a></li>
+            
+            </ul>
+            <ul class="typedefs itemMembers">
+            
+            </ul>
+            <ul class="methods itemMembers">
+            
+            </ul>
+            <ul class="events itemMembers">
+            
+            </ul>
+        </li>
+    
+        <li class="item" data-name="Rekord.Model">
+            <span class="title">
+                <a href="Rekord.Model.html">Rekord.Model</a>
+                
+            </span>
+            <ul class="members itemMembers">
+            
+            </ul>
+            <ul class="typedefs itemMembers">
+            
+            </ul>
+            <ul class="methods itemMembers">
+            
+            <span class="subtitle">Methods</span>
+            
+                <li data-name="Rekord.Model.all"><a href="Rekord.Model.html#.all">all</a></li>
+            
+                <li data-name="Rekord.Model.boot"><a href="Rekord.Model.html#.boot">boot</a></li>
+            
+                <li data-name="Rekord.Model.collect"><a href="Rekord.Model.html#.collect">collect</a></li>
+            
+                <li data-name="Rekord.Model.create"><a href="Rekord.Model.html#.create">create</a></li>
+            
+                <li data-name="Rekord.Model.fetch"><a href="Rekord.Model.html#.fetch">fetch</a></li>
+            
+                <li data-name="Rekord.Model.fetchAll"><a href="Rekord.Model.html#.fetchAll">fetchAll</a></li>
+            
+                <li data-name="Rekord.Model.get"><a href="Rekord.Model.html#.get">get</a></li>
+            
+                <li data-name="Rekord.Model.grab"><a href="Rekord.Model.html#.grab">grab</a></li>
+            
+                <li data-name="Rekord.Model.grabAll"><a href="Rekord.Model.html#.grabAll">grabAll</a></li>
+            
+                <li data-name="Rekord.Model.persist"><a href="Rekord.Model.html#.persist">persist</a></li>
+            
+                <li data-name="Rekord.Model.persist"><a href="Rekord.Model.html#.persist">persist</a></li>
+            
+                <li data-name="Rekord.Model.ready"><a href="Rekord.Model.html#.ready">ready</a></li>
+            
+                <li data-name="Rekord.Model.refresh"><a href="Rekord.Model.html#.refresh">refresh</a></li>
+            
+                <li data-name="Rekord.Model.search"><a href="Rekord.Model.html#.search">search</a></li>
+            
+                <li data-name="Rekord.Model.searchPaged"><a href="Rekord.Model.html#.searchPaged">searchPaged</a></li>
+            
+                <li data-name="Rekord.Model#$on"><a href="Rekord.Model.html#$on">$on</a></li>
+            
+                <li data-name="Rekord.Model#$once"><a href="Rekord.Model.html#$once">$once</a></li>
+            
+            </ul>
+            <ul class="events itemMembers">
+            
+            </ul>
+        </li>
+    
+        <li class="item" data-name="Rekord.ModelCollection">
+            <span class="title">
+                <a href="Rekord.ModelCollection.html">Rekord.ModelCollection</a>
+                
+            </span>
+            <ul class="members itemMembers">
+            
+            <span class="subtitle">Members</span>
+            
+                <li data-name="Rekord.ModelCollection#comparator"><a href="Rekord.ModelCollection.html#comparator">comparator</a></li>
+            
+                <li data-name="Rekord.ModelCollection#database"><a href="Rekord.ModelCollection.html#database">database</a></li>
+            
+                <li data-name="Rekord.ModelCollection#map"><a href="Rekord.ModelCollection.html#map">map</a></li>
+            
+            </ul>
+            <ul class="typedefs itemMembers">
+            
+            </ul>
+            <ul class="methods itemMembers">
+            
+            <span class="subtitle">Methods</span>
+            
+                <li data-name="Rekord.ModelCollection#add"><a href="Rekord.ModelCollection.html#add">add</a></li>
+            
+                <li data-name="Rekord.ModelCollection#addAll"><a href="Rekord.ModelCollection.html#addAll">addAll</a></li>
+            
+                <li data-name="Rekord.ModelCollection#addComparator"><a href="Rekord.ModelCollection.html#addComparator">addComparator</a></li>
+            
+                <li data-name="Rekord.ModelCollection#aggregate"><a href="Rekord.ModelCollection.html#aggregate">aggregate</a></li>
+            
+                <li data-name="Rekord.ModelCollection#avg"><a href="Rekord.ModelCollection.html#avg">avg</a></li>
+            
+                <li data-name="Rekord.ModelCollection#buildKeyFromInput"><a href="Rekord.ModelCollection.html#buildKeyFromInput">buildKeyFromInput</a></li>
+            
+                <li data-name="Rekord.ModelCollection#cancelWhere"><a href="Rekord.ModelCollection.html#cancelWhere">cancelWhere</a></li>
+            
+                <li data-name="Rekord.ModelCollection#change"><a href="Rekord.ModelCollection.html#change">change</a></li>
+            
+                <li data-name="Rekord.ModelCollection#chunk"><a href="Rekord.ModelCollection.html#chunk">chunk</a></li>
+            
+                <li data-name="Rekord.ModelCollection#clear"><a href="Rekord.ModelCollection.html#clear">clear</a></li>
+            
+                <li data-name="Rekord.ModelCollection#clone"><a href="Rekord.ModelCollection.html#clone">clone</a></li>
+            
+                <li data-name="Rekord.ModelCollection#cloneEmpty"><a href="Rekord.ModelCollection.html#cloneEmpty">cloneEmpty</a></li>
+            
+                <li data-name="Rekord.ModelCollection#complement"><a href="Rekord.ModelCollection.html#complement">complement</a></li>
+            
+                <li data-name="Rekord.ModelCollection#contains"><a href="Rekord.ModelCollection.html#contains">contains</a></li>
+            
+                <li data-name="Rekord.ModelCollection#count"><a href="Rekord.ModelCollection.html#count">count</a></li>
+            
+                <li data-name="Rekord.ModelCollection#countWhere"><a href="Rekord.ModelCollection.html#countWhere">countWhere</a></li>
+            
+                <li data-name="Rekord.ModelCollection#discardWhere"><a href="Rekord.ModelCollection.html#discardWhere">discardWhere</a></li>
+            
+                <li data-name="Rekord.ModelCollection#each"><a href="Rekord.ModelCollection.html#each">each</a></li>
+            
+                <li data-name="Rekord.ModelCollection#eachWhere"><a href="Rekord.ModelCollection.html#eachWhere">eachWhere</a></li>
+            
+                <li data-name="Rekord.ModelCollection#filtered"><a href="Rekord.ModelCollection.html#filtered">filtered</a></li>
+            
+                <li data-name="Rekord.ModelCollection#first"><a href="Rekord.ModelCollection.html#first">first</a></li>
+            
+                <li data-name="Rekord.ModelCollection#firstWhere"><a href="Rekord.ModelCollection.html#firstWhere">firstWhere</a></li>
+            
+                <li data-name="Rekord.ModelCollection#get"><a href="Rekord.ModelCollection.html#get">get</a></li>
+            
+                <li data-name="Rekord.ModelCollection#group"><a href="Rekord.ModelCollection.html#group">group</a></li>
+            
+                <li data-name="Rekord.ModelCollection#has"><a href="Rekord.ModelCollection.html#has">has</a></li>
+            
+                <li data-name="Rekord.ModelCollection#indexOf"><a href="Rekord.ModelCollection.html#indexOf">indexOf</a></li>
+            
+                <li data-name="Rekord.ModelCollection#init"><a href="Rekord.ModelCollection.html#init">init</a></li>
+            
+                <li data-name="Rekord.ModelCollection#insertAt"><a href="Rekord.ModelCollection.html#insertAt">insertAt</a></li>
+            
+                <li data-name="Rekord.ModelCollection#intersect"><a href="Rekord.ModelCollection.html#intersect">intersect</a></li>
+            
+                <li data-name="Rekord.ModelCollection#isSorted"><a href="Rekord.ModelCollection.html#isSorted">isSorted</a></li>
+            
+                <li data-name="Rekord.ModelCollection#keys"><a href="Rekord.ModelCollection.html#keys">keys</a></li>
+            
+                <li data-name="Rekord.ModelCollection#last"><a href="Rekord.ModelCollection.html#last">last</a></li>
+            
+                <li data-name="Rekord.ModelCollection#lastWhere"><a href="Rekord.ModelCollection.html#lastWhere">lastWhere</a></li>
+            
+                <li data-name="Rekord.ModelCollection#max"><a href="Rekord.ModelCollection.html#max">max</a></li>
+            
+                <li data-name="Rekord.ModelCollection#maxModel"><a href="Rekord.ModelCollection.html#maxModel">maxModel</a></li>
+            
+                <li data-name="Rekord.ModelCollection#min"><a href="Rekord.ModelCollection.html#min">min</a></li>
+            
+                <li data-name="Rekord.ModelCollection#minModel"><a href="Rekord.ModelCollection.html#minModel">minModel</a></li>
+            
+                <li data-name="Rekord.ModelCollection#on"><a href="Rekord.ModelCollection.html#on">on</a></li>
+            
+                <li data-name="Rekord.ModelCollection#once"><a href="Rekord.ModelCollection.html#once">once</a></li>
+            
+                <li data-name="Rekord.ModelCollection#page"><a href="Rekord.ModelCollection.html#page">page</a></li>
+            
+                <li data-name="Rekord.ModelCollection#parseModel"><a href="Rekord.ModelCollection.html#parseModel">parseModel</a></li>
+            
+                <li data-name="Rekord.ModelCollection#pluck"><a href="Rekord.ModelCollection.html#pluck">pluck</a></li>
+            
+                <li data-name="Rekord.ModelCollection#pop"><a href="Rekord.ModelCollection.html#pop">pop</a></li>
+            
+                <li data-name="Rekord.ModelCollection#popWhere"><a href="Rekord.ModelCollection.html#popWhere">popWhere</a></li>
+            
+                <li data-name="Rekord.ModelCollection#push"><a href="Rekord.ModelCollection.html#push">push</a></li>
+            
+                <li data-name="Rekord.ModelCollection#pushWhere"><a href="Rekord.ModelCollection.html#pushWhere">pushWhere</a></li>
+            
+                <li data-name="Rekord.ModelCollection#put"><a href="Rekord.ModelCollection.html#put">put</a></li>
+            
+                <li data-name="Rekord.ModelCollection#random"><a href="Rekord.ModelCollection.html#random">random</a></li>
+            
+                <li data-name="Rekord.ModelCollection#rebuild"><a href="Rekord.ModelCollection.html#rebuild">rebuild</a></li>
+            
+                <li data-name="Rekord.ModelCollection#reduce"><a href="Rekord.ModelCollection.html#reduce">reduce</a></li>
+            
+                <li data-name="Rekord.ModelCollection#refreshWhere"><a href="Rekord.ModelCollection.html#refreshWhere">refreshWhere</a></li>
+            
+                <li data-name="Rekord.ModelCollection#remove"><a href="Rekord.ModelCollection.html#remove">remove</a></li>
+            
+                <li data-name="Rekord.ModelCollection#removeAll"><a href="Rekord.ModelCollection.html#removeAll">removeAll</a></li>
+            
+                <li data-name="Rekord.ModelCollection#removeAt"><a href="Rekord.ModelCollection.html#removeAt">removeAt</a></li>
+            
+                <li data-name="Rekord.ModelCollection#removeWhere"><a href="Rekord.ModelCollection.html#removeWhere">removeWhere</a></li>
+            
+                <li data-name="Rekord.ModelCollection#reset"><a href="Rekord.ModelCollection.html#reset">reset</a></li>
+            
+                <li data-name="Rekord.ModelCollection#reverse"><a href="Rekord.ModelCollection.html#reverse">reverse</a></li>
+            
+                <li data-name="Rekord.ModelCollection#saveWhere"><a href="Rekord.ModelCollection.html#saveWhere">saveWhere</a></li>
+            
+                <li data-name="Rekord.ModelCollection#setComparator"><a href="Rekord.ModelCollection.html#setComparator">setComparator</a></li>
+            
+                <li data-name="Rekord.ModelCollection#shift"><a href="Rekord.ModelCollection.html#shift">shift</a></li>
+            
+                <li data-name="Rekord.ModelCollection#sort"><a href="Rekord.ModelCollection.html#sort">sort</a></li>
+            
+                <li data-name="Rekord.ModelCollection#splice"><a href="Rekord.ModelCollection.html#splice">splice</a></li>
+            
+                <li data-name="Rekord.ModelCollection#subtract"><a href="Rekord.ModelCollection.html#subtract">subtract</a></li>
+            
+                <li data-name="Rekord.ModelCollection#sum"><a href="Rekord.ModelCollection.html#sum">sum</a></li>
+            
+                <li data-name="Rekord.ModelCollection#toArray"><a href="Rekord.ModelCollection.html#toArray">toArray</a></li>
+            
+                <li data-name="Rekord.ModelCollection#unshift"><a href="Rekord.ModelCollection.html#unshift">unshift</a></li>
+            
+                <li data-name="Rekord.ModelCollection#update"><a href="Rekord.ModelCollection.html#update">update</a></li>
+            
+                <li data-name="Rekord.ModelCollection#updateWhere"><a href="Rekord.ModelCollection.html#updateWhere">updateWhere</a></li>
+            
+                <li data-name="Rekord.ModelCollection#where"><a href="Rekord.ModelCollection.html#where">where</a></li>
+            
+            </ul>
+            <ul class="events itemMembers">
+            
+            <span class="subtitle">Events</span>
+            
+                <li data-name="Rekord.ModelCollection#event:add"><a href="Rekord.ModelCollection.html#event:add">add</a></li>
+            
+                <li data-name="Rekord.ModelCollection#event:adds"><a href="Rekord.ModelCollection.html#event:adds">adds</a></li>
+            
+                <li data-name="Rekord.ModelCollection#event:changes"><a href="Rekord.ModelCollection.html#event:changes">changes</a></li>
+            
+                <li data-name="Rekord.ModelCollection#event:cleared"><a href="Rekord.ModelCollection.html#event:cleared">cleared</a></li>
+            
+                <li data-name="Rekord.ModelCollection#event:remove"><a href="Rekord.ModelCollection.html#event:remove">remove</a></li>
+            
+                <li data-name="Rekord.ModelCollection#event:removes"><a href="Rekord.ModelCollection.html#event:removes">removes</a></li>
+            
+                <li data-name="Rekord.ModelCollection#event:reset"><a href="Rekord.ModelCollection.html#event:reset">reset</a></li>
+            
+                <li data-name="Rekord.ModelCollection#event:sort"><a href="Rekord.ModelCollection.html#event:sort">sort</a></li>
+            
+                <li data-name="Rekord.ModelCollection#event:updates"><a href="Rekord.ModelCollection.html#event:updates">updates</a></li>
+            
+            </ul>
+        </li>
+    
+        <li class="item" data-name="Rekord.Page">
+            <span class="title">
+                <a href="Rekord.Page.html">Rekord.Page</a>
+                
+            </span>
+            <ul class="members itemMembers">
+            
+            </ul>
+            <ul class="typedefs itemMembers">
+            
+            </ul>
+            <ul class="methods itemMembers">
+            
+            <span class="subtitle">Methods</span>
+            
+                <li data-name="Rekord.Page#on"><a href="Rekord.Page.html#on">on</a></li>
+            
+                <li data-name="Rekord.Page#once"><a href="Rekord.Page.html#once">once</a></li>
+            
+            </ul>
+            <ul class="events itemMembers">
+            
+            </ul>
+        </li>
+    
+        <li class="item" data-name="Rekord.RelationCollection">
+            <span class="title">
+                <a href="Rekord.RelationCollection.html">Rekord.RelationCollection</a>
+                
+            </span>
+            <ul class="members itemMembers">
+            
+            <span class="subtitle">Members</span>
+            
+                <li data-name="Rekord.RelationCollection#comparator"><a href="Rekord.RelationCollection.html#comparator">comparator</a></li>
+            
+                <li data-name="Rekord.RelationCollection#database"><a href="Rekord.RelationCollection.html#database">database</a></li>
+            
+                <li data-name="Rekord.RelationCollection#map"><a href="Rekord.RelationCollection.html#map">map</a></li>
+            
+                <li data-name="Rekord.RelationCollection#model"><a href="Rekord.RelationCollection.html#model">model</a></li>
+            
+                <li data-name="Rekord.RelationCollection#relator"><a href="Rekord.RelationCollection.html#relator">relator</a></li>
+            
+            </ul>
+            <ul class="typedefs itemMembers">
+            
+            </ul>
+            <ul class="methods itemMembers">
+            
+            <span class="subtitle">Methods</span>
+            
+                <li data-name="Rekord.RelationCollection#add"><a href="Rekord.RelationCollection.html#add">add</a></li>
+            
+                <li data-name="Rekord.RelationCollection#addAll"><a href="Rekord.RelationCollection.html#addAll">addAll</a></li>
+            
+                <li data-name="Rekord.RelationCollection#addComparator"><a href="Rekord.RelationCollection.html#addComparator">addComparator</a></li>
+            
+                <li data-name="Rekord.RelationCollection#aggregate"><a href="Rekord.RelationCollection.html#aggregate">aggregate</a></li>
+            
+                <li data-name="Rekord.RelationCollection#avg"><a href="Rekord.RelationCollection.html#avg">avg</a></li>
+            
+                <li data-name="Rekord.RelationCollection#buildKeyFromInput"><a href="Rekord.RelationCollection.html#buildKeyFromInput">buildKeyFromInput</a></li>
+            
+                <li data-name="Rekord.RelationCollection#cancelWhere"><a href="Rekord.RelationCollection.html#cancelWhere">cancelWhere</a></li>
+            
+                <li data-name="Rekord.RelationCollection#change"><a href="Rekord.RelationCollection.html#change">change</a></li>
+            
+                <li data-name="Rekord.RelationCollection#chunk"><a href="Rekord.RelationCollection.html#chunk">chunk</a></li>
+            
+                <li data-name="Rekord.RelationCollection#clear"><a href="Rekord.RelationCollection.html#clear">clear</a></li>
+            
+                <li data-name="Rekord.RelationCollection#clone"><a href="Rekord.RelationCollection.html#clone">clone</a></li>
+            
+                <li data-name="Rekord.RelationCollection#cloneEmpty"><a href="Rekord.RelationCollection.html#cloneEmpty">cloneEmpty</a></li>
+            
+                <li data-name="Rekord.RelationCollection#complement"><a href="Rekord.RelationCollection.html#complement">complement</a></li>
+            
+                <li data-name="Rekord.RelationCollection#contains"><a href="Rekord.RelationCollection.html#contains">contains</a></li>
+            
+                <li data-name="Rekord.RelationCollection#count"><a href="Rekord.RelationCollection.html#count">count</a></li>
+            
+                <li data-name="Rekord.RelationCollection#countWhere"><a href="Rekord.RelationCollection.html#countWhere">countWhere</a></li>
+            
+                <li data-name="Rekord.RelationCollection#discardWhere"><a href="Rekord.RelationCollection.html#discardWhere">discardWhere</a></li>
+            
+                <li data-name="Rekord.RelationCollection#each"><a href="Rekord.RelationCollection.html#each">each</a></li>
+            
+                <li data-name="Rekord.RelationCollection#eachWhere"><a href="Rekord.RelationCollection.html#eachWhere">eachWhere</a></li>
+            
+                <li data-name="Rekord.RelationCollection#filtered"><a href="Rekord.RelationCollection.html#filtered">filtered</a></li>
+            
+                <li data-name="Rekord.RelationCollection#first"><a href="Rekord.RelationCollection.html#first">first</a></li>
+            
+                <li data-name="Rekord.RelationCollection#firstWhere"><a href="Rekord.RelationCollection.html#firstWhere">firstWhere</a></li>
+            
+                <li data-name="Rekord.RelationCollection#get"><a href="Rekord.RelationCollection.html#get">get</a></li>
+            
+                <li data-name="Rekord.RelationCollection#group"><a href="Rekord.RelationCollection.html#group">group</a></li>
+            
+                <li data-name="Rekord.RelationCollection#has"><a href="Rekord.RelationCollection.html#has">has</a></li>
+            
+                <li data-name="Rekord.RelationCollection#indexOf"><a href="Rekord.RelationCollection.html#indexOf">indexOf</a></li>
+            
+                <li data-name="Rekord.RelationCollection#init"><a href="Rekord.RelationCollection.html#init">init</a></li>
+            
+                <li data-name="Rekord.RelationCollection#insertAt"><a href="Rekord.RelationCollection.html#insertAt">insertAt</a></li>
+            
+                <li data-name="Rekord.RelationCollection#intersect"><a href="Rekord.RelationCollection.html#intersect">intersect</a></li>
+            
+                <li data-name="Rekord.RelationCollection#isRelated"><a href="Rekord.RelationCollection.html#isRelated">isRelated</a></li>
+            
+                <li data-name="Rekord.RelationCollection#isSorted"><a href="Rekord.RelationCollection.html#isSorted">isSorted</a></li>
+            
+                <li data-name="Rekord.RelationCollection#keys"><a href="Rekord.RelationCollection.html#keys">keys</a></li>
+            
+                <li data-name="Rekord.RelationCollection#last"><a href="Rekord.RelationCollection.html#last">last</a></li>
+            
+                <li data-name="Rekord.RelationCollection#lastWhere"><a href="Rekord.RelationCollection.html#lastWhere">lastWhere</a></li>
+            
+                <li data-name="Rekord.RelationCollection#max"><a href="Rekord.RelationCollection.html#max">max</a></li>
+            
+                <li data-name="Rekord.RelationCollection#maxModel"><a href="Rekord.RelationCollection.html#maxModel">maxModel</a></li>
+            
+                <li data-name="Rekord.RelationCollection#min"><a href="Rekord.RelationCollection.html#min">min</a></li>
+            
+                <li data-name="Rekord.RelationCollection#minModel"><a href="Rekord.RelationCollection.html#minModel">minModel</a></li>
+            
+                <li data-name="Rekord.RelationCollection#on"><a href="Rekord.RelationCollection.html#on">on</a></li>
+            
+                <li data-name="Rekord.RelationCollection#once"><a href="Rekord.RelationCollection.html#once">once</a></li>
+            
+                <li data-name="Rekord.RelationCollection#page"><a href="Rekord.RelationCollection.html#page">page</a></li>
+            
+                <li data-name="Rekord.RelationCollection#parseModel"><a href="Rekord.RelationCollection.html#parseModel">parseModel</a></li>
+            
+                <li data-name="Rekord.RelationCollection#pluck"><a href="Rekord.RelationCollection.html#pluck">pluck</a></li>
+            
+                <li data-name="Rekord.RelationCollection#pop"><a href="Rekord.RelationCollection.html#pop">pop</a></li>
+            
+                <li data-name="Rekord.RelationCollection#popWhere"><a href="Rekord.RelationCollection.html#popWhere">popWhere</a></li>
+            
+                <li data-name="Rekord.RelationCollection#push"><a href="Rekord.RelationCollection.html#push">push</a></li>
+            
+                <li data-name="Rekord.RelationCollection#pushWhere"><a href="Rekord.RelationCollection.html#pushWhere">pushWhere</a></li>
+            
+                <li data-name="Rekord.RelationCollection#put"><a href="Rekord.RelationCollection.html#put">put</a></li>
+            
+                <li data-name="Rekord.RelationCollection#random"><a href="Rekord.RelationCollection.html#random">random</a></li>
+            
+                <li data-name="Rekord.RelationCollection#rebuild"><a href="Rekord.RelationCollection.html#rebuild">rebuild</a></li>
+            
+                <li data-name="Rekord.RelationCollection#reduce"><a href="Rekord.RelationCollection.html#reduce">reduce</a></li>
+            
+                <li data-name="Rekord.RelationCollection#refreshWhere"><a href="Rekord.RelationCollection.html#refreshWhere">refreshWhere</a></li>
+            
+                <li data-name="Rekord.RelationCollection#relate"><a href="Rekord.RelationCollection.html#relate">relate</a></li>
+            
+                <li data-name="Rekord.RelationCollection#remove"><a href="Rekord.RelationCollection.html#remove">remove</a></li>
+            
+                <li data-name="Rekord.RelationCollection#removeAll"><a href="Rekord.RelationCollection.html#removeAll">removeAll</a></li>
+            
+                <li data-name="Rekord.RelationCollection#removeAt"><a href="Rekord.RelationCollection.html#removeAt">removeAt</a></li>
+            
+                <li data-name="Rekord.RelationCollection#removeWhere"><a href="Rekord.RelationCollection.html#removeWhere">removeWhere</a></li>
+            
+                <li data-name="Rekord.RelationCollection#reset"><a href="Rekord.RelationCollection.html#reset">reset</a></li>
+            
+                <li data-name="Rekord.RelationCollection#reverse"><a href="Rekord.RelationCollection.html#reverse">reverse</a></li>
+            
+                <li data-name="Rekord.RelationCollection#saveWhere"><a href="Rekord.RelationCollection.html#saveWhere">saveWhere</a></li>
+            
+                <li data-name="Rekord.RelationCollection#set"><a href="Rekord.RelationCollection.html#set">set</a></li>
+            
+                <li data-name="Rekord.RelationCollection#setComparator"><a href="Rekord.RelationCollection.html#setComparator">setComparator</a></li>
+            
+                <li data-name="Rekord.RelationCollection#shift"><a href="Rekord.RelationCollection.html#shift">shift</a></li>
+            
+                <li data-name="Rekord.RelationCollection#sort"><a href="Rekord.RelationCollection.html#sort">sort</a></li>
+            
+                <li data-name="Rekord.RelationCollection#splice"><a href="Rekord.RelationCollection.html#splice">splice</a></li>
+            
+                <li data-name="Rekord.RelationCollection#subtract"><a href="Rekord.RelationCollection.html#subtract">subtract</a></li>
+            
+                <li data-name="Rekord.RelationCollection#sum"><a href="Rekord.RelationCollection.html#sum">sum</a></li>
+            
+                <li data-name="Rekord.RelationCollection#toArray"><a href="Rekord.RelationCollection.html#toArray">toArray</a></li>
+            
+                <li data-name="Rekord.RelationCollection#unrelate"><a href="Rekord.RelationCollection.html#unrelate">unrelate</a></li>
+            
+                <li data-name="Rekord.RelationCollection#unshift"><a href="Rekord.RelationCollection.html#unshift">unshift</a></li>
+            
+                <li data-name="Rekord.RelationCollection#update"><a href="Rekord.RelationCollection.html#update">update</a></li>
+            
+                <li data-name="Rekord.RelationCollection#updateWhere"><a href="Rekord.RelationCollection.html#updateWhere">updateWhere</a></li>
+            
+                <li data-name="Rekord.RelationCollection#where"><a href="Rekord.RelationCollection.html#where">where</a></li>
+            
+            </ul>
+            <ul class="events itemMembers">
+            
+            <span class="subtitle">Events</span>
+            
+                <li data-name="Rekord.RelationCollection#event:add"><a href="Rekord.RelationCollection.html#event:add">add</a></li>
+            
+                <li data-name="Rekord.RelationCollection#event:adds"><a href="Rekord.RelationCollection.html#event:adds">adds</a></li>
+            
+                <li data-name="Rekord.RelationCollection#event:changes"><a href="Rekord.RelationCollection.html#event:changes">changes</a></li>
+            
+                <li data-name="Rekord.RelationCollection#event:cleared"><a href="Rekord.RelationCollection.html#event:cleared">cleared</a></li>
+            
+                <li data-name="Rekord.RelationCollection#event:remove"><a href="Rekord.RelationCollection.html#event:remove">remove</a></li>
+            
+                <li data-name="Rekord.RelationCollection#event:removes"><a href="Rekord.RelationCollection.html#event:removes">removes</a></li>
+            
+                <li data-name="Rekord.RelationCollection#event:reset"><a href="Rekord.RelationCollection.html#event:reset">reset</a></li>
+            
+                <li data-name="Rekord.RelationCollection#event:sort"><a href="Rekord.RelationCollection.html#event:sort">sort</a></li>
+            
+                <li data-name="Rekord.RelationCollection#event:updates"><a href="Rekord.RelationCollection.html#event:updates">updates</a></li>
+            
+            </ul>
+        </li>
+    
+        <li class="item" data-name="Rekord.Search">
+            <span class="title">
+                <a href="Rekord.Search.html">Rekord.Search</a>
+                
+            </span>
+            <ul class="members itemMembers">
+            
+            </ul>
+            <ul class="typedefs itemMembers">
+            
+            </ul>
+            <ul class="methods itemMembers">
+            
+            </ul>
+            <ul class="events itemMembers">
+            
+            </ul>
+        </li>
+    
+    </ul>
+</div>
+    <div class="main">
+        <h1 class="page-title" data-filename="plugins_searchPaged.js.html">Source: plugins/searchPaged.js</h1>
+        
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>Rekord.on( Rekord.Events.Plugins, function(model, db, options)
+{
+
+  /**
+   * Creates a new search with pagination for model instances. A paginated
+   * search is an object with properties that are passed to a configurable
+   * {@link Rekord.rest} function which expect an array of models to be returned
+   * as well as paging information from the remote call. Special properties are
+   * passed to the server (`page_index`, `page_size`) which dictate which
+   * chunk of data should be returned. A special `total` property is expected to
+   * be returned with `results` which tells the search how many records would've
+   * been returned without the pagination.
+   *
+   * ```javascript
+   * var Task = Rekord({
+   *  fields: ['name', 'done']
+   * });
+   * var search = Task.searchPaged('/api/task/searchPaged');
+   * search.name = 'like this';
+   * search.done = true;
+   * search.anyProperty = [1, 3, 4];
+   * var promise = search.$run();
+   * promise.success( function(search) {
+   *   search.$results; // collection of returned results
+   *   search.total; // number of results that would've been returned without pagination
+   *   search.page_index; // the zero-based page index
+   *   search.page_size; // the number of results to be returned
+   * });
+   * search.$next(); // increase page_index, get the next page
+   * ```
+   *
+   * @method searchPaged
+   * @memberof Rekord.Model
+   * @param {String} url -
+   *    A URL to send the search data to.
+   * @param {searchPageOptions} [options] -
+   *    Options for the search.
+   * @param {Object} [props] -
+   *    Initial set of properties on the search.
+   * @param {Boolean} [run=false] -
+   *    Whether or not to run the search immediately.
+   * @return {Rekord.SearchPaged} -
+   *    A new paginated search for models.
+   */
+  model.searchPaged = function(url, options, props, run)
+  {
+    return new SearchPaged( db, url, options, props, run );
+  };
+});
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+
+
+        
+
+        <footer>
+            Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Thu Jun 02 2016 01:15:39 GMT-0400 (EDT)
+        </footer>
+    </div>
+</div>
+<script>prettyPrint();</script>
+<script src="scripts/jaguar.js"></script>
+</body>
+</html>
