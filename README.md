@@ -28,9 +28,8 @@ Rekord is a javascript REST ORM that is offline and real-time capable.
 - Add dynamic fields to model objects (setting & getting)
 - Data returned from REST calls or real-time events is intelligibly merged to avoid overwriting local unsaved changes
 - Add `updated_at` and `created_at` timestamps and their automatic behavior with a single option
+- Configurable date/timestamp transformations
 - Add custom methods to the model objects
-- Look at a live subset of models with `model.filtered( properties to match or custom function )`
-- Fetch a single model from the REST API with `model.fetch( key )`
 - Load bootstrapped data with `model.boot( model or array of models )`
 - Execute searches (fields are sent to REST API and an array of models is expected) with `model.search( URL, [options], [post data], [run now?] )`
 - Execute paginated searches
@@ -41,7 +40,7 @@ Rekord is a javascript REST ORM that is offline and real-time capable.
 - Create a live filtered view of any collection
 - Create a live paginated view of any collection
 - All collections have the following notable operations: sort, page, filtered, where, subtract, intersect, complement, clear, removeWhere, min, max, first, last, sum, avg, count, pluck, reduce, random, chunk, reverse, & group
-- Model collections have the following notable operations: removeWhere, update, & updateWhere
+- Model collections have the following notable operations: removeWhere, update, updateWhere, & saveWhere
 
 **FAQ**
 
