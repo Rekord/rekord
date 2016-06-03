@@ -3767,6 +3767,8 @@ addMethods( Database.prototype,
       var conflicts = {};
       var conflicted = false;
       var updated = {};
+      var previous = {};
+      var saved = {};
       var notReallySaved = isEmpty( model.$saved );
       var relations = db.relations;
 
@@ -3786,6 +3788,9 @@ addMethods( Database.prototype,
 
         var currentValue = current[ prop ];
         var savedValue = model.$saved[ prop ];
+
+        previous[ prop ] = model[ prop ];
+        saved[ prop ] = savedValue;
 
         if ( notReallySaved || overwrite || equals( currentValue, savedValue ) )
         {
@@ -3808,14 +3813,14 @@ addMethods( Database.prototype,
 
       if ( conflicted )
       {
-        model.$trigger( Model.Events.PartialUpdate, [encoded, conflicts] );
+        model.$trigger( Model.Events.PartialUpdate, [encoded, updated, previous, saved, conflicts] );
       }
       else
       {
-        model.$trigger( Model.Events.FullUpdate, [encoded, updated] );
+        model.$trigger( Model.Events.FullUpdate, [encoded, updated, previous, saved, conflicts] );
       }
 
-      model.$trigger( Model.Events.RemoteUpdate, [encoded] );
+      model.$trigger( Model.Events.RemoteUpdate, [encoded, updated, previous, saved, conflicts] );
 
       model.$addOperation( SaveNow );
 

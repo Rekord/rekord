@@ -1030,3 +1030,90 @@ test( 'cascade chain', function(assert)
   notOk( t1.$hasChanges() );
   notOk( l0.$hasChanges() );
 });
+
+test( 'event partial update', function(assert)
+{
+  var prefix = 'Model_event_partial_update_';
+
+  var Task = Rekord({
+    name: prefix + '_task',
+    fields: ['name', 'done']
+  });
+
+  expect(4);
+
+  var t2 = Task.create({id: 2, name: 't2', done: false});
+
+  t2.$on( Rekord.Model.Events.FullUpdate, function(encoded, updated, previous, saved, conflicts) {
+    ok( false, 'this shoud not be triggered' );
+  });
+
+  t2.$on( Rekord.Model.Events.PartialUpdate, function(encoded, updated, previous, saved, conflicts) {
+    deepEqual( updated, {done: true}, 'done updated' );
+    deepEqual( previous, {done: false, name: 'local change'}, 'previous correct' );
+    deepEqual( saved, {done: false, name: 't2'}, 'saved correct' );
+    deepEqual( conflicts, {name: 'remote change'}, 'conflicts correct' );
+  });
+
+  t2.name = 'local change';
+
+  Task.Database.putRemoteData( {name: 'remote change', done: true}, 2 );
+});
+
+test( 'event full update', function(assert)
+{
+  var prefix = 'Model_event_full_update_';
+
+  var Task = Rekord({
+    name: prefix + '_task',
+    fields: ['name', 'done']
+  });
+
+  expect(4);
+
+  var t2 = Task.create({id: 2, name: 't2', done: false});
+
+  t2.$on( Rekord.Model.Events.FullUpdate, function(encoded, updated, previous, saved, conflicts) {
+    deepEqual( updated, {done: true, name: 'remote change'}, 'done updated' );
+    deepEqual( previous, {done: false, name: 't2'}, 'previous correct' );
+    deepEqual( saved, {done: false, name: 't2'}, 'saved correct' );
+    deepEqual( conflicts, {}, 'conflicts correct' );
+  });
+
+  t2.$on( Rekord.Model.Events.PartialUpdate, function(encoded, updated, previous, saved, conflicts) {
+    ok( false, 'this shoud not be triggered' );
+  });
+
+  Task.Database.putRemoteData( {name: 'remote change', done: true}, 2 );
+});
+
+test( 'event remote update', function(assert)
+{
+  var prefix = 'Model_event_remote_update_';
+
+  var Task = Rekord({
+    name: prefix + '_task',
+    fields: ['name', 'done']
+  });
+
+  expect(5);
+
+  var t2 = Task.create({id: 2, name: 't2', done: false});
+
+  t2.$on( Rekord.Model.Events.RemoteUpdate, function(encoded, updated, previous, saved, conflicts) {
+    deepEqual( updated, {done: true, name: 'remote change'}, 'done updated' );
+    deepEqual( previous, {done: false, name: 't2'}, 'previous correct' );
+    deepEqual( saved, {done: false, name: 't2'}, 'saved correct' );
+    deepEqual( conflicts, {}, 'conflicts correct' );
+  });
+
+  t2.$on( Rekord.Model.Events.FullUpdate, function(encoded, updated, previous, saved, conflicts) {
+    ok( true, 'this shoud be triggered' );
+  });
+
+  t2.$on( Rekord.Model.Events.PartialUpdate, function(encoded, updated, previous, saved, conflicts) {
+    ok( false, 'this shoud not be triggered' );
+  });
+
+  Task.Database.putRemoteData( {name: 'remote change', done: true}, 2 );
+});
