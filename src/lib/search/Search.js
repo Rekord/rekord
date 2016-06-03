@@ -41,13 +41,9 @@ addMethods( Search.prototype,
     this.$append = false;
     this.$db = database;
     this.$url = url;
+    this.$set( props );
     this.$results = new ModelCollection( database );
     this.$promise = Promise.resolve( this );
-
-    if ( isObject( props ) )
-    {
-      this.$set( props );
-    }
 
     if ( run )
     {
@@ -57,11 +53,32 @@ addMethods( Search.prototype,
 
   $set: function(props)
   {
-    return transfer( props, this );
+    if ( isObject( props ) )
+    {
+      transfer( props, this );
+    }
+
+    return this;
   },
 
-  $run: function()
+  $unset: function()
   {
+    for (var prop in this)
+    {
+      if ( prop.charAt(0) !== '$' )
+      {
+        delete this[ prop ];
+      }
+    }
+
+    return this;
+  },
+
+  $run: function(url, props)
+  {
+    this.$url = url || this.$url;
+    this.$set( props );
+
     var encoded = this.$encode();
     var success = bind( this, this.$handleSuccess );
     var failure = bind( this, this.$handleFailure );
@@ -127,6 +144,11 @@ addMethods( Search.prototype,
   $cancel: function()
   {
     this.$promise.cancel();
+  },
+
+  $clear: function()
+  {
+    this.$results.clear();
   },
 
   $encode: function()
