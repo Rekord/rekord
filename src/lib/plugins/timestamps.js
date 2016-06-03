@@ -10,21 +10,34 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
     return;
   }
 
-  function currentTimestamp()
+  function fieldSpecific(field, map)
   {
-    return convertDate( new Date(), timeType );
+    return isObject( map ) ? map[ field ] : map;
   }
 
-  function encode(x)
+  function currentTimestamp(field)
   {
-    var encoded = convertDate( x, timeFormat );
+    var to = fieldSpecific( field, timeType );
+
+    return function()
+    {
+      return convertDate( new Date(), to );
+    };
+  }
+
+  function encode(x, model, field, forSaving)
+  {
+    var to = fieldSpecific( field, timeFormat );
+    var encoded = convertDate( x, to );
 
     return encoded || x;
   }
 
-  function decode(x)
+  function decode(x, rawData, field)
   {
-    var decoded = convertDate( x, timeType, timeUTC );
+    var to = fieldSpecific( field, timeType );
+    var utc = fieldSpecific( field, timeUTC );
+    var decoded = convertDate( x, to, utc );
 
     return decoded || x;
   }
@@ -41,7 +54,7 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 
     if ( !(field in db.defaults) )
     {
-      db.defaults[ field ] = currentTimestamp;
+      db.defaults[ field ] = currentTimestamp( field );
     }
     if ( timeFormat && !(field in db.encodings) )
     {

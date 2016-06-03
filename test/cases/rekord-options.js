@@ -1157,6 +1157,29 @@ test( 'timestamps custom', function(assert)
   isInstance( t0.done_at, Date );
 });
 
+test( 'timestamps type many', function(assert)
+{
+  var prefix = 'timestamps_type_many_';
+
+  var Todo = Rekord({
+    name: prefix + 'todo',
+    fields: ['name', 'done'],
+    defaults: { done: false },
+    timestamps: ['done_at', 'created_at'],
+    timestampType: {
+      done_at: Rekord.Timestamp.Date,
+      created_at: Rekord.Timestamp.Millis
+    }
+  });
+
+  deepEqual( Todo.Database.fields, ['id', 'name', 'done', 'done_at', 'created_at'] );
+
+  var t0 = Todo.boot({id: 1, name: 't0', done_at: '01/02/2003', created_at: '04/05/2006'});
+
+  isInstance( t0.done_at, Date, 'done_at is Date' );
+  ok( Rekord.isNumber( t0.created_at), 'created_at is number' );
+});
+
 test( 'timestamps type date', function(assert)
 {
   var prefix = 'timestamps_type_date_';
