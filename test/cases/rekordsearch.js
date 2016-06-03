@@ -307,3 +307,32 @@ test( '$offline', function(assert)
 
   noline();
 });
+
+test( '$change', function(assert)
+{
+  var prefix = 'RekordSearch_change_';
+
+  var Todo = Rekord({
+    name: prefix + 'todo',
+    fields: ['name', 'done']
+  });
+
+  var rest = Todo.Database.rest;
+
+  rest.returnValue = [
+      {id: 1, name: 't0', done: 1},
+      {id: 2, name: 't1', done: 0}
+  ];
+
+  var search = Todo.search('/some/url');
+
+  expect( 2 );
+
+  search.$change(function()
+  {
+    ok( true, 'change triggered' );
+    strictEqual( this.length, 2 );
+  });
+
+  search.$run();
+});

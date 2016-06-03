@@ -9909,6 +9909,11 @@ addMethods( Search.prototype,
   $key: function()
   {
     return '';
+  },
+
+  $change: function(callback, context)
+  {
+    return this.$results.change( callback, context );
   }
 
 });
