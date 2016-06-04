@@ -192,12 +192,7 @@ addMethods( Relation.prototype,
     var queryOptions = this.queryOptions;
     var queryData = this.queryData;
     var query = isString( queryOption ) ? format( queryOption, model ) : queryOption;
-    var search = this.model.search( query, queryOptions );
-
-    if ( isObject( queryData ) )
-    {
-      transfer( queryData, search );
-    }
+    var search = this.model.search( query, queryOptions, queryData );
 
     Rekord.debug( this.debugQuery, this, model, search, queryOption, query, queryData );
 
