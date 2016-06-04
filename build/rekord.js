@@ -9596,6 +9596,28 @@ extendArray( ModelCollection, RelationCollection,
   },
 
   /**
+   * Unrelates any models in this collection which meet the where expression.
+   *
+   * @method
+   * @memberof Rekord.RelationCollection#
+   * @param {whereInput} [properties] -
+   *    See {@link Rekord.createWhere}
+   * @param {Any} [value] -
+   *    See {@link Rekord.createWhere}
+   * @param {equalityCallback} [equals] -
+   *    See {@link Rekord.createWhere}
+   * @return {Rekord.RelationCollection} -
+   *    The reference to this collection.
+   * @see Rekord.createWhere
+   * @see Rekord.RelationCollection.unrelate
+   * @see Rekord.RelationCollection.where
+   */
+  unrelateWhere: function(properties, value, equals)
+  {
+    return this.unrelate( this.where( properties, value, equals, [] ) );
+  },
+
+  /**
    * Determines whether one or more models all exist in this collection.
    *
    * @method
