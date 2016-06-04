@@ -15737,10 +15737,16 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
   var timeFormat = options.timestampFormat || Database.Defaults.timestampFormat;
   var timeType = options.timestampType || Database.Defaults.timestampType;
   var timeUTC = options.timestampUTC || Database.Defaults.timestampUTC;
+  var timeCurrent = options.timestampCurrent || Database.Defaults.timestampCurrent;
 
   if ( !time )
   {
     return;
+  }
+
+  function hasDefault(field)
+  {
+    return timeCurrent === true || indexOf( timeCurrent, field ) !== false;
   }
 
   function fieldSpecific(field, map)
@@ -15785,14 +15791,16 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
       db.saveFields.push( field );
     }
 
-    if ( !(field in db.defaults) )
+    if ( hasDefault( field ) && !(field in db.defaults) )
     {
       db.defaults[ field ] = currentTimestamp( field );
     }
+
     if ( timeFormat && !(field in db.encodings) )
     {
       db.encodings[ field ] = encode;
     }
+
     if ( timeType && !(field in db.decodings ) )
     {
       db.decodings[ field ] = decode;
@@ -15870,6 +15878,7 @@ var Timestamp = {
 Database.Defaults.timestampFormat = Timestamp.Millis;
 Database.Defaults.timestampType = Timestamp.Date;
 Database.Defaults.timestampUTC = false;
+Database.Defaults.timestampCurrent = ['created_at', 'updated_at'];
 
 function convertDate(x, to, utc)
 {

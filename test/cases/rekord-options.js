@@ -1145,7 +1145,8 @@ test( 'timestamps custom', function(assert)
     name: prefix + 'todo',
     fields: ['name', 'done'],
     defaults: { done: false },
-    timestamps: 'done_at'
+    timestamps: 'done_at',
+    timestampCurrent: ['done_at']
   });
 
   deepEqual( Todo.Database.fields, ['id', 'name', 'done', 'done_at'] );
@@ -1337,6 +1338,39 @@ test( 'timestamps format custom', function(assert)
   var e0 = t0.$toJSON(true);
 
   strictEqual( e0.done_at, '2003-1-2' );
+});
+
+test( 'timestamps defaults normal', function(assert)
+{
+  var prefix = 'timestamps_defaults_normal_';
+
+  var Todo = Rekord({
+    name: prefix + 'todo',
+    fields: ['name', 'done'],
+    timestamps: ['done_at', 'created_at']
+  });
+
+  var t0 = Todo.create({name: 't0', done: false});
+
+  isInstance( t0.created_at, Date, 'created_at is Date' );
+  strictEqual( t0.done_at, void 0, 'done_at is null' );
+});
+
+test( 'timestamps defaults custom', function(assert)
+{
+  var prefix = 'timestamps_defaults_custom_';
+
+  var Todo = Rekord({
+    name: prefix + 'todo',
+    fields: ['name', 'done'],
+    timestamps: ['done_at', 'created_at'],
+    timestampCurrent: ['done_at', 'created_at']
+  });
+
+  var t0 = Todo.create({name: 't0', done: false});
+
+  isInstance( t0.created_at, Date, 'created_at is Date' );
+  isInstance( t0.done_at, Date, 'done_at is Date' );
 });
 
 test( 'timestamps updated_at saving skipped', function(assert)
