@@ -886,7 +886,7 @@ extendArray( Collection, ModelCollection,
 
         if ( !avoidSave )
         {
-          model.$save( cascade );
+          model.$save();
         }
       }
 
