@@ -1591,3 +1591,57 @@ test( 'publishAlways', function(assert)
 
   deepEqual( TodoLive.lastMessage.model, {name: 't1', updated_at: 23} );
 });
+
+test( 'store false', function(assert)
+{
+  var prefix = 'store_false_';
+  var TaskName = prefix + 'task';
+
+  var Task = Rekord({
+    name: TaskName,
+    fields: ['name', 'done'],
+    store: false
+  });
+
+  var t1 = Task.create({id: 1, name: 't1', done: false});
+
+  notOk( Rekord.store[ TaskName ] );
+  ok( Rekord.rest[ TaskName ] );
+  ok( Rekord.live[ TaskName ] );
+});
+
+test( 'rest false', function(assert)
+{
+  var prefix = 'rest_false_';
+  var TaskName = prefix + 'task';
+
+  var Task = Rekord({
+    name: TaskName,
+    fields: ['name', 'done'],
+    rest: false
+  });
+
+  var t1 = Task.create({id: 1, name: 't1', done: false});
+
+  ok( Rekord.store[ TaskName ] );
+  notOk( Rekord.rest[ TaskName ] );
+  ok( Rekord.live[ TaskName ] );
+});
+
+test( 'live false', function(assert)
+{
+  var prefix = 'live_false_';
+  var TaskName = prefix + 'task';
+
+  var Task = Rekord({
+    name: TaskName,
+    fields: ['name', 'done'],
+    live: false
+  });
+
+  var t1 = Task.create({id: 1, name: 't1', done: false});
+
+  ok( Rekord.store[ TaskName ] );
+  ok( Rekord.rest[ TaskName ] );
+  notOk( Rekord.live[ TaskName ] );
+});

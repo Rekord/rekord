@@ -147,17 +147,17 @@ function defaultSummarize(model)
 
 function defaultCreateRest(database)
 {
-  return Rekord.rest( database );
+  return database.rest === false ? Rekord.defaultRest( database ) : Rekord.rest( database );
 }
 
 function defaultCreateStore(database)
 {
-  return Rekord.store( database );
+  return database.store === false ? Rekord.defaultStore( database ) : Rekord.store( database );
 }
 
 function defaultCreateLive( database )
 {
-  return Rekord.live( database );
+  return database.live === false ? Rekord.defaultLive( database ) : Rekord.live( database );
 }
 
 function defaultResolveModel( response )
