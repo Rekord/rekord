@@ -16036,6 +16036,7 @@ Rekord.convertDate = convertDate;
   /* Classes */
   Rekord.Model = Model;
   Rekord.Database = Database;
+  Rekord.Defaults = Database.Defaults;
   Rekord.Relation = Relation;
   Rekord.Operation = Operation;
   Rekord.Search = Search;
