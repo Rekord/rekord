@@ -72,7 +72,9 @@ function createFormatter(template)
       }
       else
       {
-        formatted += parts[ i ]( base );
+        var parsed = parts[ i ]( base );
+
+        formatted += isValue( parsed ) ? parsed : '';
       }
     }
 

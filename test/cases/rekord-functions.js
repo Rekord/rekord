@@ -760,6 +760,19 @@ test( 'Rekord.format', function(assert)
   );
 });
 
+test( 'Rekord.createFormatter', function(assert)
+{
+  var m0 = {name: 'yes', age: 23};
+  var m1 = {name: 23};
+  var m2 = {age: 5};
+
+  var formatter = Rekord.createFormatter('{name} is {age}');
+
+  strictEqual( formatter( m0 ), 'yes is 23' );
+  strictEqual( formatter( m1 ), '23 is ' );
+  strictEqual( formatter( m2 ), ' is 5' );
+});
+
 test( 'Rekord.isFormatInput', function(assert)
 {
   ok(    Rekord.isFormatInput('Hi {name}') );
