@@ -992,3 +992,26 @@ test( 'Rekord.cleanFunctions', function(assert)
     {x: 1}
   );
 });
+
+test( 'Rekord.collapse', function(assert)
+{
+  deepEqual(
+    Rekord.collapse(
+      2,
+      {name: 'first'},
+      {name: 'second', age: 27},
+      {email: 'taco@bell.com'}
+    ),
+    {name: 'first', age: 27, email: 'taco@bell.com'}
+  );
+
+  deepEqual(
+    Rekord.collapse(),
+    {}
+  );
+
+  deepEqual(
+    Rekord.collapse(23),
+    {}
+  );
+});
