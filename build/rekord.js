@@ -1897,7 +1897,8 @@ toCamelCase.REGEX = /(^.|_.)/g;
 
 function split(x, delimiter, escape)
 {
-  var splits = x.split( delimiter );
+  var regexDelimiter = isRegExp( delimiter ) ? delimiter : new RegExp( '(' + delimiter + ')' );
+  var splits = x.split( regexDelimiter );
   var i = 0;
   var n = splits.length - 2;
 

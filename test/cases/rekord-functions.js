@@ -640,3 +640,56 @@ test( 'Rekord.hasFields', function(assert)
   notOk( Rekord.hasFields( m0, 'noprop', exists ) );
   notOk( Rekord.hasFields( m0, ['id', 'noprop'], exists ) );
 });
+
+test( 'Rekord.split', function(assert)
+{
+  deepEqual(
+    Rekord.split( 'some,text', /([,])/, '\\' ),
+    ['some', 'text']
+  );
+
+  deepEqual(
+    Rekord.split( '', /([,])/, '\\' ),
+    ['']
+  );
+
+  deepEqual(
+    Rekord.split( 'some,text,,meow', /([,])/, '\\' ),
+    ['some', 'text', '', 'meow']
+  );
+
+  deepEqual(
+    Rekord.split( 'some,text,,meow\\, kitty', /([,])/, '\\' ),
+    ['some', 'text', '', 'meow, kitty']
+  );
+
+  deepEqual(
+    Rekord.split( 'Hello\\, World', /([,])/, '\\' ),
+    ['Hello, World']
+  );
+
+  deepEqual(
+    Rekord.split( 'some,text', ',', '\\' ),
+    ['some', 'text']
+  );
+
+  deepEqual(
+    Rekord.split( '', ',', '\\' ),
+    ['']
+  );
+
+  deepEqual(
+    Rekord.split( 'some,text,,meow', ',', '\\' ),
+    ['some', 'text', '', 'meow']
+  );
+
+  deepEqual(
+    Rekord.split( 'some,text,,meow\\, kitty', ',', '\\' ),
+    ['some', 'text', '', 'meow, kitty']
+  );
+
+  deepEqual(
+    Rekord.split( 'Hello\\, World', ',', '\\' ),
+    ['Hello, World']
+  );
+});
