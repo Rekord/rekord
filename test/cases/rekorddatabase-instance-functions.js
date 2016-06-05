@@ -570,3 +570,138 @@ test( 'override refresh', function(assert)
   strictEqual( t0.name, 't0' );
   strictEqual( t1.name, 't1' );
 });
+
+test( 'setStoreEnabled', function(assert)
+{
+  var prefix = 'setStoreEnabled_';
+  var TaskName = prefix + 'task';
+
+  var Task = Rekord({
+    name: TaskName,
+    fields: ['name', 'done']
+  });
+
+  var TaskStore = Task.Database.store;
+
+  var t1 = Task.create({id: 1, name: 't1', done: true});
+
+  deepEqual( TaskStore.map.get(1), {id: 1, name: 't1', done: true, $status: 0, $saved: {id: 1, name: 't1', done: true}});
+
+  Task.Database.setStoreEnabled( false );
+
+  t1.done = false;
+  t1.$save();
+
+  deepEqual( TaskStore.map.get(1), {id: 1, name: 't1', done: true, $status: 0, $saved: {id: 1, name: 't1', done: true}});
+
+  Task.Database.setStoreEnabled( true );
+
+  t1.name = 't2';
+  t1.$save();
+
+  deepEqual( TaskStore.map.get(1), {id: 1, name: 't2', done: false, $status: 0, $saved: {id: 1, name: 't2', done: false}});
+
+  Task.Database.setStoreEnabled( false );
+
+  t1.name = 't3';
+  t1.$save();
+
+  deepEqual( TaskStore.map.get(1), {id: 1, name: 't2', done: false, $status: 0, $saved: {id: 1, name: 't2', done: false}});
+
+  Task.Database.setStoreEnabled( true );
+
+  t1.name = 't4';
+  t1.$save();
+
+  deepEqual( TaskStore.map.get(1), {id: 1, name: 't4', done: false, $status: 0, $saved: {id: 1, name: 't4', done: false}});
+});
+
+test( 'setRestEnabled', function(assert)
+{
+  var prefix = 'setRestEnabled_';
+  var TaskName = prefix + 'task';
+
+  var Task = Rekord({
+    name: TaskName,
+    fields: ['name', 'done']
+  });
+
+  var TaskRest = Task.Database.rest;
+
+  var t1 = Task.create({id: 1, name: 't1', done: true});
+
+  deepEqual( TaskRest.map.get(1), {id: 1, name: 't1', done: true});
+
+  Task.Database.setRestEnabled( false );
+
+  t1.done = false;
+  t1.$save();
+
+  deepEqual( TaskRest.map.get(1), {id: 1, name: 't1', done: true});
+
+  Task.Database.setRestEnabled( true );
+
+  t1.name = 't2';
+  t1.$save();
+
+  deepEqual( TaskRest.map.get(1), {id: 1, name: 't2', done: true});
+
+  Task.Database.setRestEnabled( false );
+
+  t1.name = 't3';
+  t1.$save();
+
+  deepEqual( TaskRest.map.get(1), {id: 1, name: 't2', done: true});
+
+  Task.Database.setRestEnabled( true );
+
+  t1.name = 't4';
+  t1.$save();
+
+  deepEqual( TaskRest.map.get(1), {id: 1, name: 't4', done: true});
+});
+
+test( 'setLiveEnabled', function(assert)
+{
+  var prefix = 'setLiveEnabled_';
+  var TaskName = prefix + 'task';
+
+  var Task = Rekord({
+    name: TaskName,
+    fields: ['name', 'done']
+  });
+
+  var TaskLive = Task.Database.live;
+
+  var t1 = Task.create({id: 1, name: 't1', done: true});
+
+  deepEqual( TaskLive.lastMessage.model, {id: 1, name: 't1', done: true});
+
+  Task.Database.setLiveEnabled( false );
+
+  t1.done = false;
+  t1.$save();
+
+  deepEqual( TaskLive.lastMessage.model, {id: 1, name: 't1', done: true});
+
+  Task.Database.setLiveEnabled( true );
+
+  t1.name = 't2';
+  t1.$save();
+
+  deepEqual( TaskLive.lastMessage.model, {name: 't2'});
+
+  Task.Database.setLiveEnabled( false );
+
+  t1.name = 't3';
+  t1.$save();
+
+  deepEqual( TaskLive.lastMessage.model, {name: 't2'});
+
+  Task.Database.setLiveEnabled( true );
+
+  t1.name = 't4';
+  t1.$save();
+
+  deepEqual( TaskLive.lastMessage.model, {name: 't4'});
+});

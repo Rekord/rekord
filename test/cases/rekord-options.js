@@ -680,12 +680,12 @@ test( 'encode decode', function(assert)
     defaults: {
       created_at: now
     },
-    decode: function(rawData) {
+    decode: function(model, rawData) {
       if (typeof rawData.created_at === 'number') rawData.created_at = new Date( rawData.created_at );
       if (typeof rawData.validation === 'string') rawData.validation = new RegExp( rawData.validation );
       return rawData;
     },
-    encode: function(data) {
+    encode: function(model, data, forSaving) {
       if (data.created_at instanceof Date) data.created_at = data.created_at.getTime();
       if (data.validation instanceof RegExp) data.validation = data.validation.source;
       return data;

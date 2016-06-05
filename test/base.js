@@ -294,7 +294,7 @@ TestStore.prototype =
     var map = this.map;
     function onPut()
     {
-      map.put( key, record );
+      map.put( key, Rekord.copy( record, true ) );
       success.apply( this, arguments );
     }
 
@@ -351,7 +351,7 @@ TestLive.prototype =
     this.lastMessage = {
       op: 'SAVE',
       key: model.$key(),
-      model: data
+      model: Rekord.copy( data )
     };
 
     if ( this.onHandleMessage )

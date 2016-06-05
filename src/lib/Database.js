@@ -222,6 +222,57 @@ Database.Defaults =
 addMethods( Database.prototype,
 {
 
+  setStoreEnabled: function(enabled)
+  {
+    if ( enabled )
+    {
+      if ( this.storeDisabled )
+      {
+        this.store = this.storeDisabled;
+        this.storeDisabled = false;
+      }
+    }
+    else if ( !this.storeDisabled )
+    {
+      this.storeDisabled = this.store;
+      this.store = Rekord.defaultStore( this );
+    }
+  },
+
+  setRestEnabled: function(enabled)
+  {
+    if ( enabled )
+    {
+      if ( this.restDisabled )
+      {
+        this.rest = this.restDisabled;
+        this.restDisabled = false;
+      }
+    }
+    else if ( !this.restDisabled )
+    {
+      this.restDisabled = this.rest;
+      this.rest = Rekord.defaultRest( this );
+    }
+  },
+
+  setLiveEnabled: function(enabled)
+  {
+    if ( enabled )
+    {
+      if ( this.liveDisabled )
+      {
+        this.live = this.liveDisabled;
+        this.liveDisabled = false;
+      }
+    }
+    else if ( !this.liveDisabled )
+    {
+      this.liveDisabled = this.live;
+      this.live = Rekord.defaultLive( this );
+    }
+  },
+
   // Notifies a callback when the database has loaded (either locally or remotely).
   ready: function(callback, context, persistent)
   {
