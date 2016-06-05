@@ -827,6 +827,17 @@ test( 'Rekord.parse', function(assert)
   );
 });
 
+test( 'Rekord.isParseInput', function(assert)
+{
+  notOk( Rekord.isParseInput('Hi {name}') );
+  notOk( Rekord.isParseInput('{name} says hello') );
+  ok(    Rekord.isParseInput('user.name') );
+  ok(    Rekord.isParseInput('[0]') );
+  ok(    Rekord.isParseInput('user[0].name') );
+  notOk( Rekord.isParseInput('user') );
+  notOk( Rekord.isParseInput('Hey how are you doing?!?') );
+});
+
 test( 'Rekord.createPropertyResolver', function(assert)
 {
   var person = {
