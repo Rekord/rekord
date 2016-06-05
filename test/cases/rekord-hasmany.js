@@ -417,6 +417,57 @@ test( 'unrelate', function(assert)
   strictEqual( l0.tasks.length, 0 );
 });
 
+test( 'unrelateWhere', function(assert)
+{
+  var prefix = 'hasMany_unrelateWhere_';
+  var index = 0;
+  var nextIndex = function() {
+    return index++;
+  };
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['id', 'task_list_id', 'name', 'index', 'done'],
+    defaults: { index: nextIndex, done: false },
+    belongsTo: {
+      list: {
+        model: prefix + 'list',
+        local: 'task_list_id'
+      }
+    }
+  });
+
+  var TaskList = Rekord({
+    name: prefix + 'list',
+    fields: ['id', 'name'],
+    hasMany: {
+      tasks: {
+        model: Task,
+        foreign: 'task_list_id',
+        comparator: 'index'
+      }
+    }
+  });
+
+  var t0 = Task.create({name: 't0'});
+  var t1 = Task.create({name: 't1', done: true});
+  var t2 = Task.create({name: 't2'});
+  var t3 = Task.create({name: 't3', done: true});
+  var l0 = TaskList.create({name: 'l0', tasks: [t0, t1, t2, t3]});
+
+  strictEqual( l0.tasks.length, 4 );
+
+  l0.tasks.unrelateWhere('done', true);
+
+  strictEqual( l0.tasks.length, 2 );
+  strictEqual( l0.tasks[0], t0 );
+  strictEqual( l0.tasks[1], t2 );
+
+  l0.tasks.unrelateWhere();
+
+  strictEqual( l0.tasks.length, 0 );
+});
+
 test( 'isRelated', function(assert)
 {
   var prefix = 'hasMany_isRelated_';

@@ -5950,7 +5950,7 @@ extendArray( Array, Collection,
 
       if ( where( a ) )
       {
-        target.add( a );
+        target.push( a );
       }
     }
 
