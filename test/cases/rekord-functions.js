@@ -759,3 +759,61 @@ test( 'Rekord.format', function(assert)
     'He has 2 children'
   );
 });
+
+test( 'Rekord.parse', function(assert)
+{
+  var person = {
+    first: 'John',
+    last: 'Jacob',
+    age: 27,
+    cool: true,
+    contact: {
+      phone: '8675309'
+    },
+    favorite_numbers: [1, 2, 4, 8, 16],
+    kids: [
+      {name: 'Mackenzie', age: 2},
+      {name: 'Connor', age: 0}
+    ]
+  };
+
+  strictEqual(
+    Rekord.parse('', person),
+    person
+  );
+
+  strictEqual(
+    Rekord.parse('first', person),
+    'John'
+  );
+
+  strictEqual(
+    Rekord.parse('cool', person),
+    true
+  );
+
+  strictEqual(
+    Rekord.parse('contact.phone', person),
+    '8675309'
+  );
+
+  strictEqual(
+    Rekord.parse('favorite_numbers[0]', person),
+    person.favorite_numbers[0]
+  );
+
+  strictEqual(
+    Rekord.parse('favorite_numbers', person),
+    person.favorite_numbers
+  );
+
+  strictEqual(
+    Rekord.parse('kids[0].name', person),
+    'Mackenzie'
+  );
+
+  strictEqual(
+    Rekord.parse('kids.length', person),
+    person.kids.length
+  );
+});
