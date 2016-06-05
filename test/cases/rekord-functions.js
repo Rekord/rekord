@@ -1081,3 +1081,49 @@ test( 'Rekord.parseDate', function(assert)
   var d4 = pd( 'no' );
   strictEqual( d4, false );
 });
+
+test( 'Rekord.evaluate', function(assert)
+{
+  var prefix = 'Rekord_evaluate_';
+
+  var currentId = 0;
+  var nextId = function() {
+    return ++currentId;
+  };
+
+  var Task = Rekord({
+    name: prefix,
+    fields: ['name', 'done'],
+    defaults: {
+      id: nextId,
+      name: '',
+      done: false
+    }
+  });
+
+  var eval = Rekord.evaluate;
+
+  var a = {x: 1, y: 2};
+  var b = [1, 2];
+
+  strictEqual( eval( undefined ), undefined );
+  strictEqual( eval( null ), null );
+  strictEqual( eval( 'meow' ), 'meow' );
+  strictEqual( eval( 23 ), 23 );
+  strictEqual( eval( true ), true );
+
+  ok( Rekord.isNumber( eval( Date.now ) ) );
+  ok( Rekord.isNumber( eval( Math.random ) ) );
+
+  notStrictEqual( eval( a ), a );
+  deepEqual( eval( a ), a );
+  strictEqual( eval( a, true ), a );
+
+  notStrictEqual( eval( b ), b );
+  deepEqual( eval( b ), b );
+  strictEqual( eval( b, true ), b );
+
+  isInstance( eval( Task ), Task );
+
+  deepEqual( eval( Task ).$toJSON(), {id: 2, name: '', done: false} );
+});
