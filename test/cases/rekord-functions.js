@@ -1049,3 +1049,35 @@ test( 'Rekord.compareNumbers', function(assert)
   strictEqual( cn( 5, 6 ), -1 );  // 5 < 6
   strictEqual( cn( 6, 5 ), 1 );  // 6 > 5
 });
+
+test( 'Rekord.parseDate', function(assert)
+{
+  var pd = Rekord.parseDate;
+
+  var d1 = pd( '01/03/1989 18:23:53' );
+  strictEqual( d1.getMonth(), 0 );
+  strictEqual( d1.getDate(), 3 );
+  strictEqual( d1.getFullYear(), 1989 );
+  strictEqual( d1.getHours(), 18 );
+  strictEqual( d1.getMinutes(), 23 );
+  strictEqual( d1.getSeconds(), 53 );
+
+  var d2 = pd( d1.getTime() );
+  strictEqual( d2.getMonth(), 0 );
+  strictEqual( d2.getDate(), 3 );
+  strictEqual( d2.getFullYear(), 1989 );
+  strictEqual( d2.getHours(), 18 );
+  strictEqual( d2.getMinutes(), 23 );
+  strictEqual( d2.getSeconds(), 53 );
+
+  var d3 = pd( d2 );
+  strictEqual( d3.getMonth(), 0 );
+  strictEqual( d3.getDate(), 3 );
+  strictEqual( d3.getFullYear(), 1989 );
+  strictEqual( d3.getHours(), 18 );
+  strictEqual( d3.getMinutes(), 23 );
+  strictEqual( d3.getSeconds(), 53 );
+
+  var d4 = pd( 'no' );
+  strictEqual( d4, false );
+});
