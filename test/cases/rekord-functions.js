@@ -608,10 +608,10 @@ test( 'Rekord.saveNumberResolver', function(assert)
 
   deepEqual( n0( m0 ), 22 );
   deepEqual( n0( m1 ), 23 );
-  deepEqual( n0( m2 ), NaN );
+  deepEqual( n0( m2 ), undefined );
 
-  deepEqual( n1( m0 ), NaN );
-  deepEqual( n1( m1 ), NaN );
+  deepEqual( n1( m0 ), undefined );
+  deepEqual( n1( m1 ), undefined );
   deepEqual( n1( m2 ), 45 );
 });
 
@@ -859,11 +859,6 @@ test( 'Rekord.createPropertyResolver', function(assert)
     'John'
   );
 
-  strictEqual(
-    Rekord.createPropertyResolver( 'contact.phone' )( person ),
-    '8675309'
-  );
-
   deepEqual(
     Rekord.createPropertyResolver( ['first', 'last'] )( person ),
     ['John', 'Jacob']
@@ -872,5 +867,62 @@ test( 'Rekord.createPropertyResolver', function(assert)
   deepEqual(
     Rekord.createPropertyResolver( {first: null, contact: 'phone'} )( person ),
     {first: 'John', contact: '8675309'}
+  );
+});
+
+test( 'Rekord.createNumberResolver', function(assert)
+{
+  var person = {
+    first: 'John',
+    last: 'Jacob',
+    age: 27,
+    cool: true,
+    contact: {
+      phone: '8675309'
+    },
+    favorite_numbers: [1, 2, 4, 8, 16],
+    kids: [
+      {name: 'Mackenzie', age: 2},
+      {name: 'Connor', age: 0}
+    ]
+  };
+
+  function customResolver(x) {
+    return Rekord.sizeof(x);
+  }
+
+  strictEqual(
+    Rekord.createNumberResolver( customResolver )( person ),
+    7
+  );
+
+  strictEqual(
+    Rekord.createNumberResolver( '{age} {first} is' )( person ),
+    27 // 27 John is
+  );
+
+  strictEqual(
+    Rekord.createNumberResolver( 'contact.phone' )( person ),
+    8675309
+  );
+
+  strictEqual(
+    Rekord.createNumberResolver( 'first' )( person ),
+    undefined
+  );
+
+  strictEqual(
+    Rekord.createNumberResolver( 'first', false )( person ),
+    false
+  );
+
+  strictEqual(
+    Rekord.createNumberResolver( ['first', 'last'] )( person ),
+    undefined
+  );
+
+  strictEqual(
+    Rekord.createNumberResolver( {first: null, contact: 'phone'} )( person ),
+    undefined
   );
 });

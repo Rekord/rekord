@@ -1768,16 +1768,16 @@ function parseDate(x, utc)
 
 var NumberResolvers = {};
 
-function saveNumberResolver(name, numbers)
+function saveNumberResolver(name, numbers, invalidValue)
 {
-  var resolver = createNumberResolver( numbers );
+  var resolver = createNumberResolver( numbers, invalidValue );
 
   NumberResolvers[ name ] = resolver;
 
   return resolver;
 }
 
-function createNumberResolver(numbers)
+function createNumberResolver(numbers, invalidValue)
 {
   var resolver = createPropertyResolver( numbers );
 
@@ -1788,7 +1788,9 @@ function createNumberResolver(numbers)
 
   return function resolveNumber(model)
   {
-    return parseFloat( resolver( model ) );
+    var parsed = parseFloat( resolver( model ) );
+
+    return isNaN( parsed ) ? invalidValue : parsed;
   };
 }
 
