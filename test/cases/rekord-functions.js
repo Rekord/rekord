@@ -1015,3 +1015,12 @@ test( 'Rekord.collapse', function(assert)
     {}
   );
 });
+
+test( 'Rekord.compareNumbers', function(assert)
+{
+  var cn = Rekord.compareNumbers;
+
+  strictEqual( cn( 5, 5.0 ), 0 ); // 5 === 5
+  strictEqual( cn( 5, 6 ), -1 );  // 5 < 6
+  strictEqual( cn( 6, 5 ), 1 );  // 6 > 5
+});
