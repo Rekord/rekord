@@ -760,6 +760,15 @@ test( 'Rekord.format', function(assert)
   );
 });
 
+test( 'Rekord.isFormatInput', function(assert)
+{
+  ok(    Rekord.isFormatInput('Hi {name}') );
+  ok(    Rekord.isFormatInput('{name} says hello') );
+  notOk( Rekord.isFormatInput('user.name') );
+  notOk( Rekord.isFormatInput('user') );
+  notOk( Rekord.isFormatInput('Hey how are you doing?!?') );
+});
+
 test( 'Rekord.parse', function(assert)
 {
   var person = {
