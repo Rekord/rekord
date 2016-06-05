@@ -972,3 +972,10 @@ test( 'Rekord.createNumberResolver', function(assert)
     undefined
   );
 });
+
+test( 'Rekord.clean', function(assert)
+{
+  deepEqual( Rekord.clean({x: 1, y: 2}), {x: 1, y: 2} );
+  deepEqual( Rekord.clean({x: 1, $y: 2}), {x: 1} );
+  deepEqual( Rekord.clean({$x: 1, $y: 2}), {} );
+});
