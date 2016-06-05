@@ -280,7 +280,6 @@ test( 'Rekord.compare', function(assert)
   var d0 = new Date( d2 );
   var d1 = new Date( d2 );
 
-
   strictEqual( Rekord.compare( 1, 1 ), 0, 'okay - equivalent values' );
   strictEqual( Rekord.compare( 1, '1' ), 0 );
   strictEqual( Rekord.compare( [], [] ), 0 );
@@ -299,6 +298,32 @@ test( 'Rekord.compare', function(assert)
   strictEqual( Rekord.compare( 1, null, true ), +1 );
   strictEqual( Rekord.compare( null, 1 ), +1 );
   strictEqual( Rekord.compare( null, 1, true ), -1 );
+});
+
+test( 'Rekord.equalsCompare', function(assert)
+{
+  var d2 = currentTime()();
+  var d0 = new Date( d2 );
+  var d1 = new Date( d2 );
+
+  strictEqual( Rekord.equalsCompare( 1, 1 ), true, 'okay - equivalent values' );
+  strictEqual( Rekord.equalsCompare( 1, '1' ), true );
+  strictEqual( Rekord.equalsCompare( [], [] ), true );
+  strictEqual( Rekord.equalsCompare( 1, 1 ), true );
+  strictEqual( Rekord.equalsCompare( null, void 0 ), true );
+  strictEqual( Rekord.equalsCompare( null, null ), true );
+  strictEqual( Rekord.equalsCompare( void 0, void 0 ), true );
+  strictEqual( Rekord.equalsCompare( '3,4,5', [3,4,5] ), true );
+  strictEqual( Rekord.equalsCompare( d0, d1 ), true );
+  strictEqual( Rekord.equalsCompare( d0, d2 ), true );
+
+  strictEqual( Rekord.equalsCompare( 1, 2 ), false, 'okay - numbers' );
+  strictEqual( Rekord.equalsCompare( 2, 1 ), false );
+
+  strictEqual( Rekord.equalsCompare( 1, null ), false, 'okay - against nulls' );
+  strictEqual( Rekord.equalsCompare( 1, null, true ), false );
+  strictEqual( Rekord.equalsCompare( null, 1 ), false );
+  strictEqual( Rekord.equalsCompare( null, 1, true ), false );
 });
 
 test( 'Rekord.equals', function(assert)
