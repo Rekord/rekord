@@ -43,6 +43,11 @@ function equalsStrict(a, b)
   return a === b;
 }
 
+function equalsWeak(a, b)
+{
+  return a == b;
+}
+
 function equalsCompare(a, b)
 {
   return compare( a, b ) === 0;

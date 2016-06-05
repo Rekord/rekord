@@ -79,6 +79,7 @@
 
   /* Comparison Functions */
   Rekord.equalsStrict = equalsStrict;
+  Rekord.equalsWeak = equalsWeak;
   Rekord.equalsCompare = equalsCompare;
   Rekord.equals = equals;
   Rekord.compareNumbers = compareNumbers;

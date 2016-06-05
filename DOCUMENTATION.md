@@ -22,7 +22,7 @@
 - Static Functions
   - all, boot, collect, create, fetch, fetchAll, filtered, find, findOrCreate, get, grab, grabAll, persist, ready, refresh, search, searchPaged
 - Timestamps
-  - format, type, UTC
+  - format, type, UTC, current
 - Property Resolvers
 - Where Expressions
 - Comparators
@@ -31,6 +31,8 @@
 - Files
 - Validation *
 - Migrations *
+- Development Process
+- Conflict Management
 
 ### Tutorial Outline:
 
