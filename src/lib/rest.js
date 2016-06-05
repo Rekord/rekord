@@ -1,7 +1,7 @@
 
 // Rekord.rest = function(options, success(data), failure(data, status))
 
-Rekord.rest = function(database)
+Rekord.defaultRest = Rekord.rest = function(database)
 {
 
   return {

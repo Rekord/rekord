@@ -2498,7 +2498,7 @@ Rekord.Debugs = {
 
 // Rekord.rest = function(options, success(data), failure(data, status))
 
-Rekord.rest = function(database)
+Rekord.defaultRest = Rekord.rest = function(database)
 {
 
   return {
@@ -2579,7 +2579,7 @@ Rekord.setRest = function(factory, overwrite)
  * @return {Object} -
  *         An object with put, remove, and all functions.
  */
-Rekord.store = function(database)
+Rekord.defaultStore = Rekord.store = function(database)
 {
   return {
 
@@ -2700,7 +2700,7 @@ Rekord.setStore = function(factory, overwrite)
  * @return {function} -
  *         The function which sends operations.
  */
-Rekord.live = function(database)
+Rekord.defaultLive = Rekord.live = function(database)
 {
   return {
 

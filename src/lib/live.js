@@ -11,7 +11,7 @@
  * @return {function} -
  *         The function which sends operations.
  */
-Rekord.live = function(database)
+Rekord.defaultLive = Rekord.live = function(database)
 {
   return {
 

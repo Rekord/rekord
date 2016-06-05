@@ -7,7 +7,7 @@
  * @return {Object} -
  *         An object with put, remove, and all functions.
  */
-Rekord.store = function(database)
+Rekord.defaultStore = Rekord.store = function(database)
 {
   return {
 
