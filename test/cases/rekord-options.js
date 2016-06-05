@@ -1158,6 +1158,34 @@ test( 'timestamps custom', function(assert)
   isInstance( t0.done_at, Date );
 });
 
+test( 'timestamps collapse', function(assert)
+{
+  var prefix = 'timestamps_collapse_';
+  var previous = Rekord.Database.Defaults.timestampType;
+
+  Rekord.Database.Defaults.timestampType = {
+    created_at: Rekord.Timestamp.Millis,
+    updated_at: Rekord.Timestamp.Millis
+  };
+
+  var Todo = Rekord({
+    name: prefix + 'todo',
+    fields: ['name', 'done'],
+    defaults: { done: false },
+    timestamps: ['done_at', 'created_at'],
+    timestampType: {
+      done_at: Rekord.Timestamp.Date
+    }
+  });
+
+  var t0 = Todo.boot({id: 1, name: 't0', done_at: 34345345, created_at: 34345345});
+
+  ok( Rekord.isNumber( t0.created_at ) );
+  isInstance( t0.done_at, Date );
+
+  Rekord.Database.Defaults.timestampType = previous;
+});
+
 test( 'timestamps type many', function(assert)
 {
   var prefix = 'timestamps_type_many_';

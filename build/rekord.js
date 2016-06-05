@@ -15842,14 +15842,24 @@ Rekord.on( Rekord.Events.Options, function(options)
 Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 {
   var time = options.timestamps || Database.Defaults.timestamps;
-  var timeFormat = options.timestampFormat || Database.Defaults.timestampFormat;
-  var timeType = options.timestampType || Database.Defaults.timestampType;
-  var timeUTC = options.timestampUTC || Database.Defaults.timestampUTC;
+  var timeFormat = collapseOption( options.timestampFormat, Database.Defaults.timestampFormat );
+  var timeType = collapseOption( options.timestampType, Database.Defaults.timestampType );
+  var timeUTC = collapseOption( options.timestampUTC, Database.Defaults.timestampUTC );
   var timeCurrent = options.timestampCurrent || Database.Defaults.timestampCurrent;
 
   if ( !time )
   {
     return;
+  }
+
+  function collapseOption(option, defaultValue)
+  {
+    if ( isObject( option ) && isObject( defaultValue ) )
+    {
+      return collapse( option, defaultValue );
+    }
+
+    return option || defaultValue;
   }
 
   function hasDefault(field)
