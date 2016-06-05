@@ -75,22 +75,26 @@ function createComparator(comparator, nullsFirst)
         return -parsed( a, b );
       };
     }
-    else if ( comparator.indexOf('{') !== -1 )
+    else if ( isFormatInput( comparator ) )
     {
+      var formatter = createFormatter( comparator );
+
       return function compareFormatted(a, b)
       {
-        var af = format( comparator, a );
-        var bf = format( comparator, b );
+        var af = formatter( a );
+        var bf = formatter( b );
 
         return af.localeCompare( bf );
       };
     }
-    else if ( comparator.indexOf('.') !== -1 )
+    else if ( isParseInput( comparator ) )
     {
+      var parser = createParser( comparator );
+
       return function compareExpression(a, b)
       {
-        var ap = parse( comparator, a );
-        var bp = parse( comparator, b );
+        var ap = parser( a );
+        var bp = parser( b );
 
         return compare( ap, bp, nullsFirst );
       };

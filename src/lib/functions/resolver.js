@@ -102,19 +102,13 @@ function createPropertyResolver(properties, delim)
       return PropertyResolvers[ properties ];
     }
 
-    if ( properties.indexOf('{') !== -1 )
+    if ( isFormatInput( properties ) )
     {
-      return function resolveFormatted(model)
-      {
-        return format( properties, model );
-      };
+      return createFormatter( properties );
     }
-    else if ( properties.indexOf('.') !== -1 )
+    else if ( isParseInput( properties ) )
     {
-      return function resolveExpression(model)
-      {
-        return parse( properties, model );
-      };
+      return createParser( properties );
     }
     else
     {

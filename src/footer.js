@@ -101,7 +101,10 @@
   Rekord.diff = diff;
 
   /* Parse Functions */
+  Rekord.isParseInput = isParseInput;
   Rekord.parse = parse;
+  Rekord.createParser = createParser;
+  Rekord.isFormatInput = isFormatInput;
   Rekord.format = format;
   Rekord.createFormatter = createFormatter;
   Rekord.parseDate = parseDate;

@@ -1,71 +1,82 @@
 
-
+function isParseInput(x)
+{
+  return x.indexOf('.') !== -1 || x.indexOf('[') !== -1;
+}
 
 function parse(expr, base)
 {
-  var valid = true;
-
-  expr.replace( parse.REGEX, function(prop)
-  {
-    if (!valid)
-    {
-      return;
-    }
-
-    if ( isArray( base ) )
-    {
-      var i = parseInt(prop);
-
-      if (!isNaN(i))
-      {
-        base = base[ i ];
-      }
-      else if (prop in base)
-      {
-        base = evaluate( base[ prop ], true );
-      }
-      else
-      {
-        valid = false;
-      }
-    }
-    else if ( isObject( base ) )
-    {
-      if (prop in base)
-      {
-        base = evaluate( base[ prop ], true );
-      }
-      else
-      {
-        valid = false;
-      }
-    }
-    else
-    {
-      valid = false;
-    }
-  });
-
-  return valid ? base : void 0;
+  return createParser( expr )( base );
 }
 
 parse.REGEX = /([\w$]+)/g;
 
-function format(template, base)
+function createParser(expr)
 {
-  return template.replace( format.REGEX, function(match)
+  var regex = parse.REGEX;
+  var nodes = [];
+  var match = null;
+
+  while ((match = regex.exec( expr )) !== null)
   {
-    return parse( match, base );
-  });
+    nodes.push( match[ 1 ] );
+  }
+
+  return function(base)
+  {
+    for (var i = 0; i < nodes.length && base !== undefined; i++)
+    {
+      var n = nodes[ i ];
+
+      if ( isObject( base ) )
+      {
+        base = evaluate( base[ n ], true );
+      }
+    }
+
+    return base;
+  };
 }
 
-format.REGEX = /\{[^\}]+\}/g;
+function isFormatInput(x)
+{
+  return x.indexOf('{') !== -1;
+}
+
+function format(template, base)
+{
+  return createFormatter( template )( base );
+}
+
+format.REGEX = /[\{\}]/;
 
 function createFormatter(template)
 {
+  // Every odd element in parts is a parse expression
+  var parts = template.split( format.REGEX );
+
+  for (var i = 1; i < parts.length; i += 2 )
+  {
+    parts[ i ] = createParser( parts[ i ] );
+  }
+
   return function formatter(base)
   {
-    return format( template, base );
+    var formatted = '';
+
+    for (var i = 0; i < parts.length; i++)
+    {
+      if ( (i & 1) === 0 )
+      {
+        formatted += parts[ i ];
+      }
+      else
+      {
+        formatted += parts[ i ]( base );
+      }
+    }
+
+    return formatted;
   };
 }
 
