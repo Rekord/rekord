@@ -20,6 +20,10 @@ function parse(expr, base)
       {
         base = base[ i ];
       }
+      else if (prop in base)
+      {
+        base = evaluate( base[ prop ], true );
+      }
       else
       {
         valid = false;
@@ -29,8 +33,7 @@ function parse(expr, base)
     {
       if (prop in base)
       {
-        var value = base[ prop ];
-        base = isFunction(value) ? value() : value;
+        base = evaluate( base[ prop ], true );
       }
       else
       {

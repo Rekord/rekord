@@ -355,7 +355,7 @@ function isEmpty(x)
   return false;
 }
 
-function evaluate(x)
+function evaluate(x, avoidCopy)
 {
   if ( !isValue( x ) )
   {
@@ -371,5 +371,5 @@ function evaluate(x)
     return x();
   }
 
-  return copy( x );
+  return avoidCopy ? x : copy( x );
 }

@@ -634,7 +634,7 @@ function isEmpty(x)
   return false;
 }
 
-function evaluate(x)
+function evaluate(x, avoidCopy)
 {
   if ( !isValue( x ) )
   {
@@ -650,7 +650,7 @@ function evaluate(x)
     return x();
   }
 
-  return copy( x );
+  return avoidCopy ? x : copy( x );
 }
 
 
@@ -1648,6 +1648,10 @@ function parse(expr, base)
       {
         base = base[ i ];
       }
+      else if (prop in base)
+      {
+        base = evaluate( base[ prop ], true );
+      }
       else
       {
         valid = false;
@@ -1657,8 +1661,7 @@ function parse(expr, base)
     {
       if (prop in base)
       {
-        var value = base[ prop ];
-        base = isFunction(value) ? value() : value;
+        base = evaluate( base[ prop ], true );
       }
       else
       {

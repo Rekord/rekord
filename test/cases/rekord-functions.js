@@ -701,3 +701,61 @@ test( 'Rekord.toCamelCase', function(assert)
   strictEqual( Rekord.toCamelCase('MeowKitty'), 'MeowKitty' );
   strictEqual( Rekord.toCamelCase('meow'), 'Meow' );
 });
+
+test( 'Rekord.format', function(assert)
+{
+  var person = {
+    first: 'John',
+    last: 'Jacob',
+    age: 27,
+    cool: true,
+    contact: {
+      phone: '8675309'
+    },
+    favorite_numbers: [1, 2, 4, 8, 16],
+    kids: [
+      {name: 'Mackenzie', age: 2},
+      {name: 'Connor', age: 0}
+    ]
+  };
+
+  strictEqual(
+    Rekord.format('Greetings {first} {last}!', person),
+    'Greetings John Jacob!'
+  );
+
+  strictEqual(
+    Rekord.format('Is {first} cool?: {cool}', person),
+    'Is John cool?: true'
+  );
+
+  strictEqual(
+    Rekord.format('Call {first} at {contact.phone}', person),
+    'Call John at 8675309'
+  );
+
+  strictEqual(
+    Rekord.format('Call {first} at {contact.phone}', person),
+    'Call John at 8675309'
+  );
+
+  strictEqual(
+    Rekord.format('His 1st favorite number is {favorite_numbers[0]}', person),
+    'His 1st favorite number is 1'
+  );
+
+  strictEqual(
+    Rekord.format('His 1st favorite numbers are {favorite_numbers}', person),
+    'His 1st favorite numbers are 1,2,4,8,16'
+  );
+
+  strictEqual(
+    Rekord.format('His first child is {kids[0].name} and is {kids[0].age} years old.', person),
+    'His first child is Mackenzie and is 2 years old.'
+  );
+
+  strictEqual(
+    Rekord.format('He has {kids.length} children', person),
+    'He has 2 children'
+  );
+});
