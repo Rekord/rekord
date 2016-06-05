@@ -827,6 +827,19 @@ test( 'Rekord.parse', function(assert)
   );
 });
 
+test( 'Rekord.createParser', function(assert)
+{
+  var m0 = {name: 'yes'};
+  var m1 = {name: 23};
+  var m2 = {};
+
+  var parser = Rekord.createParser('name');
+
+  strictEqual( parser( m0 ), 'yes' );
+  strictEqual( parser( m1 ), 23 );
+  strictEqual( parser( m2 ), undefined );
+});
+
 test( 'Rekord.isParseInput', function(assert)
 {
   notOk( Rekord.isParseInput('Hi {name}') );
