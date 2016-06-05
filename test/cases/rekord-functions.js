@@ -583,10 +583,10 @@ test( 'Rekord.savePropertyResolver', function(assert)
   strictEqual( p0( m2 ), 'Connor' );
   strictEqual( p0( m3 ), 'Dylan' );
 
-  strictEqual( p1( m0 ), 'Adam,22' );
-  strictEqual( p1( m1 ), 'Barnabas,22' );
-  strictEqual( p1( m2 ), 'Connor,19' );
-  strictEqual( p1( m3 ), 'Dylan,20' );
+  deepEqual( p1( m0 ), ['Adam',22] );
+  deepEqual( p1( m1 ), ['Barnabas',22] );
+  deepEqual( p1( m2 ), ['Connor',19] );
+  deepEqual( p1( m3 ), ['Dylan',20] );
 
   strictEqual( p2( m0 ), m0 );
   strictEqual( p2( m1 ), m1 );
@@ -815,5 +815,62 @@ test( 'Rekord.parse', function(assert)
   strictEqual(
     Rekord.parse('kids.length', person),
     person.kids.length
+  );
+});
+
+test( 'Rekord.createPropertyResolver', function(assert)
+{
+  var person = {
+    first: 'John',
+    last: 'Jacob',
+    age: 27,
+    cool: true,
+    contact: {
+      phone: '8675309'
+    },
+    favorite_numbers: [1, 2, 4, 8, 16],
+    kids: [
+      {name: 'Mackenzie', age: 2},
+      {name: 'Connor', age: 0}
+    ]
+  };
+
+  function customResolver(x) {
+    return Rekord.sizeof(x);
+  }
+
+  strictEqual(
+    Rekord.createPropertyResolver( customResolver )( person ),
+    7
+  );
+
+  strictEqual(
+    Rekord.createPropertyResolver( '{first} is {age}' )( person ),
+    'John is 27'
+  );
+
+  strictEqual(
+    Rekord.createPropertyResolver( 'contact.phone' )( person ),
+    '8675309'
+  );
+
+  strictEqual(
+    Rekord.createPropertyResolver( 'first' )( person ),
+    'John'
+  );
+
+  strictEqual(
+    Rekord.createPropertyResolver( 'contact.phone' )( person ),
+    '8675309'
+  );
+
+  deepEqual(
+    Rekord.createPropertyResolver( ['first', 'last'] )( person ),
+    ['John', 'Jacob']
+  );
+
+  deepEqual(
+    Rekord.createPropertyResolver( {first: null, contact: 'phone'} )( person ),
+    {first: 'John', contact: '8675309'}
   );
 });

@@ -22,8 +22,8 @@
  * 'user.first'             // sub property
  * '{age}, {user.first}'    // a formatted string built from object values
  * function(a) {}           // a function which returns a value itself
- * ['age', 'name']          // multiple properties joined with a delimiter
- * {age:null, user:'first'} // multiple properties joined with a delimiter including a sub property
+ * ['age', 'name']          // multiple properties resolves to an array of values
+ * {age:null, user:'first'} // multiple properties including a sub property returns an object of values
  * ```
  *
  * @typedef {String|Function|Array|Object} propertyResolverInput
@@ -57,9 +57,9 @@ function createNumberResolver(numbers)
 
 var PropertyResolvers = {};
 
-function savePropertyResolver(name, properties, delim)
+function savePropertyResolver(name, properties)
 {
-  var resolver = createPropertyResolver( properties, delim );
+  var resolver = createPropertyResolver( properties );
 
   PropertyResolvers[ name ] = resolver;
 
@@ -76,20 +76,17 @@ function savePropertyResolver(name, properties, delim)
  * createPropertyResolver( 'age' )( x )                   // 6
  * createPropertyResolver( 'user.first' )( x )            // 'jack'
  * createPropertyResolver( '{name} & {user.first}')( x )  // 'tom & jack'
- * createPropertyResolver( ['name', 'age'] )( x )         // 'tom,6'
- * createPropertyResolver( ['name', 'age'], ' is ' )( x ) // 'tom is 6'
- * createPropertyResolver( {age:null, user:'first'})( x ) // '6,jack'
+ * createPropertyResolver( ['name', 'age'] )( x )         // ['tom', 6]
+ * createPropertyResolver( {age:null, user:'first'})( x ) // {age: 6, user:'jack'}
  * ```
  *
  * @memberof Rekord
  * @param {propertyResolverInput} [properties] -
  *    The expression which converts one value into another.
- * @param {String} [delim=','] -
- *    A delimiter to use to join multiple properties into a string.
  * @return {propertyResolverCallback} -
  *    A function to take values and resolve new ones.
  */
-function createPropertyResolver(properties, delim)
+function createPropertyResolver(properties)
 {
   if ( isFunction( properties ) )
   {
@@ -122,7 +119,7 @@ function createPropertyResolver(properties, delim)
   {
     return function resolveProperties(model)
     {
-      return pull( model, properties ).join( delim );
+      return pull( model, properties );
     };
   }
   else if ( isObject( properties ) )
@@ -133,19 +130,21 @@ function createPropertyResolver(properties, delim)
     for (var prop in properties)
     {
       propsArray.push( prop );
-      propsResolver.push( createPropertyResolver( properties[ prop ], delim ) );
+      propsResolver.push( createPropertyResolver( properties[ prop ] ) );
     }
 
     return function resolvePropertyObject(model)
     {
-      var pulled = [];
+      var resolved = {};
 
-      for (var i = 0; i < prop.length; i++)
+      for (var i = 0; i < propsArray.length; i++)
       {
-        pulled.push( propsResolver[ i ]( model[ propsArray[ i ] ] ) );
+        var prop = propsArray[ i ];
+
+        resolved[ prop ] = propsResolver[ i ]( model[ prop ] );
       }
 
-      return pulled.join( delim );
+      return resolved;
     };
   }
   else

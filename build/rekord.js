@@ -1759,8 +1759,8 @@ function parseDate(x, utc)
  * 'user.first'             // sub property
  * '{age}, {user.first}'    // a formatted string built from object values
  * function(a) {}           // a function which returns a value itself
- * ['age', 'name']          // multiple properties joined with a delimiter
- * {age:null, user:'first'} // multiple properties joined with a delimiter including a sub property
+ * ['age', 'name']          // multiple properties resolves to an array of values
+ * {age:null, user:'first'} // multiple properties including a sub property returns an object of values
  * ```
  *
  * @typedef {String|Function|Array|Object} propertyResolverInput
@@ -1794,9 +1794,9 @@ function createNumberResolver(numbers)
 
 var PropertyResolvers = {};
 
-function savePropertyResolver(name, properties, delim)
+function savePropertyResolver(name, properties)
 {
-  var resolver = createPropertyResolver( properties, delim );
+  var resolver = createPropertyResolver( properties );
 
   PropertyResolvers[ name ] = resolver;
 
@@ -1813,20 +1813,17 @@ function savePropertyResolver(name, properties, delim)
  * createPropertyResolver( 'age' )( x )                   // 6
  * createPropertyResolver( 'user.first' )( x )            // 'jack'
  * createPropertyResolver( '{name} & {user.first}')( x )  // 'tom & jack'
- * createPropertyResolver( ['name', 'age'] )( x )         // 'tom,6'
- * createPropertyResolver( ['name', 'age'], ' is ' )( x ) // 'tom is 6'
- * createPropertyResolver( {age:null, user:'first'})( x ) // '6,jack'
+ * createPropertyResolver( ['name', 'age'] )( x )         // ['tom', 6]
+ * createPropertyResolver( {age:null, user:'first'})( x ) // {age: 6, user:'jack'}
  * ```
  *
  * @memberof Rekord
  * @param {propertyResolverInput} [properties] -
  *    The expression which converts one value into another.
- * @param {String} [delim=','] -
- *    A delimiter to use to join multiple properties into a string.
  * @return {propertyResolverCallback} -
  *    A function to take values and resolve new ones.
  */
-function createPropertyResolver(properties, delim)
+function createPropertyResolver(properties)
 {
   if ( isFunction( properties ) )
   {
@@ -1859,7 +1856,7 @@ function createPropertyResolver(properties, delim)
   {
     return function resolveProperties(model)
     {
-      return pull( model, properties ).join( delim );
+      return pull( model, properties );
     };
   }
   else if ( isObject( properties ) )
@@ -1870,19 +1867,21 @@ function createPropertyResolver(properties, delim)
     for (var prop in properties)
     {
       propsArray.push( prop );
-      propsResolver.push( createPropertyResolver( properties[ prop ], delim ) );
+      propsResolver.push( createPropertyResolver( properties[ prop ] ) );
     }
 
     return function resolvePropertyObject(model)
     {
-      var pulled = [];
+      var resolved = {};
 
-      for (var i = 0; i < prop.length; i++)
+      for (var i = 0; i < propsArray.length; i++)
       {
-        pulled.push( propsResolver[ i ]( model[ propsArray[ i ] ] ) );
+        var prop = propsArray[ i ];
+
+        resolved[ prop ] = propsResolver[ i ]( model[ prop ] );
       }
 
-      return pulled.join( delim );
+      return resolved;
     };
   }
   else
@@ -6786,27 +6785,28 @@ extendArray( Array, Collection,
    * @param {propertyResolverInput} [properties] -
    *    The expression which takes an element in this container and resolves a
    *    value that can be compared to the current minimum.
-   * @param {String} [delim=','] -
-   *    A delimiter to use to join multiple properties into a string.
    * @param {Any} [startingValue] -
    *    The initial minimum value. If a value is specified, it's compared
    *    against all elements in this collection until the comparator function
    *    finds a more minimal value. If it doesn't - this is the value returned.
+   * @param {compareCallback} [compareFunction=Rekord.compare] -
+   *    A comparison function to use.
    * @return {Any} -
    *    The minimum value found.
    * @see Rekord.createPropertyResolver
    * @see Rekord.compare
    */
-  min: function(properties, delim, startingValue)
+  min: function(properties, startingValue, compareFunction)
   {
-    var resolver = createPropertyResolver( properties, delim );
+    var comparator = compareFunction || compare;
+    var resolver = createPropertyResolver( properties );
     var min = startingValue;
 
     for (var i = 0; i < this.length; i++)
     {
       var resolved = resolver( this[ i ] );
 
-      if ( compare( min, resolved, false ) > 0 )
+      if ( comparator( min, resolved, false ) > 0 )
       {
         min = resolved;
       }
@@ -6829,27 +6829,28 @@ extendArray( Array, Collection,
    * @param {propertyResolverInput} [properties] -
    *    The expression which takes an element in this container and resolves a
    *    value that can be compared to the current maximum.
-   * @param {String} [delim=','] -
-   *    A delimiter to use to join multiple properties into a string.
    * @param {Any} [startingValue] -
    *    The initial maximum value. If a value is specified, it's compared
    *    against all elements in this collection until the comparator function
    *    finds a more maximal value. If it doesn't - this is the value returned.
+   * @param {compareCallback} [compareFunction=Rekord.compare] -
+   *    A comparison function to use.
    * @return {Any} -
    *    The maximum value found.
    * @see Rekord.createPropertyResolver
    * @see Rekord.compare
    */
-  max: function(properties, delim, startingValue)
+  max: function(properties, startingValue, compareFunction)
   {
-    var resolver = createPropertyResolver( properties, delim );
+    var comparator = compareFunction || compare;
+    var resolver = createPropertyResolver( properties );
     var max = startingValue;
 
     for (var i = 0; i < this.length; i++)
     {
       var resolved = resolver( this[ i ] );
 
-      if ( compare( max, resolved, true ) < 0 )
+      if ( comparator( max, resolved, true ) < 0 )
       {
         max = resolved;
       }
@@ -6914,15 +6915,13 @@ extendArray( Array, Collection,
    * @memberof Rekord.Collection#
    * @param {propertyResolverInput} [properties] -
    *    The expression which converts one value into another.
-   * @param {String} [delim=','] -
-   *    A delimiter to use to join multiple properties into a string.
    * @return {Any} -
    * @see Rekord.createPropertyResolver
    * @see Rekord.isValue
    */
-  first: function(properties, delim)
+  first: function(properties)
   {
-    var resolver = createPropertyResolver( properties, delim );
+    var resolver = createPropertyResolver( properties );
 
     for (var i = 0; i < this.length; i++)
     {
@@ -6991,15 +6990,13 @@ extendArray( Array, Collection,
     * @memberof Rekord.Collection#
     * @param {propertyResolverInput} [properties] -
     *    The expression which converts one value into another.
-    * @param {String} [delim=','] -
-    *    A delimiter to use to join multiple properties into a string.
     * @return {Any} -
     * @see Rekord.createPropertyResolver
     * @see Rekord.isValue
     */
-  last: function(properties, delim)
+  last: function(properties)
   {
-    var resolver = createPropertyResolver( properties, delim );
+    var resolver = createPropertyResolver( properties );
 
     for (var i = this.length - 1; i >= 0; i--)
     {
@@ -7234,21 +7231,17 @@ extendArray( Array, Collection,
    *    The expression which converts an element into a value to pluck.
    * @param {propertyResolverInput} [keys] -
    *    The expression which converts an element into an object property (key).
-   * @param {String} [valuesDelim=','] -
-   *    A delimiter to use to join multiple value properties into a string.
-   * @param {String} [keysDelim=','] -
-   *    A delimiter to use to join multiple key properties into a string.
    * @return {Array|Object} -
    *    The plucked values.
    * @see Rekord.createPropertyResolver
    */
-  pluck: function(values, keys, valuesDelim, keysDelim)
+  pluck: function(values, keys)
   {
-    var valuesResolver = createPropertyResolver( values, valuesDelim );
+    var valuesResolver = createPropertyResolver( values );
 
     if ( keys )
     {
-      var keysResolver = createPropertyResolver( keys, keysDelim );
+      var keysResolver = createPropertyResolver( keys );
       var result = {};
 
       for (var i = 0; i < this.length; i++)
@@ -7536,7 +7529,6 @@ extendArray( Array, Collection,
    *    and what properties from the elements should be aggregated in the
    *    resulting groupings.
    *      - `by`: A property expression that resolves how elements will be grouped.
-   *      - `bySeparator`: When an array or object property expression is specified, this is the string that joins them.
    *      - `select`: An object which contains properties that should be aggregated where the value is the aggregate collection function to call (sum, avg, count, first, last, etc).
    *      - `having`: A having expression which takes a grouping and the grouped elements and determines whether the grouping should be in the final result.
    *      - `comparator`: A comparator for sorting the resulting collection of groupings.
@@ -7548,7 +7540,7 @@ extendArray( Array, Collection,
    */
   group: function(grouping)
   {
-    var by = createPropertyResolver( grouping.by, grouping.bySeparator || '/' );
+    var by = createPropertyResolver( grouping.by );
     var having = createWhere( grouping.having, grouping.havingValue, grouping.havingEquals );
     var select = grouping.select || {};
     var map = {};
