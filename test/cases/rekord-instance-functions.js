@@ -710,3 +710,24 @@ test( 'persist', function(assert)
   strictEqual( li0.quantity, 4 );
   strictEqual( li0.$saved.quantity, 4 );
 });
+
+test( 'count', function(assert)
+{
+  var prefix = 'Rekord_count_';
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['name', 'done']
+  });
+
+  strictEqual( Task.count(), 0 );
+  strictEqual( Task.count('done', true), 0 );
+
+  Task.create({id: 2, name: 't2', done: true});
+  Task.create({id: 3, name: 't3', done: false});
+  Task.create({id: 4, name: 't4', done: false});
+  Task.create({id: 5, name: 't5', done: true});
+
+  strictEqual( Task.count(), 4 );
+  strictEqual( Task.count('done', true), 2 );
+});
