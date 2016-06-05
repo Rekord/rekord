@@ -1127,3 +1127,17 @@ test( 'Rekord.evaluate', function(assert)
 
   deepEqual( eval( Task ).$toJSON(), {id: 2, name: '', done: false} );
 });
+
+test( 'Rekord.bind', function(assert)
+{
+  var base = {};
+  var func = function() {
+    strictEqual( base, this );
+  };
+
+  var binded = Rekord.bind( base, func );
+
+  expect(2);
+  binded();
+  binded();
+});
