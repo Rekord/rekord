@@ -693,3 +693,11 @@ test( 'Rekord.split', function(assert)
     ['Hello, World']
   );
 });
+
+test( 'Rekord.toCamelCase', function(assert)
+{
+  strictEqual( Rekord.toCamelCase('meow_kitty'), 'MeowKitty' );
+  strictEqual( Rekord.toCamelCase('Meow_Kitty'), 'MeowKitty' );
+  strictEqual( Rekord.toCamelCase('MeowKitty'), 'MeowKitty' );
+  strictEqual( Rekord.toCamelCase('meow'), 'Meow' );
+});
