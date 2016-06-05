@@ -979,3 +979,16 @@ test( 'Rekord.clean', function(assert)
   deepEqual( Rekord.clean({x: 1, $y: 2}), {x: 1} );
   deepEqual( Rekord.clean({$x: 1, $y: 2}), {} );
 });
+
+test( 'Rekord.cleanFunctions', function(assert)
+{
+  deepEqual(
+    Rekord.cleanFunctions({
+      x: 1,
+      y: function() {},
+      z: Date,
+      w: Rekord
+    }),
+    {x: 1}
+  );
+});
