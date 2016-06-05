@@ -485,6 +485,84 @@ test( 'Rekord.createWhere array', function(assert)
   notOk( c0( m3 ) );
 });
 
+test( 'Rekord.createWhere function', function(assert)
+{
+  function isEven(x) {return x % 2 === 0}
+
+  var where = Rekord.createWhere( isEven );
+
+  ok(    where( 0 ) );
+  notOk( where( 1 ) );
+  ok(    where( 2 ) );
+  notOk( where( 3 ) );
+  ok(    where( 4 ) );
+});
+
+test( 'Rekord.createWhere object', function(assert)
+{
+  var m0 = {done: false, name: 't2'};
+  var m1 = {done: true, name: 't2'};
+  var m2 = {done: true, name: 't29'};
+  var m3 = {done: true, name: 'x'};
+
+  var expr = {
+    done: true,
+    name: /^t\d+/
+  };
+
+  var where = Rekord.createWhere( expr, undefined, Rekord.equals );
+
+  notOk( where( m0 ) );
+  ok(    where( m1 ) );
+  ok(    where( m2 ) );
+  notOk( where( m3 ) );
+});
+
+test( 'Rekord.createWhere property value', function(assert)
+{
+  var m0 = {done: false, name: 't2'};
+  var m1 = {done: true, name: 't2'};
+  var m2 = {done: true, name: 't29'};
+  var m3 = {done: true, name: 'x'};
+
+  var where = Rekord.createWhere( 'done', true );
+
+  notOk( where( m0 ) );
+  ok(    where( m1 ) );
+  ok(    where( m2 ) );
+  ok(    where( m3 ) );
+});
+
+test( 'Rekord.createWhere property no value', function(assert)
+{
+  var m0 = {done: false, name: 't2'};
+  var m1 = {done: true, name: 't2'};
+  var m2 = {done: true, name: 't29'};
+  var m3 = {name: 'x'};
+
+  var where = Rekord.createWhere( 'done' );
+
+  ok(    where( m0 ) );
+  ok(    where( m1 ) );
+  ok(    where( m2 ) );
+  notOk( where( m3 ) );
+});
+
+test( 'Rekord.createWhere all', function(assert)
+{
+  var m0 = {done: false, name: 't2'};
+  var m1 = 23;
+  var m2 = {done: true, name: 't29'};
+  var m3 = {name: 'x'};
+
+  var where = Rekord.createWhere();
+
+  ok(    where( m0 ) );
+  ok(    where( m1 ) );
+  ok(    where( m2 ) );
+  ok(    where( m3 ) );
+});
+
 test( 'Rekord.savePropertyResolver', function(assert)
 {
   Rekord.savePropertyResolver( 'prop0', 'name' );
