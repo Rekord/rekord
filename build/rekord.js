@@ -835,6 +835,11 @@ function equalsStrict(a, b)
   return a === b;
 }
 
+function equalsWeak(a, b)
+{
+  return a == b; // jshint ignore:line
+}
+
 function equalsCompare(a, b)
 {
   return compare( a, b ) === 0;
@@ -16110,6 +16115,7 @@ Rekord.convertDate = convertDate;
 
   /* Comparison Functions */
   Rekord.equalsStrict = equalsStrict;
+  Rekord.equalsWeak = equalsWeak;
   Rekord.equalsCompare = equalsCompare;
   Rekord.equals = equals;
   Rekord.compareNumbers = compareNumbers;

@@ -45,7 +45,7 @@ function equalsStrict(a, b)
 
 function equalsWeak(a, b)
 {
-  return a == b;
+  return a == b; // jshint ignore:line
 }
 
 function equalsCompare(a, b)
