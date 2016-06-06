@@ -1202,3 +1202,24 @@ test( 'Rekord.reverse', function(assert)
   deepEqual( rv( [1, 2, 3, 4] ), [4, 3, 2, 1] );
   deepEqual( rv( [1, 2, 3, 4, 5] ), [5, 4, 3, 2, 1] );
 });
+
+test( 'Rekord.addMethod', function(assert)
+{
+  var am = Rekord.addMethod;
+
+  var x = {};
+
+  am( x, 'foo', function() {
+    return 'bar';
+  });
+
+  expect(3);
+
+  ok( Rekord.isFunction( x.foo ) );
+  ok( 'foo' in x );
+  strictEqual( x.foo(), 'bar' );
+
+  for (var prop in x) {
+    ok( false, 'oops, it should not be enumerable' );
+  }
+});
