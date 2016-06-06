@@ -1275,3 +1275,36 @@ test( 'Rekord.replaceMethod', function(assert)
 
   strictEqual( x.foo(), 'barney' );
 });
+
+test( 'Rekord.applyOptions', function(assert)
+{
+  var target = {};
+  var defaults = {
+    x: 1,
+    y: function() {
+      return 3;
+    },
+    z: true,
+    q: [3, 4], // should be copied
+    m: {x: 1}
+  };
+  var options = {
+    x: 2,
+    y: function() { // overrites (not enumerable)
+      return 4
+    },
+    w: [1, 2], // use this reference (not specified in defaults)
+    m: {x: 2}, // use this reference
+  };
+
+  Rekord.applyOptions( target, options, defaults );
+
+  strictEqual( target.options, options );
+  strictEqual( target.x, 2 );
+  strictEqual( target.y, options.y );
+  strictEqual( target.z, true );
+  notStrictEqual( target.q, defaults.q );
+  deepEqual( target.q, defaults.q );
+  strictEqual( target.w, options.w );
+  strictEqual( target.m, options.m );
+});
