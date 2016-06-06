@@ -1117,3 +1117,78 @@ test( 'event remote update', function(assert)
 
   Task.Database.putRemoteData( {name: 'remote change', done: true}, 2 );
 });
+
+test( '$save missing key', function(assert)
+{
+  var prefix = 'Model_save_missing_key_';
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['name', 'done']
+  });
+
+  var t0 = Task.create({name: 't0', done: false});
+
+  ok( t0.id );
+
+  t0.id = null;
+
+  throws(function()
+  {
+    t0.$save();
+
+  }, 'Key missing from model' );
+});
+
+test( 'load missing key', function(assert)
+{
+  var prefix = 'Model_load_missing_key_';
+  var ListItemName = prefix + 'list_item';
+
+  var ListItemRest = Rekord.rest[ ListItemName ] = new TestRest();
+
+  ListItemRest.map.put('2/3', {item_id: 2, list_id: 3, amount: 4});
+  ListItemRest.map.put('5/6', {list_id: 6, amount: 7});
+  ListItemRest.map.put('8/9', {amount: 10});
+
+  var ListItem = Rekord({
+    name: ListItemName,
+    key: ['item_id', 'list_id'],
+    fields: ['amount']
+  });
+
+  strictEqual( ListItem.all().length, 1 );
+  strictEqual( ListItem.all()[0].amount, 4 );
+});
+
+test( 'live missing key', function(assert)
+{
+  var prefix = 'Model_live_missing_key_';
+  var ListItemName = prefix + 'list_item';
+
+  var ListItem = Rekord({
+    name: ListItemName,
+    key: ['item_id', 'list_id'],
+    fields: ['amount']
+  });
+
+  strictEqual( ListItem.all().length, 0 );
+
+  ListItem.Database.putRemoteData( {list_id: 6, amount: 7}, '5/6' );
+
+  strictEqual( ListItem.all().length, 0 );
+});
+
+test( 'boot missing key', function(assert)
+{
+  var prefix = 'Model_live_missing_key_';
+  var ListItemName = prefix + 'list_item';
+
+  var ListItem = Rekord({
+    name: ListItemName,
+    key: ['item_id', 'list_id'],
+    fields: ['amount']
+  });
+
+  notOk( ListItem.boot( {list_id: 6, amount: 7} ) );
+});

@@ -499,7 +499,7 @@ addMethods( Database.prototype,
     {
       key = model[ fields ];
 
-      if (!key)
+      if ( !isValue(key) )
       {
         key = model[ fields ] = uuid();
       }
@@ -548,7 +548,7 @@ addMethods( Database.prototype,
       throw 'Composite key not supplied.';
     }
 
-    return false;
+    return null;
   },
 
   // Gets the key from the given model
@@ -695,7 +695,16 @@ addMethods( Database.prototype,
     }
 
     var db = this;
-    var key = key || db.getKey( encoded );
+    var key = key || db.getKey( encoded, true );
+
+    // The remote source might be crazy, if the key isn't there then log it and ignore it
+    if ( !isValue( key ) )
+    {
+      Rekord.debug( Rekord.Debugs.MISSING_KEY, db, encoded );
+
+      return;
+    }
+
     var model = model || db.all[ key ];
     var decoded = db.decode( copy( encoded ) );
 
@@ -808,17 +817,20 @@ addMethods( Database.prototype,
     {
       model = db.createModel( decoded, true );
 
-      if ( db.cache === Cache.All )
+      if ( model )
       {
-        model.$local = model.$toJSON( false );
-        model.$local.$status = model.$status;
-        model.$saved = model.$local.$saved = model.$toJSON( true );
+        if ( db.cache === Cache.All )
+        {
+          model.$local = model.$toJSON( false );
+          model.$local.$status = model.$status;
+          model.$saved = model.$local.$saved = model.$toJSON( true );
 
-        model.$addOperation( SaveNow );
-      }
-      else
-      {
-        model.$saved = model.$toJSON( true );
+          model.$addOperation( SaveNow );
+        }
+        else
+        {
+          model.$saved = model.$toJSON( true );
+        }
       }
     }
 
@@ -829,6 +841,14 @@ addMethods( Database.prototype,
   {
     var db = this;
     var model = db.instantiate( decoded, remoteData );
+
+    if ( model.$invalid === true )
+    {
+      Rekord.debug( Rekord.Debugs.MISSING_KEY, db, decoded );
+
+      return;
+    }
+
     var key = model.$key();
 
     if ( !db.models.has( key ) )
@@ -1014,6 +1034,13 @@ addMethods( Database.prototype,
         var key = keys[ i ];
         var decoded = db.decode( copy( encoded, true ) );
         var model = db.instantiate( decoded, true );
+
+        if ( model.$invalid === true )
+        {
+          Rekord.debug( Rekord.Debugs.MISSING_KEY, db, encoded );
+
+          break;
+        }
 
         model.$local = encoded;
         model.$saved = encoded.$saved;

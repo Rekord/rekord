@@ -35,7 +35,7 @@ Rekord.defaultStore = Rekord.store = function(database)
     // TODO
     get: function(key, success, failure)
     {
-      failure( key, void 0 );
+      failure( key, undefined );
     },
 
     /**

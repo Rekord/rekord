@@ -330,7 +330,7 @@ function sizeof(x)
 
 function isEmpty(x)
 {
-  if (x === null || x === void 0 || x === 0)
+  if (x === null || x === undefined || x === 0)
   {
     return true;
   }

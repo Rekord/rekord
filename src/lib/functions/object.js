@@ -24,7 +24,7 @@ function applyOptions( target, options, defaults, secret )
 
     if ( !valued && defaultValue === undefined )
     {
-      throw ( defaultProperty + ' is a required option' );
+      throw defaultProperty + ' is a required option';
     }
     else if ( valued )
     {
