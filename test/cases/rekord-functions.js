@@ -1172,3 +1172,22 @@ test( 'Rekord.toArray', function(assert)
   deepEqual( ta( [1, 2] ), [1, 2] );
   deepEqual( ta( '1, 2', /\s*,\s*/ ), ['1', '2'] );
 });
+
+test( 'Rekord.isSorted', function(assert)
+{
+  var is = Rekord.isSorted;
+  var cn = Rekord.compareNumbers;
+  var cp = Rekord.compare;
+
+  ok( is( cn, [] ) );
+  ok( is( cn, [1] ) );
+  ok( is( cn, [1, 2, 3] ) );
+  ok( is( cn, [1, '2', 3] ) );
+  notOk( is( cn, [2, 1, 3] ) );
+
+  ok( is( cp, [] ) );
+  ok( is( cp, [1] ) );
+  ok( is( cp, [1, 2, 3] ) );
+  ok( is( cp, [1, '2', 3] ) );
+  notOk( is( cp, [2, 1, 3] ) );
+});
