@@ -1191,3 +1191,14 @@ test( 'Rekord.isSorted', function(assert)
   ok( is( cp, [1, '2', 3] ) );
   notOk( is( cp, [2, 1, 3] ) );
 });
+
+test( 'Rekord.reverse', function(assert)
+{
+  var rv = Rekord.reverse;
+
+  deepEqual( rv( [1] ), [1] );
+  deepEqual( rv( [1, 2] ), [2, 1] );
+  deepEqual( rv( [1, 2, 3] ), [3, 2, 1] );
+  deepEqual( rv( [1, 2, 3, 4] ), [4, 3, 2, 1] );
+  deepEqual( rv( [1, 2, 3, 4, 5] ), [5, 4, 3, 2, 1] );
+});
