@@ -1141,3 +1141,20 @@ test( 'Rekord.bind', function(assert)
   binded();
   binded();
 });
+
+test( 'Rekord.isPrimitiveArray', function(assert)
+{
+  var a = [1, 2, 3];
+  var b = [];
+  var c = [1, true, null, undefined];
+  var d = [{}, 4];
+  var e = [[], 5];
+  var f = [null, null, {}];
+
+  ok( Rekord.isPrimitiveArray( a ) );
+  ok( Rekord.isPrimitiveArray( b ) );
+  ok( Rekord.isPrimitiveArray( c ) );
+  notOk( Rekord.isPrimitiveArray( d ) );
+  notOk( Rekord.isPrimitiveArray( e ) );
+  notOk( Rekord.isPrimitiveArray( f ) );
+});
