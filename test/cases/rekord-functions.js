@@ -1253,3 +1253,25 @@ test( 'Rekord.addMethods', function(assert)
     ok( false, 'oops, it should not be enumerable' );
   }
 });
+
+test( 'Rekord.replaceMethod', function(assert)
+{
+  var am = Rekord.addMethod;
+  var rm = Rekord.replaceMethod;
+
+  var x = {};
+
+  am( x, 'foo', function() {
+    return 'bar';
+  });
+
+  strictEqual( x.foo(), 'bar' );
+
+  rm( x, 'foo', function(old) {
+    return function() {
+      return old() + 'ney'
+    };
+  });
+
+  strictEqual( x.foo(), 'barney' );
+});
