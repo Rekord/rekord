@@ -1223,3 +1223,33 @@ test( 'Rekord.addMethod', function(assert)
     ok( false, 'oops, it should not be enumerable' );
   }
 });
+
+test( 'Rekord.addMethods', function(assert)
+{
+  var am = Rekord.addMethods;
+
+  var x = {};
+
+  am( x, {
+    foo: function() {
+      return 'bar';
+    },
+    bar: function() {
+      return 'foo';
+    }
+  });
+
+  expect(6);
+
+  ok( Rekord.isFunction( x.foo ) );
+  ok( 'foo' in x );
+  strictEqual( x.foo(), 'bar' );
+
+  ok( Rekord.isFunction( x.bar ) );
+  ok( 'bar' in x );
+  strictEqual( x.bar(), 'foo' );
+
+  for (var prop in x) {
+    ok( false, 'oops, it should not be enumerable' );
+  }
+});
