@@ -1144,6 +1144,8 @@ test( 'Rekord.bind', function(assert)
 
 test( 'Rekord.isPrimitiveArray', function(assert)
 {
+  var pa = Rekord.isPrimitiveArray;
+
   var a = [1, 2, 3];
   var b = [];
   var c = [1, true, null, undefined];
@@ -1151,10 +1153,22 @@ test( 'Rekord.isPrimitiveArray', function(assert)
   var e = [[], 5];
   var f = [null, null, {}];
 
-  ok( Rekord.isPrimitiveArray( a ) );
-  ok( Rekord.isPrimitiveArray( b ) );
-  ok( Rekord.isPrimitiveArray( c ) );
-  notOk( Rekord.isPrimitiveArray( d ) );
-  notOk( Rekord.isPrimitiveArray( e ) );
-  notOk( Rekord.isPrimitiveArray( f ) );
+  ok(    pa( a ) );
+  ok(    pa( b ) );
+  ok(    pa( c ) );
+  notOk( pa( d ) );
+  notOk( pa( e ) );
+  notOk( pa( f ) );
+});
+
+test( 'Rekord.toArray', function(assert)
+{
+  var ta = Rekord.toArray;
+
+  deepEqual( ta(), [] );
+  deepEqual( ta( null ), [] );
+  deepEqual( ta( undefined ), [] );
+  deepEqual( ta( 1 ), [ 1 ] );
+  deepEqual( ta( [1, 2] ), [1, 2] );
+  deepEqual( ta( '1, 2', /\s*,\s*/ ), ['1', '2'] );
 });
