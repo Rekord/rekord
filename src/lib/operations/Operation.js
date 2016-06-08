@@ -71,7 +71,16 @@ addMethods( Operation.prototype,
 
     this.db.pendingOperations++;
 
-    this.run( this.db, this.model );
+    try
+    {
+      this.run( this.db, this.model );
+    }
+    catch (e)
+    {
+      this.finish();
+
+      throw e;
+    }
   },
 
   run: function(db, model)
@@ -114,8 +123,18 @@ addMethods( Operation.prototype,
 
   handleSuccess: function()
   {
-    this.onSuccess.apply( this, arguments );
-    this.finish();
+    try
+    {
+      this.onSuccess.apply( this, arguments );
+    }
+    catch (e)
+    {
+      throw e;
+    }
+    finally
+    {
+      this.finish();
+    }
   },
 
   onSuccess: function()
@@ -130,8 +149,18 @@ addMethods( Operation.prototype,
 
   handleFailure: function()
   {
-    this.onFailure.apply( this, arguments );
-    this.finish();
+    try
+    {
+      this.onFailure.apply( this, arguments );
+    }
+    catch (e)
+    {
+      throw e;
+    }
+    finally
+    {
+      this.finish();
+    }
   },
 
   onFailure: function()
