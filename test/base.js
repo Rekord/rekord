@@ -2,7 +2,7 @@
 // Configuration
 
 Rekord.autoload = true;
-Rekord.Database.Defaults.load = Rekord.Load.All;
+Rekord.Defaults.load = Rekord.Load.All;
 
 QUnit.config.reorder = false;
 

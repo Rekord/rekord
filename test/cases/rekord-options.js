@@ -756,7 +756,7 @@ test( 'methods', function(assert)
 
 test( 'methods global default', function(assert)
 {
-  Rekord.Database.Defaults.methods = {
+  Rekord.Defaults.methods = {
     setDone: function(done) {
       this.$save({
         done: done,
@@ -799,7 +799,7 @@ test( 'methods global default', function(assert)
 
   strictEqual( t0.name, 't1' );
 
-  delete Rekord.Database.Defaults.methods;
+  delete Rekord.Defaults.methods;
 });
 
 test( 'dynamic get', function(assert)
@@ -834,7 +834,7 @@ test( 'dynamic get global default', function(assert)
     return 1448323200; // Tuesday 24th November 2015 12:00:00 AM
   };
 
-  Rekord.Database.Defaults.dynamic = {
+  Rekord.Defaults.dynamic = {
     age: function() {
       return Math.floor( (now() - this.dob) / 31536000 );
     }
@@ -854,7 +854,7 @@ test( 'dynamic get global default', function(assert)
 
   strictEqual( p.age, 26 );
 
-  delete Rekord.Database.Defaults.dynamic;
+  delete Rekord.Defaults.dynamic;
 });
 
 test( 'dynamic set', function(assert)
@@ -993,7 +993,7 @@ test( 'events global default', function(assert)
   var context0 = {name: 'c0'};
   var context1 = {name: 'c1'};
 
-  Rekord.Database.Defaults.events = {
+  Rekord.Defaults.events = {
     // Database Event
     modelAdded: function(model) {
       notStrictEqual( model, void 0, 'on modelAdded: model given' );
@@ -1015,7 +1015,7 @@ test( 'events global default', function(assert)
     name: 'Joe'
   });
 
-  delete Rekord.Database.Defaults.events;
+  delete Rekord.Defaults.events;
 });
 
 test( 'encodings decodings', function(assert)
@@ -1095,7 +1095,7 @@ test( 'timestamps default global default', function(assert)
   var timer = assert.timer();
   var prefix = 'timestamps_default_default_';
 
-  Rekord.Database.Defaults.timestamps = true;
+  Rekord.Defaults.timestamps = true;
 
   var Todo = Rekord({
     name: prefix + 'todo',
@@ -1132,7 +1132,7 @@ test( 'timestamps default global default', function(assert)
     notDeepEqual( t0.updated_at.getTime(), time0, t0.updated_at );
   });
 
-  delete Rekord.Database.Defaults.timestamps;
+  delete Rekord.Defaults.timestamps;
 
   timer.run();
 });
@@ -1161,9 +1161,9 @@ test( 'timestamps custom', function(assert)
 test( 'timestamps collapse', function(assert)
 {
   var prefix = 'timestamps_collapse_';
-  var previous = Rekord.Database.Defaults.timestampType;
+  var previous = Rekord.Defaults.timestampType;
 
-  Rekord.Database.Defaults.timestampType = {
+  Rekord.Defaults.timestampType = {
     created_at: Rekord.Timestamp.Millis,
     updated_at: Rekord.Timestamp.Millis
   };
@@ -1183,7 +1183,7 @@ test( 'timestamps collapse', function(assert)
   ok( Rekord.isNumber( t0.created_at ) );
   isInstance( t0.done_at, Date );
 
-  Rekord.Database.Defaults.timestampType = previous;
+  Rekord.Defaults.timestampType = previous;
 });
 
 test( 'timestamps type many', function(assert)
@@ -1541,7 +1541,7 @@ test( 'extend global default', function(assert)
     }
   });
 
-  Rekord.Database.Defaults.extend = Todo;
+  Rekord.Defaults.extend = Todo;
 
   var TodoUpdatable = Rekord({
     name: prefix + 'todo_extended',
@@ -1565,7 +1565,7 @@ test( 'extend global default', function(assert)
   ok( 'updater' in db.relations );
   ok( 'creator' in db.relations );
 
-  delete Rekord.Database.Defaults.extend;
+  delete Rekord.Defaults.extend;
 });
 
 test( 'prepare', function(assert)
@@ -1587,7 +1587,7 @@ test( 'prepare global default', function(assert)
 {
   var prefix = 'prepare_default_';
 
-  Rekord.Database.Defaults.prepare = function(db, options) {
+  Rekord.Defaults.prepare = function(db, options) {
     db.api = '/api/1.0/' + db.name;
   };
 

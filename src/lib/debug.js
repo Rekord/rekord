@@ -32,6 +32,8 @@ Rekord.Debugs = {
   REST: 1,                    // options
   AUTO_REFRESH: 73,           //
 
+  MISSING_KEY: 33,            // encoded
+
   REMOTE_UPDATE: 2,           // encoded, Model
   REMOTE_CREATE: 3,           // encoded, Model
   REMOTE_REMOVE: 4,           // Model
@@ -167,6 +169,4 @@ Rekord.Debugs = {
   HASREMOVE_NINJA_SAVE: 110,        // Model, Model, relation
   HASREMOVE_QUERY: 119,             // Model, RemoteQuery, queryOption, query
   HASREMOVE_QUERY_RESULTS: 120      // Model, RemoteQuery
-
-  // 33
 };

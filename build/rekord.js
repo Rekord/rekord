@@ -2378,6 +2378,8 @@ Rekord.Debugs = {
   REST: 1,                    // options
   AUTO_REFRESH: 73,           //
 
+  MISSING_KEY: 33,            // encoded
+
   REMOTE_UPDATE: 2,           // encoded, Model
   REMOTE_CREATE: 3,           // encoded, Model
   REMOTE_REMOVE: 4,           // Model
@@ -2513,8 +2515,6 @@ Rekord.Debugs = {
   HASREMOVE_NINJA_SAVE: 110,        // Model, Model, relation
   HASREMOVE_QUERY: 119,             // Model, RemoteQuery, queryOption, query
   HASREMOVE_QUERY_RESULTS: 120      // Model, RemoteQuery
-
-  // 33
 };
 
 
@@ -3108,15 +3108,13 @@ function Gate(callback)
  */
 function Database(options)
 {
-  var defaults = Database.Defaults;
-
   // Apply the options to this database!
-  applyOptions( this, options, defaults );
+  applyOptions( this, options, Defaults );
 
   // Apply options not specified in defaults
   for (var prop in options)
   {
-    if ( !(prop in defaults) )
+    if ( !(prop in Defaults) )
     {
       this[ prop ] = options[ prop ];
     }
@@ -3285,7 +3283,7 @@ Database.Events =
   Changes:            'updated'
 };
 
-Database.Defaults =
+var Defaults = Database.Defaults =
 {
   name:                 undefined,  // required
   className:            null,       // defaults to toCamelCase( name )
@@ -14674,7 +14672,7 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 
 Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 {
-  var dynamics = collapse( options.dynamic, Database.Defaults.dynamic );
+  var dynamics = collapse( options.dynamic, Defaults.dynamic );
 
   if ( !isEmpty( dynamics ) )
   {
@@ -14732,7 +14730,7 @@ function addDynamicProperty(modelPrototype, property, definition)
 
 Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 {
-  var events = collapse( options.events, Database.Defaults.events );
+  var events = collapse( options.events, Defaults.events );
 
   if ( !isEmpty( events ) )
   {
@@ -14851,14 +14849,14 @@ function applyEventListeners(target, listeners)
 
 Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 {
-  var extend = options.extend || Database.Defaults.extend;
+  var extend = options.extend || Defaults.extend;
 
   if ( !isRekord( extend ) )
   {
     return;
   }
 
-  var defaults = Database.Defaults;
+  var defaults = Defaults;
   var edb = extend.Database;
   var eoptions = edb.options;
 
@@ -15058,7 +15056,7 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 
 Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 {
-  var files = options.files || Database.Defaults.files;
+  var files = options.files || Defaults.files;
 
   if ( !isObject( files ) )
   {
@@ -15652,7 +15650,7 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 
 Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 {
-  var methods = collapse( options.methods, Database.Defaults.methods );
+  var methods = collapse( options.methods, Defaults.methods );
 
   if ( !isEmpty( methods ) )
   {
@@ -15875,7 +15873,7 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 
 Rekord.on( Rekord.Events.Options, function(options)
 {
-  var shard = options.shard || Database.Defaults.shard;
+  var shard = options.shard || Defaults.shard;
 
   if ( !isObject( shard ) )
   {
@@ -15887,11 +15885,11 @@ Rekord.on( Rekord.Events.Options, function(options)
 
 Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 {
-  var time = options.timestamps || Database.Defaults.timestamps;
-  var timeFormat = collapseOption( options.timestampFormat, Database.Defaults.timestampFormat );
-  var timeType = collapseOption( options.timestampType, Database.Defaults.timestampType );
-  var timeUTC = collapseOption( options.timestampUTC, Database.Defaults.timestampUTC );
-  var timeCurrent = options.timestampCurrent || Database.Defaults.timestampCurrent;
+  var time = options.timestamps || Defaults.timestamps;
+  var timeFormat = collapseOption( options.timestampFormat, Defaults.timestampFormat );
+  var timeType = collapseOption( options.timestampType, Defaults.timestampType );
+  var timeUTC = collapseOption( options.timestampUTC, Defaults.timestampUTC );
+  var timeCurrent = options.timestampCurrent || Defaults.timestampCurrent;
 
   if ( !time )
   {
@@ -16039,10 +16037,10 @@ var Timestamp = {
   Seconds: 'seconds'
 };
 
-Database.Defaults.timestampFormat = Timestamp.Millis;
-Database.Defaults.timestampType = Timestamp.Date;
-Database.Defaults.timestampUTC = false;
-Database.Defaults.timestampCurrent = ['created_at', 'updated_at'];
+Defaults.timestampFormat = Timestamp.Millis;
+Defaults.timestampType = Timestamp.Date;
+Defaults.timestampUTC = false;
+Defaults.timestampCurrent = ['created_at', 'updated_at'];
 
 function convertDate(x, to, utc)
 {
@@ -16082,7 +16080,7 @@ Rekord.convertDate = convertDate;
   /* Classes */
   Rekord.Model = Model;
   Rekord.Database = Database;
-  Rekord.Defaults = Database.Defaults;
+  Rekord.Defaults = Defaults;
   Rekord.Relation = Relation;
   Rekord.Operation = Operation;
   Rekord.Search = Search;

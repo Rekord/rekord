@@ -1,13 +1,13 @@
 Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 {
-  var extend = options.extend || Database.Defaults.extend;
+  var extend = options.extend || Defaults.extend;
 
   if ( !isRekord( extend ) )
   {
     return;
   }
 
-  var defaults = Database.Defaults;
+  var defaults = Defaults;
   var edb = extend.Database;
   var eoptions = edb.options;
 

@@ -1,10 +1,10 @@
 Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 {
-  var time = options.timestamps || Database.Defaults.timestamps;
-  var timeFormat = collapseOption( options.timestampFormat, Database.Defaults.timestampFormat );
-  var timeType = collapseOption( options.timestampType, Database.Defaults.timestampType );
-  var timeUTC = collapseOption( options.timestampUTC, Database.Defaults.timestampUTC );
-  var timeCurrent = options.timestampCurrent || Database.Defaults.timestampCurrent;
+  var time = options.timestamps || Defaults.timestamps;
+  var timeFormat = collapseOption( options.timestampFormat, Defaults.timestampFormat );
+  var timeType = collapseOption( options.timestampType, Defaults.timestampType );
+  var timeUTC = collapseOption( options.timestampUTC, Defaults.timestampUTC );
+  var timeCurrent = options.timestampCurrent || Defaults.timestampCurrent;
 
   if ( !time )
   {
@@ -152,10 +152,10 @@ var Timestamp = {
   Seconds: 'seconds'
 };
 
-Database.Defaults.timestampFormat = Timestamp.Millis;
-Database.Defaults.timestampType = Timestamp.Date;
-Database.Defaults.timestampUTC = false;
-Database.Defaults.timestampCurrent = ['created_at', 'updated_at'];
+Defaults.timestampFormat = Timestamp.Millis;
+Defaults.timestampType = Timestamp.Date;
+Defaults.timestampUTC = false;
+Defaults.timestampCurrent = ['created_at', 'updated_at'];
 
 function convertDate(x, to, utc)
 {

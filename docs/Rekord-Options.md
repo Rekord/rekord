@@ -1,5 +1,5 @@
 
-Defaults can be overridden by changing `Rekord.Database.Defaults`
+Defaults can be overridden by changing `Rekord.Defaults`
 
 ```javascript
 var ModelClass = Rekord({

@@ -1,6 +1,6 @@
 Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 {
-  var files = options.files || Database.Defaults.files;
+  var files = options.files || Defaults.files;
 
   if ( !isObject( files ) )
   {

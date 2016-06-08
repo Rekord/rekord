@@ -5,7 +5,7 @@
   /* Classes */
   Rekord.Model = Model;
   Rekord.Database = Database;
-  Rekord.Defaults = Database.Defaults;
+  Rekord.Defaults = Defaults;
   Rekord.Relation = Relation;
   Rekord.Operation = Operation;
   Rekord.Search = Search;

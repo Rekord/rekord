@@ -8,15 +8,13 @@
  */
 function Database(options)
 {
-  var defaults = Database.Defaults;
-
   // Apply the options to this database!
-  applyOptions( this, options, defaults );
+  applyOptions( this, options, Defaults );
 
   // Apply options not specified in defaults
   for (var prop in options)
   {
-    if ( !(prop in defaults) )
+    if ( !(prop in Defaults) )
     {
       this[ prop ] = options[ prop ];
     }
@@ -185,7 +183,7 @@ Database.Events =
   Changes:            'updated'
 };
 
-Database.Defaults =
+var Defaults = Database.Defaults =
 {
   name:                 undefined,  // required
   className:            null,       // defaults to toCamelCase( name )

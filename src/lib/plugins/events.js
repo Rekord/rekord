@@ -1,6 +1,6 @@
 Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 {
-  var events = collapse( options.events, Database.Defaults.events );
+  var events = collapse( options.events, Defaults.events );
 
   if ( !isEmpty( events ) )
   {

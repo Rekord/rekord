@@ -1,6 +1,6 @@
 Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 {
-  var dynamics = collapse( options.dynamic, Database.Defaults.dynamic );
+  var dynamics = collapse( options.dynamic, Defaults.dynamic );
 
   if ( !isEmpty( dynamics ) )
   {
