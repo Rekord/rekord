@@ -10695,12 +10695,13 @@ addMethods( Operation.prototype,
       {
         this.next.execute();
       }
-      else
+
+      this.db.pendingOperations--;
+
+      if ( !this.next )
       {
         this.model.$trigger( Model.Events.OperationsFinished );
       }
-
-      this.db.pendingOperations--;
 
       if ( this.db.pendingOperations === 0 )
       {
