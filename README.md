@@ -11,8 +11,6 @@ Rekord does this in a generic way so **you can use any libraries you wish** or y
 Rekord's design allows for offline capable and real-time applications if desired - offering complete control over how and where your data is stored.
 Rekord is the most powerful client-side Model/Active Record/ORM you'll find guaranteed - or your money back!
 
-Rekord is a javascript REST ORM that is offline and real-time capable.
-
 **Features**
 - Relationships `hasOne`, `belongsTo`, `hasMany`, `hasManyThrough`, `hasRemote`, & `hasList`
 - Polymorphic relationships for `hasOne`, `belongsTo` & `hasMany`
