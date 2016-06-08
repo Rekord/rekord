@@ -21,8 +21,7 @@ test( 'model string', function(assert)
     fields: ['id', 'name'],
     hasRemote: {
       tasks: {
-        model: prefix + 'task',
-        foreign: 'task_list_id'
+        model: prefix + 'task'
       }
     }
   });
@@ -51,8 +50,7 @@ test( 'model reference', function(assert)
     fields: ['id', 'name'],
     hasRemote: {
       tasks: {
-        model: Task,
-        foreign: 'task_list_id'
+        model: Task
       }
     }
   });

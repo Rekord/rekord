@@ -126,7 +126,7 @@ extend( RelationMultiple, HasMany,
 
     if ( related )
     {
-      var relateds = [];
+      var relatedClones = [];
 
       this.updateFieldsReturnChanges( properties, this.foreign, clone, model.$db.key );
 
@@ -134,10 +134,10 @@ extend( RelationMultiple, HasMany,
 
       for (var i = 0; i < related.length; i++)
       {
-        relateds.push( related[ i ].$clone( properties ) );
+        relatedClones.push( related[ i ].$clone( properties ) );
       }
 
-      clone[ this.name ] = relateds;
+      clone[ this.name ] = relatedClones;
     }
   },
 

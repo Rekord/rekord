@@ -33,6 +33,7 @@
   Rekord.HasMany = HasMany;
   Rekord.HasManyThrough = HasManyThrough;
   Rekord.HasRemote = HasRemote;
+  Rekord.HasList = HasList;
 
   /* Common Functions */
   Rekord.isRekord = isRekord;

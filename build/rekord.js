@@ -2511,10 +2511,18 @@ Rekord.Debugs = {
 
   HASREMOTE_INIT: 50,               // HasRemote
   HASREMOTE_SORT: 121,              // relation
-  HASREMOVE_NINJA_REMOVE: 109,      // Model, Model, relation
-  HASREMOVE_NINJA_SAVE: 110,        // Model, Model, relation
-  HASREMOVE_QUERY: 119,             // Model, RemoteQuery, queryOption, query
-  HASREMOVE_QUERY_RESULTS: 120      // Model, RemoteQuery
+  HASREMOTE_NINJA_REMOVE: 109,      // Model, Model, relation
+  HASREMOTE_NINJA_SAVE: 110,        // Model, Model, relation
+  HASREMOTE_QUERY: 119,             // Model, RemoteQuery, queryOption, query
+  HASREMOTE_QUERY_RESULTS: 120,     // Model, RemoteQuery
+
+  HASLIST_INIT: 122,                // HasList
+  HASLIST_SORT: 123,                // relation
+  HASLIST_NINJA_REMOVE: 124,        // Model, Model, relation
+  HASLIST_NINJA_SAVE: 125,          // Model, Model, relation
+  HASLIST_REMOVE: 126,              // HasList, relation, Model
+  HASLIST_ADD: 127,                 // HasList, relation, Model
+  HASLIST_INITIAL: 128              // HasList, Model, relation, initial
 };
 
 
@@ -13009,7 +13017,7 @@ extend( RelationMultiple, HasMany,
 
     if ( related )
     {
-      var relateds = [];
+      var relatedClones = [];
 
       this.updateFieldsReturnChanges( properties, this.foreign, clone, model.$db.key );
 
@@ -13017,10 +13025,10 @@ extend( RelationMultiple, HasMany,
 
       for (var i = 0; i < related.length; i++)
       {
-        relateds.push( related[ i ].$clone( properties ) );
+        relatedClones.push( related[ i ].$clone( properties ) );
       }
 
-      clone[ this.name ] = relateds;
+      clone[ this.name ] = relatedClones;
     }
   },
 
@@ -13811,14 +13819,14 @@ extend( RelationMultiple, HasRemote,
 
       onRemoved: function() // this = model removed
       {
-        Rekord.debug( Rekord.Debugs.HASREMOVE_NINJA_REMOVE, relator, model, this, relation );
+        Rekord.debug( Rekord.Debugs.HASREMOTE_NINJA_REMOVE, relator, model, this, relation );
 
         relator.removeModel( relation, this, true );
       },
 
       onSaved: function() // this = model saved
       {
-        Rekord.debug( Rekord.Debugs.HASREMOVE_NINJA_SAVE, relator, model, this, relation );
+        Rekord.debug( Rekord.Debugs.HASREMOTE_NINJA_SAVE, relator, model, this, relation );
 
         relator.sort( relation );
         relator.checkSave( relation );
@@ -13908,6 +13916,165 @@ extend( RelationMultiple, HasRemote,
     }
 
     delete pending[ key ];
+  }
+
+});
+
+function HasList()
+{
+}
+
+Rekord.Relations.hasList = HasList;
+
+HasList.Defaults =
+{
+  model:                undefined,
+  lazy:                 false,
+  store:                Store.Model,
+  save:                 Save.Model,
+  auto:                 false,
+  property:             true,
+  dynamic:              false,
+  comparator:           null,
+  comparatorNullsFirst: false
+};
+
+extend( RelationMultiple, HasList,
+{
+
+  type: 'hasList',
+
+  debugSort:            Rekord.Debugs.HASLIST_SORT,
+
+  getDefaults: function(database, field, options)
+  {
+    return HasList.Defaults;
+  },
+
+  onInitialized: function(database, field, options)
+  {
+    this.comparator = createComparator( this.comparator, this.comparatorNullsFirst );
+
+    Rekord.debug( Rekord.Debugs.HASLIST_INIT, this );
+
+    this.finishInitialization();
+  },
+
+  load: Gate(function(model, initialValue, remoteData)
+  {
+    var relator = this;
+    var relation = model.$relations[ this.name ] =
+    {
+      parent: model,
+      pending: {},
+      related: this.createRelationCollection( model ),
+      delaySorting: false,
+      delaySaving: false,
+
+      onRemoved: function() // this = model removed
+      {
+        Rekord.debug( Rekord.Debugs.HASLIST_NINJA_REMOVE, relator, model, this, relation );
+
+        relator.removeModel( relation, this, true );
+      },
+
+      onSaved: function() // this = model saved
+      {
+        Rekord.debug( Rekord.Debugs.HASLIST_NINJA_SAVE, relator, model, this, relation );
+
+        relator.sort( relation );
+        relator.checkSave( relation );
+      }
+
+    };
+
+    // If the model's initial value is an array, populate the relation from it!
+    if ( isArray( initialValue ) )
+    {
+      Rekord.debug( Rekord.Debugs.HASLIST_INITIAL, this, model, relation, initialValue );
+
+      this.grabModels( relation, initialValue, this.handleModel( relation, remoteData ), remoteData );
+    }
+
+    // We only need to set the property once since the underlying array won't change.
+    this.setProperty( relation );
+  }),
+
+  addModel: function(relation, related, remoteData)
+  {
+    if ( related.$isDeleted() )
+    {
+      return;
+    }
+
+    var model = relation.parent;
+    var target = relation.related;
+    var key = related.$key();
+    var adding = !target.has( key );
+
+    if ( adding )
+    {
+      Rekord.debug( Rekord.Debugs.HASLIST_ADD, this, relation, related );
+
+      target.put( key, related );
+
+      related.$on( Model.Events.Removed, relation.onRemoved );
+      related.$on( Model.Events.SavedRemoteUpdate, relation.onSaved );
+
+      this.sort( relation );
+
+      if ( !remoteData )
+      {
+        this.checkSave( relation );
+      }
+    }
+
+    return adding;
+  },
+
+  removeModel: function(relation, related, remoteData)
+  {
+    if ( !this.canRemoveRelated( related, remoteData ) )
+    {
+      return;
+    }
+
+    var model = relation.parent;
+    var target = relation.related;
+    var pending = relation.pending;
+    var key = related.$key();
+
+    if ( target.has( key ) )
+    {
+      Rekord.debug( Rekord.Debugs.HASLIST_REMOVE, this, relation, related );
+
+      target.remove( key );
+
+      related.$off( Model.Events.Removed, relation.onRemoved );
+      related.$off( Model.Events.SavedRemoteUpdate, relation.onSaved );
+
+      this.sort( relation );
+      this.checkSave( relation );
+    }
+
+    delete pending[ key ];
+  },
+
+  postClone: function(model, clone, properties)
+  {
+    var related = this.get( model );
+
+    if ( related )
+    {
+      var relatedClones = [];
+
+      for (var i = 0; i < related.length; i++)
+      {
+        relatedClones.push( related[ i ].$clone() );
+      }
+
+      clone[ this.name ] = relatedClones;
+    }
   }
 
 });
@@ -16124,6 +16291,7 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
   Rekord.HasMany = HasMany;
   Rekord.HasManyThrough = HasManyThrough;
   Rekord.HasRemote = HasRemote;
+  Rekord.HasList = HasList;
 
   /* Common Functions */
   Rekord.isRekord = isRekord;

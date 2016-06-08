@@ -165,8 +165,16 @@ Rekord.Debugs = {
 
   HASREMOTE_INIT: 50,               // HasRemote
   HASREMOTE_SORT: 121,              // relation
-  HASREMOVE_NINJA_REMOVE: 109,      // Model, Model, relation
-  HASREMOVE_NINJA_SAVE: 110,        // Model, Model, relation
-  HASREMOVE_QUERY: 119,             // Model, RemoteQuery, queryOption, query
-  HASREMOVE_QUERY_RESULTS: 120      // Model, RemoteQuery
+  HASREMOTE_NINJA_REMOVE: 109,      // Model, Model, relation
+  HASREMOTE_NINJA_SAVE: 110,        // Model, Model, relation
+  HASREMOTE_QUERY: 119,             // Model, RemoteQuery, queryOption, query
+  HASREMOTE_QUERY_RESULTS: 120,     // Model, RemoteQuery
+
+  HASLIST_INIT: 122,                // HasList
+  HASLIST_SORT: 123,                // relation
+  HASLIST_NINJA_REMOVE: 124,        // Model, Model, relation
+  HASLIST_NINJA_SAVE: 125,          // Model, Model, relation
+  HASLIST_REMOVE: 126,              // HasList, relation, Model
+  HASLIST_ADD: 127,                 // HasList, relation, Model
+  HASLIST_INITIAL: 128              // HasList, Model, relation, initial
 };
