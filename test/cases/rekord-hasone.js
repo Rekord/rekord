@@ -554,3 +554,136 @@ test( 'child table', function(assert)
   ok( i0.$isSaved() );
   ok( p0.$isSaved() );
 });
+
+test( 'child table value instance', function(assert)
+{
+  var prefix = 'hasOne_child_table_value_instance_';
+
+  var ItemName = prefix + 'item';
+  var ItemPreferenceName = prefix + 'item_preference';
+
+  var Item = Rekord({
+    name: ItemName,
+    fields: ['name'],
+    hasOne: {
+      preference: {
+        model: ItemPreferenceName,
+        local: 'id'
+      }
+    }
+  });
+
+  var ItemPreference = Rekord({
+    name: ItemPreferenceName,
+    key: 'item_id',
+    fields: ['brand', 'model'],
+    belongsTo: {
+      item: {
+        model: ItemName,
+        local: 'item_id'
+      }
+    }
+  });
+
+  var i0 = Item.create({name: 'i0', preference: new ItemPreference({brand: 'Rekord', model: '#53434'})});
+  var p0 = i0.preference;
+
+  ok( p0 );
+  strictEqual( p0.item_id, i0.id );
+  ok( i0.$isSaved() );
+  ok( p0.$isSaved() );
+  deepEqual( i0.$saved, {id: i0.id, name: 'i0'} );
+  deepEqual( p0.$saved, {item_id: i0.id, brand: 'Rekord', model: '#53434'} );
+});
+
+test( 'child table default rekord', function(assert)
+{
+  var prefix = 'hasOne_child_table_default_rekord_';
+
+  var ItemName = prefix + 'item';
+  var ItemPreferenceName = prefix + 'item_preference';
+
+  var ItemPreference = Rekord({
+    name: ItemPreferenceName,
+    key: 'item_id',
+    fields: ['brand', 'model'],
+    belongsTo: {
+      item: {
+        model: ItemName,
+        local: 'item_id'
+      }
+    }
+  });
+
+  var Item = Rekord({
+    name: ItemName,
+    fields: ['name'],
+    defaults: {
+      preference: ItemPreference
+    },
+    hasOne: {
+      preference: {
+        model: ItemPreferenceName,
+        local: 'id'
+      }
+    }
+  });
+
+  var i0 = Item.create({name: 'i0'});
+  var p0 = i0.preference;
+
+  ok( p0 );
+  strictEqual( p0.item_id, i0.id );
+  ok( i0.$isSaved() );
+  ok( p0.$isSaved() );
+  deepEqual( i0.$saved, {id: i0.id, name: 'i0'} );
+  deepEqual( p0.$saved, {item_id: i0.id, brand: undefined, model: undefined} );
+});
+
+test( 'child table default function', function(assert)
+{
+  var prefix = 'hasOne_child_table_default_function_';
+
+  var ItemName = prefix + 'item';
+  var ItemPreferenceName = prefix + 'item_preference';
+
+  var ItemPreference = Rekord({
+    name: ItemPreferenceName,
+    key: 'item_id',
+    fields: ['brand', 'model'],
+    belongsTo: {
+      item: {
+        model: ItemName,
+        local: 'item_id'
+      }
+    }
+  });
+
+  var Item = Rekord({
+    name: ItemName,
+    fields: ['name'],
+    defaults: {
+      preference: function() {
+        return new ItemPreference({brand: 'brand', model: 'model'});
+      }
+    },
+    hasOne: {
+      preference: {
+        model: ItemPreferenceName,
+        local: 'id'
+      }
+    }
+  });
+
+  var i0 = Item.create({name: 'i0'});
+  var p0 = i0.preference;
+
+  ok( p0 );
+  strictEqual( p0.item_id, i0.id );
+  ok( i0.$isSaved() );
+  ok( p0.$isSaved() );
+  strictEqual( p0.brand, 'brand' );
+  strictEqual( p0.model, 'model' );
+  deepEqual( i0.$saved, {id: i0.id, name: 'i0'} );
+  deepEqual( p0.$saved, {item_id: i0.id, brand: 'brand', model: 'model'} );
+});

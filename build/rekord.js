@@ -4661,18 +4661,6 @@ addMethods( Model.prototype,
 
         this[ prop ] = evaluatedValue;
       }
-
-      for (var prop in relations)
-      {
-        if ( prop in def )
-        {
-          var defaultValue = def[ prop ];
-          var evaluatedValue = evaluate( defaultValue );
-          var relation = this.$getRelation( prop );
-
-          relation.set( this, evaluatedValue );
-        }
-      }
     }
     else
     {
@@ -4722,6 +4710,25 @@ addMethods( Model.prototype,
     {
       this.$db.all[ key ] = this;
       this.$$key = key;
+    }
+
+    if ( !isEmpty( def ) )
+    {
+      for (var prop in relations)
+      {
+        if ( prop in def )
+        {
+          var defaultValue = def[ prop ];
+          var evaluatedValue = evaluate( defaultValue );
+          var hasRelation = !!this.$relations[ prop ];
+          var relation = this.$getRelation( prop, evaluatedValue );
+
+          if ( hasRelation )
+          {
+            relation.set( this, evaluatedValue );
+          }
+        }
+      }
     }
 
     // Set the remaing properties
