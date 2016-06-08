@@ -142,7 +142,7 @@ var Polymorphic =
 
   clearFields: function(target, targetFields, remoteData)
   {
-    var changes = this.clearFieldsReturnChanges( target, targetFields );
+    var changes = clearFieldsReturnChanges( target, targetFields );
 
     if ( target[ this.discriminator ] )
     {
@@ -160,7 +160,7 @@ var Polymorphic =
 
   updateFields: function(target, targetFields, source, sourceFields, remoteData)
   {
-    var changes = this.updateFieldsReturnChanges( target, targetFields, source, sourceFields );
+    var changes = updateFieldsReturnChanges( target, targetFields, source, sourceFields );
 
     var targetField = this.discriminator;
     var targetValue = target[ targetField ];
@@ -196,21 +196,12 @@ var Polymorphic =
 
       if ( related.Database )
       {
+        var db = related.Database;
         var initial = {};
 
         initial[ discriminator ] = discriminatorValue;
 
-        if ( isString( fields ) ) // && isString( model.Database.key )
-        {
-          initial[ related.Database.key ] = model[ fields ];
-        }
-        else // if ( isArray( fields ) && isArray( model.Database.key ) )
-        {
-          for (var i = 0; i < fields.length; i++)
-          {
-            initial[ related.Database.key[ i ] ] = model[ fields[ i ] ];
-          }
-        }
+        updateFieldsReturnChanges( initial, db.key, model, fields );
 
         return initial;
       }
@@ -246,7 +237,7 @@ var Polymorphic =
 
         if ( db )
         {
-          var key = db.buildKeyFromInput( input );
+          var key = db.keyHandler.buildKeyFromInput( input );
 
           relation.pending[ key ] = true;
 

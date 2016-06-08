@@ -373,13 +373,13 @@ TestLive.prototype =
   },
   liveSave: function(data)
   {
-    var key = this.database.buildKeyFromInput( data );
+    var key = this.database.keyHandler.buildKeyFromInput( data );
 
     this.database.liveSave( key, data );
   },
   liveRemove: function(input)
   {
-    var key = this.database.buildKeyFromInput( input );
+    var key = this.database.keyHandler.buildKeyFromInput( input );
 
     this.database.liveRemove( key );
   }

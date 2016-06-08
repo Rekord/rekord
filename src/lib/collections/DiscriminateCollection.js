@@ -46,7 +46,7 @@ function DiscriminateCollection(collection, discriminator, discriminatorsToModel
 
         if ( model )
         {
-          return model.Database.buildKeyFromInput( input );
+          return model.Database.keyHandler.buildKeyFromInput( input );
         }
       }
 

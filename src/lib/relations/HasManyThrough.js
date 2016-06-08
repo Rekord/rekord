@@ -311,7 +311,7 @@ extend( RelationMultiple, HasManyThrough,
 
     // TODO polymoprhic logic
     var relatedDatabase = this.model.Database;
-    var relatedKey = relatedDatabase.buildKey( through, this.foreign );
+    var relatedKey = relatedDatabase.keyHandler.buildKey( through, this.foreign );
 
     relatedDatabase.grabModel( relatedKey, this.onAddModelFromThrough( relation, through, remoteData ), this, remoteData );
   },
@@ -403,7 +403,7 @@ extend( RelationMultiple, HasManyThrough,
   {
     var throughDatabase = this.through.Database;
     var keyObject = this.createThroughKey( relation, related );
-    var key = throughDatabase.getKey( keyObject );
+    var key = throughDatabase.keyHandler.getKey( keyObject );
     var throughs = relation.throughs;
     var through = throughs.get( key );
 
@@ -413,7 +413,7 @@ extend( RelationMultiple, HasManyThrough,
   removeModelFromThrough: function(relation, through)
   {
     var relatedDatabase = this.model.Database;
-    var relatedKey = relatedDatabase.buildKey( through, this.foreign );
+    var relatedKey = relatedDatabase.keyHandler.buildKey( through, this.foreign );
 
     if ( this.finishRemoveThrough( relation, through ) )
     {
@@ -491,8 +491,8 @@ extend( RelationMultiple, HasManyThrough,
   createThroughKey: function(relation, related)
   {
     var model = relation.parent;
-    var modelDatabase = model.$db;
-    var relatedDatabase = this.model.Database;
+    var modelKeys = model.$db.keyHandler;
+    var relatedKeys = this.model.Database.keyHandler;
     var throughDatabase = this.through.Database;
     var throughKey = throughDatabase.key;
     var key = {};
@@ -501,28 +501,8 @@ extend( RelationMultiple, HasManyThrough,
     {
       var prop = throughKey[ i ];
 
-      if ( prop === this.foreign )
-      {
-        key[ prop ] = related.$key();
-      }
-      else if ( prop === this.local )
-      {
-        key[ prop ] = model.$key();
-      }
-      else if ( isArray( this.foreign ) )
-      {
-        var keyIndex = indexOf( this.foreign, prop );
-        var keyProp = relatedDatabase.key[ keyIndex ];
-
-        key[ prop ] = related[ keyProp ];
-      }
-      else if ( isArray( this.local ) )
-      {
-        var keyIndex = indexOf( this.local, prop );
-        var keyProp = modelDatabase.key[ keyIndex ];
-
-        key[ prop ] = model[ keyProp ];
-      }
+      modelKeys.setKeyField( key, prop, related, this.foreign );
+      relatedKeys.setKeyField( key, prop, model, this.local );
     }
 
     return key;

@@ -230,27 +230,10 @@ extend( Relation, RelationSingle,
 
     if ( isObject( related ) && this.model )
     {
-      var foreign = this.model.Database.key;
+      var modelDatabase = this.model.Database;
+      var foreign = modelDatabase.key;
 
-      if ( isArray( key ) )
-      {
-        for (var i = 0; i < key.length; i++)
-        {
-          var field = key[ i ];
-
-          if ( !isValue( input[ field ] ) && isValue( related[ foreign[ i ] ] ) )
-          {
-            input[ field ] = related[ foreign[ i ] ];
-          }
-        }
-      }
-      else
-      {
-        if ( !isValue( input[ key ] ) && isValue( related[ foreign ] ) )
-        {
-          input[ key ] = related[ foreign ];
-        }
-      }
+      modelDatabase.keyHandler.copyFields( input, key, related, foreign );
     }
   }
 

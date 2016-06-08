@@ -12,6 +12,11 @@
   Rekord.SearchPaged = SearchPaged;
   Rekord.Promise = Promise;
 
+  /* Keys */
+  Rekord.KeyHandler = KeyHandler;
+  Rekord.KeySimple = KeySimple;
+  Rekord.KeyComposite = KeyComposite;
+
   /* Enums */
   Rekord.Cascade = Cascade;
   Rekord.Cache = Cache;
@@ -94,6 +99,8 @@
   Rekord.applyOptions = applyOptions;
   Rekord.propsMatch = propsMatch;
   Rekord.hasFields = hasFields;
+  Rekord.updateFieldsReturnChanges = updateFieldsReturnChanges;
+  Rekord.clearFieldsReturnChanges = clearFieldsReturnChanges;
   Rekord.grab = grab;
   Rekord.pull = pull;
   Rekord.transfer = transfer;

@@ -66,8 +66,8 @@ The `Rekord.Model` and `Rekord.Search` classes can have custom properties theref
 
 The easiest way to install rekord is through bower via `bower install rekord`.
 
-- `rekord.js` is `376KB` (`66KB` gzipped)
-- `rekord.min.js` is `110KB` (`28KB` gzipped)
+- `rekord.js` is `390KB` (`67KB` gzipped)
+- `rekord.min.js` is `115KB` (`29KB` gzipped)
 
 **Examples**
 

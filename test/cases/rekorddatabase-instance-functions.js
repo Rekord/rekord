@@ -55,7 +55,7 @@ test( 'remove key default', function(assert)
 
   notStrictEqual( r0.id, void 0 );
 
-  db.removeKey( r0 );
+  db.keyHandler.removeKey( r0 );
 
   strictEqual( r0.id, void 0 );
 });
@@ -74,7 +74,7 @@ test( 'remove key prop', function(assert)
 
   notStrictEqual( r0.key, void 0 );
 
-  db.removeKey( r0 );
+  db.keyHandler.removeKey( r0 );
 
   strictEqual( r0.key, void 0 );
 });
@@ -94,7 +94,7 @@ test( 'remove key props', function(assert)
   notStrictEqual( r0.subject_id, void 0 );
   notStrictEqual( r0.object_id, void 0 );
 
-  db.removeKey( r0 );
+  db.keyHandler.removeKey( r0 );
 
   strictEqual( r0.subject_id, void 0 );
   strictEqual( r0.object_id, void 0 );
@@ -109,11 +109,9 @@ test( 'buildKey', function(assert)
 
   var db = buildKey.Database;
 
-  var b0 = buildKey.create({name: 'name0', age: 1});
+  var b0 = buildKey.create({id: 6, name: 'name0', age: 1});
 
-  strictEqual( db.buildKey( b0, 'name' ), 'name0' );
-  strictEqual( db.buildKey( b0, 'age' ), 1 );
-  strictEqual( db.buildKey( b0, ['name', 'age'] ), 'name0/1' );
+  strictEqual( db.keyHandler.buildKey( b0 ), 6 );
 });
 
 test( 'buildKey with relationships', function(assert)
@@ -159,7 +157,7 @@ test( 'buildKey with relationships', function(assert)
     amount: 24
   };
 
-  var key = ListItem.Database.buildKeyFromInput(input);
+  var key = ListItem.Database.keyHandler.buildKeyFromInput(input);
 
   strictEqual( key, '3/4' );
   strictEqual( input.list_id, 3 );
@@ -175,16 +173,15 @@ test( 'buildKeys', function(assert)
 {
   var buildKeys = Rekord({
     name: 'buildKeys',
-    fields: ['id', 'name', 'age']
+    key: ['id', 'name'],
+    fields: ['age']
   });
 
   var db = buildKeys.Database;
 
-  var b0 = buildKeys.create({name: 'name0', age: 1});
+  var b0 = buildKeys.create({id: 6, name: 'name0', age: 1});
 
-  strictEqual( db.buildKeys( b0, 'name' ), 'name0' );
-  strictEqual( db.buildKeys( b0, 'age' ), 1 );
-  deepEqual( db.buildKeys( b0, ['name', 'age'] ), ['name0', 1] );
+  deepEqual( db.keyHandler.getKeys( b0 ), [6, 'name0'] );
 });
 
 test( 'buildKeyFromInput', function(assert)
@@ -206,29 +203,10 @@ test( 'buildKeyFromInput', function(assert)
   var e2 = 34;
   var e3 = 'uuid';
 
-  strictEqual( db.buildKeyFromInput( i0 ), e0 );
-  strictEqual( db.buildKeyFromInput( i1 ), e1 );
-  strictEqual( db.buildKeyFromInput( i2 ), e2 );
-  strictEqual( db.buildKeyFromInput( i3 ), e3 );
-});
-
-test( 'buildKeyFromArray', function(assert)
-{
-  var buildKeyFromArray = Rekord({
-    name: 'buildKeyFromArray',
-    fields: ['id', 'name']
-  });
-
-  var db = buildKeyFromArray.Database;
-
-  var i0 = [1];
-  var i1 = [2,3];
-
-  var e0 = '1';
-  var e1 = '2/3';
-
-  strictEqual( db.buildKeyFromArray( i0 ), e0 );
-  strictEqual( db.buildKeyFromArray( i1 ), e1 );
+  strictEqual( db.keyHandler.buildKeyFromInput( i0 ), e0 );
+  strictEqual( db.keyHandler.buildKeyFromInput( i1 ), e1 );
+  strictEqual( db.keyHandler.buildKeyFromInput( i2 ), e2 );
+  strictEqual( db.keyHandler.buildKeyFromInput( i3 ), e3 );
 });
 
 test( 'setRevision', function(assert)

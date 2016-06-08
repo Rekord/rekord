@@ -253,7 +253,7 @@ addMethods( Relation.prototype,
     for (var i = 0; i < initial.length; i++)
     {
       var input = initial[ i ];
-      var key = db.buildKeyFromInput( input );
+      var key = db.keyHandler.buildKeyFromInput( input );
 
       relation.pending[ key ] = true;
 
@@ -342,7 +342,7 @@ addMethods( Relation.prototype,
 
   clearFields: function(target, targetFields, remoteData, cascade)
   {
-    var changes = this.clearFieldsReturnChanges( target, targetFields );
+    var changes = clearFieldsReturnChanges( target, targetFields );
 
     if ( changes && !remoteData && this.auto && !target.$isNew() )
     {
@@ -352,38 +352,9 @@ addMethods( Relation.prototype,
     return changes;
   },
 
-  clearFieldsReturnChanges: function(target, targetFields)
-  {
-    var changes = false;
-
-    if ( isString( targetFields ) )
-    {
-      if ( target[ targetFields ] )
-      {
-        target[ targetFields ] = null;
-        changes = true;
-      }
-    }
-    else // isArray ( targetFields )
-    {
-      for (var i = 0; i < targetFields.length; i++)
-      {
-        var targetField = targetFields[ i ];
-
-        if ( target[ targetField ] )
-        {
-          target[ targetField ] = null;
-          changes = true;
-        }
-      }
-    }
-
-    return changes;
-  },
-
   updateFields: function(target, targetFields, source, sourceFields, remoteData)
   {
-    var changes = this.updateFieldsReturnChanges( target, targetFields, source, sourceFields );
+    var changes = updateFieldsReturnChanges( target, targetFields, source, sourceFields );
 
     if ( changes )
     {
@@ -393,41 +364,6 @@ addMethods( Relation.prototype,
       }
 
       target.$trigger( Model.Events.KeyUpdate, [target, source, targetFields, sourceFields] );
-    }
-
-    return changes;
-  },
-
-  updateFieldsReturnChanges: function(target, targetFields, source, sourceFields)
-  {
-    var changes = false;
-
-    if ( isString( targetFields ) ) // && isString( sourceFields )
-    {
-      var targetValue = target[ targetFields ];
-      var sourceValue = source[ sourceFields ];
-
-      if ( !equals( targetValue, sourceValue ) )
-      {
-        target[ targetFields ] = sourceValue;
-        changes = true;
-      }
-    }
-    else // if ( isArray( targetFields ) && isArray( sourceFields ) )
-    {
-      for (var i = 0; i < targetFields.length; i++)
-      {
-        var targetField = targetFields[ i ];
-        var targetValue = target[ targetField ];
-        var sourceField = sourceFields[ i ];
-        var sourceValue = source[ sourceField ];
-
-        if ( !equals( targetValue, sourceValue ) )
-        {
-          target[ targetField ] = copy( sourceValue );
-          changes = true;
-        }
-      }
     }
 
     return changes;

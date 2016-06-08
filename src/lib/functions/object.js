@@ -122,6 +122,70 @@ function hasFields(model, fields, exists)
   }
 }
 
+function clearFieldsReturnChanges(target, targetFields)
+{
+  var changes = false;
+
+  if ( isArray( targetFields ) )
+  {
+    for (var i = 0; i < targetFields.length; i++)
+    {
+      var targetField = targetFields[ i ];
+
+      if ( target[ targetField ] )
+      {
+        target[ targetField ] = null;
+        changes = true;
+      }
+    }
+  }
+  else
+  {
+    if ( target[ targetFields ] )
+    {
+      target[ targetFields ] = null;
+      changes = true;
+    }
+  }
+
+  return changes;
+}
+
+function updateFieldsReturnChanges(target, targetFields, source, sourceFields)
+{
+  var changes = false;
+
+  if ( isArray( targetFields ) ) // && isArray( sourceFields )
+  {
+    for (var i = 0; i < targetFields.length; i++)
+    {
+      var targetField = targetFields[ i ];
+      var targetValue = target[ targetField ];
+      var sourceField = sourceFields[ i ];
+      var sourceValue = source[ sourceField ];
+
+      if ( !equals( targetValue, sourceValue ) )
+      {
+        target[ targetField ] = copy( sourceValue );
+        changes = true;
+      }
+    }
+  }
+  else
+  {
+    var targetValue = target[ targetFields ];
+    var sourceValue = source[ sourceFields ];
+
+    if ( !equals( targetValue, sourceValue ) )
+    {
+      target[ targetFields ] = copy( sourceValue );
+      changes = true;
+    }
+  }
+
+  return changes;
+}
+
 
 function grab(obj, props, copyValues)
 {

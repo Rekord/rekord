@@ -109,7 +109,7 @@ addMethods( Model.prototype,
 
     if ( remoteData )
     {
-      var key = this.$db.getKey( props, true );
+      var key = this.$db.keyHandler.getKey( props, true );
 
       if ( !isValue( key ) )
       {
@@ -171,6 +171,7 @@ addMethods( Model.prototype,
     var def = this.$db.defaults;
     var fields = this.$db.fields;
     var relations = this.$db.relations;
+    var keyHandler = this.$db.keyHandler;
     var keyFields = this.$db.key;
 
     if ( !isEmpty( def ) )
@@ -200,30 +201,18 @@ addMethods( Model.prototype,
     // initialized through defaults)
     if ( props )
     {
-      key = this.$db.getKey( props, true );
+      key = keyHandler.getKey( props, true );
     }
 
     // If the key wasn't specified, try generating it on this model
     if ( !isValue( key ) )
     {
-      key = this.$db.getKey( this );
+      key = keyHandler.getKey( this );
     }
     // The key was specified in the properties, apply it to this model
     else
     {
-      if ( isString( keyFields ) )
-      {
-        this[ keyFields ] = key;
-      }
-      else // if ( isArray( keyFields ) )
-      {
-        for (var i = 0; i < keyFields.length; i++)
-        {
-          var k = keyFields[ i ];
-
-          this[ k ] = props[ k ];
-        }
-      }
+      updateFieldsReturnChanges( this, keyFields, props, keyFields );
     }
 
     // The key exists on this model - place the reference of this model
@@ -234,6 +223,7 @@ addMethods( Model.prototype,
       this.$$key = key;
     }
 
+    // Apply the default relation values now that this key is most likely populated
     if ( !isEmpty( def ) )
     {
       for (var prop in relations)
@@ -556,7 +546,7 @@ addMethods( Model.prototype,
       delete values[ key ];
     }
 
-    var cloneKey = db.getKey( values );
+    var cloneKey = db.keyHandler.getKey( values );
     var modelKey = this.$key();
 
     if ( cloneKey === modelKey )
@@ -655,7 +645,7 @@ addMethods( Model.prototype,
   {
     if ( !this.$$key )
     {
-      this.$$key = this.$db.getKey( this, quietly );
+      this.$$key = this.$db.keyHandler.getKey( this, quietly );
     }
 
     return this.$$key;
@@ -663,7 +653,7 @@ addMethods( Model.prototype,
 
   $keys: function()
   {
-    return this.$db.getKeys( this );
+    return this.$db.keyHandler.getKeys( this );
   },
 
   $uid: function()

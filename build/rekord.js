@@ -1481,6 +1481,70 @@ function hasFields(model, fields, exists)
   }
 }
 
+function clearFieldsReturnChanges(target, targetFields)
+{
+  var changes = false;
+
+  if ( isArray( targetFields ) )
+  {
+    for (var i = 0; i < targetFields.length; i++)
+    {
+      var targetField = targetFields[ i ];
+
+      if ( target[ targetField ] )
+      {
+        target[ targetField ] = null;
+        changes = true;
+      }
+    }
+  }
+  else
+  {
+    if ( target[ targetFields ] )
+    {
+      target[ targetFields ] = null;
+      changes = true;
+    }
+  }
+
+  return changes;
+}
+
+function updateFieldsReturnChanges(target, targetFields, source, sourceFields)
+{
+  var changes = false;
+
+  if ( isArray( targetFields ) ) // && isArray( sourceFields )
+  {
+    for (var i = 0; i < targetFields.length; i++)
+    {
+      var targetField = targetFields[ i ];
+      var targetValue = target[ targetField ];
+      var sourceField = sourceFields[ i ];
+      var sourceValue = source[ sourceField ];
+
+      if ( !equals( targetValue, sourceValue ) )
+      {
+        target[ targetField ] = copy( sourceValue );
+        changes = true;
+      }
+    }
+  }
+  else
+  {
+    var targetValue = target[ targetFields ];
+    var sourceValue = source[ sourceFields ];
+
+    if ( !equals( targetValue, sourceValue ) )
+    {
+      target[ targetFields ] = copy( sourceValue );
+      changes = true;
+    }
+  }
+
+  return changes;
+}
+
 
 function grab(obj, props, copyValues)
 {
@@ -3119,38 +3183,14 @@ function Database(options)
   // Apply the options to this database!
   applyOptions( this, options, Defaults );
 
-  // Apply options not specified in defaults
-  for (var prop in options)
-  {
-    if ( !(prop in Defaults) )
-    {
-      this[ prop ] = options[ prop ];
-    }
-  }
+  // Create the key handler based on the given key
+  this.keyHandler = isArray( this.key ) ?
+    new KeyComposite( this ) : new KeySimple( this );
 
   // If key fields aren't in fields array, add them in
-  var key = this.key;
-  var fields = this.fields;
-  if ( isArray( key ) )
-  {
-    for (var i = key.length - 1; i >= 0; i--)
-    {
-      if ( indexOf( fields, key[ i ] ) === false )
-      {
-        fields.unshift( key[ i ] );
-      }
-    }
-  }
-  else // isString( key )
-  {
-    if ( indexOf( fields, key ) === false )
-    {
-      fields.unshift( key );
-    }
-  }
+  this.keyHandler.addToFields( this.fields );
 
   // Properties
-  this.keys = toArray( this.key );
   this.models = new ModelCollection( this );
   this.all = {};
   this.loaded = {};
@@ -3162,7 +3202,7 @@ function Database(options)
   this.firstRefresh = false;
   this.pendingOperations = 0;
   this.afterOnline = false;
-  this.saveFields = copy( fields );
+  this.saveFields = copy( this.fields );
   this.readyPromise = new Promise( null, false );
 
   // Prepare
@@ -3426,7 +3466,7 @@ addMethods( Database.prototype,
         {
           if ( !result )
           {
-            result = db.buildObjectFromKey( db.buildKeyFromInput( input ) );
+            result = db.keyHandler.buildObjectFromKey( db.keyHandler.buildKeyFromInput( input ) );
           }
 
           result.$once( Model.Events.RemoteGets, function()
@@ -3477,6 +3517,7 @@ addMethods( Database.prototype,
   parseModel: function(input, remoteData)
   {
     var db = this;
+    var keyHandler = db.keyHandler;
     var hasRemote = db.remoteLoaded || !db.hasLoad( Load.All );
 
     if ( !isValue( input ) )
@@ -3493,7 +3534,7 @@ addMethods( Database.prototype,
       input = input();
     }
 
-    var key = db.buildKeyFromInput( input );
+    var key = keyHandler.buildKeyFromInput( input );
 
     if ( input instanceof db.Model )
     {
@@ -3505,7 +3546,7 @@ addMethods( Database.prototype,
 
       if ( isObject( input ) )
       {
-        this.buildKeyFromRelations( input );
+        keyHandler.buildKeyFromRelations( input );
 
         if ( remoteData )
         {
@@ -3521,7 +3562,7 @@ addMethods( Database.prototype,
     }
     else if ( isObject( input ) )
     {
-      this.buildKeyFromRelations( input );
+      keyHandler.buildKeyFromRelations( input );
 
       if ( remoteData )
       {
@@ -3538,155 +3579,6 @@ addMethods( Database.prototype,
     }
 
     return false;
-  },
-
-  // Removes the key from the given model
-  removeKey: function(model)
-  {
-    var k = this.key;
-
-    if ( isArray(k) )
-    {
-      for (var i = 0; i < k.length; i++)
-      {
-        delete model[ k[i] ];
-      }
-    }
-    else
-    {
-      delete model[ k ];
-    }
-  },
-
-  // Builds a key string from the given model and array of fields
-  buildKey: function(model, fields)
-  {
-    var key = this.buildKeys( model, fields );
-
-    if ( isArray( key ) )
-    {
-      key = key.join( this.keySeparator );
-    }
-
-    return key;
-  },
-
-  buildKeyFromRelations: function(input)
-  {
-    if ( isObject( input ) )
-    {
-      for (var relationName in this.relations)
-      {
-        if ( relationName in input )
-        {
-          this.relations[ relationName ].buildKey( input );
-        }
-      }
-    }
-  },
-
-  // Builds a key (possibly array) from the given model and array of fields
-  buildKeys: function(model, fields)
-  {
-    var key = null;
-
-    this.buildKeyFromRelations( model );
-
-    if ( isArray( fields ) )
-    {
-      key = [];
-
-      for (var i = 0; i < fields.length; i++)
-      {
-        key.push( model[ fields[i] ] );
-      }
-    }
-    else
-    {
-      key = model[ fields ];
-
-      if ( !isValue(key) )
-      {
-        key = model[ fields ] = uuid();
-      }
-    }
-
-    return key;
-  },
-
-  // Builds a key from various types of input.
-  buildKeyFromInput: function(input)
-  {
-    if ( input instanceof this.Model )
-    {
-      return input.$key();
-    }
-    else if ( isArray( input ) ) // && isArray( this.key )
-    {
-      return this.buildKeyFromArray( input );
-    }
-    else if ( isObject( input ) )
-    {
-      return this.buildKey( input, this.key );
-    }
-
-    return input;
-  },
-
-  // Builds a key from an array
-  buildKeyFromArray: function(arr)
-  {
-    return arr.join( this.keySeparator );
-  },
-
-  // Gets the key from the given model
-  getKey: function(model, quietly)
-  {
-    var key = this.key;
-    var modelKey = this.buildKey( model, key );
-
-    if ( hasFields( model, key, isValue ) )
-    {
-      return modelKey;
-    }
-    else if ( !quietly )
-    {
-      throw 'Composite key not supplied.';
-    }
-
-    return null;
-  },
-
-  // Gets the key from the given model
-  getKeys: function(model)
-  {
-    return this.buildKeys( model, this.key );
-  },
-
-  buildObjectFromKey: function(key)
-  {
-    var db = this;
-
-    var props = {};
-
-    if ( isArray( db.key ) )
-    {
-      if ( isString( key ) )
-      {
-        key = key.split( db.keySeparator );
-      }
-
-      for (var i = 0; i < db.key.length; i++)
-      {
-        props[ db.key[ i ] ] = key[ i ];
-      }
-    }
-    else
-    {
-      props[ db.key ] = key;
-    }
-
-    return db.instantiate( props );
   },
 
   // Sorts the models & notifies listeners that the database has been updated.
@@ -3801,7 +3693,7 @@ addMethods( Database.prototype,
     }
 
     var db = this;
-    var key = key || db.getKey( encoded, true );
+    var key = key || db.keyHandler.getKey( encoded, true );
 
     // The remote source might be crazy, if the key isn't there then log it and ignore it
     if ( !isValue( key ) )
@@ -3830,18 +3722,9 @@ addMethods( Database.prototype,
     // If the model already exists, update it.
     if ( model )
     {
-      var keyFields = db.keys;
-
-      for (var i = 0; i < keyFields.length; i++)
+      if ( db.keyHandler.hasKeyChange( model, decoded ) )
       {
-        var k = keyFields[ i ];
-        var mk = model[ k ];
-        var dk = decoded[ k ];
-
-        if ( isValue( mk ) && isValue( dk ) && mk !== dk )
-        {
-          throw new Error('Model keys cannot be changed');
-        }
+        throw new Error('Model keys cannot be changed');
       }
 
       db.all[ key ] = model;
@@ -3991,7 +3874,7 @@ addMethods( Database.prototype,
       {
         delete model.$saved;
 
-        db.removeKey( model );
+        db.keyHandler.removeKey( model );
 
         model.$trigger( Model.Events.Detach );
 
@@ -4018,13 +3901,13 @@ addMethods( Database.prototype,
         // Removed saved history and the current ID
         delete model.$saved;
 
-        db.removeKey( model );
+        db.keyHandler.removeKey( model );
 
         if ( model.$local )
         {
           delete model.$local.$saved;
 
-          db.removeKey( model.$local );
+          db.keyHandler.removeKey( model.$local );
         }
 
         model.$trigger( Model.Events.Detach );
@@ -4362,7 +4245,7 @@ addMethods( Database.prototype,
   // Returns a model
   get: function(key)
   {
-    return this.all[ this.buildKeyFromInput( key ) ];
+    return this.all[ this.keyHandler.buildKeyFromInput( key ) ];
   },
 
   filter: function(isValid)
@@ -4595,7 +4478,7 @@ addMethods( Model.prototype,
 
     if ( remoteData )
     {
-      var key = this.$db.getKey( props, true );
+      var key = this.$db.keyHandler.getKey( props, true );
 
       if ( !isValue( key ) )
       {
@@ -4657,6 +4540,7 @@ addMethods( Model.prototype,
     var def = this.$db.defaults;
     var fields = this.$db.fields;
     var relations = this.$db.relations;
+    var keyHandler = this.$db.keyHandler;
     var keyFields = this.$db.key;
 
     if ( !isEmpty( def ) )
@@ -4686,30 +4570,18 @@ addMethods( Model.prototype,
     // initialized through defaults)
     if ( props )
     {
-      key = this.$db.getKey( props, true );
+      key = keyHandler.getKey( props, true );
     }
 
     // If the key wasn't specified, try generating it on this model
     if ( !isValue( key ) )
     {
-      key = this.$db.getKey( this );
+      key = keyHandler.getKey( this );
     }
     // The key was specified in the properties, apply it to this model
     else
     {
-      if ( isString( keyFields ) )
-      {
-        this[ keyFields ] = key;
-      }
-      else // if ( isArray( keyFields ) )
-      {
-        for (var i = 0; i < keyFields.length; i++)
-        {
-          var k = keyFields[ i ];
-
-          this[ k ] = props[ k ];
-        }
-      }
+      updateFieldsReturnChanges( this, keyFields, props, keyFields );
     }
 
     // The key exists on this model - place the reference of this model
@@ -4720,6 +4592,7 @@ addMethods( Model.prototype,
       this.$$key = key;
     }
 
+    // Apply the default relation values now that this key is most likely populated
     if ( !isEmpty( def ) )
     {
       for (var prop in relations)
@@ -5042,7 +4915,7 @@ addMethods( Model.prototype,
       delete values[ key ];
     }
 
-    var cloneKey = db.getKey( values );
+    var cloneKey = db.keyHandler.getKey( values );
     var modelKey = this.$key();
 
     if ( cloneKey === modelKey )
@@ -5141,7 +5014,7 @@ addMethods( Model.prototype,
   {
     if ( !this.$$key )
     {
-      this.$$key = this.$db.getKey( this, quietly );
+      this.$$key = this.$db.keyHandler.getKey( this, quietly );
     }
 
     return this.$$key;
@@ -5149,7 +5022,7 @@ addMethods( Model.prototype,
 
   $keys: function()
   {
-    return this.$db.getKeys( this );
+    return this.$db.keyHandler.getKeys( this );
   },
 
   $uid: function()
@@ -5636,6 +5509,283 @@ addMethods( Map.prototype,
     }
 
     return this;
+  }
+
+});
+
+
+function KeyHandler()
+{
+
+}
+
+KeyHandler.prototype =
+{
+  init: function(database)
+  {
+    this.key = database.key;
+    this.keySeparator = database.keySeparator;
+    this.database = database;
+  },
+
+  getKey: function(model, quietly)
+  {
+    var field = this.key;
+    var modelKey = this.buildKey( model, field );
+
+    if ( hasFields( model, field, isValue ) )
+    {
+      return modelKey;
+    }
+    else if ( !quietly )
+    {
+      throw 'Composite key not supplied.';
+    }
+
+    return null;
+  },
+
+  buildKeyFromRelations: function(input)
+  {
+    if ( isObject( input ) )
+    {
+      var relations = this.database.relations;
+
+      for (var relationName in relations)
+      {
+        if ( relationName in input )
+        {
+          relations[ relationName ].buildKey( input );
+        }
+      }
+    }
+  },
+
+  buildKeyFromInput: function(input)
+  {
+    if ( input instanceof this.database.Model )
+    {
+      return input.$key();
+    }
+    else if ( isArray( input ) ) // && isArray( this.key )
+    {
+      return input.join( this.keySeparator );
+    }
+    else if ( isObject( input ) )
+    {
+      return this.buildKey( input );
+    }
+
+    return input;
+  }
+};
+
+
+function KeySimple(database)
+{
+  this.init( database );
+}
+
+extend( KeyHandler, KeySimple,
+{
+  getKeys: function(model)
+  {
+    return this.buildKey( model );
+  },
+
+  removeKey: function(model)
+  {
+    var field = this.key;
+
+    delete model[ field ];
+  },
+
+  buildKey: function(input, otherFields)
+  {
+    this.buildKeyFromRelations( input );
+
+    var field = otherFields || this.key;
+    var key = input[ field ];
+
+    if ( !isValue( key ) )
+    {
+      key = input[ field ] = uuid();
+    }
+
+    return key;
+  },
+
+  buildObjectFromKey: function(key)
+  {
+    var field = this.key;
+    var props = {};
+
+    props[ field ] = key;
+
+    return this.database.instantiate( props );
+  },
+
+  hasKeyChange: function(a, b)
+  {
+    var field = this.key;
+    var akey = a[ field ];
+    var bkey = b[ field ];
+
+    return isValue( akey ) && isValue( bkey ) && akey !== bkey;
+  },
+
+  addToFields: function(out)
+  {
+    var field = this.key;
+
+    if ( indexOf( out, field ) === false )
+    {
+      out.unshift( field );
+    }
+  },
+
+  isValid: function(key)
+  {
+    return isValue( key );
+  },
+
+  copyFields: function(target, targetFields, source, sourceFields)
+  {
+    var targetValue = target[ targetFields ];
+    var sourceValue = source[ sourceFields ];
+
+    if ( !isValue( targetValue ) && isValue( sourceValue ) )
+    {
+      target[ targetFields ] = copy( sourceValue );
+    }
+  },
+
+  inKey: function(field)
+  {
+    return field === this.key;
+  },
+
+  setKeyField: function(key, field, source, target)
+  {
+    if ( field === target )
+    {
+      key[ field ] = source[ this.key ];
+    }
+  }
+
+});
+
+
+function KeyComposite(database)
+{
+  this.init( database );
+}
+
+extend( KeyHandler, KeyComposite,
+{
+  getKeys: function(input, otherFields)
+  {
+    this.buildKeyFromRelations( input );
+
+    return pull( input, otherFields || this.key );
+  },
+
+  removeKey: function(model)
+  {
+    var fields = this.key;
+
+    for (var i = 0; i < fields.length; i++)
+    {
+      delete model[ fields[ i ] ];
+    }
+  },
+
+  buildKey: function(input, otherFields)
+  {
+    return this.getKeys( input, otherFields ).join( this.keySeparator );
+  },
+
+  buildObjectFromKey: function(key)
+  {
+    var fields = this.key;
+    var props = {};
+
+    if ( isString( key ) )
+    {
+      key = key.split( this.keySeparator );
+    }
+
+    for (var i = 0; i < fields.length; i++)
+    {
+      props[ fields[ i ] ] = key[ i ];
+    }
+
+    return this.database.instantiate( props );
+  },
+
+  hasKeyChange: function(a, b)
+  {
+    var fields = this.key;
+
+    for (var i = 0; i < fields.length; i++)
+    {
+      var akey = a[ fields[ i ] ];
+      var bkey = b[ fields[ i ] ];
+
+      if ( isValue( akey ) && isValue( bkey ) && akey !== bkey )
+      {
+        return true;
+      }
+    }
+
+    return false;
+  },
+
+  addToFields: function(out)
+  {
+    var fields = this.key;
+
+    for (var i = fields.length - 1; i >= 0; i--)
+    {
+      if ( indexOf( out, fields[ i ] ) === false )
+      {
+        out.unshift( fields[ i ] );
+      }
+    }
+  },
+
+  isValid: function(key)
+  {
+    return isValue( key );
+  },
+
+  copyFields: function(target, targetFields, source, sourceFields)
+  {
+    for (var i = 0; i < targetFields.length; i++)
+    {
+      var targetValue = target[ targetFields[ i ] ];
+      var sourceValue = source[ sourceFields[ i ] ];
+
+      if ( !isValue( targetValue ) && isValue( sourceValue ) )
+      {
+        target[ targetFields[ i ] ] = copy( sourceValue );
+      }
+    }
+  },
+
+  inKey: function(field)
+  {
+    return indexOf( this.key, field ) !== false;
+  },
+
+  setKeyField: function(key, field, source, target)
+  {
+    var index = indexOf( target );
+
+    if ( index !== false )
+    {
+      key[ field ] = source[ this.key[ index ] ];
+    }
   }
 
 });
@@ -8322,7 +8472,7 @@ extendArray( Collection, ModelCollection,
    */
   buildKeyFromInput: function(input)
   {
-    return this.database.buildKeyFromInput( input );
+    return this.database.keyHandler.buildKeyFromInput( input );
   },
 
   /**
@@ -9827,7 +9977,7 @@ function DiscriminateCollection(collection, discriminator, discriminatorsToModel
 
         if ( model )
         {
-          return model.Database.buildKeyFromInput( input );
+          return model.Database.keyHandler.buildKeyFromInput( input );
         }
       }
 
@@ -11858,7 +12008,7 @@ addMethods( Relation.prototype,
     for (var i = 0; i < initial.length; i++)
     {
       var input = initial[ i ];
-      var key = db.buildKeyFromInput( input );
+      var key = db.keyHandler.buildKeyFromInput( input );
 
       relation.pending[ key ] = true;
 
@@ -11947,7 +12097,7 @@ addMethods( Relation.prototype,
 
   clearFields: function(target, targetFields, remoteData, cascade)
   {
-    var changes = this.clearFieldsReturnChanges( target, targetFields );
+    var changes = clearFieldsReturnChanges( target, targetFields );
 
     if ( changes && !remoteData && this.auto && !target.$isNew() )
     {
@@ -11957,38 +12107,9 @@ addMethods( Relation.prototype,
     return changes;
   },
 
-  clearFieldsReturnChanges: function(target, targetFields)
-  {
-    var changes = false;
-
-    if ( isString( targetFields ) )
-    {
-      if ( target[ targetFields ] )
-      {
-        target[ targetFields ] = null;
-        changes = true;
-      }
-    }
-    else // isArray ( targetFields )
-    {
-      for (var i = 0; i < targetFields.length; i++)
-      {
-        var targetField = targetFields[ i ];
-
-        if ( target[ targetField ] )
-        {
-          target[ targetField ] = null;
-          changes = true;
-        }
-      }
-    }
-
-    return changes;
-  },
-
   updateFields: function(target, targetFields, source, sourceFields, remoteData)
   {
-    var changes = this.updateFieldsReturnChanges( target, targetFields, source, sourceFields );
+    var changes = updateFieldsReturnChanges( target, targetFields, source, sourceFields );
 
     if ( changes )
     {
@@ -11998,41 +12119,6 @@ addMethods( Relation.prototype,
       }
 
       target.$trigger( Model.Events.KeyUpdate, [target, source, targetFields, sourceFields] );
-    }
-
-    return changes;
-  },
-
-  updateFieldsReturnChanges: function(target, targetFields, source, sourceFields)
-  {
-    var changes = false;
-
-    if ( isString( targetFields ) ) // && isString( sourceFields )
-    {
-      var targetValue = target[ targetFields ];
-      var sourceValue = source[ sourceFields ];
-
-      if ( !equals( targetValue, sourceValue ) )
-      {
-        target[ targetFields ] = sourceValue;
-        changes = true;
-      }
-    }
-    else // if ( isArray( targetFields ) && isArray( sourceFields ) )
-    {
-      for (var i = 0; i < targetFields.length; i++)
-      {
-        var targetField = targetFields[ i ];
-        var targetValue = target[ targetField ];
-        var sourceField = sourceFields[ i ];
-        var sourceValue = source[ sourceField ];
-
-        if ( !equals( targetValue, sourceValue ) )
-        {
-          target[ targetField ] = copy( sourceValue );
-          changes = true;
-        }
-      }
     }
 
     return changes;
@@ -12332,27 +12418,10 @@ extend( Relation, RelationSingle,
 
     if ( isObject( related ) && this.model )
     {
-      var foreign = this.model.Database.key;
+      var modelDatabase = this.model.Database;
+      var foreign = modelDatabase.key;
 
-      if ( isArray( key ) )
-      {
-        for (var i = 0; i < key.length; i++)
-        {
-          var field = key[ i ];
-
-          if ( !isValue( input[ field ] ) && isValue( related[ foreign[ i ] ] ) )
-          {
-            input[ field ] = related[ foreign[ i ] ];
-          }
-        }
-      }
-      else
-      {
-        if ( !isValue( input[ key ] ) && isValue( related[ foreign ] ) )
-        {
-          input[ key ] = related[ foreign ];
-        }
-      }
+      modelDatabase.keyHandler.copyFields( input, key, related, foreign );
     }
   }
 
@@ -12851,7 +12920,7 @@ extend( RelationSingle, HasOne,
     {
       var relatedClone = related.$clone( properties );
 
-      this.updateFieldsReturnChanges( clone, this.local, relatedClone, relatedClone.$db.key );
+      updateFieldsReturnChanges( clone, this.local, relatedClone, relatedClone.$db.key );
 
       clone[ this.name ] = relatedClone;
     }
@@ -13049,7 +13118,7 @@ extend( RelationMultiple, HasMany,
     {
       var relatedClones = [];
 
-      this.updateFieldsReturnChanges( properties, this.foreign, clone, model.$db.key );
+      updateFieldsReturnChanges( properties, this.foreign, clone, model.$db.key );
 
       properties[ this.foreign ] = clone[ model.$db.key ];
 
@@ -13573,7 +13642,7 @@ extend( RelationMultiple, HasManyThrough,
 
     // TODO polymoprhic logic
     var relatedDatabase = this.model.Database;
-    var relatedKey = relatedDatabase.buildKey( through, this.foreign );
+    var relatedKey = relatedDatabase.keyHandler.buildKey( through, this.foreign );
 
     relatedDatabase.grabModel( relatedKey, this.onAddModelFromThrough( relation, through, remoteData ), this, remoteData );
   },
@@ -13665,7 +13734,7 @@ extend( RelationMultiple, HasManyThrough,
   {
     var throughDatabase = this.through.Database;
     var keyObject = this.createThroughKey( relation, related );
-    var key = throughDatabase.getKey( keyObject );
+    var key = throughDatabase.keyHandler.getKey( keyObject );
     var throughs = relation.throughs;
     var through = throughs.get( key );
 
@@ -13675,7 +13744,7 @@ extend( RelationMultiple, HasManyThrough,
   removeModelFromThrough: function(relation, through)
   {
     var relatedDatabase = this.model.Database;
-    var relatedKey = relatedDatabase.buildKey( through, this.foreign );
+    var relatedKey = relatedDatabase.keyHandler.buildKey( through, this.foreign );
 
     if ( this.finishRemoveThrough( relation, through ) )
     {
@@ -13753,8 +13822,8 @@ extend( RelationMultiple, HasManyThrough,
   createThroughKey: function(relation, related)
   {
     var model = relation.parent;
-    var modelDatabase = model.$db;
-    var relatedDatabase = this.model.Database;
+    var modelKeys = model.$db.keyHandler;
+    var relatedKeys = this.model.Database.keyHandler;
     var throughDatabase = this.through.Database;
     var throughKey = throughDatabase.key;
     var key = {};
@@ -13763,28 +13832,8 @@ extend( RelationMultiple, HasManyThrough,
     {
       var prop = throughKey[ i ];
 
-      if ( prop === this.foreign )
-      {
-        key[ prop ] = related.$key();
-      }
-      else if ( prop === this.local )
-      {
-        key[ prop ] = model.$key();
-      }
-      else if ( isArray( this.foreign ) )
-      {
-        var keyIndex = indexOf( this.foreign, prop );
-        var keyProp = relatedDatabase.key[ keyIndex ];
-
-        key[ prop ] = related[ keyProp ];
-      }
-      else if ( isArray( this.local ) )
-      {
-        var keyIndex = indexOf( this.local, prop );
-        var keyProp = modelDatabase.key[ keyIndex ];
-
-        key[ prop ] = model[ keyProp ];
-      }
+      modelKeys.setKeyField( key, prop, related, this.foreign );
+      relatedKeys.setKeyField( key, prop, model, this.local );
     }
 
     return key;
@@ -14253,7 +14302,7 @@ var Polymorphic =
 
   clearFields: function(target, targetFields, remoteData)
   {
-    var changes = this.clearFieldsReturnChanges( target, targetFields );
+    var changes = clearFieldsReturnChanges( target, targetFields );
 
     if ( target[ this.discriminator ] )
     {
@@ -14271,7 +14320,7 @@ var Polymorphic =
 
   updateFields: function(target, targetFields, source, sourceFields, remoteData)
   {
-    var changes = this.updateFieldsReturnChanges( target, targetFields, source, sourceFields );
+    var changes = updateFieldsReturnChanges( target, targetFields, source, sourceFields );
 
     var targetField = this.discriminator;
     var targetValue = target[ targetField ];
@@ -14307,21 +14356,12 @@ var Polymorphic =
 
       if ( related.Database )
       {
+        var db = related.Database;
         var initial = {};
 
         initial[ discriminator ] = discriminatorValue;
 
-        if ( isString( fields ) ) // && isString( model.Database.key )
-        {
-          initial[ related.Database.key ] = model[ fields ];
-        }
-        else // if ( isArray( fields ) && isArray( model.Database.key ) )
-        {
-          for (var i = 0; i < fields.length; i++)
-          {
-            initial[ related.Database.key[ i ] ] = model[ fields[ i ] ];
-          }
-        }
+        updateFieldsReturnChanges( initial, db.key, model, fields );
 
         return initial;
       }
@@ -14357,7 +14397,7 @@ var Polymorphic =
 
         if ( db )
         {
-          var key = db.buildKeyFromInput( input );
+          var key = db.keyHandler.buildKeyFromInput( input );
 
           relation.pending[ key ] = true;
 
@@ -15193,12 +15233,12 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
    */
   model.fetch = function( input, callback, context )
   {
-    var key = db.buildKeyFromInput( input );
+    var key = db.keyHandler.buildKeyFromInput( input );
     var instance = db.get( key );
 
     if ( !instance )
     {
-      instance = db.buildObjectFromKey( key );
+      instance = db.keyHandler.buildObjectFromKey( key );
 
       if ( isObject( input ) )
       {
@@ -16300,6 +16340,11 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
   Rekord.SearchPaged = SearchPaged;
   Rekord.Promise = Promise;
 
+  /* Keys */
+  Rekord.KeyHandler = KeyHandler;
+  Rekord.KeySimple = KeySimple;
+  Rekord.KeyComposite = KeyComposite;
+
   /* Enums */
   Rekord.Cascade = Cascade;
   Rekord.Cache = Cache;
@@ -16382,6 +16427,8 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
   Rekord.applyOptions = applyOptions;
   Rekord.propsMatch = propsMatch;
   Rekord.hasFields = hasFields;
+  Rekord.updateFieldsReturnChanges = updateFieldsReturnChanges;
+  Rekord.clearFieldsReturnChanges = clearFieldsReturnChanges;
   Rekord.grab = grab;
   Rekord.pull = pull;
   Rekord.transfer = transfer;

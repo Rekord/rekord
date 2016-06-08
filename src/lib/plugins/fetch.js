@@ -30,12 +30,12 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
    */
   model.fetch = function( input, callback, context )
   {
-    var key = db.buildKeyFromInput( input );
+    var key = db.keyHandler.buildKeyFromInput( input );
     var instance = db.get( key );
 
     if ( !instance )
     {
-      instance = db.buildObjectFromKey( key );
+      instance = db.keyHandler.buildObjectFromKey( key );
 
       if ( isObject( input ) )
       {

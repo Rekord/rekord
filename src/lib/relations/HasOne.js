@@ -110,7 +110,7 @@ extend( RelationSingle, HasOne,
     {
       var relatedClone = related.$clone( properties );
 
-      this.updateFieldsReturnChanges( clone, this.local, relatedClone, relatedClone.$db.key );
+      updateFieldsReturnChanges( clone, this.local, relatedClone, relatedClone.$db.key );
 
       clone[ this.name ] = relatedClone;
     }

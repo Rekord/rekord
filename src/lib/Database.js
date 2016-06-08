@@ -11,38 +11,14 @@ function Database(options)
   // Apply the options to this database!
   applyOptions( this, options, Defaults );
 
-  // Apply options not specified in defaults
-  for (var prop in options)
-  {
-    if ( !(prop in Defaults) )
-    {
-      this[ prop ] = options[ prop ];
-    }
-  }
+  // Create the key handler based on the given key
+  this.keyHandler = isArray( this.key ) ?
+    new KeyComposite( this ) : new KeySimple( this );
 
   // If key fields aren't in fields array, add them in
-  var key = this.key;
-  var fields = this.fields;
-  if ( isArray( key ) )
-  {
-    for (var i = key.length - 1; i >= 0; i--)
-    {
-      if ( indexOf( fields, key[ i ] ) === false )
-      {
-        fields.unshift( key[ i ] );
-      }
-    }
-  }
-  else // isString( key )
-  {
-    if ( indexOf( fields, key ) === false )
-    {
-      fields.unshift( key );
-    }
-  }
+  this.keyHandler.addToFields( this.fields );
 
   // Properties
-  this.keys = toArray( this.key );
   this.models = new ModelCollection( this );
   this.all = {};
   this.loaded = {};
@@ -54,7 +30,7 @@ function Database(options)
   this.firstRefresh = false;
   this.pendingOperations = 0;
   this.afterOnline = false;
-  this.saveFields = copy( fields );
+  this.saveFields = copy( this.fields );
   this.readyPromise = new Promise( null, false );
 
   // Prepare
@@ -318,7 +294,7 @@ addMethods( Database.prototype,
         {
           if ( !result )
           {
-            result = db.buildObjectFromKey( db.buildKeyFromInput( input ) );
+            result = db.keyHandler.buildObjectFromKey( db.keyHandler.buildKeyFromInput( input ) );
           }
 
           result.$once( Model.Events.RemoteGets, function()
@@ -369,6 +345,7 @@ addMethods( Database.prototype,
   parseModel: function(input, remoteData)
   {
     var db = this;
+    var keyHandler = db.keyHandler;
     var hasRemote = db.remoteLoaded || !db.hasLoad( Load.All );
 
     if ( !isValue( input ) )
@@ -385,7 +362,7 @@ addMethods( Database.prototype,
       input = input();
     }
 
-    var key = db.buildKeyFromInput( input );
+    var key = keyHandler.buildKeyFromInput( input );
 
     if ( input instanceof db.Model )
     {
@@ -397,7 +374,7 @@ addMethods( Database.prototype,
 
       if ( isObject( input ) )
       {
-        this.buildKeyFromRelations( input );
+        keyHandler.buildKeyFromRelations( input );
 
         if ( remoteData )
         {
@@ -413,7 +390,7 @@ addMethods( Database.prototype,
     }
     else if ( isObject( input ) )
     {
-      this.buildKeyFromRelations( input );
+      keyHandler.buildKeyFromRelations( input );
 
       if ( remoteData )
       {
@@ -430,155 +407,6 @@ addMethods( Database.prototype,
     }
 
     return false;
-  },
-
-  // Removes the key from the given model
-  removeKey: function(model)
-  {
-    var k = this.key;
-
-    if ( isArray(k) )
-    {
-      for (var i = 0; i < k.length; i++)
-      {
-        delete model[ k[i] ];
-      }
-    }
-    else
-    {
-      delete model[ k ];
-    }
-  },
-
-  // Builds a key string from the given model and array of fields
-  buildKey: function(model, fields)
-  {
-    var key = this.buildKeys( model, fields );
-
-    if ( isArray( key ) )
-    {
-      key = key.join( this.keySeparator );
-    }
-
-    return key;
-  },
-
-  buildKeyFromRelations: function(input)
-  {
-    if ( isObject( input ) )
-    {
-      for (var relationName in this.relations)
-      {
-        if ( relationName in input )
-        {
-          this.relations[ relationName ].buildKey( input );
-        }
-      }
-    }
-  },
-
-  // Builds a key (possibly array) from the given model and array of fields
-  buildKeys: function(model, fields)
-  {
-    var key = null;
-
-    this.buildKeyFromRelations( model );
-
-    if ( isArray( fields ) )
-    {
-      key = [];
-
-      for (var i = 0; i < fields.length; i++)
-      {
-        key.push( model[ fields[i] ] );
-      }
-    }
-    else
-    {
-      key = model[ fields ];
-
-      if ( !isValue(key) )
-      {
-        key = model[ fields ] = uuid();
-      }
-    }
-
-    return key;
-  },
-
-  // Builds a key from various types of input.
-  buildKeyFromInput: function(input)
-  {
-    if ( input instanceof this.Model )
-    {
-      return input.$key();
-    }
-    else if ( isArray( input ) ) // && isArray( this.key )
-    {
-      return this.buildKeyFromArray( input );
-    }
-    else if ( isObject( input ) )
-    {
-      return this.buildKey( input, this.key );
-    }
-
-    return input;
-  },
-
-  // Builds a key from an array
-  buildKeyFromArray: function(arr)
-  {
-    return arr.join( this.keySeparator );
-  },
-
-  // Gets the key from the given model
-  getKey: function(model, quietly)
-  {
-    var key = this.key;
-    var modelKey = this.buildKey( model, key );
-
-    if ( hasFields( model, key, isValue ) )
-    {
-      return modelKey;
-    }
-    else if ( !quietly )
-    {
-      throw 'Composite key not supplied.';
-    }
-
-    return null;
-  },
-
-  // Gets the key from the given model
-  getKeys: function(model)
-  {
-    return this.buildKeys( model, this.key );
-  },
-
-  buildObjectFromKey: function(key)
-  {
-    var db = this;
-
-    var props = {};
-
-    if ( isArray( db.key ) )
-    {
-      if ( isString( key ) )
-      {
-        key = key.split( db.keySeparator );
-      }
-
-      for (var i = 0; i < db.key.length; i++)
-      {
-        props[ db.key[ i ] ] = key[ i ];
-      }
-    }
-    else
-    {
-      props[ db.key ] = key;
-    }
-
-    return db.instantiate( props );
   },
 
   // Sorts the models & notifies listeners that the database has been updated.
@@ -693,7 +521,7 @@ addMethods( Database.prototype,
     }
 
     var db = this;
-    var key = key || db.getKey( encoded, true );
+    var key = key || db.keyHandler.getKey( encoded, true );
 
     // The remote source might be crazy, if the key isn't there then log it and ignore it
     if ( !isValue( key ) )
@@ -722,18 +550,9 @@ addMethods( Database.prototype,
     // If the model already exists, update it.
     if ( model )
     {
-      var keyFields = db.keys;
-
-      for (var i = 0; i < keyFields.length; i++)
+      if ( db.keyHandler.hasKeyChange( model, decoded ) )
       {
-        var k = keyFields[ i ];
-        var mk = model[ k ];
-        var dk = decoded[ k ];
-
-        if ( isValue( mk ) && isValue( dk ) && mk !== dk )
-        {
-          throw new Error('Model keys cannot be changed');
-        }
+        throw new Error('Model keys cannot be changed');
       }
 
       db.all[ key ] = model;
@@ -883,7 +702,7 @@ addMethods( Database.prototype,
       {
         delete model.$saved;
 
-        db.removeKey( model );
+        db.keyHandler.removeKey( model );
 
         model.$trigger( Model.Events.Detach );
 
@@ -910,13 +729,13 @@ addMethods( Database.prototype,
         // Removed saved history and the current ID
         delete model.$saved;
 
-        db.removeKey( model );
+        db.keyHandler.removeKey( model );
 
         if ( model.$local )
         {
           delete model.$local.$saved;
 
-          db.removeKey( model.$local );
+          db.keyHandler.removeKey( model.$local );
         }
 
         model.$trigger( Model.Events.Detach );
@@ -1254,7 +1073,7 @@ addMethods( Database.prototype,
   // Returns a model
   get: function(key)
   {
-    return this.all[ this.buildKeyFromInput( key ) ];
+    return this.all[ this.keyHandler.buildKeyFromInput( key ) ];
   },
 
   filter: function(isValid)

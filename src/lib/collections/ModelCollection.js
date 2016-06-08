@@ -97,7 +97,7 @@ extendArray( Collection, ModelCollection,
    */
   buildKeyFromInput: function(input)
   {
-    return this.database.buildKeyFromInput( input );
+    return this.database.keyHandler.buildKeyFromInput( input );
   },
 
   /**
