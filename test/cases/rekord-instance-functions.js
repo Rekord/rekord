@@ -350,9 +350,9 @@ test( 'boot complex', function(assert)
   strictEqual( TaskList.Database.rest.lastModel, null );
 });
 
-test( 'where', function(assert)
+test( 'filtered', function(assert)
 {
-  var prefix = 'Rekord_where_';
+  var prefix = 'Rekord_filtered_';
 
   var Todo = Rekord({
     name: prefix + 'todo',
@@ -399,6 +399,29 @@ test( 'where', function(assert)
   strictEqual( done[0], t2 );
   strictEqual( done[1], t4 );
   strictEqual( done[2], t5 );
+});
+
+test( 'where', function(assert)
+{
+  var prefix = 'Rekord_where_';
+
+  var Todo = Rekord({
+    name: prefix + 'todo',
+    fields: ['name', 'done']
+  });
+
+  var t0 = Todo.create({name: 't0', done: true});
+  var t1 = Todo.create({name: 't1', done: false});
+  var t2 = Todo.create({name: 't2', done: false});
+  var t3 = Todo.create({name: 't3', done: true});
+
+  var done = Todo.where('done', true);
+
+  done.setComparator( 'name' );
+
+  strictEqual( done.length, 2 );
+  strictEqual( done[0], t0 );
+  strictEqual( done[1], t3 );
 });
 
 test( 'search success', function(assert)

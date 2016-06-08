@@ -16073,6 +16073,15 @@ Rekord.Timestamp = Timestamp;
 Rekord.formatDate = noop;
 Rekord.convertDate = convertDate;
 
+Rekord.on( Rekord.Events.Plugins, function(model, db, options)
+{
+
+  model.where = function(whereProperties, whereValue, whereEquals, out)
+  {
+    return db.models.where(whereProperties, whereValue, whereEquals, out);
+  };
+});
+
 
   /* Top-Level Function */
   global.Rekord = Rekord;
