@@ -6,10 +6,15 @@
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/Rekord/rekord/blob/master/LICENSE)
 [![Alpha](https://img.shields.io/badge/State-Alpha-orange.svg)]()
 
+Rekord is an ORM - a way to define properties and relationships - that interacts with local storage, a RESTful service, and a real-time service.
+Rekord does this in a generic way so **you can use any libraries you wish** or your own implementation - making it very easy to integrate into your existing projects.
+Rekord's design allows for offline capable and real-time applications if desired - offering complete control over how and where your data is stored.
+Rekord is the most powerful client-side Model/Active Record/ORM you'll find guaranteed - or your money back!
+
 Rekord is a javascript REST ORM that is offline and real-time capable.
 
 **Features**
-- Relationships `hasOne`, `belongsTo`, `hasMany`, `hasManyThrough`, & `hasRemote`
+- Relationships `hasOne`, `belongsTo`, `hasMany`, `hasManyThrough`, `hasRemote`, & `hasList`
 - Polymorphic relationships for `hasOne`, `belongsTo` & `hasMany`
 - Validation (59 rules, 6 expressions, 13 transforms, and custom functions) through [rekord-validation](https://github.com/Rekord/rekord-validation)
 - Migrations through [rekord-migrations](https://github.com/Rekord/rekord-migrations)
