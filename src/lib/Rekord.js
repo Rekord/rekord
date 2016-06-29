@@ -150,7 +150,8 @@ Rekord.Events =
   Plugins:      'plugins',
   Options:      'options',
   Online:       'online',
-  Offline:      'offline'
+  Offline:      'offline',
+  Error:        'error'
 };
 
 var Cascade =

@@ -75,11 +75,13 @@ addMethods( Operation.prototype,
     {
       this.run( this.db, this.model );
     }
-    catch (e)
+    catch (ex)
     {
       this.finish();
 
-      throw e;
+      Rekord.trigger( Rekord.Events.Error, [ex] );
+
+      throw ex;
     }
   },
 
@@ -128,9 +130,11 @@ addMethods( Operation.prototype,
     {
       this.onSuccess.apply( this, arguments );
     }
-    catch (e)
+    catch (ex)
     {
-      throw e;
+      Rekord.trigger( Rekord.Events.Error, [ex] );
+
+      throw ex;
     }
     finally
     {
@@ -154,9 +158,11 @@ addMethods( Operation.prototype,
     {
       this.onFailure.apply( this, arguments );
     }
-    catch (e)
+    catch (ex)
     {
-      throw e;
+      Rekord.trigger( Rekord.Events.Error, [ex] );
+
+      throw ex;
     }
     finally
     {

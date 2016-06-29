@@ -335,15 +335,22 @@ function addEventful(target, secret)
    */
   function trigger(eventsInput, args)
   {
-    var events = toArray( eventsInput, ' ' );
-
-    for (var i = 0; i < events.length; i++)
+    try
     {
-      var e = events[ i ];
+      var events = toArray( eventsInput, ' ' );
 
-      triggerListeners( this.$$on, e, args, false );
-      triggerListeners( this.$$once, e, args, true );
-      triggerListeners( this.$$after, e, args, false );
+      for (var i = 0; i < events.length; i++)
+      {
+        var e = events[ i ];
+
+        triggerListeners( this.$$on, e, args, false );
+        triggerListeners( this.$$once, e, args, true );
+        triggerListeners( this.$$after, e, args, false );
+      }
+    }
+    catch (ex)
+    {
+      Rekord.trigger( Rekord.Events.Error, [ex] );
     }
 
     return this;

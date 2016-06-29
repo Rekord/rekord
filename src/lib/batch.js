@@ -217,9 +217,11 @@ function batchExecute(func, context)
 
     func.apply( context );
   }
-  catch (e)
+  catch (ex)
   {
-    throw e;
+    Rekord.trigger( Rekord.Events.Error, [ex] );
+
+    throw ex;
   }
   finally
   {

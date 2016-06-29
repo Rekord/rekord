@@ -1325,15 +1325,22 @@ function addEventful(target, secret)
    */
   function trigger(eventsInput, args)
   {
-    var events = toArray( eventsInput, ' ' );
-
-    for (var i = 0; i < events.length; i++)
+    try
     {
-      var e = events[ i ];
+      var events = toArray( eventsInput, ' ' );
 
-      triggerListeners( this.$$on, e, args, false );
-      triggerListeners( this.$$once, e, args, true );
-      triggerListeners( this.$$after, e, args, false );
+      for (var i = 0; i < events.length; i++)
+      {
+        var e = events[ i ];
+
+        triggerListeners( this.$$on, e, args, false );
+        triggerListeners( this.$$once, e, args, true );
+        triggerListeners( this.$$after, e, args, false );
+      }
+    }
+    catch (ex)
+    {
+      Rekord.trigger( Rekord.Events.Error, [ex] );
     }
 
     return this;
@@ -2358,7 +2365,8 @@ Rekord.Events =
   Plugins:      'plugins',
   Options:      'options',
   Online:       'online',
-  Offline:      'offline'
+  Offline:      'offline',
+  Error:        'error'
 };
 
 var Cascade =
@@ -3122,9 +3130,11 @@ function batchExecute(func, context)
 
     func.apply( context );
   }
-  catch (e)
+  catch (ex)
   {
-    throw e;
+    Rekord.trigger( Rekord.Events.Error, [ex] );
+
+    throw ex;
   }
   finally
   {
@@ -10570,15 +10580,11 @@ Promise.singularity = (function()
       {
         callback.call( context, singularity );
       }
-      catch (e)
+      catch (ex)
       {
-        // throw error, Rekord.debug, and/or singularity.reject( e )
-        if ( global.console && global.console.log )
-        {
-          global.console.log( e );
-        }
+        Rekord.trigger( Rekord.Events.Error, [ex] );
 
-        throw e;
+        throw ex;
       }
       finally
       {
@@ -10829,11 +10835,13 @@ addMethods( Operation.prototype,
     {
       this.run( this.db, this.model );
     }
-    catch (e)
+    catch (ex)
     {
       this.finish();
 
-      throw e;
+      Rekord.trigger( Rekord.Events.Error, [ex] );
+
+      throw ex;
     }
   },
 
@@ -10882,9 +10890,11 @@ addMethods( Operation.prototype,
     {
       this.onSuccess.apply( this, arguments );
     }
-    catch (e)
+    catch (ex)
     {
-      throw e;
+      Rekord.trigger( Rekord.Events.Error, [ex] );
+
+      throw ex;
     }
     finally
     {
@@ -10908,9 +10918,11 @@ addMethods( Operation.prototype,
     {
       this.onFailure.apply( this, arguments );
     }
-    catch (e)
+    catch (ex)
     {
-      throw e;
+      Rekord.trigger( Rekord.Events.Error, [ex] );
+
+      throw ex;
     }
     finally
     {

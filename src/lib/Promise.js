@@ -152,15 +152,11 @@ Promise.singularity = (function()
       {
         callback.call( context, singularity );
       }
-      catch (e)
+      catch (ex)
       {
-        // throw error, Rekord.debug, and/or singularity.reject( e )
-        if ( global.console && global.console.log )
-        {
-          global.console.log( e );
-        }
+        Rekord.trigger( Rekord.Events.Error, [ex] );
 
-        throw e;
+        throw ex;
       }
       finally
       {
