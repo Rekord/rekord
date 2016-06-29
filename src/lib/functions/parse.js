@@ -91,7 +91,15 @@ function parseDate(x, utc)
       x += ' UTC';
     }
 
-    x = Date.parse ? Date.parse( x ) : new Date( x );
+    if ( Date.parse )
+    {
+      x = Date.parse( x );
+    }
+
+    if ( !isNumber( x ) )
+    {
+      x = new Date( x );
+    }
   }
   if ( isNumber( x ) )
   {
