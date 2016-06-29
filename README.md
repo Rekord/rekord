@@ -38,7 +38,7 @@ Rekord is the most powerful client-side Model/Active Record/ORM you'll find guar
 - Execute paginated searches
 - Add global event listeners to the "database" or all model instances
 - Stores data locally through `Rekord.store` interface (ex: [storkjs](https://github.com/Rekord/rekord-storkjs))
-- Stores data remotely through `Rekord.rest` interface (ex: [angular](https://github.com/Rekord/rekord-angular), [jquery](https://github.com/Rekord/rekord-jquery), [pouchdb](https://github.com/Rekord/rekord-pouchdb), [firebase](https://github.com/Rekord/rekord-firebase))
+- Stores data remotely through `Rekord.rest` interface (ex: [angular](https://github.com/Rekord/rekord-angular), [jquery](https://github.com/Rekord/rekord-jquery), [ajax](https://github.com/Rekord/rekord-ajax), [pouchdb](https://github.com/Rekord/rekord-pouchdb), [firebase](https://github.com/Rekord/rekord-firebase))
 - Real-time changes through `Rekord.live` interface (ex: [pubsub](https://github.com/Rekord/rekord-pubsub), [pouchdb](https://github.com/Rekord/rekord-pouchdb), [firebase](https://github.com/Rekord/rekord-firebase))
 - Create a live filtered view of any collection
 - Create a live paginated view of any collection
@@ -87,6 +87,7 @@ Bindings are used to implement core pieces of functionality in rekord - these in
 - [Firebase](https://github.com/Rekord/rekord-firebase) - implements `Rekord.store`, `Rekord.rest`, & `Rekord.live`
 - [PouchDB](https://github.com/Rekord/rekord-pouchdb) - implements `Rekord.store`, `Rekord.rest`, & `Rekord.live`
 - [jQuery](https://github.com/Rekord/rekord-jquery) - implements `Rekord.rest`
+- [Ajax](https://github.com/Rekord/rekord-ajax) - implements `Rekord.rest`, dependency free
 - [Debugging](https://github.com/Rekord/rekord-debug) - implements `Rekord.debug`
 
 **Add-Ons**
