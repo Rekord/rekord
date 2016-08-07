@@ -86,11 +86,6 @@ function parseDate(x, utc)
 {
   if ( isString( x ) )
   {
-    if ( utc )
-    {
-      x += ' UTC';
-    }
-
     if ( Date.parse )
     {
       x = Date.parse( x );
@@ -107,6 +102,11 @@ function parseDate(x, utc)
   }
   if ( isDate( x ) && isNumber( x.getTime() ) )
   {
+    if ( utc )
+    {
+      x = new Date( x.getUTCFullYear(), x.getUTCMonth(), x.getUTCDate(), x.getUTCHours(), x.getUTCMinutes(), x.getUTCSeconds() );
+    }
+
     return x;
   }
 

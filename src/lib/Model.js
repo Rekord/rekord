@@ -80,7 +80,8 @@ Model.Events =
   SavedRemoteUpdate:    'saved remote-update',
   OperationsStarted:    'operations-started',
   OperationsFinished:   'operations-finished',
-  Changes:              'saved remote-update key-update relation-update removed change'
+  KeyChange:            'key-change',
+  Changes:              'saved remote-update key-update relation-update removed key-change change'
 };
 
 Model.Status =
@@ -105,7 +106,7 @@ addMethods( Model.prototype,
     this.$status = Model.Status.Synced;
     this.$operation = null;
     this.$relations = {};
-    this.$dependents = {};
+    this.$dependents = new Dependents( this );
 
     if ( remoteData )
     {
@@ -321,33 +322,6 @@ addMethods( Model.prototype,
   $decode: function()
   {
     this.$db.decode( this );
-  },
-
-  $isDependentsSaved: function(callbackOnSaved, contextOnSaved)
-  {
-    var dependents = this.$dependents;
-    var off;
-
-    var onDependentSave = function()
-    {
-      callbackOnSaved.apply( contextOnSaved || this, arguments );
-
-      off();
-    };
-
-    for (var uid in dependents)
-    {
-      var dependent = dependents[ uid ];
-
-      if ( !dependent.$isSaved() )
-      {
-        off = dependent.$once( Model.Events.RemoteSaves, onDependentSave );
-
-        return false;
-      }
-    }
-
-    return true;
   },
 
   $relate: function(prop, relate)
@@ -664,6 +638,35 @@ addMethods( Model.prototype,
   $hasKey: function()
   {
     return hasFields( this, this.$db.key, isValue );
+  },
+
+  $setKey: function(key, skipApplication)
+  {
+    var db = this.$db;
+    var newKey = db.keyHandler.buildKeyFromInput(key);
+    var oldKey = this.$$key;
+
+    if (newKey !== oldKey)
+    {
+      if (!db.keyChanges)
+      {
+        throw 'Key changes are not supported, see the documentation on how to enable key changes.';
+      }
+
+      delete db.all[ oldKey ];
+      db.all[ newKey ] = this;
+
+      this.$$key = newKey;
+
+      if ( !skipApplication )
+      {
+        db.keyHandler.applyKey( newKey, this );
+      }
+
+      this.$trigger( Model.Events.KeyChange, [this, oldKey, newKey] );
+    }
+
+    return newKey;
   },
 
   $isSynced: function()

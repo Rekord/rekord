@@ -552,7 +552,7 @@ addMethods( Database.prototype,
     {
       if ( db.keyHandler.hasKeyChange( model, decoded ) )
       {
-        throw new Error('Model keys cannot be changed');
+        key = model.$setKey( db.keyHandler.getKey( decoded, true ) );
       }
 
       db.all[ key ] = model;

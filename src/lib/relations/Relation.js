@@ -369,6 +369,39 @@ addMethods( Relation.prototype,
     return changes;
   },
 
+  updateForeignKey: function(target, source, remoteData)
+  {
+    var targetFields = this.getTargetFields( target );
+    var sourceFields = this.getSourceFields( source );
+    var targetKey = target.$key();
+    var targetKeyHandler = target.$db.keyHandler;
+    var keyChanges = target.$db.keyChanges;
+
+    Rekord.debug( this.debugUpdateKey, this, target, targetFields, source, sourceFields );
+
+    this.updateFields( target, targetFields, source, sourceFields, remoteData );
+
+    if ( keyChanges && remoteData )
+    {
+      var targetNewKey = targetKeyHandler.getKey( target, true );
+
+      if ( targetKeyHandler.inKey( targetFields ) && targetNewKey !== targetKey )
+      {
+        target.$setKey( targetNewKey, true );
+      }
+    }
+  },
+
+  getTargetFields: function(target)
+  {
+    return target.$db.key;
+  },
+
+  getSourceFields: function(source)
+  {
+    return source.$db.key;
+  },
+
   getStoredArray: function(relateds, mode)
   {
     if ( !mode )

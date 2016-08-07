@@ -98,6 +98,19 @@ extend( KeyHandler, KeyComposite,
 
   inKey: function(field)
   {
+    if ( isArray( field ) )
+    {
+      for (var i = 0; i < field.length; i++)
+      {
+        if ( indexOf( this.key, field[ i ] ) !== false )
+        {
+          return true;
+        }
+      }
+
+      return false;
+    }
+
     return indexOf( this.key, field ) !== false;
   },
 
@@ -108,6 +121,21 @@ extend( KeyHandler, KeyComposite,
     if ( index !== false )
     {
       key[ field ] = source[ this.key[ index ] ];
+    }
+  },
+
+  applyKey: function(input, target)
+  {
+    var fields = this.key;
+
+    if ( isString( input ) )
+    {
+      input = input.split( this.keySeparator );
+    }
+
+    for (var i = 0; i < fields.length; i++)
+    {
+      target[ fields[ i ] ] = input[ i ];
     }
   }
 

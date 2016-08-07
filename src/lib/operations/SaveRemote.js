@@ -21,7 +21,7 @@ extend( Operation, SaveRemote,
       this.markSynced( model, true, Model.Events.RemoteSaveFailure, null );
       this.finish();
     }
-    else if ( !model.$isDependentsSaved( this.tryAgain, this ) )
+    else if ( !model.$dependents.isSaved( this.tryAgain, this ) )
     {
       this.finish();
     }
@@ -211,7 +211,7 @@ extend( Operation, SaveRemote,
   {
     var model = this.model;
 
-    model.$addOperation( SaveRemote, this.cascade );
+    model.$addOperation( SaveLocal, this.cascade );
   }
 
 });

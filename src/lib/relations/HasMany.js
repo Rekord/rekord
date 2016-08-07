@@ -34,6 +34,7 @@ extend( RelationMultiple, HasMany,
   debugSort:            Rekord.Debugs.HASMANY_SORT,
   debugQuery:           Rekord.Debugs.HASMANY_QUERY,
   debugQueryResults:    Rekord.Debugs.HASMANY_QUERY_RESULTS,
+  debugUpdateKey:       Rekord.Debugs.HASMANY_UPDATE_KEY,
 
   getDefaults: function(database, field, options)
   {
@@ -258,9 +259,9 @@ extend( RelationMultiple, HasMany,
       related.$on( Model.Events.Removed, relation.onRemoved );
       related.$on( Model.Events.SavedRemoteUpdate, relation.onSaved );
 
-      related.$dependents[ model.$uid() ] = model;
+      related.$dependents.add( model, this );
 
-      this.updateForeignKey( model, related, remoteData );
+      this.updateForeignKey( related, model, remoteData );
 
       this.sort( relation );
 
@@ -284,8 +285,9 @@ extend( RelationMultiple, HasMany,
     var target = relation.related;
     var pending = relation.pending;
     var key = related.$key();
+    var removing = target.has( key );
 
-    if ( target.has( key ) )
+    if ( removing )
     {
       Rekord.debug( Rekord.Debugs.HASMANY_REMOVE, this, relation, related );
 
@@ -294,7 +296,7 @@ extend( RelationMultiple, HasMany,
       related.$off( Model.Events.Removed, relation.onRemoved );
       related.$off( Model.Events.SavedRemoteUpdate, relation.onSaved );
 
-      delete related.$dependents[ model.$uid() ];
+      related.$dependents.remove( model );
 
       if ( this.cascadeRemove )
       {
@@ -316,14 +318,8 @@ extend( RelationMultiple, HasMany,
     }
 
     delete pending[ key ];
-  },
 
-  updateForeignKey: function(model, related, remoteData)
-  {
-    var foreign = this.foreign;
-    var local = model.$db.key;
-
-    this.updateFields( related, foreign, model, local, remoteData );
+    return removing;
   },
 
   isRelatedFactory: function(model)
@@ -335,6 +331,11 @@ extend( RelationMultiple, HasMany,
     {
       return propsMatch( related, foreign, model, local );
     };
+  },
+
+  getTargetFields: function(target)
+  {
+    return this.foreign;
   }
 
 });

@@ -16,6 +16,8 @@
   Rekord.KeyHandler = KeyHandler;
   Rekord.KeySimple = KeySimple;
   Rekord.KeyComposite = KeyComposite;
+  Rekord.enableKeyChanges = enableKeyChanges;
+  Rekord.disableKeyChanges = disableKeyChanges;
 
   /* Enums */
   Rekord.Cascade = Cascade;

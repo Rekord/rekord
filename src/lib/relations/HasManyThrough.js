@@ -37,6 +37,7 @@ extend( RelationMultiple, HasManyThrough,
   debugSort:            Rekord.Debugs.HASMANYTHRU_SORT,
   debugQuery:           Rekord.Debugs.HASMANYTHRU_QUERY,
   debugQueryResults:    Rekord.Debugs.HASMANYTHRU_QUERY_RESULTS,
+  debugUpdateKey:       Rekord.Debugs.HASMANYTHRU_UPDATE_KEY,
 
   getDefaults: function(database, field, options)
   {
@@ -333,8 +334,9 @@ extend( RelationMultiple, HasManyThrough,
     var model = relation.parent;
     var throughs = relation.throughs;
     var throughKey = through.$key();
+    var added = !throughs.has( throughKey );
 
-    if ( !throughs.has( throughKey ) )
+    if ( added )
     {
       Rekord.debug( Rekord.Debugs.HASMANYTHRU_THRU_ADD, this, relation, through );
 
@@ -342,7 +344,7 @@ extend( RelationMultiple, HasManyThrough,
 
       through.$on( Model.Events.Removed, relation.onThroughRemoved );
 
-      through.$dependents[ model.$uid() ] = model;
+      through.$dependents.add( model, this );
 
       if ( !remoteData && this.cascadeSave )
       {
@@ -356,6 +358,8 @@ extend( RelationMultiple, HasManyThrough,
         }
       }
     }
+
+    return added;
   },
 
   finishAddModel: function(relation, related, remoteData)
@@ -440,7 +444,7 @@ extend( RelationMultiple, HasManyThrough,
 
       through.$off( Model.Events.Removed, relation.onThroughRemoved );
 
-      delete through.$dependents[ model.$uid() ];
+      through.$dependents.remove( model );
 
       if ( callRemove )
       {
@@ -506,6 +510,11 @@ extend( RelationMultiple, HasManyThrough,
     }
 
     return key;
+  },
+
+  getTargetFields: function(target)
+  {
+    return this.local;
   }
 
 });

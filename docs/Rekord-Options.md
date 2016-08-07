@@ -24,6 +24,11 @@ var ModelClass = Rekord({
   // a singular key used in caching and hash maps.
   keySeparator: '/', // default: '/'
 
+  // (boolean) Whether this model will have a different primary key returned by the REST server on create. This should
+  // also be set to true if this model has a composite key which has a foreign key to another model which has a
+  // changeable key.
+  keyChanges: true,
+
   // (string[]) The fields which exist on the model. If the key(s) are not specified in this list, they are automatically
   // added. There are other options that may also add fields.
   fields: ['name', 'finished_at', 'created_by'], // default: []

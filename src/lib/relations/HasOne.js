@@ -172,7 +172,7 @@ extend( RelationSingle, HasOne,
       relation.dirty = true;
       relation.loaded = true;
 
-      delete relation.parent.$dependents[ related.$uid() ];
+      relation.parent.$dependents.remove( related );
     }
   }
 

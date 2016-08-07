@@ -28,6 +28,7 @@
 - Comparators
 - Batch Operations
 - Sharding
+- Key Changing
 - Files
 - Validation *
 - Migrations *
@@ -44,6 +45,7 @@
   - PouchDB
   - StorkJS
   - PubSub
+  - AJAX
 - Defining your Models
 - Add-Ons
   - Validation

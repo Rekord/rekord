@@ -128,7 +128,7 @@ extend( Relation, RelationSingle,
       relation.dirty = true;
       relation.loaded = true;
 
-      delete relation.parent.$dependents[ related.$uid() ];
+      relation.parent.$dependents.remove( related );
     }
   },
 
@@ -138,6 +138,7 @@ extend( Relation, RelationSingle,
     {
       related.$on( Model.Events.Saved, relation.onSaved, this );
     }
+
     if (relation.onRemoved)
     {
       related.$on( Model.Events.Removed, relation.onRemoved, this );
@@ -149,7 +150,7 @@ extend( Relation, RelationSingle,
 
     if ( this.isDependent( relation, related ) )
     {
-      relation.parent.$dependents[ related.$uid() ] = related;
+      relation.parent.$dependents.add( related, this );
     }
 
     Rekord.debug( this.debugSetModel, this, relation );
@@ -213,14 +214,9 @@ extend( Relation, RelationSingle,
     this.clearFields( model, local, remoteData );
   },
 
-  updateForeignKey: function(model, related, remoteData)
+  getTargetFields: function(target)
   {
-    var local = this.local;
-    var foreign = related.$db.key;
-
-    Rekord.debug( this.debugUpdateKey, this, model, local, related, foreign );
-
-    this.updateFields( model, local, related, foreign, remoteData );
+    return this.local;
   },
 
   buildKey: function(input)

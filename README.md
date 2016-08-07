@@ -22,6 +22,7 @@ Rekord is the most powerful client-side Model/Active Record/ORM you'll find guar
 - Supports composite keys
 - Specify default values
 - Handle collisions with a "revision" field
+- Handle propagating primary key changes returned by the server
 - Automatically refresh when application becomes online
 - Cache no data, all data, or only pending changes
 - Send only changed values to REST/real-time APIs or entire object
@@ -54,7 +55,7 @@ No, of course not. It interacts with a REST API.
 Working with relational data in javascript can be painful. Rekord eases that pain by allowing you to use plain looking objects that can have any type of relationship with other objects. Rekord takes into consideration things like foreign keys - where you need object A successfully remotely saved before you can save object B. These types of constraints are ugly and bothersome to handle yourself and easily result in bugs. If you're familiar with server-side ORMs, then Rekord should be really easy to pick up. You'll find all the same features and even more!
 
 3. *How are ID collisions avoided?*  
-The key for a model can be given when creating a model - otherwise the key will be given a UUID. This is necessary to be offline capable, models need keys so related models can reference it.
+The key for a model can be given when creating a model - otherwise the key will be given a UUID. This is necessary to be offline capable, models need keys so related models can reference it. If the `keyChanges` option is used the server can return a different key (like an auto-incrementing value) and the key changes will be propagated to all references to that model (foreign keys).
 
 4. *What do you mean by capable?*  
 Caching data/changes locally and real-time behavior is optional - if you don't want either feature then you don't need to include an implementation.
@@ -69,7 +70,7 @@ The `Rekord.Model` and `Rekord.Search` classes can have custom properties theref
 
 The easiest way to install rekord is through bower via `bower install rekord`.
 
-- `rekord.js` is `390KB` (`67KB` gzipped)
+- `rekord.js` is `387KB` (`68KB` gzipped)
 - `rekord.min.js` is `115KB` (`29KB` gzipped)
 
 **Examples**

@@ -80,6 +80,19 @@ extend( KeyHandler, KeySimple,
 
   inKey: function(field)
   {
+    if ( isArray( field ) )
+    {
+      for (var i = 0; i < field.length; i++)
+      {
+        if ( field[ i ] === this.key )
+        {
+          return true;
+        }
+      }
+
+      return false;
+    }
+
     return field === this.key;
   },
 
@@ -89,6 +102,11 @@ extend( KeyHandler, KeySimple,
     {
       key[ field ] = source[ this.key ];
     }
+  },
+
+  applyKey: function(input, target)
+  {
+    target[ this.key ] = input;
   }
 
 });

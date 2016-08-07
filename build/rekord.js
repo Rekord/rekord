@@ -1795,11 +1795,6 @@ function parseDate(x, utc)
 {
   if ( isString( x ) )
   {
-    if ( utc )
-    {
-      x += ' UTC';
-    }
-
     if ( Date.parse )
     {
       x = Date.parse( x );
@@ -1816,6 +1811,11 @@ function parseDate(x, utc)
   }
   if ( isDate( x ) && isNumber( x.getTime() ) )
   {
+    if ( utc )
+    {
+      x = new Date( x.getUTCFullYear(), x.getUTCMonth(), x.getUTCDate(), x.getUTCHours(), x.getUTCMinutes(), x.getUTCSeconds() );
+    }
+
     return x;
   }
 
@@ -2533,7 +2533,7 @@ Rekord.Debugs = {
   HASONE_PRESAVE: 56,         // Model, relation
   HASONE_POSTREMOVE: 57,      // Model, relation
   HASONE_CLEAR_KEY: 58,       // Model, local
-  HASONE_UPDATE_KEY: 59,      // Model, local, Model, foreign
+  HASONE_UPDATE_KEY: 59,      // Model, targetFields, Model, sourceFields
   HASONE_LOADED: 60,          // Model, relation, [Model]
   HASONE_QUERY: 111,          // Model, RemoteQuery, queryOption, query
   HASONE_QUERY_RESULTS: 112,  // Model, RemoteQuery
@@ -2547,7 +2547,7 @@ Rekord.Debugs = {
   BELONGSTO_SET_MODEL: 67,     // relation
   BELONGSTO_POSTREMOVE: 69,    // Model, relation
   BELONGSTO_CLEAR_KEY: 70,     // Model, local
-  BELONGSTO_UPDATE_KEY: 71,    // Model, local, Model, foreign
+  BELONGSTO_UPDATE_KEY: 71,    // Model, targetFields, Model, sourceFields
   BELONGSTO_LOADED: 72,        // Model, relation, [Model]
   BELONGSTO_QUERY: 113,        // Model, RemoteQuery, queryOption, query
   BELONGSTO_QUERY_RESULTS: 114,// Model, RemoteQuery
@@ -2568,6 +2568,7 @@ Rekord.Debugs = {
   HASMANY_POSTSAVE: 87,         // Model, relation
   HASMANY_QUERY: 115,           // Model, RemoteQuery, queryOption, query
   HASMANY_QUERY_RESULTS: 116,   // Model, RemoteQuery
+  HASMANY_UPDATE_KEY: 129,      // Model, targetFields, Model, sourceFields
 
   HASMANYTHRU_INIT: 88,             // HasMany
   HASMANYTHRU_NINJA_REMOVE: 89,     // Model, Model, relation
@@ -2588,6 +2589,7 @@ Rekord.Debugs = {
   HASMANYTHRU_THRU_REMOVE: 68,      // relation, Model, Model
   HASMANYTHRU_QUERY: 117,           // Model, RemoteQuery, queryOption, query
   HASMANYTHRU_QUERY_RESULTS: 118,   // Model, RemoteQuery
+  HASMANYTHRU_UPDATE_KEY: 130,      // Model, targetFields, Model, sourceFields
 
   HASREMOTE_INIT: 50,               // HasRemote
   HASREMOTE_SORT: 121,              // relation
@@ -3742,7 +3744,7 @@ addMethods( Database.prototype,
     {
       if ( db.keyHandler.hasKeyChange( model, decoded ) )
       {
-        throw new Error('Model keys cannot be changed');
+        key = model.$setKey( db.keyHandler.getKey( decoded, true ) );
       }
 
       db.all[ key ] = model;
@@ -4467,7 +4469,8 @@ Model.Events =
   SavedRemoteUpdate:    'saved remote-update',
   OperationsStarted:    'operations-started',
   OperationsFinished:   'operations-finished',
-  Changes:              'saved remote-update key-update relation-update removed change'
+  KeyChange:            'key-change',
+  Changes:              'saved remote-update key-update relation-update removed key-change change'
 };
 
 Model.Status =
@@ -4492,7 +4495,7 @@ addMethods( Model.prototype,
     this.$status = Model.Status.Synced;
     this.$operation = null;
     this.$relations = {};
-    this.$dependents = {};
+    this.$dependents = new Dependents( this );
 
     if ( remoteData )
     {
@@ -4708,33 +4711,6 @@ addMethods( Model.prototype,
   $decode: function()
   {
     this.$db.decode( this );
-  },
-
-  $isDependentsSaved: function(callbackOnSaved, contextOnSaved)
-  {
-    var dependents = this.$dependents;
-    var off;
-
-    var onDependentSave = function()
-    {
-      callbackOnSaved.apply( contextOnSaved || this, arguments );
-
-      off();
-    };
-
-    for (var uid in dependents)
-    {
-      var dependent = dependents[ uid ];
-
-      if ( !dependent.$isSaved() )
-      {
-        off = dependent.$once( Model.Events.RemoteSaves, onDependentSave );
-
-        return false;
-      }
-    }
-
-    return true;
   },
 
   $relate: function(prop, relate)
@@ -5051,6 +5027,35 @@ addMethods( Model.prototype,
   $hasKey: function()
   {
     return hasFields( this, this.$db.key, isValue );
+  },
+
+  $setKey: function(key, skipApplication)
+  {
+    var db = this.$db;
+    var newKey = db.keyHandler.buildKeyFromInput(key);
+    var oldKey = this.$$key;
+
+    if (newKey !== oldKey)
+    {
+      if (!db.keyChanges)
+      {
+        throw 'Key changes are not supported, see the documentation on how to enable key changes.';
+      }
+
+      delete db.all[ oldKey ];
+      db.all[ newKey ] = this;
+
+      this.$$key = newKey;
+
+      if ( !skipApplication )
+      {
+        db.keyHandler.applyKey( newKey, this );
+      }
+
+      this.$trigger( Model.Events.KeyChange, [this, oldKey, newKey] );
+    }
+
+    return newKey;
   },
 
   $isSynced: function()
@@ -5532,6 +5537,89 @@ addMethods( Map.prototype,
 });
 
 
+function Dependents(subject)
+{
+  this.map = {};
+  this.listeners = {};
+
+  this.subject = subject;
+}
+
+Dependents.prototype =
+{
+  add: function(model, relator)
+  {
+    var key = model.$uid();
+
+    this.map[ key ] = model;
+
+    if ( model.$db.keyChanges && !this.listeners[ key ] )
+    {
+      var listener = this.handleKeyChange( relator );
+
+      this.listeners[ key ] = model.$on( Model.Events.KeyChange, listener, this );
+    }
+  },
+
+  remove: function(model)
+  {
+    var key = model.$uid();
+
+    evaluate( this.listeners[ key ] );
+
+    delete this.listeners[ key ];
+    delete this.map[ key ];
+  },
+
+  handleKeyChange: function(relator)
+  {
+    return function(model, oldKey, newKey)
+    {
+      var prefix = model.$db.name + '$';
+
+      oldKey = prefix + oldKey;
+      newKey = prefix + newKey;
+
+      this.listeners[ newKey ] = this.listeners[ oldKey ];
+      this.map[ newKey ] = this.map[ oldKey ];
+
+      delete this.listeners[ oldKey ];
+      delete this.map[ oldKey ];
+
+      relator.updateForeignKey( this.subject, model, true );
+    };
+  },
+
+  isSaved: function(callbackOnSaved, contextOnSaved)
+  {
+    var dependents = this.map;
+    var off = noop;
+
+    var onDependentSave = function()
+    {
+      callbackOnSaved.apply( contextOnSaved || this, arguments );
+
+      off();
+    };
+
+    for (var uid in dependents)
+    {
+      var dependent = dependents[ uid ];
+
+      if ( !dependent.$isSaved() )
+      {
+        off = dependent.$once( Model.Events.RemoteSaves, onDependentSave );
+
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+};
+
+
 function KeyHandler()
 {
 
@@ -5680,6 +5768,19 @@ extend( KeyHandler, KeySimple,
 
   inKey: function(field)
   {
+    if ( isArray( field ) )
+    {
+      for (var i = 0; i < field.length; i++)
+      {
+        if ( field[ i ] === this.key )
+        {
+          return true;
+        }
+      }
+
+      return false;
+    }
+
     return field === this.key;
   },
 
@@ -5689,6 +5790,11 @@ extend( KeyHandler, KeySimple,
     {
       key[ field ] = source[ this.key ];
     }
+  },
+
+  applyKey: function(input, target)
+  {
+    target[ this.key ] = input;
   }
 
 });
@@ -5793,6 +5899,19 @@ extend( KeyHandler, KeyComposite,
 
   inKey: function(field)
   {
+    if ( isArray( field ) )
+    {
+      for (var i = 0; i < field.length; i++)
+      {
+        if ( indexOf( this.key, field[ i ] ) !== false )
+        {
+          return true;
+        }
+      }
+
+      return false;
+    }
+
     return indexOf( this.key, field ) !== false;
   },
 
@@ -5803,6 +5922,21 @@ extend( KeyHandler, KeyComposite,
     if ( index !== false )
     {
       key[ field ] = source[ this.key[ index ] ];
+    }
+  },
+
+  applyKey: function(input, target)
+  {
+    var fields = this.key;
+
+    if ( isString( input ) )
+    {
+      input = input.split( this.keySeparator );
+    }
+
+    for (var i = 0; i < fields.length; i++)
+    {
+      target[ fields[ i ] ] = input[ i ];
     }
   }
 
@@ -11578,7 +11712,7 @@ extend( Operation, SaveRemote,
       this.markSynced( model, true, Model.Events.RemoteSaveFailure, null );
       this.finish();
     }
-    else if ( !model.$isDependentsSaved( this.tryAgain, this ) )
+    else if ( !model.$dependents.isSaved( this.tryAgain, this ) )
     {
       this.finish();
     }
@@ -11768,7 +11902,7 @@ extend( Operation, SaveRemote,
   {
     var model = this.model;
 
-    model.$addOperation( SaveRemote, this.cascade );
+    model.$addOperation( SaveLocal, this.cascade );
   }
 
 });
@@ -12144,6 +12278,39 @@ addMethods( Relation.prototype,
     return changes;
   },
 
+  updateForeignKey: function(target, source, remoteData)
+  {
+    var targetFields = this.getTargetFields( target );
+    var sourceFields = this.getSourceFields( source );
+    var targetKey = target.$key();
+    var targetKeyHandler = target.$db.keyHandler;
+    var keyChanges = target.$db.keyChanges;
+
+    Rekord.debug( this.debugUpdateKey, this, target, targetFields, source, sourceFields );
+
+    this.updateFields( target, targetFields, source, sourceFields, remoteData );
+
+    if ( keyChanges && remoteData )
+    {
+      var targetNewKey = targetKeyHandler.getKey( target, true );
+
+      if ( targetKeyHandler.inKey( targetFields ) && targetNewKey !== targetKey )
+      {
+        target.$setKey( targetNewKey, true );
+      }
+    }
+  },
+
+  getTargetFields: function(target)
+  {
+    return target.$db.key;
+  },
+
+  getSourceFields: function(source)
+  {
+    return source.$db.key;
+  },
+
   getStoredArray: function(relateds, mode)
   {
     if ( !mode )
@@ -12336,7 +12503,7 @@ extend( Relation, RelationSingle,
       relation.dirty = true;
       relation.loaded = true;
 
-      delete relation.parent.$dependents[ related.$uid() ];
+      relation.parent.$dependents.remove( related );
     }
   },
 
@@ -12346,6 +12513,7 @@ extend( Relation, RelationSingle,
     {
       related.$on( Model.Events.Saved, relation.onSaved, this );
     }
+
     if (relation.onRemoved)
     {
       related.$on( Model.Events.Removed, relation.onRemoved, this );
@@ -12357,7 +12525,7 @@ extend( Relation, RelationSingle,
 
     if ( this.isDependent( relation, related ) )
     {
-      relation.parent.$dependents[ related.$uid() ] = related;
+      relation.parent.$dependents.add( related, this );
     }
 
     Rekord.debug( this.debugSetModel, this, relation );
@@ -12421,14 +12589,9 @@ extend( Relation, RelationSingle,
     this.clearFields( model, local, remoteData );
   },
 
-  updateForeignKey: function(model, related, remoteData)
+  getTargetFields: function(target)
   {
-    var local = this.local;
-    var foreign = related.$db.key;
-
-    Rekord.debug( this.debugUpdateKey, this, model, local, related, foreign );
-
-    this.updateFields( model, local, related, foreign, remoteData );
+    return this.local;
   },
 
   buildKey: function(input)
@@ -13002,7 +13165,7 @@ extend( RelationSingle, HasOne,
       relation.dirty = true;
       relation.loaded = true;
 
-      delete relation.parent.$dependents[ related.$uid() ];
+      relation.parent.$dependents.remove( related );
     }
   }
 
@@ -13044,6 +13207,7 @@ extend( RelationMultiple, HasMany,
   debugSort:            Rekord.Debugs.HASMANY_SORT,
   debugQuery:           Rekord.Debugs.HASMANY_QUERY,
   debugQueryResults:    Rekord.Debugs.HASMANY_QUERY_RESULTS,
+  debugUpdateKey:       Rekord.Debugs.HASMANY_UPDATE_KEY,
 
   getDefaults: function(database, field, options)
   {
@@ -13268,9 +13432,9 @@ extend( RelationMultiple, HasMany,
       related.$on( Model.Events.Removed, relation.onRemoved );
       related.$on( Model.Events.SavedRemoteUpdate, relation.onSaved );
 
-      related.$dependents[ model.$uid() ] = model;
+      related.$dependents.add( model, this );
 
-      this.updateForeignKey( model, related, remoteData );
+      this.updateForeignKey( related, model, remoteData );
 
       this.sort( relation );
 
@@ -13294,8 +13458,9 @@ extend( RelationMultiple, HasMany,
     var target = relation.related;
     var pending = relation.pending;
     var key = related.$key();
+    var removing = target.has( key );
 
-    if ( target.has( key ) )
+    if ( removing )
     {
       Rekord.debug( Rekord.Debugs.HASMANY_REMOVE, this, relation, related );
 
@@ -13304,7 +13469,7 @@ extend( RelationMultiple, HasMany,
       related.$off( Model.Events.Removed, relation.onRemoved );
       related.$off( Model.Events.SavedRemoteUpdate, relation.onSaved );
 
-      delete related.$dependents[ model.$uid() ];
+      related.$dependents.remove( model );
 
       if ( this.cascadeRemove )
       {
@@ -13326,14 +13491,8 @@ extend( RelationMultiple, HasMany,
     }
 
     delete pending[ key ];
-  },
 
-  updateForeignKey: function(model, related, remoteData)
-  {
-    var foreign = this.foreign;
-    var local = model.$db.key;
-
-    this.updateFields( related, foreign, model, local, remoteData );
+    return removing;
   },
 
   isRelatedFactory: function(model)
@@ -13345,6 +13504,11 @@ extend( RelationMultiple, HasMany,
     {
       return propsMatch( related, foreign, model, local );
     };
+  },
+
+  getTargetFields: function(target)
+  {
+    return this.foreign;
   }
 
 });
@@ -13388,6 +13552,7 @@ extend( RelationMultiple, HasManyThrough,
   debugSort:            Rekord.Debugs.HASMANYTHRU_SORT,
   debugQuery:           Rekord.Debugs.HASMANYTHRU_QUERY,
   debugQueryResults:    Rekord.Debugs.HASMANYTHRU_QUERY_RESULTS,
+  debugUpdateKey:       Rekord.Debugs.HASMANYTHRU_UPDATE_KEY,
 
   getDefaults: function(database, field, options)
   {
@@ -13684,8 +13849,9 @@ extend( RelationMultiple, HasManyThrough,
     var model = relation.parent;
     var throughs = relation.throughs;
     var throughKey = through.$key();
+    var added = !throughs.has( throughKey );
 
-    if ( !throughs.has( throughKey ) )
+    if ( added )
     {
       Rekord.debug( Rekord.Debugs.HASMANYTHRU_THRU_ADD, this, relation, through );
 
@@ -13693,7 +13859,7 @@ extend( RelationMultiple, HasManyThrough,
 
       through.$on( Model.Events.Removed, relation.onThroughRemoved );
 
-      through.$dependents[ model.$uid() ] = model;
+      through.$dependents.add( model, this );
 
       if ( !remoteData && this.cascadeSave )
       {
@@ -13707,6 +13873,8 @@ extend( RelationMultiple, HasManyThrough,
         }
       }
     }
+
+    return added;
   },
 
   finishAddModel: function(relation, related, remoteData)
@@ -13791,7 +13959,7 @@ extend( RelationMultiple, HasManyThrough,
 
       through.$off( Model.Events.Removed, relation.onThroughRemoved );
 
-      delete through.$dependents[ model.$uid() ];
+      through.$dependents.remove( model );
 
       if ( callRemove )
       {
@@ -13857,6 +14025,11 @@ extend( RelationMultiple, HasManyThrough,
     }
 
     return key;
+  },
+
+  getTargetFields: function(target)
+  {
+    return this.local;
   }
 
 });
@@ -16364,6 +16537,8 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
   Rekord.KeyHandler = KeyHandler;
   Rekord.KeySimple = KeySimple;
   Rekord.KeyComposite = KeyComposite;
+  Rekord.enableKeyChanges = enableKeyChanges;
+  Rekord.disableKeyChanges = disableKeyChanges;
 
   /* Enums */
   Rekord.Cascade = Cascade;

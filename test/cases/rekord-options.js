@@ -1673,3 +1673,165 @@ test( 'live false', function(assert)
   ok( Rekord.rest[ TaskName ] );
   notOk( Rekord.live[ TaskName ] );
 });
+
+test( 'keyChanges', function(assert)
+{
+  var prefix = 'keyChanges_';
+  var UserName = prefix + 'user';
+  var GroupName = prefix + 'group';
+  var UserGroupName = prefix + 'user_group';
+  var TaskName = prefix + 'task';
+
+  var User = Rekord({
+    name: UserName,
+    fields: ['name'],
+    keyChanges: true,
+    hasMany: {
+      tasks: {
+        model: TaskName,
+        foreign: 'assigned_to'
+      },
+      userGroups: {
+        model: UserGroupName,
+        foreign: 'user_id'
+      }
+    },
+    hasManyThrough: {
+      groups: {
+        model: GroupName,
+        through: UserGroupName,
+        local: 'user_id',
+        foreign: 'group_id'
+      }
+    }
+  });
+
+  var Task = Rekord({
+    name: TaskName,
+    fields: ['name', 'done', 'assigned_to'],
+    keyChanges: true,
+    belongsTo: {
+      assignee: {
+        model: UserName,
+        local: 'assigned_to'
+      }
+    },
+    defaults: {
+      done: false
+    }
+  });
+
+  var Group = Rekord({
+    name: GroupName,
+    fields: ['name'],
+    hasMany: {
+      groupUsers: {
+        model: UserGroupName,
+        foreign: 'group_id'
+      }
+    },
+    hasManyThrough: {
+      users: {
+        model: UserName,
+        through: UserGroupName,
+        local: 'group_id',
+        foreign: 'user_id'
+      }
+    }
+  });
+
+  var UserGroup = Rekord({
+    name: UserGroupName,
+    key: ['user_id', 'group_id'],
+    keyChanges: true,
+    belongsTo: {
+      user: {
+        model: UserName,
+        local: 'user_id'
+      },
+      group: {
+        model: GroupName,
+        local: 'group_id'
+      }
+    }
+  });
+
+  var KEY_INIT = 'somekey';
+  var KEY_LAST = 4;
+
+  var g0 = new Group({id: 2, name: 'g0'});
+  var g1 = new Group({id: 3, name: 'g1'});
+  var t0 = new Task({name: 't0'});
+  var t1 = new Task({name: 't1'});
+  var u0 = new User({id: KEY_INIT, name: 'u0', groups: [g0, g1], tasks: [t0, t1]});
+  var ug0 = UserGroup.get({user: u0, group: g0});
+  var ug1 = UserGroup.get({user: u0, group: g1});
+
+  strictEqual( u0.id, KEY_INIT );
+  deepEqual( g0.users.slice(), [u0] );
+  deepEqual( g1.users.slice(), [u0] );
+  deepEqual( u0.groups.slice(), [g0, g1] );
+  deepEqual( u0.tasks.slice(), [t0, t1] );
+  strictEqual( ug0.group, g0 );
+  strictEqual( ug0.group_id, g0.id );
+  strictEqual( ug1.group, g1 );
+  strictEqual( ug1.group_id, g1.id );
+  strictEqual( ug0.user, u0 );
+  strictEqual( ug0.user_id, u0.id );
+  strictEqual( ug0.user_id, KEY_INIT );
+  strictEqual( ug1.user, u0 );
+  strictEqual( ug1.user_id, u0.id );
+  strictEqual( t0.assignee, u0 );
+  strictEqual( t1.assignee, u0 );
+  strictEqual( t0.assigned_to, u0.id );
+  strictEqual( t1.assigned_to, u0.id );
+  strictEqual( u0.userGroups.length, 2 );
+  strictEqual( g0.groupUsers.length, 1 );
+  strictEqual( g1.groupUsers.length, 1 );
+
+  g0.$save();
+  g1.$save();
+
+  ok( g0.$isSaved() );
+  ok( g1.$isSaved() );
+
+  t0.$save();
+
+  notOk( t0.$isSaved() );
+  notOk( t1.$isSaved() );
+  notOk( ug0.$isSaved() );
+  notOk( ug1.$isSaved() );
+
+  User.Database.rest.returnValue = {
+    id: KEY_LAST
+  };
+
+  u0.$save();
+
+  strictEqual( u0.id, KEY_LAST, 'key changed' );
+
+  ok( t0.$isSaved(), 'task 0 saved' );
+  notOk( t1.$isSaved(), 'task 1 not saved' );
+  ok( ug0.$isSaved(), 'user group 0 saved' );
+  ok( ug1.$isSaved(), 'user group 1 saved' );
+
+  strictEqual( ug0.user_id, KEY_LAST, 'user group 0 has new id' );
+  strictEqual( ug1.user_id, KEY_LAST, 'user group 1 has new id' );
+  strictEqual( t0.assigned_to, KEY_LAST, 'task 0 has new id' );
+  strictEqual( t1.assigned_to, KEY_LAST, 'task 1 has new id' );
+
+  deepEqual( ug0.$saved, { user_id: KEY_LAST, group_id: g0.id } );
+  deepEqual( ug1.$saved, { user_id: KEY_LAST, group_id: g1.id } );
+
+  deepEqual( t0.$saved, { id: t0.id, name: 't0', assigned_to: KEY_LAST, done: false } );
+  deepEqual( t1.$saved, undefined );
+
+  t1.$save();
+
+  deepEqual( t1.$saved, { id: t1.id, name: 't1', assigned_to: KEY_LAST, done: false } );
+
+  deepEqual( u0.userGroups.map.keys, [ '4/2', '4/3' ] );
+  deepEqual( u0.userGroups.map.indices, { '4/2': 0, '4/3': 1 } );
+
+  Rekord.disableKeyChanges();
+});

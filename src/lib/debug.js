@@ -107,7 +107,7 @@ Rekord.Debugs = {
   HASONE_PRESAVE: 56,         // Model, relation
   HASONE_POSTREMOVE: 57,      // Model, relation
   HASONE_CLEAR_KEY: 58,       // Model, local
-  HASONE_UPDATE_KEY: 59,      // Model, local, Model, foreign
+  HASONE_UPDATE_KEY: 59,      // Model, targetFields, Model, sourceFields
   HASONE_LOADED: 60,          // Model, relation, [Model]
   HASONE_QUERY: 111,          // Model, RemoteQuery, queryOption, query
   HASONE_QUERY_RESULTS: 112,  // Model, RemoteQuery
@@ -121,7 +121,7 @@ Rekord.Debugs = {
   BELONGSTO_SET_MODEL: 67,     // relation
   BELONGSTO_POSTREMOVE: 69,    // Model, relation
   BELONGSTO_CLEAR_KEY: 70,     // Model, local
-  BELONGSTO_UPDATE_KEY: 71,    // Model, local, Model, foreign
+  BELONGSTO_UPDATE_KEY: 71,    // Model, targetFields, Model, sourceFields
   BELONGSTO_LOADED: 72,        // Model, relation, [Model]
   BELONGSTO_QUERY: 113,        // Model, RemoteQuery, queryOption, query
   BELONGSTO_QUERY_RESULTS: 114,// Model, RemoteQuery
@@ -142,6 +142,7 @@ Rekord.Debugs = {
   HASMANY_POSTSAVE: 87,         // Model, relation
   HASMANY_QUERY: 115,           // Model, RemoteQuery, queryOption, query
   HASMANY_QUERY_RESULTS: 116,   // Model, RemoteQuery
+  HASMANY_UPDATE_KEY: 129,      // Model, targetFields, Model, sourceFields
 
   HASMANYTHRU_INIT: 88,             // HasMany
   HASMANYTHRU_NINJA_REMOVE: 89,     // Model, Model, relation
@@ -162,6 +163,7 @@ Rekord.Debugs = {
   HASMANYTHRU_THRU_REMOVE: 68,      // relation, Model, Model
   HASMANYTHRU_QUERY: 117,           // Model, RemoteQuery, queryOption, query
   HASMANYTHRU_QUERY_RESULTS: 118,   // Model, RemoteQuery
+  HASMANYTHRU_UPDATE_KEY: 130,      // Model, targetFields, Model, sourceFields
 
   HASREMOTE_INIT: 50,               // HasRemote
   HASREMOTE_SORT: 121,              // relation
