@@ -61,7 +61,7 @@ extendArray( Array, Page,
 
   goto: function(pageIndex)
   {
-    var actualIndex = Math.max( 0, Math.min( pageIndex, this.pageCount - 1 ) );
+    var actualIndex = this.page( pageIndex );
 
     if ( actualIndex !== this.pageIndex )
     {
@@ -96,11 +96,50 @@ extendArray( Array, Page,
     this.goto( this.pageCount - 1 );
   },
 
+  total: function()
+  {
+    return this.collection.length;
+  },
+
+  pages: function()
+  {
+    return Math.ceil( this.total() / this.pageSize );
+  },
+
+  page: function(index)
+  {
+    return Math.max( 0, Math.min( index, this.pages() - 1 ) );
+  },
+
+  can: function(index)
+  {
+    return this.total() && index >= 0 && index < this.pageCount;
+  },
+
+  canFirst: function()
+  {
+    return this.canPrev();
+  },
+
+  canLast: function()
+  {
+    return this.canNext();
+  },
+
+  canPrev: function()
+  {
+    return this.total() && this.pageIndex > 0;
+  },
+
+  canNext: function()
+  {
+    return this.total() && this.pageIndex < this.pageCount - 1;
+  },
+
   handleChanges: function(forceApply)
   {
-    var n = this.collection.length;
-    var pageCount = Math.ceil( n / this.pageSize );
-    var pageIndex = Math.max( 0, Math.min( this.pageIndex, pageCount - 1 ) );
+    var pageCount = this.pages();
+    var pageIndex = this.page( this.pageIndex );
     var apply = forceApply || this.pageIndex !== pageIndex || this.length !== this.pageSize;
     var changes = apply || this.pageCount !== pageCount;
 

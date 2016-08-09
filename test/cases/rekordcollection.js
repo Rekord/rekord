@@ -882,26 +882,47 @@ test( 'page', function(assert)
   var c = Rekord.collect(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
   var p = c.page( 4 );
 
+  strictEqual( p.pages(), 4 );
+  strictEqual( p.total(), 15 );
+
+  notOk( p.canPrev() );
+  notOk( p.canFirst() );
   deepEqual( p.toArray(), [1, 2, 3, 4] );
 
   p.next();
 
+  ok( p.canPrev() );
+  ok( p.canFirst() );
+  ok( p.canNext() );
+  ok( p.canLast() );
   deepEqual( p.toArray(), [5, 6, 7, 8] );
 
   p.next();
 
+  ok( p.canNext() );
+  ok( p.canLast() );
   deepEqual( p.toArray(), [9, 10, 11, 12] );
 
   p.next();
 
+  notOk( p.canNext() );
+  notOk( p.canLast() );
   deepEqual( p.toArray(), [13, 14, 15] );
 
   p.first();
 
+  notOk( p.canPrev() );
+  notOk( p.canFirst() );
+  ok( p.canNext() );
+  ok( p.canLast() );
   deepEqual( p.toArray(), [1, 2, 3, 4] );
 
   p.last();
 
+  ok( p.canPrev() );
+  ok( p.canFirst() );
+  notOk( p.canNext() );
+  notOk( p.canLast() );
   deepEqual( p.toArray(), [13, 14, 15] );
 
   c.removeAll( [11, 12, 13, 14, 15] );

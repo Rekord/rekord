@@ -112,6 +112,46 @@ extend( Search, SearchPaged,
     return this.$goto( this.$getPageIndex() + 1, dontRun );
   },
 
+  $total: function()
+  {
+    return this.$getTotal();
+  },
+
+  $pages: function()
+  {
+    return this.$getPageCount();
+  },
+
+  $page: function(index)
+  {
+    return Math.max( 0, Math.min( index, this.$pages() - 1 ) );
+  },
+
+  $can: function(index)
+  {
+    return this.$getTotal() && index >= 0 && index < this.$getPageCount();
+  },
+
+  $canFirst: function()
+  {
+    return this.$canPrev();
+  },
+
+  $canLast: function()
+  {
+    return this.$canNext();
+  },
+
+  $canPrev: function()
+  {
+    return this.$getTotal() && this.$getPageIndex() > 0;
+  },
+
+  $canNext: function()
+  {
+    return this.$getTotal() && this.$getPageIndex() < this.$getPageCount() - 1;
+  },
+
   $decode: function(response)
   {
     this.$updatePageSize( response );
