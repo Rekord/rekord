@@ -1,4 +1,4 @@
-/* rekord 1.4.1 - A javascript REST ORM that is offline and real-time capable http://rekord.github.io/rekord/ by Philip Diffenderfer */
+/* rekord 1.4.2 - A javascript REST ORM that is offline and real-time capable http://rekord.github.io/rekord/ by Philip Diffenderfer */
 (function(global, undefined)
 {
 
@@ -635,7 +635,7 @@ function isEmpty(x)
   return false;
 }
 
-function evaluate(x, avoidCopy)
+function evaluate(x, avoidCopy, context)
 {
   if ( !isValue( x ) )
   {
@@ -648,7 +648,7 @@ function evaluate(x, avoidCopy)
   }
   if ( isFunction( x ) )
   {
-    return x();
+    return context ? x.apply( context ) : x();
   }
 
   return avoidCopy ? x : copy( x );
@@ -1710,7 +1710,7 @@ function diff(curr, old, props, comparator)
 
 function isParseInput(x)
 {
-  return x.indexOf('.') !== -1 || x.indexOf('[') !== -1;
+  return x.indexOf('.') !== -1 || x.indexOf('[') !== -1 || x.indexOf('(') !== -1;
 }
 
 function parse(expr, base)
@@ -1739,7 +1739,7 @@ function createParser(expr)
 
       if ( isObject( base ) )
       {
-        base = evaluate( base[ n ], true );
+        base = evaluate( base[ n ], true, base );
       }
     }
 

@@ -355,7 +355,7 @@ function isEmpty(x)
   return false;
 }
 
-function evaluate(x, avoidCopy)
+function evaluate(x, avoidCopy, context)
 {
   if ( !isValue( x ) )
   {
@@ -368,7 +368,7 @@ function evaluate(x, avoidCopy)
   }
   if ( isFunction( x ) )
   {
-    return x();
+    return context ? x.apply( context ) : x();
   }
 
   return avoidCopy ? x : copy( x );

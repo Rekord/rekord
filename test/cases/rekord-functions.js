@@ -741,7 +741,10 @@ test( 'Rekord.format', function(assert)
     kids: [
       {name: 'Mackenzie', age: 2},
       {name: 'Connor', age: 0}
-    ]
+    ],
+    getThirdFavoriteNumber: function() {
+      return this.favorite_numbers[2];
+    }
   };
 
   strictEqual(
@@ -783,6 +786,11 @@ test( 'Rekord.format', function(assert)
     Rekord.format('He has {kids.length} children', person),
     'He has 2 children'
   );
+
+  strictEqual(
+    Rekord.format('{ getThirdFavoriteNumber() } is his 3rd favorite number.', person),
+    '4 is his 3rd favorite number.'
+  );
 });
 
 test( 'Rekord.createFormatter', function(assert)
@@ -821,7 +829,10 @@ test( 'Rekord.parse', function(assert)
     kids: [
       {name: 'Mackenzie', age: 2},
       {name: 'Connor', age: 0}
-    ]
+    ],
+    getThirdFavoriteNumber: function() {
+      return this.favorite_numbers[2];
+    }
   };
 
   strictEqual(
@@ -862,6 +873,11 @@ test( 'Rekord.parse', function(assert)
   strictEqual(
     Rekord.parse('kids.length', person),
     person.kids.length
+  );
+
+  strictEqual(
+    Rekord.parse('getThirdFavoriteNumber', person),
+    person.favorite_numbers[2]
   );
 });
 

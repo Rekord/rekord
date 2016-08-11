@@ -1,7 +1,7 @@
 
 function isParseInput(x)
 {
-  return x.indexOf('.') !== -1 || x.indexOf('[') !== -1;
+  return x.indexOf('.') !== -1 || x.indexOf('[') !== -1 || x.indexOf('(') !== -1;
 }
 
 function parse(expr, base)
@@ -30,7 +30,7 @@ function createParser(expr)
 
       if ( isObject( base ) )
       {
-        base = evaluate( base[ n ], true );
+        base = evaluate( base[ n ], true, base );
       }
     }
 
