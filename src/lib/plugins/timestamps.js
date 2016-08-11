@@ -103,7 +103,7 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
       {
         this[ field ] = evaluate( db.defaults[ field ] );
 
-        $save.apply( this, arguments );
+        return $save.apply( this, arguments );
       };
     });
   }
