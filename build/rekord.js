@@ -1,4 +1,4 @@
-/* rekord 1.4.2 - A javascript REST ORM that is offline and real-time capable http://rekord.github.io/rekord/ by Philip Diffenderfer */
+/* rekord 1.4.3 - A javascript REST ORM that is offline and real-time capable http://rekord.github.io/rekord/ by Philip Diffenderfer */
 (function(global, undefined)
 {
 
@@ -14204,7 +14204,7 @@ extend( RelationMultiple, HasRemote,
     // Populate the model's key if it's missing
     model.$key();
 
-    // If auto refersh was specified, execute the query on refresh
+    // If auto refresh was specified, execute the query on refresh
     if ( this.autoRefresh )
     {
       model.$on( this.autoRefresh, this.onRefresh( relation ), this );
