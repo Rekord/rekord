@@ -1714,7 +1714,7 @@ extendArray( Array, Collection,
     {
       var item = this[ i ];
 
-      callback.call( context, item, i );
+      callback.call( callbackContext, item, i );
 
       if ( this[ i ] !== item )
       {

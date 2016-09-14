@@ -1006,12 +1006,28 @@ test( 'each', function(assert)
 {
   var c = Rekord.collect(1, 2, 3, 4, 5);
 
-  expect( 5 );
+  expect( 10 );
 
   c.each(function(x, i)
   {
     strictEqual( x, i + 1 );
-  })
+    strictEqual( this, c );
+  });
+});
+
+test( 'each context', function(assert)
+{
+  var c = Rekord.collect(1, 2, 3, 4, 5);
+  var context = {};
+
+  expect( 10 );
+
+  c.each(function(x, i)
+  {
+    strictEqual( x, i + 1 );
+    strictEqual( this, context );
+
+  }, context );
 });
 
 test( 'eachWhere', function(assert)
