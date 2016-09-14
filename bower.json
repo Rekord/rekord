@@ -18,6 +18,9 @@
     "**/.*",
     "node_modules",
     "bower_components",
+    "docs",
+    "images",
+    "src",
     "test",
     "tests"
   ]

@@ -210,7 +210,13 @@ var Polymorphic =
 
   grabModel: function(input, callback, remoteData)
   {
-    if ( isObject( input ) )
+    if ( input instanceof Model )
+    {
+      callback.call( this, input );
+    }
+    // At the moment I don't think this will ever work - if we are given a plain
+    // object we can't really determine the related database.
+    else if ( isObject( input ) )
     {
       var db = this.getDiscriminatorDatabase( input );
 
@@ -229,8 +235,12 @@ var Polymorphic =
 
       if ( input instanceof Model )
       {
+        relation.pending[ input.$key() ] = true;
+
         callback.call( this, input );
       }
+      // At the moment I don't think this will ever work - if we are given a plain
+      // object we can't really determine the related database.
       else if ( isObject( input ) )
       {
         var db = this.getDiscriminatorDatabase( input );

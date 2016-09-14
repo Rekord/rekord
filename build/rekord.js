@@ -4653,11 +4653,15 @@ addMethods( Model.prototype,
         return;
       }
 
+      var exists = this.$hasRelation( props );
       var relation = this.$getRelation( props, value, remoteData );
 
       if ( relation )
       {
-        relation.set( this, value, remoteData );
+        if ( exists )
+        {
+          relation.set( this, value, remoteData );
+        }
       }
       else
       {
@@ -4738,6 +4742,11 @@ addMethods( Model.prototype,
     var relation = this.$getRelation( prop );
 
     return relation && relation.isRelated( this, related );
+  },
+
+  $hasRelation: function(prop)
+  {
+    return prop in this.$relations;
   },
 
   $getRelation: function(prop, initialValue, remoteData)
@@ -12245,7 +12254,14 @@ addMethods( Relation.prototype,
 
       relation.pending[ key ] = true;
 
-      db.grabModel( input, callback, this, remoteData );
+      if ( input instanceof Model )
+      {
+        callback.call( this, input );
+      }
+      else
+      {
+        db.grabModel( input, callback, this, remoteData );
+      }
     }
   },
 
@@ -14642,7 +14658,13 @@ var Polymorphic =
 
   grabModel: function(input, callback, remoteData)
   {
-    if ( isObject( input ) )
+    if ( input instanceof Model )
+    {
+      callback.call( this, input );
+    }
+    // At the moment I don't think this will ever work - if we are given a plain
+    // object we can't really determine the related database.
+    else if ( isObject( input ) )
     {
       var db = this.getDiscriminatorDatabase( input );
 
@@ -14661,8 +14683,12 @@ var Polymorphic =
 
       if ( input instanceof Model )
       {
+        relation.pending[ input.$key() ] = true;
+
         callback.call( this, input );
       }
+      // At the moment I don't think this will ever work - if we are given a plain
+      // object we can't really determine the related database.
       else if ( isObject( input ) )
       {
         var db = this.getDiscriminatorDatabase( input );

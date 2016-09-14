@@ -709,6 +709,74 @@ test( 'encode decode', function(assert)
   isType( encoded.validation, 'string' );
 });
 
+test( 'decodings', function(assert)
+{
+  var prefix = 'decodings_';
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['name', 'type'],
+    decodings: {
+      type: parseInt
+    }
+  });
+
+  var t0 = Task.boot({
+    name: 't0',
+    type: '0'
+  });
+
+  strictEqual( t0.type, 0 );
+  notOk( t0.$hasChanges() );
+  strictEqual( t0.$saved.type, 0 );
+});
+
+test( 'decodings children', function(assert)
+{
+  var prefix = 'decodings_children_';
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['name', 'type', 'list_id'],
+    decodings: {
+      type: parseInt
+    }
+  });
+
+  var TaskList = Rekord({
+    name: prefix + 'list',
+    fields: ['name'],
+    hasMany: {
+      tasks: {
+        model: Task,
+        foreign: 'list_id'
+      }
+    }
+  });
+
+  var l0 = TaskList.boot({
+    id: 29,
+    name: 'l0',
+    tasks: [
+      {id: 1, list_id: 29, name: 't0', type: '0'},
+      {id: 2, list_id: 29, name: 't1', type: '1'}
+    ]
+  });
+
+  var t0 = Task.get(1);
+  var t1 = Task.get(2);
+
+  notOk( l0.$hasChanges() );
+  notOk( t0.$hasChanges() );
+  notOk( t1.$hasChanges() );
+
+  strictEqual( t0.type, 0 );
+  strictEqual( t1.type, 1 );
+
+  strictEqual( t0.$saved.type, 0 );
+  strictEqual( t1.$saved.type, 1 );
+});
+
 test( 'methods', function(assert)
 {
   var Todo = Rekord({

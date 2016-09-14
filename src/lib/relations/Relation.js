@@ -257,7 +257,14 @@ addMethods( Relation.prototype,
 
       relation.pending[ key ] = true;
 
-      db.grabModel( input, callback, this, remoteData );
+      if ( input instanceof Model )
+      {
+        callback.call( this, input );
+      }
+      else
+      {
+        db.grabModel( input, callback, this, remoteData );
+      }
     }
   },
 

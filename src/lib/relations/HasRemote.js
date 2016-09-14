@@ -73,7 +73,7 @@ extend( RelationMultiple, HasRemote,
     // Populate the model's key if it's missing
     model.$key();
 
-    // If auto refersh was specified, execute the query on refresh
+    // If auto refresh was specified, execute the query on refresh
     if ( this.autoRefresh )
     {
       model.$on( this.autoRefresh, this.onRefresh( relation ), this );

@@ -264,11 +264,15 @@ addMethods( Model.prototype,
         return;
       }
 
+      var exists = this.$hasRelation( props );
       var relation = this.$getRelation( props, value, remoteData );
 
       if ( relation )
       {
-        relation.set( this, value, remoteData );
+        if ( exists )
+        {
+          relation.set( this, value, remoteData );
+        }
       }
       else
       {
@@ -349,6 +353,11 @@ addMethods( Model.prototype,
     var relation = this.$getRelation( prop );
 
     return relation && relation.isRelated( this, related );
+  },
+
+  $hasRelation: function(prop)
+  {
+    return prop in this.$relations;
   },
 
   $getRelation: function(prop, initialValue, remoteData)
