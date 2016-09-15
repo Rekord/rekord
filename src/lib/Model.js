@@ -624,6 +624,12 @@ addMethods( Model.prototype,
     this.$trigger( Model.Events.Change );
   },
 
+  $updated: function()
+  {
+    this.$changed();
+    this.$db.trigger( Database.Events.ModelUpdated, [this] );
+  },
+
   $key: function(quietly)
   {
     if ( !this.$$key )
