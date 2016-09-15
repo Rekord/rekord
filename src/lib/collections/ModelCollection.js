@@ -1151,6 +1151,88 @@ extendArray( Collection, ModelCollection,
   },
 
   /**
+   * Returns whether this collection has at least one model with changes. An
+   * additional where expression can be given to only check certain models.
+   *
+   * @method
+   * @memberof Rekord.ModelCollection#
+   * @param {whereInput} [properties] -
+   *    See {@link Rekord.createWhere}
+   * @param {Any} [value] -
+   *    See {@link Rekord.createWhere}
+   * @param {equalityCallback} [equals=Rekord.equalsStrict] -
+   *    See {@link Rekord.createWhere}
+   * @return {Boolean} -
+   *    True if at least one model has changes, otherwise false.
+   * @see Rekord.createWhere
+   * @see Rekord.Model#$hasChanges
+   */
+  hasChanges: function(properties, value, equals)
+  {
+    var where = createWhere( properties, value, equals );
+
+    var hasChanges = function( model )
+    {
+      return where( model ) && model.$hasChanges();
+    };
+
+    return this.contains( hasChanges );
+  },
+
+  /**
+   * Returns a collection of all changes for each model. The changes are keyed
+   * into the collection by the models key. An additional where expression can
+   * be given to only check certain models.
+   *
+   * @method
+   * @memberof Rekord.ModelCollection#
+   * @param {whereInput} [properties] -
+   *    See {@link Rekord.createWhere}
+   * @param {Any} [value] -
+   *    See {@link Rekord.createWhere}
+   * @param {equalityCallback} [equals=Rekord.equalsStrict] -
+   *    See {@link Rekord.createWhere}
+   * @param {Rekord.ModelCollection} [out] -
+   *    The collection to add the changes to.
+   * @return {Rekord.ModelCollection} -
+   *    The collection with all changes to models in this collection.
+   * @see Rekord.createWhere
+   * @see Rekord.Model#$hasChanges
+   * @see Rekord.Model#$getChanges
+   */
+  getChanges: function(properties, value, equals, out)
+  {
+    var where = createWhere( properties, value, equals );
+    var changes = out && out instanceof ModelCollection ? out : this.cloneEmpty();
+
+    this.each(function(model)
+    {
+      if ( where( model ) && model.$hasChanges() )
+      {
+        changes.put( model.$key(), model.$getChanges() );
+      }
+    });
+
+    return changes;
+  },
+
+  /**
+   * Converts this collection into an object where the keys of the models are
+   * the object properties and the models are the values.
+   *
+   * @method
+   * @memberof Rekord.ModelCollection#
+   * @param {Object} [out] -
+   *    The object to place the models in.
+   * @return {Object} -
+   *    The object containing the models in this collection.
+   */
+  toObject: function(out)
+  {
+    return this.map.toObject( out );
+  },
+
+  /**
    * Returns a clone of this collection. Optionally the models in this
    * collection can also be cloned.
    *

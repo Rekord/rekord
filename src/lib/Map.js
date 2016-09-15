@@ -314,6 +314,26 @@ addMethods( Map.prototype,
     }
 
     return this;
+  },
+
+  /**
+   * Builds an object contain the keys and values in this map.
+   *
+   * @return {Object} -
+   *         The built object.
+   */
+  toObject: function(out)
+  {
+    var target = out || {};
+    var keys = this.keys;
+    var values = this.values;
+
+    for (var i = 0; i < keys.length; i++)
+    {
+      target[ keys[ i ] ] = values[ i ];
+    }
+
+    return target;
   }
 
 });

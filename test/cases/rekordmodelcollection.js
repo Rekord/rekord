@@ -1055,3 +1055,61 @@ test( 'updateWhere autoSort', function(assert)
 
   deepEqual( c.pluck('id'), [2, 3, 1, 4, 5] );
 });
+
+test( 'hasChanges', function(assert)
+{
+  var prefix = 'RekordModelCollection_hasChanges_';
+
+  var Todo = Rekord({
+    name: prefix + 'todo',
+    fields: ['name', 'done'],
+    defaults: {
+      done: false
+    }
+  });
+
+  var t0 = Todo.create({name: 't0'});
+  var t1 = Todo.create({name: 't1'});
+  var t2 = Todo.create({name: 't2'});
+
+  var c = Todo.collect([t0, t1, t2]);
+
+  notOk( c.hasChanges() );
+
+  t0.name = 't0a';
+
+  ok( c.hasChanges() );
+
+  t0.$save();
+
+  notOk( c.hasChanges() );
+});
+
+test( 'getChanges', function(assert)
+{
+  var prefix = 'RekordModelCollection_getChanges_';
+
+  var Todo = Rekord({
+    name: prefix + 'todo',
+    fields: ['name', 'done'],
+    defaults: {
+      done: false
+    }
+  });
+
+  var t0 = Todo.create({id: 10, name: 't0'});
+  var t1 = Todo.create({id: 11, name: 't1'});
+  var t2 = Todo.create({id: 12, name: 't2'});
+
+  var c = Todo.collect([t0, t1, t2]);
+
+  deepEqual( c.getChanges().toObject(), {} );
+
+  t0.name = 't0a';
+
+  deepEqual( c.getChanges().toObject(), {10: {name: 't0a'}} );
+
+  t0.$save();
+
+  deepEqual( c.getChanges().toObject(), {} );
+});
