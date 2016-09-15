@@ -555,8 +555,8 @@ extendArray( Array, Collection,
    */
   clear: function()
   {
-    this.length = 0;
     this.trigger( Collection.Events.Cleared, [this] );
+    this.length = 0;
 
     return this;
   },

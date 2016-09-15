@@ -309,9 +309,9 @@ addMethods( Relation.prototype,
 
       if ( relation.lastRelated !== relation.related )
       {
-        relation.lastRelated = relation.related;
-
         model.$trigger( Model.Events.RelationUpdate, [this, relation] );
+
+        relation.lastRelated = relation.related;
       }
     }
   },

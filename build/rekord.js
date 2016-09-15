@@ -6534,8 +6534,8 @@ extendArray( Array, Collection,
    */
   clear: function()
   {
-    this.length = 0;
     this.trigger( Collection.Events.Cleared, [this] );
+    this.length = 0;
 
     return this;
   },
@@ -8129,7 +8129,7 @@ var Filtering = {
     this.base.on( Collection.Events.Removes, this.onRemoves );
     this.base.on( Collection.Events.Reset, this.onReset );
     this.base.on( Collection.Events.Updates, this.onUpdates );
-    this.base.on( Collection.Events.Cleared, this.onClear );
+    this.base.on( Collection.Events.Cleared, this.onCleared );
 
     return this;
   },
@@ -8142,7 +8142,7 @@ var Filtering = {
     this.base.off( Collection.Events.Removes, this.onRemoves );
     this.base.off( Collection.Events.Reset, this.onReset );
     this.base.off( Collection.Events.Updates, this.onUpdates );
-    this.base.off( Collection.Events.Cleared, this.onClear );
+    this.base.off( Collection.Events.Cleared, this.onCleared );
 
     return this;
   },
@@ -12414,9 +12414,9 @@ addMethods( Relation.prototype,
 
       if ( relation.lastRelated !== relation.related )
       {
-        relation.lastRelated = relation.related;
-
         model.$trigger( Model.Events.RelationUpdate, [this, relation] );
+
+        relation.lastRelated = relation.related;
       }
     }
   },

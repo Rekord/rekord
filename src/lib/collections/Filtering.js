@@ -48,7 +48,7 @@ var Filtering = {
     this.base.on( Collection.Events.Removes, this.onRemoves );
     this.base.on( Collection.Events.Reset, this.onReset );
     this.base.on( Collection.Events.Updates, this.onUpdates );
-    this.base.on( Collection.Events.Cleared, this.onClear );
+    this.base.on( Collection.Events.Cleared, this.onCleared );
 
     return this;
   },
@@ -61,7 +61,7 @@ var Filtering = {
     this.base.off( Collection.Events.Removes, this.onRemoves );
     this.base.off( Collection.Events.Reset, this.onReset );
     this.base.off( Collection.Events.Updates, this.onUpdates );
-    this.base.off( Collection.Events.Cleared, this.onClear );
+    this.base.off( Collection.Events.Cleared, this.onCleared );
 
     return this;
   },
