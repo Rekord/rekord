@@ -6534,8 +6534,8 @@ extendArray( Array, Collection,
    */
   clear: function()
   {
-    this.trigger( Collection.Events.Cleared, [this] );
     this.length = 0;
+    this.trigger( Collection.Events.Cleared, [this] );
 
     return this;
   },
