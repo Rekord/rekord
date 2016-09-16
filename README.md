@@ -16,6 +16,7 @@ Rekord is the most powerful client-side Model/Active Record/ORM you'll find guar
 - Polymorphic relationships for `hasOne`, `belongsTo` & `hasMany`
 - Validation (59 rules, 6 expressions, 13 transforms, and custom functions) through [rekord-validation](https://github.com/Rekord/rekord-validation)
 - Migrations through [rekord-migrations](https://github.com/Rekord/rekord-migrations)
+- "Sessions" through [rekord-session](https://github.com/Rekord/rekord-session)
 - Batch REST execution for any/all types and operations
 - Inheritance (with `extend` option)
 - Horizontal scaling with `shard`ing
@@ -97,6 +98,7 @@ Add-Ons add new functionality to Rekord.
 
 - [Validation](https://github.com/Rekord/rekord-validation) - adds `validation` option
 - [Migrations](https://github.com/Rekord/rekord-migrations) - adds `Rekord.migration` function
+- [Sessions](https://github.com/Rekord/rekord-session) - adds `Rekord.Session` class
 
 **Rekord's Life Cycle:**
 
