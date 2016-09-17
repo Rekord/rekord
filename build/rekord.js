@@ -11475,7 +11475,7 @@ extend( Operation, RemoveLocal,
       this.insertNext( RemoveRemote );
       this.finish();
     }
-    else if ( model.$saved )
+    else if ( model.$saved && this.canCascade( Cascade.Rest ) )
     {
       model.$local.$status = model.$status;
 
