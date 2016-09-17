@@ -12616,7 +12616,7 @@ extend( Relation, RelationSingle,
       var relation = model.$relations[ this.name ];
       var related = this.parseModel( input, remoteData );
 
-      if ( related && !relation.isRelated( related ) )
+      if ( related && relation.related !== related )
       {
         this.clearModel( relation );
         this.setRelated( relation, related, remoteData );
@@ -12629,13 +12629,10 @@ extend( Relation, RelationSingle,
     var relation = model.$relations[ this.name ];
     var related = this.parseModel( input, remoteData );
 
-    if ( related )
+    if ( related && relation.related !== related )
     {
-      if ( relation.related !== related )
-      {
-        this.clearModel( relation );
-        this.setRelated( relation, related, remoteData );
-      }
+      this.clearModel( relation );
+      this.setRelated( relation, related, remoteData );
     }
   },
 
