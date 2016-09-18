@@ -12,7 +12,8 @@ function createUserGroups1( prefix, usersGroupsOptions, groupsUsersOptions )
     hasMany: {
       userGroups: {
         model: UserGroupName,
-        foreign: 'user_id'
+        foreign: 'user_id',
+        clearKey: false
       }
     },
     hasManyThrough: {
@@ -31,7 +32,8 @@ function createUserGroups1( prefix, usersGroupsOptions, groupsUsersOptions )
     hasMany: {
       userGroups: {
         model: UserGroupName,
-        foreign: 'group_id'
+        foreign: 'group_id',
+        clearKey: false
       }
     },
     hasManyThrough: {
@@ -51,11 +53,13 @@ function createUserGroups1( prefix, usersGroupsOptions, groupsUsersOptions )
     belongsTo: {
       group: {
         model: GroupName,
-        local: 'group_id'
+        local: 'group_id',
+        clearKey: false
       },
       user: {
         model: UserName,
-        local: 'user_id'
+        local: 'user_id',
+        clearKey: false
       }
     }
   });

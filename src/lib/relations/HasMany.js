@@ -13,6 +13,8 @@ HasMany.Defaults =
   save:                 Save.None,
   auto:                 true,
   property:             true,
+  preserve:             true,
+  clearKey:             true,
   dynamic:              false,
   foreign:              null,
   comparator:           null,
@@ -297,6 +299,11 @@ extend( RelationMultiple, HasMany,
       related.$off( Model.Events.SavedRemoteUpdate, relation.onSaved );
 
       related.$dependents.remove( model );
+
+      if ( this.clearKey )
+      {
+        this.clearForeignKey( related, remoteData );
+      }
 
       if ( this.cascadeRemove )
       {

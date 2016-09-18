@@ -194,7 +194,8 @@ test( 'poly hasMany', function()
         foreign: 'parent_id',
         discriminator: 'parent_type',
         discriminators: Discriminators,
-        dynamic: true
+        dynamic: true,
+        clearKey: false
       }
     }
   });

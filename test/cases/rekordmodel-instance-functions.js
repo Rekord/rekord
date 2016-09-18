@@ -145,7 +145,8 @@ test( '$relate $unrelate $isRelated $getRelation', function(assert)
     belongsTo: {
       list: {
         model: 'Model_relations_tasklist',
-        local: 'task_list_id'
+        local: 'task_list_id',
+        clearKey: false
       }
     }
   });
@@ -156,7 +157,8 @@ test( '$relate $unrelate $isRelated $getRelation', function(assert)
     hasMany: {
       tasks: {
         model: 'Model_relations_task',
-        foreign: 'task_list_id'
+        foreign: 'task_list_id',
+        clearKey: false
       }
     }
   });

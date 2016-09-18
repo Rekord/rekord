@@ -1123,3 +1123,69 @@ test( 'preserve false', function(assert)
 
   strictEqual( t0.created_by, null );
 });
+
+test( 'clearKey true', function(assert)
+{
+  var prefix = 'belongsTo_clearKey_true_';
+
+  var User = Rekord({
+    name: prefix + 'user',
+    fields: ['id', 'name']
+  });
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['id', 'name', 'created_by'],
+    belongsTo: {
+      creator: {
+        model: User,
+        local: 'created_by',
+        clearKey: true
+      }
+    }
+  });
+
+  var u0 = User.create({id: 1, name: 'u0'});
+  var t0 = Task.create({id: 2, name: 't0', creator: u0});
+
+  strictEqual( t0.created_by, u0.id );
+  strictEqual( t0.creator, u0 );
+
+  t0.$set( 'creator', null );
+
+  strictEqual( t0.created_by, null );
+  strictEqual( t0.creator, null );
+});
+
+test( 'clearKey false', function(assert)
+{
+  var prefix = 'belongsTo_clearKey_false_';
+
+  var User = Rekord({
+    name: prefix + 'user',
+    fields: ['id', 'name']
+  });
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['id', 'name', 'created_by'],
+    belongsTo: {
+      creator: {
+        model: User,
+        local: 'created_by',
+        clearKey: false
+      }
+    }
+  });
+
+  var u0 = User.create({id: 1, name: 'u0'});
+  var t0 = Task.create({id: 2, name: 't0', creator: u0});
+
+  strictEqual( t0.created_by, u0.id );
+  strictEqual( t0.creator, u0 );
+
+  t0.$set( 'creator', null );
+
+  strictEqual( t0.created_by, u0.id );
+  strictEqual( t0.creator, null );
+});

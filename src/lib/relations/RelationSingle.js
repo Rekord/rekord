@@ -40,7 +40,7 @@ extend( Relation, RelationSingle,
 
       if ( related && relation.related !== related )
       {
-        this.clearModel( relation );
+        this.clearModel( relation, remoteData );
         this.setRelated( relation, related, remoteData );
       }
     }
@@ -53,7 +53,7 @@ extend( Relation, RelationSingle,
 
     if ( related && relation.related !== related )
     {
-      this.clearModel( relation );
+      this.clearModel( relation, remoteData );
       this.setRelated( relation, related, remoteData );
     }
   },
@@ -99,12 +99,11 @@ extend( Relation, RelationSingle,
       }
     }
 
-    this.clearModel( relation );
-    this.clearForeignKey( relation.parent );
+    this.clearModel( relation, remoteData );
     this.setProperty( relation );
   },
 
-  clearModel: function(relation)
+  clearModel: function(relation, remoteData)
   {
     var related = relation.related;
 
@@ -126,6 +125,11 @@ extend( Relation, RelationSingle,
       relation.loaded = true;
 
       relation.parent.$dependents.remove( related );
+
+      if ( this.clearKey )
+      {
+        this.clearForeignKey( relation.parent, remoteData );
+      }
     }
   },
 
@@ -200,15 +204,6 @@ extend( Relation, RelationSingle,
     {
       return propsMatch( model, local, related, related.$db.key );
     };
-  },
-
-  clearForeignKey: function(model, remoteData)
-  {
-    var local = this.local;
-
-    Rekord.debug( this.debugClearKey, this, model, local );
-
-    this.clearFields( model, local, remoteData );
   },
 
   getTargetFields: function(target)

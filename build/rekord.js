@@ -12120,6 +12120,7 @@ Relation.Defaults =
   auto:                 true,
   property:             true,
   preserve:             true,
+  clearKey:             true,
   dynamic:              false,
   discriminator:        'discriminator',
   discriminators:       {},
@@ -12504,6 +12505,15 @@ addMethods( Relation.prototype,
     }
   },
 
+  clearForeignKey: function(related, remoteData)
+  {
+    var key = this.getTargetFields( related );
+
+    Rekord.debug( this.debugClearKey, this, related, key );
+
+    this.clearFields( related, key, remoteData );
+  },
+
   getTargetFields: function(target)
   {
     return target.$db.key;
@@ -12618,7 +12628,7 @@ extend( Relation, RelationSingle,
 
       if ( related && relation.related !== related )
       {
-        this.clearModel( relation );
+        this.clearModel( relation, remoteData );
         this.setRelated( relation, related, remoteData );
       }
     }
@@ -12631,7 +12641,7 @@ extend( Relation, RelationSingle,
 
     if ( related && relation.related !== related )
     {
-      this.clearModel( relation );
+      this.clearModel( relation, remoteData );
       this.setRelated( relation, related, remoteData );
     }
   },
@@ -12677,12 +12687,11 @@ extend( Relation, RelationSingle,
       }
     }
 
-    this.clearModel( relation );
-    this.clearForeignKey( relation.parent );
+    this.clearModel( relation, remoteData );
     this.setProperty( relation );
   },
 
-  clearModel: function(relation)
+  clearModel: function(relation, remoteData)
   {
     var related = relation.related;
 
@@ -12704,6 +12713,11 @@ extend( Relation, RelationSingle,
       relation.loaded = true;
 
       relation.parent.$dependents.remove( related );
+
+      if ( this.clearKey )
+      {
+        this.clearForeignKey( relation.parent, remoteData );
+      }
     }
   },
 
@@ -12778,15 +12792,6 @@ extend( Relation, RelationSingle,
     {
       return propsMatch( model, local, related, related.$db.key );
     };
-  },
-
-  clearForeignKey: function(model, remoteData)
-  {
-    var local = this.local;
-
-    Rekord.debug( this.debugClearKey, this, model, local );
-
-    this.clearFields( model, local, remoteData );
   },
 
   getTargetFields: function(target)
@@ -13080,6 +13085,7 @@ BelongsTo.Defaults =
   auto:                 true,
   property:             true,
   preserve:             true,
+  clearKey:             true,
   dynamic:              false,
   local:                null,
   cascade:              Cascade.Local,
@@ -13207,6 +13213,7 @@ HasOne.Defaults =
   auto:                 true,
   property:             true,
   preserve:             true,
+  clearKey:             true,
   dynamic:              false,
   local:                null,
   cascade:              Cascade.All,
@@ -13346,7 +13353,7 @@ extend( RelationSingle, HasOne,
     }
   },
 
-  clearModel: function(relation)
+  clearModel: function(relation, remoteData)
   {
     var related = relation.related;
 
@@ -13366,6 +13373,11 @@ extend( RelationSingle, HasOne,
       relation.loaded = true;
 
       relation.parent.$dependents.remove( related );
+
+      if ( this.clearKey )
+      {
+        this.clearForeignKey( relation.parent, remoteData );
+      }
     }
   }
 
@@ -13386,6 +13398,8 @@ HasMany.Defaults =
   save:                 Save.None,
   auto:                 true,
   property:             true,
+  preserve:             true,
+  clearKey:             true,
   dynamic:              false,
   foreign:              null,
   comparator:           null,
@@ -13670,6 +13684,11 @@ extend( RelationMultiple, HasMany,
       related.$off( Model.Events.SavedRemoteUpdate, relation.onSaved );
 
       related.$dependents.remove( model );
+
+      if ( this.clearKey )
+      {
+        this.clearForeignKey( related, remoteData );
+      }
 
       if ( this.cascadeRemove )
       {

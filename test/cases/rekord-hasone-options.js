@@ -636,7 +636,8 @@ test( 'cascade local', function(assert)
       creator: {
         model: User,
         local: 'created_by',
-        cascade: Rekord.Cascade.Local
+        cascade: Rekord.Cascade.Local,
+        clearKey: false
       }
     }
   });
@@ -687,7 +688,8 @@ test( 'cascade rest', function(assert)
       creator: {
         model: User,
         local: 'created_by',
-        cascade: Rekord.Cascade.Rest
+        cascade: Rekord.Cascade.Rest,
+        clearKey: false
       }
     }
   });
@@ -738,7 +740,8 @@ test( 'cascade nolive', function(assert)
       creator: {
         model: User,
         local: 'created_by',
-        cascade: Rekord.Cascade.NoLive
+        cascade: Rekord.Cascade.NoLive,
+        clearKey: false
       }
     }
   });
@@ -789,7 +792,8 @@ test( 'cascade live', function(assert)
       creator: {
         model: User,
         local: 'created_by',
-        cascade: Rekord.Cascade.Live
+        cascade: Rekord.Cascade.Live,
+        clearKey: false
       }
     }
   });
@@ -840,7 +844,8 @@ test( 'cascade norest', function(assert)
       creator: {
         model: User,
         local: 'created_by',
-        cascade: Rekord.Cascade.NoRest
+        cascade: Rekord.Cascade.NoRest,
+        clearKey: false
       }
     }
   });
@@ -891,7 +896,8 @@ test( 'cascade remote', function(assert)
       creator: {
         model: User,
         local: 'created_by',
-        cascade: Rekord.Cascade.Remote
+        cascade: Rekord.Cascade.Remote,
+        clearKey: false
       }
     }
   });
@@ -942,7 +948,8 @@ test( 'cascade all', function(assert)
       creator: {
         model: User,
         local: 'created_by',
-        cascade: Rekord.Cascade.All
+        cascade: Rekord.Cascade.All,
+        clearKey: false
       }
     }
   });
@@ -1123,4 +1130,70 @@ test( 'preserve false', function(assert)
   var t0 = Task.create({name: 't0', created_by: 23});
 
   strictEqual( t0.created_by, null );
+});
+
+test( 'clearKey true', function(assert)
+{
+  var prefix = 'hasOne_clearKey_true_';
+
+  var User = Rekord({
+    name: prefix + 'user',
+    fields: ['id', 'name']
+  });
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['id', 'name', 'created_by'],
+    hasOne: {
+      creator: {
+        model: User,
+        local: 'created_by',
+        clearKey: true
+      }
+    }
+  });
+
+  var u0 = User.create({id: 1, name: 'u0'});
+  var t0 = Task.create({id: 2, name: 't0', creator: u0});
+
+  strictEqual( t0.created_by, u0.id );
+  strictEqual( t0.creator, u0 );
+
+  t0.$set( 'creator', null );
+
+  strictEqual( t0.created_by, null );
+  strictEqual( t0.creator, null );
+});
+
+test( 'clearKey false', function(assert)
+{
+  var prefix = 'hasOne_clearKey_false_';
+
+  var User = Rekord({
+    name: prefix + 'user',
+    fields: ['id', 'name']
+  });
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['id', 'name', 'created_by'],
+    hasOne: {
+      creator: {
+        model: User,
+        local: 'created_by',
+        clearKey: false
+      }
+    }
+  });
+
+  var u0 = User.create({id: 1, name: 'u0'});
+  var t0 = Task.create({id: 2, name: 't0', creator: u0});
+
+  strictEqual( t0.created_by, u0.id );
+  strictEqual( t0.creator, u0 );
+
+  t0.$set( 'creator', null );
+
+  strictEqual( t0.created_by, u0.id );
+  strictEqual( t0.creator, null );
 });

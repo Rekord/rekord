@@ -15,6 +15,7 @@ Relation.Defaults =
   auto:                 true,
   property:             true,
   preserve:             true,
+  clearKey:             true,
   dynamic:              false,
   discriminator:        'discriminator',
   discriminators:       {},
@@ -397,6 +398,15 @@ addMethods( Relation.prototype,
         target.$setKey( targetNewKey, true );
       }
     }
+  },
+
+  clearForeignKey: function(related, remoteData)
+  {
+    var key = this.getTargetFields( related );
+
+    Rekord.debug( this.debugClearKey, this, related, key );
+
+    this.clearFields( related, key, remoteData );
   },
 
   getTargetFields: function(target)

@@ -14,6 +14,7 @@ HasOne.Defaults =
   auto:                 true,
   property:             true,
   preserve:             true,
+  clearKey:             true,
   dynamic:              false,
   local:                null,
   cascade:              Cascade.All,
@@ -153,7 +154,7 @@ extend( RelationSingle, HasOne,
     }
   },
 
-  clearModel: function(relation)
+  clearModel: function(relation, remoteData)
   {
     var related = relation.related;
 
@@ -173,6 +174,11 @@ extend( RelationSingle, HasOne,
       relation.loaded = true;
 
       relation.parent.$dependents.remove( related );
+
+      if ( this.clearKey )
+      {
+        this.clearForeignKey( relation.parent, remoteData );
+      }
     }
   }
 

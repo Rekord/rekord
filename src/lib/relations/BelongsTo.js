@@ -14,6 +14,7 @@ BelongsTo.Defaults =
   auto:                 true,
   property:             true,
   preserve:             true,
+  clearKey:             true,
   dynamic:              false,
   local:                null,
   cascade:              Cascade.Local,

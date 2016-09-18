@@ -878,7 +878,8 @@ test( 'cascadeRemove local', function(assert)
       tasks: {
         model: Task,
         foreign: 'task_list_id',
-        cascadeRemove: Rekord.Cascade.Local
+        cascadeRemove: Rekord.Cascade.Local,
+        clearKey: false
       }
     }
   });
@@ -933,7 +934,8 @@ test( 'cascadeRemove rest', function(assert)
       tasks: {
         model: Task,
         foreign: 'task_list_id',
-        cascadeRemove: Rekord.Cascade.Rest
+        cascadeRemove: Rekord.Cascade.Rest,
+        clearKey: false
       }
     }
   });
@@ -988,7 +990,8 @@ test( 'cascadeRemove nolive', function(assert)
       tasks: {
         model: Task,
         foreign: 'task_list_id',
-        cascadeRemove: Rekord.Cascade.NoLive
+        cascadeRemove: Rekord.Cascade.NoLive,
+        clearKey: false
       }
     }
   });
@@ -1043,7 +1046,8 @@ test( 'cascadeRemove live', function(assert)
       tasks: {
         model: Task,
         foreign: 'task_list_id',
-        cascadeRemove: Rekord.Cascade.Live
+        cascadeRemove: Rekord.Cascade.Live,
+        clearKey: false
       }
     }
   });
@@ -1098,7 +1102,8 @@ test( 'cascadeRemove norest', function(assert)
       tasks: {
         model: Task,
         foreign: 'task_list_id',
-        cascadeRemove: Rekord.Cascade.NoRest
+        cascadeRemove: Rekord.Cascade.NoRest,
+        clearKey: false
       }
     }
   });
@@ -1153,7 +1158,8 @@ test( 'cascadeRemove remote', function(assert)
       tasks: {
         model: Task,
         foreign: 'task_list_id',
-        cascadeRemove: Rekord.Cascade.Remote
+        cascadeRemove: Rekord.Cascade.Remote,
+        clearKey: false
       }
     }
   });
@@ -1208,7 +1214,8 @@ test( 'cascadeRemove all', function(assert)
       tasks: {
         model: Task,
         foreign: 'task_list_id',
-        cascadeRemove: Rekord.Cascade.All
+        cascadeRemove: Rekord.Cascade.All,
+        clearKey: false
       }
     }
   });
@@ -1726,4 +1733,80 @@ test( 'query', function(assert)
   strictEqual( l0.tasks[1].task_list_id, l0.id );
 
   isInstance( l0.$relations.tasks.query, Rekord.Search, 'query exists' );
+});
+
+test( 'clearKey true', function(assert)
+{
+  var prefix = 'hasMany_clearKey_true_';
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['task_list_id', 'name'],
+    defaults: {
+      done: false,
+      created_at: currentTime()
+    }
+  });
+
+  var TaskList = Rekord({
+    name: prefix + 'list',
+    fields: ['name'],
+    hasMany: {
+      tasks: {
+        model: Task,
+        foreign: 'task_list_id',
+        clearKey: true
+      }
+    }
+  });
+
+  var l0 = TaskList.create({name: 'l0'});
+  var t0 = Task.create({name: 't0', task_list_id: l0.id});
+  var t1 = Task.create({name: 't1', task_list_id: l0.id});
+
+  deepEqual( l0.tasks.toArray(), [t0, t1] );
+  strictEqual( t0.task_list_id, l0.id );
+
+  l0.tasks.unrelate( t0 );
+
+  deepEqual( l0.tasks.toArray(), [t1] );
+  strictEqual( t0.task_list_id, null );
+});
+
+test( 'clearKey false', function(assert)
+{
+  var prefix = 'hasMany_clearKey_false_';
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['task_list_id', 'name'],
+    defaults: {
+      done: false,
+      created_at: currentTime()
+    }
+  });
+
+  var TaskList = Rekord({
+    name: prefix + 'list',
+    fields: ['name'],
+    hasMany: {
+      tasks: {
+        model: Task,
+        foreign: 'task_list_id',
+        clearKey: false
+      }
+    }
+  });
+
+  var l0 = TaskList.create({name: 'l0'});
+  var t0 = Task.create({name: 't0', task_list_id: l0.id});
+  var t1 = Task.create({name: 't1', task_list_id: l0.id});
+
+  deepEqual( l0.tasks.toArray(), [t0, t1] );
+  strictEqual( t0.task_list_id, l0.id );
+
+  l0.tasks.unrelate( t0 );
+
+  deepEqual( l0.tasks.toArray(), [t1] );
+  strictEqual( t0.task_list_id, l0.id );
 });
