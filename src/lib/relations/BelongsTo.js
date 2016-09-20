@@ -56,7 +56,7 @@ extend( RelationSingle, BelongsTo,
         Rekord.debug( Rekord.Debugs.BELONGSTO_NINJA_REMOVE, this, model, relation );
 
         model.$remove( this.cascade );
-        this.clearRelated( relation );
+        this.clearRelated( relation, false, true );
       },
 
       onSaved: function()
@@ -65,8 +65,7 @@ extend( RelationSingle, BelongsTo,
 
         if ( !relation.isRelated( relation.related ) )
         {
-          model.$remove( this.cascade );
-          this.clearRelated( relation );
+          this.clearRelated( relation, false, true );
         }
       }
     };
@@ -117,7 +116,7 @@ extend( RelationSingle, BelongsTo,
 
       if ( relation && related !== relation.related )
       {
-        this.clearModel( relation );
+        this.clearModel( relation, false, true );
         this.setModel( relation, related );
         this.setProperty( relation );
       }

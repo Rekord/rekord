@@ -70,7 +70,7 @@ extend( RelationMultiple, HasMany,
       {
         Rekord.debug( Rekord.Debugs.HASMANY_NINJA_REMOVE, relator, model, this, relation );
 
-        relator.removeModel( relation, this, true );
+        relator.removeModel( relation, this, true, true );
       },
 
       onSaved: function() // this = model saved
@@ -84,7 +84,7 @@ extend( RelationMultiple, HasMany,
 
         if ( !relation.isRelated( this ) )
         {
-          relator.removeModel( relation, this );
+          relator.removeModel( relation, this, false, true );
         }
         else
         {
@@ -276,7 +276,7 @@ extend( RelationMultiple, HasMany,
     return adding;
   },
 
-  removeModel: function(relation, related, remoteData)
+  removeModel: function(relation, related, remoteData, dontClear)
   {
     if ( !this.canRemoveRelated( related, remoteData ) )
     {
@@ -300,23 +300,26 @@ extend( RelationMultiple, HasMany,
 
       related.$dependents.remove( model );
 
-      if ( this.clearKey )
+      if ( !dontClear )
       {
-        this.clearForeignKey( related, remoteData );
-      }
-
-      if ( this.cascadeRemove )
-      {
-        if ( remoteData )
+        if ( this.clearKey )
         {
-          if ( canCascade( this.cascadeRemove, Cascade.Local ) )
-          {
-            related.$remove( Cascade.Local );
-          }
+          this.clearForeignKey( related, remoteData );
         }
-        else
+
+        if ( this.cascadeRemove )
         {
-          related.$remove( this.cascadeRemove );
+          if ( remoteData )
+          {
+            if ( canCascade( this.cascadeRemove, Cascade.Local ) )
+            {
+              related.$remove( Cascade.Local );
+            }
+          }
+          else
+          {
+            related.$remove( this.cascadeRemove );
+          }
         }
       }
 

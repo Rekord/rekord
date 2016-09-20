@@ -1311,9 +1311,9 @@ test( 'timestamps type millis', function(assert)
 
   deepEqual( Todo.Database.fields, ['id', 'name', 'done', 'done_at'] );
 
-  var t0 = Todo.boot({id: 1, name: 't0', done_at: '01/02/2003'});
+  var t0 = Todo.boot({id: 1, name: 't0', done_at: '2003-01-02T12:00:00Z'});
 
-  strictEqual( t0.done_at, 1041465600000 );
+  strictEqual( t0.done_at, 1041526800000 );
 });
 
 test( 'timestamps type seconds', function(assert)
@@ -1331,9 +1331,9 @@ test( 'timestamps type seconds', function(assert)
 
   deepEqual( Todo.Database.fields, ['id', 'name', 'done', 'done_at'] );
 
-  var t0 = Todo.boot({id: 1, name: 't0', done_at: '01/02/2003'});
+  var t0 = Todo.boot({id: 1, name: 't0', done_at: '2003-01-02T12:00:00Z'});
 
-  strictEqual( t0.done_at, 1041465600 );
+  strictEqual( t0.done_at, 1041526800 );
 });
 
 test( 'timestamps type custom', function(assert)
@@ -1355,7 +1355,7 @@ test( 'timestamps type custom', function(assert)
 
   deepEqual( Todo.Database.fields, ['id', 'name', 'done', 'done_at'] );
 
-  var t0 = Todo.boot({id: 1, name: 't0', done_at: '01/02/2003'});
+  var t0 = Todo.boot({id: 1, name: 't0', done_at: '2003/01/02'});
 
   strictEqual( t0.done_at, '2003-1-2' );
 });
@@ -1375,13 +1375,13 @@ test( 'timestamps format millis', function(assert)
 
   deepEqual( Todo.Database.fields, ['id', 'name', 'done', 'done_at'] );
 
-  var t0 = Todo.boot({id: 1, name: 't0', done_at: '01/02/2003'});
+  var t0 = Todo.boot({id: 1, name: 't0', done_at: '2003-01-02T12:00:00Z'});
 
   isInstance( t0.done_at, Date );
 
   var e0 = t0.$toJSON(true);
 
-  strictEqual( e0.done_at, 1041465600000 );
+  strictEqual( e0.done_at, 1041526800000 );
 });
 
 test( 'timestamps format seconds', function(assert)
@@ -1399,13 +1399,13 @@ test( 'timestamps format seconds', function(assert)
 
   deepEqual( Todo.Database.fields, ['id', 'name', 'done', 'done_at'] );
 
-  var t0 = Todo.boot({id: 1, name: 't0', done_at: '01/02/2003'});
+  var t0 = Todo.boot({id: 1, name: 't0', done_at: '2003-01-02T12:00:00Z'});
 
   isInstance( t0.done_at, Date );
 
   var e0 = t0.$toJSON(true);
 
-  strictEqual( e0.done_at, 1041465600 );
+  strictEqual( e0.done_at, 1041526800 );
 });
 
 test( 'timestamps format custom', function(assert)
@@ -1427,7 +1427,7 @@ test( 'timestamps format custom', function(assert)
 
   deepEqual( Todo.Database.fields, ['id', 'name', 'done', 'done_at'] );
 
-  var t0 = Todo.boot({id: 1, name: 't0', done_at: '01/02/2003'});
+  var t0 = Todo.boot({id: 1, name: 't0', done_at: '2003/01/02'});
 
   isInstance( t0.done_at, Date );
 

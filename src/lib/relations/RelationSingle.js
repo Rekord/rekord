@@ -87,7 +87,7 @@ extend( Relation, RelationSingle,
     }
   },
 
-  clearRelated: function(relation, remoteData)
+  clearRelated: function(relation, remoteData, dontClear)
   {
     if ( remoteData )
     {
@@ -99,11 +99,11 @@ extend( Relation, RelationSingle,
       }
     }
 
-    this.clearModel( relation, remoteData );
+    this.clearModel( relation, remoteData, dontClear );
     this.setProperty( relation );
   },
 
-  clearModel: function(relation, remoteData)
+  clearModel: function(relation, remoteData, dontClear)
   {
     var related = relation.related;
 
@@ -126,9 +126,12 @@ extend( Relation, RelationSingle,
 
       relation.parent.$dependents.remove( related );
 
-      if ( this.clearKey )
+      if ( !dontClear )
       {
-        this.clearForeignKey( relation.parent, remoteData );
+        if ( this.clearKey )
+        {
+          this.clearForeignKey( relation.parent, remoteData );
+        }
       }
     }
   },

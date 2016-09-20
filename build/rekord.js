@@ -12675,7 +12675,7 @@ extend( Relation, RelationSingle,
     }
   },
 
-  clearRelated: function(relation, remoteData)
+  clearRelated: function(relation, remoteData, dontClear)
   {
     if ( remoteData )
     {
@@ -12687,11 +12687,11 @@ extend( Relation, RelationSingle,
       }
     }
 
-    this.clearModel( relation, remoteData );
+    this.clearModel( relation, remoteData, dontClear );
     this.setProperty( relation );
   },
 
-  clearModel: function(relation, remoteData)
+  clearModel: function(relation, remoteData, dontClear)
   {
     var related = relation.related;
 
@@ -12714,9 +12714,12 @@ extend( Relation, RelationSingle,
 
       relation.parent.$dependents.remove( related );
 
-      if ( this.clearKey )
+      if ( !dontClear )
       {
-        this.clearForeignKey( relation.parent, remoteData );
+        if ( this.clearKey )
+        {
+          this.clearForeignKey( relation.parent, remoteData );
+        }
       }
     }
   },
@@ -13127,7 +13130,7 @@ extend( RelationSingle, BelongsTo,
         Rekord.debug( Rekord.Debugs.BELONGSTO_NINJA_REMOVE, this, model, relation );
 
         model.$remove( this.cascade );
-        this.clearRelated( relation );
+        this.clearRelated( relation, false, true );
       },
 
       onSaved: function()
@@ -13136,8 +13139,7 @@ extend( RelationSingle, BelongsTo,
 
         if ( !relation.isRelated( relation.related ) )
         {
-          model.$remove( this.cascade );
-          this.clearRelated( relation );
+          this.clearRelated( relation, false, true );
         }
       }
     };
@@ -13188,7 +13190,7 @@ extend( RelationSingle, BelongsTo,
 
       if ( relation && related !== relation.related )
       {
-        this.clearModel( relation );
+        this.clearModel( relation, false, true );
         this.setModel( relation, related );
         this.setProperty( relation );
       }
@@ -13257,7 +13259,7 @@ extend( RelationSingle, HasOne,
       {
         Rekord.debug( Rekord.Debugs.HASONE_NINJA_REMOVE, this, model, relation );
 
-        this.clearRelated( relation );
+        this.clearRelated( relation, false, true );
       }
     };
 
@@ -13455,7 +13457,7 @@ extend( RelationMultiple, HasMany,
       {
         Rekord.debug( Rekord.Debugs.HASMANY_NINJA_REMOVE, relator, model, this, relation );
 
-        relator.removeModel( relation, this, true );
+        relator.removeModel( relation, this, true, true );
       },
 
       onSaved: function() // this = model saved
@@ -13469,7 +13471,7 @@ extend( RelationMultiple, HasMany,
 
         if ( !relation.isRelated( this ) )
         {
-          relator.removeModel( relation, this );
+          relator.removeModel( relation, this, false, true );
         }
         else
         {
@@ -13661,7 +13663,7 @@ extend( RelationMultiple, HasMany,
     return adding;
   },
 
-  removeModel: function(relation, related, remoteData)
+  removeModel: function(relation, related, remoteData, dontClear)
   {
     if ( !this.canRemoveRelated( related, remoteData ) )
     {
@@ -13685,23 +13687,26 @@ extend( RelationMultiple, HasMany,
 
       related.$dependents.remove( model );
 
-      if ( this.clearKey )
+      if ( !dontClear )
       {
-        this.clearForeignKey( related, remoteData );
-      }
-
-      if ( this.cascadeRemove )
-      {
-        if ( remoteData )
+        if ( this.clearKey )
         {
-          if ( canCascade( this.cascadeRemove, Cascade.Local ) )
-          {
-            related.$remove( Cascade.Local );
-          }
+          this.clearForeignKey( related, remoteData );
         }
-        else
+
+        if ( this.cascadeRemove )
         {
-          related.$remove( this.cascadeRemove );
+          if ( remoteData )
+          {
+            if ( canCascade( this.cascadeRemove, Cascade.Local ) )
+            {
+              related.$remove( Cascade.Local );
+            }
+          }
+          else
+          {
+            related.$remove( this.cascadeRemove );
+          }
         }
       }
 

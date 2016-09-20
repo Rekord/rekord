@@ -58,7 +58,7 @@ extend( RelationSingle, HasOne,
       {
         Rekord.debug( Rekord.Debugs.HASONE_NINJA_REMOVE, this, model, relation );
 
-        this.clearRelated( relation );
+        this.clearRelated( relation, false, true );
       }
     };
 

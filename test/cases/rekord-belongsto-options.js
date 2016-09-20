@@ -973,7 +973,7 @@ test( 'cascade all', function(assert)
   strictEqual( local.lastKey, t0.id );
 
   strictEqual( t0.creator, null );
-  strictEqual( t0.created_by, null );
+  strictEqual( t0.created_by, null, 'foreign key cleared' );
 });
 
 test( 'lazy true', function(assert)

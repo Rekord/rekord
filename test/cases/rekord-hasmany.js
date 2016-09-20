@@ -809,3 +809,85 @@ test( 'clone', function(assert)
   notStrictEqual( u0.tasks[1], u1.tasks[1] );
   notStrictEqual( u0.tasks[2], u1.tasks[2] );
 });
+
+test( 'transfer', function(assert)
+{
+  var prefix = 'hasMany_transfer';
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['name', 'done', 'list_id']
+  });
+
+  var TaskList = Rekord({
+    name: prefix + 'list',
+    fields: ['name'],
+    hasMany: {
+      tasks: {
+        model: Task,
+        foreign: 'list_id'
+      }
+    }
+  });
+
+  var l0 = TaskList.create({id: 1, name: 'l0'});
+  var l1 = TaskList.create({id: 2, name: 'l1'});
+  var t0 = Task.create({id: 3, name: 't0', list_id: 1});
+
+  deepEqual( l0.tasks.toArray(), [t0] );
+  deepEqual( l1.tasks.toArray(), [] );
+
+  l1.tasks.relate( t0 );
+
+  strictEqual( t0.list_id, 2 );
+  deepEqual( l0.tasks.toArray(), [] );
+  deepEqual( l1.tasks.toArray(), [t0] );
+  ok( t0.$isSaved() );
+  notOk( t0.$isDeleted() );
+});
+
+test( 'transfer belongsTo', function(assert)
+{
+  var prefix = 'hasMany_transfer_belongsTo_';
+  var TaskName = prefix + 'task';
+  var ListName = prefix + 'list';
+
+  var Task = Rekord({
+    name: TaskName,
+    fields: ['name', 'done', 'list_id'],
+    belongsTo: {
+      list: {
+        model: ListName,
+        local: 'list_id'
+      }
+    }
+  });
+
+  var TaskList = Rekord({
+    name: ListName,
+    fields: ['name'],
+    hasMany: {
+      tasks: {
+        model: TaskName,
+        foreign: 'list_id'
+      }
+    }
+  });
+
+  var l0 = TaskList.create({id: 1, name: 'l0'});
+  var l1 = TaskList.create({id: 2, name: 'l1'});
+  var t0 = Task.create({id: 3, name: 't0', list_id: 1});
+
+  deepEqual( l0.tasks.toArray(), [t0] );
+  deepEqual( l1.tasks.toArray(), [] );
+  strictEqual( t0.list, l0 );
+
+  l1.tasks.relate( t0 );
+
+  strictEqual( t0.list, l1 );
+  strictEqual( t0.list_id, 2 );
+  deepEqual( l0.tasks.toArray(), [] );
+  deepEqual( l1.tasks.toArray(), [t0] );
+  ok( t0.$isSaved() );
+  notOk( t0.$isDeleted() );
+});
