@@ -1306,14 +1306,14 @@ test( 'timestamps type millis', function(assert)
     defaults: { done: false },
     timestamps: 'done_at',
     timestampType: Rekord.Timestamp.Millis,
-    timestampUTC: true
+    timestampUTC: false
   });
 
   deepEqual( Todo.Database.fields, ['id', 'name', 'done', 'done_at'] );
 
   var t0 = Todo.boot({id: 1, name: 't0', done_at: '2003-01-02T12:00:00Z'});
 
-  strictEqual( t0.done_at, 1041526800000 );
+  strictEqual( t0.done_at, 1041508800000 );
 });
 
 test( 'timestamps type seconds', function(assert)
@@ -1326,14 +1326,14 @@ test( 'timestamps type seconds', function(assert)
     defaults: { done: false },
     timestamps: 'done_at',
     timestampType: Rekord.Timestamp.Seconds,
-    timestampUTC: true
+    timestampUTC: false
   });
 
   deepEqual( Todo.Database.fields, ['id', 'name', 'done', 'done_at'] );
 
   var t0 = Todo.boot({id: 1, name: 't0', done_at: '2003-01-02T12:00:00Z'});
 
-  strictEqual( t0.done_at, 1041526800 );
+  strictEqual( t0.done_at, 1041508800 );
 });
 
 test( 'timestamps type custom', function(assert)
@@ -1370,7 +1370,7 @@ test( 'timestamps format millis', function(assert)
     defaults: { done: false },
     timestamps: 'done_at',
     timestampFormat: Rekord.Timestamp.Millis,
-    timestampUTC: true
+    timestampUTC: false
   });
 
   deepEqual( Todo.Database.fields, ['id', 'name', 'done', 'done_at'] );
@@ -1381,7 +1381,7 @@ test( 'timestamps format millis', function(assert)
 
   var e0 = t0.$toJSON(true);
 
-  strictEqual( e0.done_at, 1041526800000 );
+  strictEqual( e0.done_at, 1041508800000 );
 });
 
 test( 'timestamps format seconds', function(assert)
@@ -1394,7 +1394,7 @@ test( 'timestamps format seconds', function(assert)
     defaults: { done: false },
     timestamps: 'done_at',
     timestampFormat: Rekord.Timestamp.Seconds,
-    timestampUTC: true
+    timestampUTC: false
   });
 
   deepEqual( Todo.Database.fields, ['id', 'name', 'done', 'done_at'] );
@@ -1405,7 +1405,7 @@ test( 'timestamps format seconds', function(assert)
 
   var e0 = t0.$toJSON(true);
 
-  strictEqual( e0.done_at, 1041526800 );
+  strictEqual( e0.done_at, 1041508800 );
 });
 
 test( 'timestamps format custom', function(assert)
