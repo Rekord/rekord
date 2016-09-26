@@ -66,6 +66,7 @@ var build = {
     './src/lib/relations/HasManyThrough.js',
     './src/lib/relations/HasRemote.js',
     './src/lib/relations/HasList.js',
+    './src/lib/relations/HasReference.js',
     './src/lib/relations/Polymorphic.js',
     './src/lib/Shard.js',
     './src/lib/plugins/*.js',

@@ -2552,6 +2552,18 @@ Rekord.Debugs = {
   BELONGSTO_QUERY: 113,        // Model, RemoteQuery, queryOption, query
   BELONGSTO_QUERY_RESULTS: 114,// Model, RemoteQuery
 
+  HASREFERENCE_INIT: 131,      // HasOne
+  HASREFERENCE_NINJA_REMOVE: 132, // Model, relation
+  HASREFERENCE_INITIAL_PULLED: 133, // Model, initial
+  HASREFERENCE_INITIAL: 134,    // Model, initial
+  HASREFERENCE_CLEAR_MODEL: 135, // relation
+  HASREFERENCE_SET_MODEL: 136,  // relation
+  HASREFERENCE_CLEAR_KEY: 137,  // Model, local
+  HASREFERENCE_UPDATE_KEY: 138, // Model, targetFields, Model, sourceFields
+  HASREFERENCE_LOADED: 139,     // Model, relation, [Model]
+  HASREFERENCE_QUERY: 140,      // Model, RemoteQuery, queryOption, query
+  HASREFERENCE_QUERY_RESULTS: 141, // Model, RemoteQuery
+
   HASMANY_INIT: 74,             // HasMany
   HASMANY_NINJA_REMOVE: 75,     // Model, Model, relation
   HASMANY_NINJA_SAVE: 76,       // Model, Model, relation
@@ -14572,6 +14584,96 @@ extend( RelationMultiple, HasList,
       clone[ this.name ] = relatedClones;
     }
   }
+
+});
+
+function HasReference()
+{
+}
+
+Rekord.Relations.hasReference = HasReference;
+
+HasReference.Defaults =
+{
+  model:                null,
+  lazy:                 false,
+  query:                false,
+  store:                Store.None,
+  save:                 Save.None,
+  property:             true,
+  dynamic:              false
+};
+
+extend( RelationSingle, HasReference,
+{
+
+  type: 'hasReference',
+
+  debugInit:          Rekord.Debugs.HASREFERENCE_INIT,
+  debugClearModel:    Rekord.Debugs.HASREFERENCE_CLEAR_MODEL,
+  debugSetModel:      Rekord.Debugs.HASREFERENCE_SET_MODEL,
+  debugLoaded:        Rekord.Debugs.HASREFERENCE_LOADED,
+  debugQuery:         Rekord.Debugs.HASREFERENCE_QUERY,
+  debugQueryResults:  Rekord.Debugs.HASREFERENCE_QUERY_RESULTS,
+
+  getDefaults: function(database, field, options)
+  {
+    return HasReference.Defaults;
+  },
+
+  load: Gate(function(model, initialValue, remoteData)
+  {
+    var relation = model.$relations[ this.name ] =
+    {
+      parent: model,
+      related: null,
+      loaded: false,
+      dirty: false,
+
+      onRemoved: function()
+      {
+        Rekord.debug( Rekord.Debugs.HASREFERENCE_NINJA_REMOVE, this, model, relation );
+
+        this.clearRelated( relation, false, true );
+      }
+    };
+
+    if ( !isEmpty( initialValue ) )
+    {
+      Rekord.debug( Rekord.Debugs.HASREFERENCE_INITIAL, this, model, initialValue );
+
+      this.grabModel( initialValue, this.handleModel( relation ), remoteData );
+    }
+    else if ( this.query )
+    {
+      relation.query = this.executeQuery( model );
+    }
+  }),
+
+  preClone: function(model, clone, properties)
+  {
+    var related = this.get( model );
+
+    if ( related )
+    {
+      clone[ this.name ] = related.$clone( properties );
+    }
+  },
+
+  isDependent: function(relation, related)
+  {
+    return false;
+  },
+
+  updateForeignKey: function()
+  {
+    // nothing
+  },
+
+  clearForeignKey: function()
+  {
+    // nothing
+  },
 
 });
 

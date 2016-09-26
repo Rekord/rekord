@@ -126,6 +126,18 @@ Rekord.Debugs = {
   BELONGSTO_QUERY: 113,        // Model, RemoteQuery, queryOption, query
   BELONGSTO_QUERY_RESULTS: 114,// Model, RemoteQuery
 
+  HASREFERENCE_INIT: 131,      // HasOne
+  HASREFERENCE_NINJA_REMOVE: 132, // Model, relation
+  HASREFERENCE_INITIAL_PULLED: 133, // Model, initial
+  HASREFERENCE_INITIAL: 134,    // Model, initial
+  HASREFERENCE_CLEAR_MODEL: 135, // relation
+  HASREFERENCE_SET_MODEL: 136,  // relation
+  HASREFERENCE_CLEAR_KEY: 137,  // Model, local
+  HASREFERENCE_UPDATE_KEY: 138, // Model, targetFields, Model, sourceFields
+  HASREFERENCE_LOADED: 139,     // Model, relation, [Model]
+  HASREFERENCE_QUERY: 140,      // Model, RemoteQuery, queryOption, query
+  HASREFERENCE_QUERY_RESULTS: 141, // Model, RemoteQuery
+
   HASMANY_INIT: 74,             // HasMany
   HASMANY_NINJA_REMOVE: 75,     // Model, Model, relation
   HASMANY_NINJA_SAVE: 76,       // Model, Model, relation
