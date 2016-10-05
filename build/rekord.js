@@ -1,4 +1,4 @@
-/* rekord 1.4.5 - A javascript REST ORM that is offline and real-time capable http://rekord.github.io/rekord/ by Philip Diffenderfer */
+/* rekord 1.4.6 - A javascript REST ORM that is offline and real-time capable http://rekord.github.io/rekord/ by Philip Diffenderfer */
 (function(global, undefined)
 {
 
