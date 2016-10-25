@@ -19,6 +19,8 @@ HasMany.Defaults =
   foreign:              null,
   comparator:           null,
   comparatorNullsFirst: false,
+  listenForRelated:     true,
+  loadRelated:          true,
   cascadeRemove:        Cascade.Local,
   cascadeSave:          Cascade.None,
   discriminator:        'discriminator',
@@ -99,7 +101,10 @@ extend( RelationMultiple, HasMany,
     model.$on( Model.Events.PreRemove, this.preRemove, this );
 
     // When models are added to the related database, check if it's related to this model
-    this.listenToModelAdded( this.handleModelAdded( relation ) );
+    if ( this.listenForRelated )
+    {
+      this.listenToModelAdded( this.handleModelAdded( relation ) );
+    }
 
     // If the model's initial value is an array, populate the relation from it!
     if ( isArray( initialValue ) )
@@ -112,7 +117,7 @@ extend( RelationMultiple, HasMany,
     {
       relation.query = this.executeQuery( model );
     }
-    else
+    else if ( this.loadRelated )
     {
       Rekord.debug( Rekord.Debugs.HASMANY_INITIAL_PULLED, this, model, relation );
 
