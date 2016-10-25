@@ -1953,3 +1953,30 @@ test( 'query', function(assert)
 
   isInstance( u0.$relations.groups.query, Rekord.Search, 'query exists' );
 });
+
+test( 'where', function(assert)
+{
+  var prefix = 'hasManyThrough_where_';
+
+  var options = {
+    where: function(grp) {
+      return grp.name.length === 3;
+    }
+  };
+
+  var test = createUserGroups2( prefix, options );
+  var User = test.User;
+  var Group = test.Group;
+  var UserGroup = test.UserGroup;
+
+  var u0 = User.create({name: 'u0'});
+  var g0 = Group.create({name: '0'});
+  var g1 = Group.create({name: '123'});
+  var g2 = Group.create({name: '4567'});
+  var g3 = Group.create({name: '890'});
+
+  u0.groups.relate([g0, g1, g2, g3]);
+
+  strictEqual( u0.groups.length, 2 );
+  deepEqual( u0.groups.toArray(), [g1, g3] );
+});

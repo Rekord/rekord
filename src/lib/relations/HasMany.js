@@ -21,6 +21,7 @@ HasMany.Defaults =
   comparatorNullsFirst: false,
   listenForRelated:     true,
   loadRelated:          true,
+  where:                false,
   cascadeRemove:        Cascade.Local,
   cascadeSave:          Cascade.None,
   discriminator:        'discriminator',
@@ -92,6 +93,19 @@ extend( RelationMultiple, HasMany,
         {
           relator.sort( relation );
           relator.checkSave( relation );
+        }
+      },
+
+      onChange: function()
+      {
+        if ( relation.saving )
+        {
+          return;
+        }
+
+        if ( relator.where && !relator.where( this ) )
+        {
+          relator.removeModel( relation, this, false, true );
         }
       }
 
@@ -247,7 +261,7 @@ extend( RelationMultiple, HasMany,
 
   addModel: function(relation, related, remoteData)
   {
-    if ( related.$isDeleted() )
+    if ( related.$isDeleted() || (this.where && !this.where( related ) ) )
     {
       return;
     }
@@ -265,6 +279,11 @@ extend( RelationMultiple, HasMany,
 
       related.$on( Model.Events.Removed, relation.onRemoved );
       related.$on( Model.Events.SavedRemoteUpdate, relation.onSaved );
+
+      if ( this.where )
+      {
+        related.$on( Model.Events.Change, relation.onChange );
+      }
 
       related.$dependents.add( model, this );
 
@@ -302,6 +321,7 @@ extend( RelationMultiple, HasMany,
 
       related.$off( Model.Events.Removed, relation.onRemoved );
       related.$off( Model.Events.SavedRemoteUpdate, relation.onSaved );
+      related.$off( Model.Events.Change, relation.onChange );
 
       related.$dependents.remove( model );
 

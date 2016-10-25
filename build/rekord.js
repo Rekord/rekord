@@ -12870,7 +12870,6 @@ function RelationMultiple()
 {
 }
 
-
 extend( Relation, RelationMultiple,
 {
 
@@ -13456,6 +13455,7 @@ HasMany.Defaults =
   comparatorNullsFirst: false,
   listenForRelated:     true,
   loadRelated:          true,
+  where:                false,
   cascadeRemove:        Cascade.Local,
   cascadeSave:          Cascade.None,
   discriminator:        'discriminator',
@@ -13527,6 +13527,19 @@ extend( RelationMultiple, HasMany,
         {
           relator.sort( relation );
           relator.checkSave( relation );
+        }
+      },
+
+      onChange: function()
+      {
+        if ( relation.saving )
+        {
+          return;
+        }
+
+        if ( relator.where && !relator.where( this ) )
+        {
+          relator.removeModel( relation, this, false, true );
         }
       }
 
@@ -13682,7 +13695,7 @@ extend( RelationMultiple, HasMany,
 
   addModel: function(relation, related, remoteData)
   {
-    if ( related.$isDeleted() )
+    if ( related.$isDeleted() || (this.where && !this.where( related ) ) )
     {
       return;
     }
@@ -13700,6 +13713,11 @@ extend( RelationMultiple, HasMany,
 
       related.$on( Model.Events.Removed, relation.onRemoved );
       related.$on( Model.Events.SavedRemoteUpdate, relation.onSaved );
+
+      if ( this.where )
+      {
+        related.$on( Model.Events.Change, relation.onChange );
+      }
 
       related.$dependents.add( model, this );
 
@@ -13737,6 +13755,7 @@ extend( RelationMultiple, HasMany,
 
       related.$off( Model.Events.Removed, relation.onRemoved );
       related.$off( Model.Events.SavedRemoteUpdate, relation.onSaved );
+      related.$off( Model.Events.Change, relation.onChange );
 
       related.$dependents.remove( model );
 
@@ -13813,6 +13832,7 @@ HasManyThrough.Defaults =
   comparatorNullsFirst: false,
   listenForRelated:     true,
   loadRelated:          true,
+  where:                false,
   cascadeRemove:        Cascade.NoRest,
   cascadeSave:          Cascade.All,
   cascadeSaveRelated:   Cascade.None,
@@ -13871,7 +13891,7 @@ extend( RelationMultiple, HasManyThrough,
 
   load: Gate(function(model, initialValue, remoteData)
   {
-    var that = this;
+    var relator = this;
     var throughDatabase = this.through.Database;
 
     var relation = model.$relations[ this.name ] =
@@ -13887,9 +13907,9 @@ extend( RelationMultiple, HasManyThrough,
 
       onRemoved: function() // this = model removed
       {
-        Rekord.debug( Rekord.Debugs.HASMANYTHRU_NINJA_REMOVE, that, model, this, relation );
+        Rekord.debug( Rekord.Debugs.HASMANYTHRU_NINJA_REMOVE, relator, model, this, relation );
 
-        that.removeModel( relation, this );
+        relator.removeModel( relation, this );
       },
 
       onSaved: function() // this = model saved
@@ -13899,17 +13919,30 @@ extend( RelationMultiple, HasManyThrough,
           return;
         }
 
-        Rekord.debug( Rekord.Debugs.HASMANYTHRU_NINJA_SAVE, that, model, this, relation );
+        Rekord.debug( Rekord.Debugs.HASMANYTHRU_NINJA_SAVE, relator, model, this, relation );
 
-        that.sort( relation );
-        that.checkSave( relation );
+        relator.sort( relation );
+        relator.checkSave( relation );
+      },
+
+      onChange: function()
+      {
+        if ( relation.saving )
+        {
+          return;
+        }
+
+        if ( relator.where && !relator.where( this ) )
+        {
+          relator.removeModel( relation, this );
+        }
       },
 
       onThroughRemoved: function() // this = through removed
       {
-        Rekord.debug( Rekord.Debugs.HASMANYTHRU_NINJA_THRU_REMOVE, that, model, this, relation );
+        Rekord.debug( Rekord.Debugs.HASMANYTHRU_NINJA_THRU_REMOVE, relator, model, this, relation );
 
-        that.removeModelFromThrough( relation, this );
+        relator.removeModelFromThrough( relation, this );
       }
 
     };
@@ -14069,7 +14102,7 @@ extend( RelationMultiple, HasManyThrough,
 
   addModel: function(relation, related, remoteData)
   {
-    if ( related.$isDeleted() )
+    if ( related.$isDeleted() || (this.where && !this.where( related ) ) )
     {
       return;
     }
@@ -14118,7 +14151,7 @@ extend( RelationMultiple, HasManyThrough,
   {
     return function onAddModelFromThrough(related)
     {
-      if ( related )
+      if ( related && ( !this.where || this.where( related ) ) )
       {
         this.finishAddThrough( relation, through, remoteData );
         this.finishAddModel( relation, related, remoteData );
@@ -14173,6 +14206,11 @@ extend( RelationMultiple, HasManyThrough,
 
       related.$on( Model.Events.Removed, relation.onRemoved );
       related.$on( Model.Events.SavedRemoteUpdate, relation.onSaved );
+
+      if ( this.where )
+      {
+        related.$on( Model.Events.Change, relation.onChange );
+      }
 
       this.sort( relation );
 
@@ -14268,6 +14306,7 @@ extend( RelationMultiple, HasManyThrough,
 
       related.$off( Model.Events.Removed, relation.onRemoved );
       related.$off( Model.Events.SavedRemoteUpdate, relation.onSaved );
+      related.$off( Model.Events.Change, relation.onChange );
 
       this.sort( relation );
       this.checkSave( relation );
@@ -14334,6 +14373,7 @@ HasRemote.Defaults =
   dynamic:              false,
   comparator:           null,
   comparatorNullsFirst: false,
+  where:                false,
   autoRefresh:          false // Model.Events.RemoteGets
 };
 
@@ -14384,6 +14424,19 @@ extend( RelationMultiple, HasRemote,
 
         relator.sort( relation );
         relator.checkSave( relation );
+      },
+
+      onChange: function()
+      {
+        if ( relation.saving )
+        {
+          return;
+        }
+
+        if ( relator.where && !relator.where( this ) )
+        {
+          relator.removeModel( relation, this, true );
+        }
       }
 
     };
@@ -14414,7 +14467,7 @@ extend( RelationMultiple, HasRemote,
 
   addModel: function(relation, related, remoteData)
   {
-    if ( related.$isDeleted() )
+    if ( related.$isDeleted() || (this.where && !this.where( related ) ) )
     {
       return;
     }
@@ -14432,6 +14485,11 @@ extend( RelationMultiple, HasRemote,
 
       related.$on( Model.Events.Removed, relation.onRemoved );
       related.$on( Model.Events.SavedRemoteUpdate, relation.onSaved );
+
+      if ( this.where )
+      {
+        related.$on( Model.Events.Change, relation.onChange );
+      }
 
       this.sort( relation );
 
@@ -14464,6 +14522,7 @@ extend( RelationMultiple, HasRemote,
 
       related.$off( Model.Events.Removed, relation.onRemoved );
       related.$off( Model.Events.SavedRemoteUpdate, relation.onSaved );
+      related.$off( Model.Events.Change, relation.onChange );
 
       this.sort( relation );
       this.checkSave( relation );

@@ -16,6 +16,7 @@ HasRemote.Defaults =
   dynamic:              false,
   comparator:           null,
   comparatorNullsFirst: false,
+  where:                false,
   autoRefresh:          false // Model.Events.RemoteGets
 };
 
@@ -66,6 +67,19 @@ extend( RelationMultiple, HasRemote,
 
         relator.sort( relation );
         relator.checkSave( relation );
+      },
+
+      onChange: function()
+      {
+        if ( relation.saving )
+        {
+          return;
+        }
+
+        if ( relator.where && !relator.where( this ) )
+        {
+          relator.removeModel( relation, this, true );
+        }
       }
 
     };
@@ -96,7 +110,7 @@ extend( RelationMultiple, HasRemote,
 
   addModel: function(relation, related, remoteData)
   {
-    if ( related.$isDeleted() )
+    if ( related.$isDeleted() || (this.where && !this.where( related ) ) )
     {
       return;
     }
@@ -114,6 +128,11 @@ extend( RelationMultiple, HasRemote,
 
       related.$on( Model.Events.Removed, relation.onRemoved );
       related.$on( Model.Events.SavedRemoteUpdate, relation.onSaved );
+
+      if ( this.where )
+      {
+        related.$on( Model.Events.Change, relation.onChange );
+      }
 
       this.sort( relation );
 
@@ -146,6 +165,7 @@ extend( RelationMultiple, HasRemote,
 
       related.$off( Model.Events.Removed, relation.onRemoved );
       related.$off( Model.Events.SavedRemoteUpdate, relation.onSaved );
+      related.$off( Model.Events.Change, relation.onChange );
 
       this.sort( relation );
       this.checkSave( relation );

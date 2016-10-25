@@ -891,3 +891,44 @@ test( 'transfer belongsTo', function(assert)
   ok( t0.$isSaved() );
   notOk( t0.$isDeleted() );
 });
+
+test( 'where', function(assert)
+{
+  var prefix = 'hasMany_where_';
+  var TaskName = prefix + 'task';
+  var ListName = prefix + 'list';
+
+  var Task = Rekord({
+    name: TaskName,
+    fields: ['name', 'done', 'list_id'],
+    belongsTo: {
+      list: {
+        model: ListName,
+        local: 'list_id'
+      }
+    }
+  });
+
+  var TaskList = Rekord({
+    name: ListName,
+    fields: ['name'],
+    hasMany: {
+      tasks: {
+        model: TaskName,
+        foreign: 'list_id',
+        comparator: 'name',
+        where: Rekord.createWhere('done', true)
+      }
+    }
+  });
+
+  var l0 = TaskList.create({name: 'l0'});
+
+  var t0 = Task.create({name: 't0', done: true, list_id: l0.id});
+  var t1 = Task.create({name: 't1', done: false, list_id: l0.id});
+  var t2 = Task.create({name: 't2', done: true, list_id: l0.id});
+  var t3 = Task.create({name: 't3', done: 0, list_id: l0.id});
+
+  strictEqual( l0.tasks.length, 2 );
+  deepEqual( l0.tasks.toArray(), [t0, t2] );
+});

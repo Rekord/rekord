@@ -2,7 +2,6 @@ function RelationMultiple()
 {
 }
 
-
 extend( Relation, RelationMultiple,
 {
 
