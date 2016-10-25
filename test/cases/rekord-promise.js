@@ -1190,3 +1190,33 @@ test( '.singularity() offline early', function(assert)
 
   ok( s.isOffline(), 'second resolved, no longer pending' );
 });
+
+test( '.singularity() success', function(assert)
+{
+  var p1 = new Rekord.Promise();
+  var context = this;
+  var counter = 0;
+
+  expect( 9 );
+
+  var s = Rekord.Promise.singularity( context, function(s0)
+  {
+    strictEqual( ++counter, 1, 'singularity first level' );
+    ok( s0.isPending(), 'still pending (1)' );
+    strictEqual( context, this );
+
+    Rekord.Promise.singularity( p1, context, function(s1)
+    {
+      strictEqual( ++counter, 2, 'singularity second level' );
+      ok( s1.isPending(), 'still pending (2)' );
+      strictEqual( context, this );
+    });
+  });
+
+  strictEqual( counter, 2, 'both singularity called' );
+  ok( s.isPending(), 'still pending' );
+
+  p1.resolve();
+
+  ok( s.isSuccess(), 'second resolved, no longer pending' );
+});

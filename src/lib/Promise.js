@@ -136,8 +136,19 @@ Promise.singularity = (function()
     promise.then( handleSuccess, singularity.reject, singularity.noline, null, singularity );
   }
 
-  return function(promise, context, callback)
+  return function(promiseOrContext, contextOrCallback, callbackOrNull)
   {
+    var promise = promiseOrContext;
+    var context = contextOrCallback;
+    var callback = callbackOrNull;
+
+    if (!(promise instanceof Promise))
+    {
+      promise = false;
+      context = promiseOrContext;
+      callback = contextOrCallback;
+    }
+
     if ( !consuming )
     {
       consuming = true;
@@ -146,7 +157,10 @@ Promise.singularity = (function()
       promiseCount = 0;
       promiseComplete = 0;
 
-      bindPromise( promise );
+      if (promise)
+      {
+        bindPromise( promise );
+      }
 
       try
       {
@@ -165,9 +179,17 @@ Promise.singularity = (function()
     }
     else
     {
-      bindPromise( promise );
+      if (promise)
+      {
+        bindPromise( promise );
+      }
 
       callback.call( context, singularity );
+    }
+
+    if (promiseCount === 0)
+    {
+      singularity.resolve();
     }
 
     return singularity;
