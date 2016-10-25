@@ -5,7 +5,7 @@ Rekord.shard = function(methods)
   {
     var shard = new Shard( database );
 
-    addMethods( shard, methods );
+    setProperties( shard, methods );
 
     shard.initialize( database );
 
@@ -18,7 +18,7 @@ function Shard(database)
   this.database = database;
 }
 
-addMethods( Shard.prototype,
+setProperties( Shard.prototype,
 {
 
   STATUS_FAIL_ALL: 500,

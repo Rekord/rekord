@@ -4,13 +4,15 @@ var Filtering = {
 
   bind: function()
   {
-    this.onAdd      = bind( this, Filtering.handleAdd );
-    this.onAdds     = bind( this, Filtering.handleAdds );
-    this.onRemove   = bind( this, Filtering.handleRemove );
-    this.onRemoves  = bind( this, Filtering.handleRemoves );
-    this.onReset    = bind( this, Filtering.handleReset );
-    this.onUpdates  = bind( this, Filtering.handleUpdates );
-    this.onCleared  = bind( this, Filtering.handleCleared );
+    setProperties(this, {
+      onAdd:      bind( this, Filtering.handleAdd ),
+      onAdds:     bind( this, Filtering.handleAdds ),
+      onRemove:   bind( this, Filtering.handleRemove ),
+      onRemoves:  bind( this, Filtering.handleRemoves ),
+      onReset:    bind( this, Filtering.handleReset ),
+      onUpdates:  bind( this, Filtering.handleUpdates ),
+      onCleared:  bind( this, Filtering.handleCleared )
+    });
   },
 
   init: function(base, filter)
@@ -22,11 +24,13 @@ var Filtering = {
         this.disconnect();
       }
 
-      this.base = base;
+      setProperty( this, 'base', base );
+
       this.connect();
     }
 
-    this.filter = filter;
+    setProperty( this, 'filter', filter );
+    
     this.sync();
 
     return this;

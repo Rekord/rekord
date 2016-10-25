@@ -22,7 +22,7 @@ Relation.Defaults =
   discriminatorToModel: {}
 };
 
-addMethods( Relation.prototype,
+setProperties( Relation.prototype,
 {
 
   debugQuery: null,
@@ -58,7 +58,7 @@ addMethods( Relation.prototype,
         throw 'Polymorphic feature is required to use the discriminated option.';
       }
 
-      addMethods( this, Polymorphic );
+      setProperties( this, Polymorphic );
     }
 
     this.setReferences( database, field, options );

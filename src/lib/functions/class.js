@@ -6,7 +6,7 @@ function extend(parent, child, override)
   // Child instances are instanceof parent
   child.prototype = new parent();
   // Copy new methods into child prototype
-  addMethods( child.prototype, override );
+  setProperties( child.prototype, override );
   // Set the correct constructor
   child.prototype.constructor = child;
 }
@@ -52,7 +52,7 @@ function extendArraySupported()
   return extendArraySupported.supported;
 }
 
-var addMethod = (function()
+var setProperty = (function()
 {
   if ( Object.defineProperty )
   {
@@ -61,6 +61,7 @@ var addMethod = (function()
       Object.defineProperty( target, methodName, {
         configurable: true,
         enumerable: false,
+        writable: true,
         value: method
       });
     };
@@ -75,17 +76,17 @@ var addMethod = (function()
 
 })();
 
-function addMethods(target, methods)
+function setProperties(target, methods)
 {
   for (var methodName in methods)
   {
-    addMethod( target, methodName, methods[ methodName ] );
+    setProperty( target, methodName, methods[ methodName ] );
   }
 }
 
 function replaceMethod(target, methodName, methodFactory)
 {
-  addMethod( target, methodName, methodFactory( target[ methodName ] ) );
+  setProperty( target, methodName, methodFactory( target[ methodName ] ) );
 }
 
 

@@ -59,9 +59,12 @@ extendArray( Collection, ModelCollection,
    */
   init: function(database, models, remoteData)
   {
-    this.map = new Map();
+    setProperties(this, {
+      database: database,
+      map: new Map()
+    });
+
     this.map.values = this;
-    this.database = database;
     this.reset( models, remoteData );
 
     return this;

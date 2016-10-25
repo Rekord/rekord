@@ -59,7 +59,9 @@ extendArray( ModelCollection, FilteredModelCollection,
   {
     Filtering.bind.apply( this );
 
-    this.onModelUpdated = bind( this, this.handleModelUpdate );
+    setProperties(this, {
+      onModelUpdated: bind( this, this.handleModelUpdate )
+    });
   },
 
   /**

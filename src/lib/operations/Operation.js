@@ -3,7 +3,7 @@ function Operation()
 {
 }
 
-addMethods( Operation.prototype,
+setProperties( Operation.prototype,
 {
   reset: function(model, cascade)
   {

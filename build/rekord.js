@@ -170,7 +170,7 @@ function extend(parent, child, override)
   // Child instances are instanceof parent
   child.prototype = new parent();
   // Copy new methods into child prototype
-  addMethods( child.prototype, override );
+  setProperties( child.prototype, override );
   // Set the correct constructor
   child.prototype.constructor = child;
 }
@@ -216,7 +216,7 @@ function extendArraySupported()
   return extendArraySupported.supported;
 }
 
-var addMethod = (function()
+var setProperty = (function()
 {
   if ( Object.defineProperty )
   {
@@ -225,6 +225,7 @@ var addMethod = (function()
       Object.defineProperty( target, methodName, {
         configurable: true,
         enumerable: false,
+        writable: true,
         value: method
       });
     };
@@ -239,17 +240,17 @@ var addMethod = (function()
 
 })();
 
-function addMethods(target, methods)
+function setProperties(target, methods)
 {
   for (var methodName in methods)
   {
-    addMethod( target, methodName, methods[ methodName ] );
+    setProperty( target, methodName, methods[ methodName ] );
   }
 }
 
 function replaceMethod(target, methodName, methodFactory)
 {
-  addMethod( target, methodName, methodFactory( target[ methodName ] ) );
+  setProperty( target, methodName, methodFactory( target[ methodName ] ) );
 }
 
 
@@ -994,7 +995,7 @@ function addEventFunction(target, functionName, events, secret)
   var on = secret ? '$on' : 'on';
   var off = secret ? '$off' : 'off';
 
-  addMethod( target, functionName, function(callback, context)
+  setProperty( target, functionName, function(callback, context)
   {
     var subject = this;
     var unlistened = false;
@@ -1092,7 +1093,7 @@ function addEventful(target, secret)
 
     if ( !listeners )
     {
-      listeners = $this[ property ] = {};
+      setProperty( $this, property, listeners = {} );
     }
 
     for (var i = 0; i < events.length; i++)
@@ -1348,19 +1349,23 @@ function addEventful(target, secret)
 
   if ( secret )
   {
-    addMethod( target, '$on', on );
-    addMethod( target, '$once', once );
-    addMethod( target, '$after', after );
-    addMethod( target, '$off', off );
-    addMethod( target, '$trigger', trigger );
+    setProperties(target, {
+      $on: on,
+      $once: once,
+      $after: after,
+      $off: off,
+      $trigger: trigger
+    });
   }
   else
   {
-    addMethod( target, 'on', on );
-    addMethod( target, 'once', once );
-    addMethod( target, 'after', after );
-    addMethod( target, 'off', off );
-    addMethod( target, 'trigger', trigger );
+    setProperties(target, {
+      on: on,
+      once: once,
+      after: after,
+      off: off,
+      trigger: trigger
+    });
   }
 }
 
@@ -1369,18 +1374,6 @@ function addEventful(target, secret)
 function applyOptions( target, options, defaults, secret )
 {
   options = options || {};
-
-  function setProperty(prop, value)
-  {
-    if ( isFunction( value ) )
-    {
-      addMethod( target, prop, value );
-    }
-    else
-    {
-      target[ prop ] = value;
-    }
-  }
 
   for (var defaultProperty in defaults)
   {
@@ -1394,11 +1387,11 @@ function applyOptions( target, options, defaults, secret )
     }
     else if ( valued )
     {
-      setProperty( defaultProperty, option );
+      target[ defaultProperty ] = option;
     }
     else
     {
-      setProperty( defaultProperty, copy( defaultValue ) );
+      target[ defaultProperty ] = copy( defaultValue );
     }
   }
 
@@ -1406,7 +1399,7 @@ function applyOptions( target, options, defaults, secret )
   {
     if ( !(optionProperty in defaults) )
     {
-      setProperty( optionProperty, options[ optionProperty ] );
+      target[ optionProperty ] = options[ optionProperty ];
     }
   }
 
@@ -3397,7 +3390,7 @@ var Defaults = Database.Defaults =
   createLive:           defaultCreateLive
 };
 
-addMethods( Database.prototype,
+setProperties( Database.prototype,
 {
 
   setStoreEnabled: function(enabled)
@@ -4411,7 +4404,7 @@ addEventFunction( Database.prototype, 'change', Database.Events.Changes );
  */
 function Model(db)
 {
-  this.$db = db;
+  setProperty( this, '$db', db );
 
   /**
    * @property {Database} $db
@@ -4499,15 +4492,21 @@ Model.Blocked =
   valueOf: true
 };
 
-addMethods( Model.prototype,
+setProperties( Model.prototype,
 {
 
   $init: function(props, remoteData)
   {
     this.$status = Model.Status.Synced;
-    this.$operation = null;
-    this.$relations = {};
-    this.$dependents = new Dependents( this );
+
+    setProperties(this, {
+      $operation: null,
+      $relations: {},
+      $dependents: new Dependents( this ),
+      $savedState: false,
+      $saved: false,
+      $local: false
+    });
 
     if ( remoteData )
     {
@@ -4515,7 +4514,7 @@ addMethods( Model.prototype,
 
       if ( !isValue( key ) )
       {
-        this.$invalid = true;
+        setProperty( this, '$invalid', true );
 
         return;
       }
@@ -4982,7 +4981,7 @@ addMethods( Model.prototype,
 
   $discard: function()
   {
-    delete this.$savedState;
+    this.$savedState = false;
   },
 
   $exists: function()
@@ -5274,7 +5273,7 @@ function Map()
   this.indices = {};
 }
 
-addMethods( Map.prototype,
+setProperties( Map.prototype,
 {
 
   /**
@@ -8097,13 +8096,15 @@ var Filtering = {
 
   bind: function()
   {
-    this.onAdd      = bind( this, Filtering.handleAdd );
-    this.onAdds     = bind( this, Filtering.handleAdds );
-    this.onRemove   = bind( this, Filtering.handleRemove );
-    this.onRemoves  = bind( this, Filtering.handleRemoves );
-    this.onReset    = bind( this, Filtering.handleReset );
-    this.onUpdates  = bind( this, Filtering.handleUpdates );
-    this.onCleared  = bind( this, Filtering.handleCleared );
+    setProperties(this, {
+      onAdd:      bind( this, Filtering.handleAdd ),
+      onAdds:     bind( this, Filtering.handleAdds ),
+      onRemove:   bind( this, Filtering.handleRemove ),
+      onRemoves:  bind( this, Filtering.handleRemoves ),
+      onReset:    bind( this, Filtering.handleReset ),
+      onUpdates:  bind( this, Filtering.handleUpdates ),
+      onCleared:  bind( this, Filtering.handleCleared )
+    });
   },
 
   init: function(base, filter)
@@ -8115,11 +8116,13 @@ var Filtering = {
         this.disconnect();
       }
 
-      this.base = base;
+      setProperty( this, 'base', base );
+
       this.connect();
     }
 
-    this.filter = filter;
+    setProperty( this, 'filter', filter );
+    
     this.sync();
 
     return this;
@@ -8672,9 +8675,12 @@ extendArray( Collection, ModelCollection,
    */
   init: function(database, models, remoteData)
   {
-    this.map = new Map();
+    setProperties(this, {
+      database: database,
+      map: new Map()
+    });
+
     this.map.values = this;
-    this.database = database;
     this.reset( models, remoteData );
 
     return this;
@@ -9953,7 +9959,9 @@ extendArray( ModelCollection, FilteredModelCollection,
   {
     Filtering.bind.apply( this );
 
-    this.onModelUpdated = bind( this, this.handleModelUpdate );
+    setProperties(this, {
+      onModelUpdated: bind( this, this.handleModelUpdate )
+    });
   },
 
   /**
@@ -10102,8 +10110,10 @@ extendArray( ModelCollection, FilteredModelCollection,
  */
 function RelationCollection(database, model, relator, models, remoteData)
 {
-  this.model = model;
-  this.relator = relator;
+  setProperties(this, {
+    model:    model,
+    relator:  relator
+  });
 
   this.init( database, models, remoteData );
 }
@@ -10265,8 +10275,10 @@ extendArray( ModelCollection, RelationCollection,
  */
 function DiscriminateCollection(collection, discriminator, discriminatorsToModel)
 {
-  collection.discriminator = discriminator;
-  collection.discriminatorsToModel = discriminatorsToModel;
+  setProperties(collection, {
+    discriminator: discriminator,
+    discriminatorsToModel: discriminatorsToModel
+  });
 
   // Original Functions
   var buildKeyFromInput = collection.buildKeyFromInput;
@@ -10274,7 +10286,7 @@ function DiscriminateCollection(collection, discriminator, discriminatorsToModel
   var clone = collection.clone;
   var cloneEmpty = collection.cloneEmpty;
 
-  addMethods( collection,
+  setProperties( collection,
   {
 
     /**
@@ -10387,7 +10399,7 @@ Search.Defaults =
 {
 };
 
-addMethods( Search.prototype,
+setProperties( Search.prototype,
 {
 
   $getDefaults: function()
@@ -10399,8 +10411,9 @@ addMethods( Search.prototype,
   {
     applyOptions( this, options, this.$getDefaults(), true );
 
+    setProperty( this, '$db', database );
+
     this.$append = false;
-    this.$db = database;
     this.$url = url;
     this.$set( props );
     this.$results = new ModelCollection( database );
@@ -10772,8 +10785,9 @@ extend( Search, SearchPaged,
 function Promise(executor, cancelable)
 {
   this.status = Promise.Status.Pending;
-  this.results = null;
   this.cancelable = cancelable !== false;
+
+  setProperty( this, 'results', null );
 
   if ( isFunction( executor ) )
   {
@@ -10967,7 +10981,7 @@ Promise.singularity = (function()
 
 })();
 
-addMethods( Promise.prototype,
+setProperties( Promise.prototype,
 {
   resolve: function()
   {
@@ -11127,7 +11141,7 @@ function Operation()
 {
 }
 
-addMethods( Operation.prototype,
+setProperties( Operation.prototype,
 {
   reset: function(model, cascade)
   {
@@ -12161,7 +12175,7 @@ Relation.Defaults =
   discriminatorToModel: {}
 };
 
-addMethods( Relation.prototype,
+setProperties( Relation.prototype,
 {
 
   debugQuery: null,
@@ -12197,7 +12211,7 @@ addMethods( Relation.prototype,
         throw 'Polymorphic feature is required to use the discriminated option.';
       }
 
-      addMethods( this, Polymorphic );
+      setProperties( this, Polymorphic );
     }
 
     this.setReferences( database, field, options );
@@ -14995,7 +15009,7 @@ Rekord.shard = function(methods)
   {
     var shard = new Shard( database );
 
-    addMethods( shard, methods );
+    setProperties( shard, methods );
 
     shard.initialize( database );
 
@@ -15008,7 +15022,7 @@ function Shard(database)
   this.database = database;
 }
 
-addMethods( Shard.prototype,
+setProperties( Shard.prototype,
 {
 
   STATUS_FAIL_ALL: 500,
@@ -15557,7 +15571,7 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
     {
       var $init = model.prototype.$init;
 
-      addMethod( model.prototype, '$init', function()
+      setProperty( model.prototype, '$init', function()
       {
         $init.apply( this, arguments );
 
@@ -16510,14 +16524,14 @@ function mapKeyChangeRemove(key)
 
 function enableKeyChanges()
 {
-  addMethod( Map.prototype, 'put', mapKeyChangePut );
-  addMethod( Map.prototype, 'remove', mapKeyChangeRemove );
+  setProperty( Map.prototype, 'put', mapKeyChangePut );
+  setProperty( Map.prototype, 'remove', mapKeyChangeRemove );
 }
 
 function disableKeyChanges()
 {
-  addMethod( Map.prototype, 'put', Map_put );
-  addMethod( Map.prototype, 'remove', Map_remove );
+  setProperty( Map.prototype, 'put', Map_put );
+  setProperty( Map.prototype, 'remove', Map_remove );
 }
 
 Rekord.on( Rekord.Events.Plugins, function(model, db, options)
@@ -16526,7 +16540,7 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 
   if ( !isEmpty( methods ) )
   {
-    addMethods( model.prototype, methods );
+    setProperties( model.prototype, methods );
   }
 });
 
@@ -17029,8 +17043,8 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
   /* Class Functions */
   Rekord.extend = extend;
   Rekord.extendArray = extendArray;
-  Rekord.addMethod = addMethod;
-  Rekord.addMethods = addMethods;
+  Rekord.addMethod = Rekord.setProperty = setProperty;
+  Rekord.addMethods = Rekord.setProperties = setProperties;
   Rekord.replaceMethod = replaceMethod;
   Rekord.copyConstructor = copyConstructor;
   Rekord.factory = factory;

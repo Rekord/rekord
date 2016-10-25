@@ -2,8 +2,9 @@
 function Promise(executor, cancelable)
 {
   this.status = Promise.Status.Pending;
-  this.results = null;
   this.cancelable = cancelable !== false;
+
+  setProperty( this, 'results', null );
 
   if ( isFunction( executor ) )
   {
@@ -197,7 +198,7 @@ Promise.singularity = (function()
 
 })();
 
-addMethods( Promise.prototype,
+setProperties( Promise.prototype,
 {
   resolve: function()
   {

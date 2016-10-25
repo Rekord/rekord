@@ -20,8 +20,10 @@
  */
 function RelationCollection(database, model, relator, models, remoteData)
 {
-  this.model = model;
-  this.relator = relator;
+  setProperties(this, {
+    model:    model,
+    relator:  relator
+  });
 
   this.init( database, models, remoteData );
 }

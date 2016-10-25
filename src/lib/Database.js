@@ -193,7 +193,7 @@ var Defaults = Database.Defaults =
   createLive:           defaultCreateLive
 };
 
-addMethods( Database.prototype,
+setProperties( Database.prototype,
 {
 
   setStoreEnabled: function(enabled)

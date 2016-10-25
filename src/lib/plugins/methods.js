@@ -4,6 +4,6 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 
   if ( !isEmpty( methods ) )
   {
-    addMethods( model.prototype, methods );
+    setProperties( model.prototype, methods );
   }
 });

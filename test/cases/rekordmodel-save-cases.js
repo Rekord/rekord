@@ -190,7 +190,7 @@ test( 'save remote first time, check $saved', function(assert)
 
   var t0 = new Todo({name: 'name0'});
 
-  strictEqual( t0.$saved, void 0 );
+  strictEqual( t0.$saved, false );
 
   t0.$save();
 

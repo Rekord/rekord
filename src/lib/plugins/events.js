@@ -32,7 +32,7 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
     {
       var $init = model.prototype.$init;
 
-      addMethod( model.prototype, '$init', function()
+      setProperty( model.prototype, '$init', function()
       {
         $init.apply( this, arguments );
 

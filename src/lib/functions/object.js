@@ -4,18 +4,6 @@ function applyOptions( target, options, defaults, secret )
 {
   options = options || {};
 
-  function setProperty(prop, value)
-  {
-    if ( isFunction( value ) )
-    {
-      addMethod( target, prop, value );
-    }
-    else
-    {
-      target[ prop ] = value;
-    }
-  }
-
   for (var defaultProperty in defaults)
   {
     var defaultValue = defaults[ defaultProperty ];
@@ -28,11 +16,11 @@ function applyOptions( target, options, defaults, secret )
     }
     else if ( valued )
     {
-      setProperty( defaultProperty, option );
+      target[ defaultProperty ] = option;
     }
     else
     {
-      setProperty( defaultProperty, copy( defaultValue ) );
+      target[ defaultProperty ] = copy( defaultValue );
     }
   }
 
@@ -40,7 +28,7 @@ function applyOptions( target, options, defaults, secret )
   {
     if ( !(optionProperty in defaults) )
     {
-      setProperty( optionProperty, options[ optionProperty ] );
+      target[ optionProperty ] = options[ optionProperty ];
     }
   }
 

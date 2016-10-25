@@ -1892,7 +1892,7 @@ test( 'keyChanges', function(assert)
   deepEqual( ug1.$saved, { user_id: KEY_LAST, group_id: g1.id } );
 
   deepEqual( t0.$saved, { id: t0.id, name: 't0', assigned_to: KEY_LAST, done: false } );
-  deepEqual( t1.$saved, undefined );
+  deepEqual( t1.$saved, false );
 
   t1.$save();
 

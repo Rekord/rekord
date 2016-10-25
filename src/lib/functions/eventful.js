@@ -4,7 +4,7 @@ function addEventFunction(target, functionName, events, secret)
   var on = secret ? '$on' : 'on';
   var off = secret ? '$off' : 'off';
 
-  addMethod( target, functionName, function(callback, context)
+  setProperty( target, functionName, function(callback, context)
   {
     var subject = this;
     var unlistened = false;
@@ -102,7 +102,7 @@ function addEventful(target, secret)
 
     if ( !listeners )
     {
-      listeners = $this[ property ] = {};
+      setProperty( $this, property, listeners = {} );
     }
 
     for (var i = 0; i < events.length; i++)
@@ -358,18 +358,22 @@ function addEventful(target, secret)
 
   if ( secret )
   {
-    addMethod( target, '$on', on );
-    addMethod( target, '$once', once );
-    addMethod( target, '$after', after );
-    addMethod( target, '$off', off );
-    addMethod( target, '$trigger', trigger );
+    setProperties(target, {
+      $on: on,
+      $once: once,
+      $after: after,
+      $off: off,
+      $trigger: trigger
+    });
   }
   else
   {
-    addMethod( target, 'on', on );
-    addMethod( target, 'once', once );
-    addMethod( target, 'after', after );
-    addMethod( target, 'off', off );
-    addMethod( target, 'trigger', trigger );
+    setProperties(target, {
+      on: on,
+      once: once,
+      after: after,
+      off: off,
+      trigger: trigger
+    });
   }
 }

@@ -47,7 +47,7 @@ test( 'pushWhere', function(assert)
   c.pushWhere(['name'], 'done', true);
 
   deepEqual( t0.$savedState, {name: 't0'} );
-  deepEqual( t1.$savedState, void 0 );
+  deepEqual( t1.$savedState, false );
   deepEqual( t2.$savedState, {name: 't2a'} );
 });
 

@@ -65,12 +65,12 @@ function mapKeyChangeRemove(key)
 
 function enableKeyChanges()
 {
-  addMethod( Map.prototype, 'put', mapKeyChangePut );
-  addMethod( Map.prototype, 'remove', mapKeyChangeRemove );
+  setProperty( Map.prototype, 'put', mapKeyChangePut );
+  setProperty( Map.prototype, 'remove', mapKeyChangeRemove );
 }
 
 function disableKeyChanges()
 {
-  addMethod( Map.prototype, 'put', Map_put );
-  addMethod( Map.prototype, 'remove', Map_remove );
+  setProperty( Map.prototype, 'put', Map_put );
+  setProperty( Map.prototype, 'remove', Map_remove );
 }

@@ -29,7 +29,7 @@ function Map()
   this.indices = {};
 }
 
-addMethods( Map.prototype,
+setProperties( Map.prototype,
 {
 
   /**

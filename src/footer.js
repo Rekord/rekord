@@ -73,8 +73,8 @@
   /* Class Functions */
   Rekord.extend = extend;
   Rekord.extendArray = extendArray;
-  Rekord.addMethod = addMethod;
-  Rekord.addMethods = addMethods;
+  Rekord.addMethod = Rekord.setProperty = setProperty;
+  Rekord.addMethods = Rekord.setProperties = setProperties;
   Rekord.replaceMethod = replaceMethod;
   Rekord.copyConstructor = copyConstructor;
   Rekord.factory = factory;

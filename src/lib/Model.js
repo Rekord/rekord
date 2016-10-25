@@ -10,7 +10,7 @@
  */
 function Model(db)
 {
-  this.$db = db;
+  setProperty( this, '$db', db );
 
   /**
    * @property {Database} $db
@@ -98,15 +98,21 @@ Model.Blocked =
   valueOf: true
 };
 
-addMethods( Model.prototype,
+setProperties( Model.prototype,
 {
 
   $init: function(props, remoteData)
   {
     this.$status = Model.Status.Synced;
-    this.$operation = null;
-    this.$relations = {};
-    this.$dependents = new Dependents( this );
+
+    setProperties(this, {
+      $operation: null,
+      $relations: {},
+      $dependents: new Dependents( this ),
+      $savedState: false,
+      $saved: false,
+      $local: false
+    });
 
     if ( remoteData )
     {
@@ -114,7 +120,7 @@ addMethods( Model.prototype,
 
       if ( !isValue( key ) )
       {
-        this.$invalid = true;
+        setProperty( this, '$invalid', true );
 
         return;
       }
@@ -581,7 +587,7 @@ addMethods( Model.prototype,
 
   $discard: function()
   {
-    delete this.$savedState;
+    this.$savedState = false;
   },
 
   $exists: function()

@@ -26,7 +26,7 @@ Search.Defaults =
 {
 };
 
-addMethods( Search.prototype,
+setProperties( Search.prototype,
 {
 
   $getDefaults: function()
@@ -38,8 +38,9 @@ addMethods( Search.prototype,
   {
     applyOptions( this, options, this.$getDefaults(), true );
 
+    setProperty( this, '$db', database );
+
     this.$append = false;
-    this.$db = database;
     this.$url = url;
     this.$set( props );
     this.$results = new ModelCollection( database );

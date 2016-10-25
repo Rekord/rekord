@@ -14,8 +14,10 @@
  */
 function DiscriminateCollection(collection, discriminator, discriminatorsToModel)
 {
-  collection.discriminator = discriminator;
-  collection.discriminatorsToModel = discriminatorsToModel;
+  setProperties(collection, {
+    discriminator: discriminator,
+    discriminatorsToModel: discriminatorsToModel
+  });
 
   // Original Functions
   var buildKeyFromInput = collection.buildKeyFromInput;
@@ -23,7 +25,7 @@ function DiscriminateCollection(collection, discriminator, discriminatorsToModel
   var clone = collection.clone;
   var cloneEmpty = collection.cloneEmpty;
 
-  addMethods( collection,
+  setProperties( collection,
   {
 
     /**
