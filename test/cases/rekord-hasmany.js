@@ -932,3 +932,61 @@ test( 'where', function(assert)
   strictEqual( l0.tasks.length, 2 );
   deepEqual( l0.tasks.toArray(), [t0, t2] );
 });
+
+test( 'relation name', function(assert)
+{
+  var prefix = 'relation_name_';
+  var TaskName = prefix + 'task';
+  var ListName = prefix + 'list';
+
+  var Task = Rekord({
+    name: TaskName,
+    fields: ['name', 'done', ListName + '_id']
+  });
+
+  var TaskList = Rekord({
+    name: ListName,
+    fields: ['name'],
+    hasMany: {
+      tasks: TaskName
+    }
+  });
+
+  var l0 = TaskList.create({name: 'l0'});
+
+  var t0 = Task.create({name: 't0', done: true, relation_name_list_id: l0.id});
+  var t1 = Task.create({name: 't1', done: false, relation_name_list_id: l0.id});
+  var t2 = Task.create({name: 't2', done: true, relation_name_list_id: l0.id});
+  var t3 = Task.create({name: 't3', done: 0, relation_name_list_id: l0.id});
+
+  strictEqual( l0.tasks.length, 4 );
+});
+
+test( 'relation true', function(assert)
+{
+  var prefix = 'relation_true_';
+  var TaskName = prefix + 'task';
+  var ListName = prefix + 'list';
+
+  var Task = Rekord({
+    name: TaskName,
+    fields: ['name', 'done', ListName + '_id']
+  });
+
+  var TaskList = Rekord({
+    name: ListName,
+    fields: ['name'],
+    hasMany: {
+      relation_true_task: true
+    }
+  });
+
+  var l0 = TaskList.create({name: 'l0'});
+
+  var t0 = Task.create({name: 't0', done: true, relation_true_list_id: l0.id});
+  var t1 = Task.create({name: 't1', done: false, relation_true_list_id: l0.id});
+  var t2 = Task.create({name: 't2', done: true, relation_true_list_id: l0.id});
+  var t3 = Task.create({name: 't3', done: 0, relation_true_list_id: l0.id});
+
+  strictEqual( l0.relation_true_task.length, 4 );
+});

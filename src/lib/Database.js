@@ -71,6 +71,22 @@ function Database(options)
       var relationOptions = relationMap[ name ];
       var relation = new RelationClass();
 
+      if ( isString( relationOptions ) )
+      {
+        relationOptions = {
+          model: relationOptions
+        };
+      }
+      else if ( !isObject( relationOptions ) )
+      {
+        relationOptions = {};
+      }
+
+      if ( !relationOptions.model && !relationOptions.discriminator )
+      {
+        relationOptions.model = name;
+      }
+
       relation.init( this, name, relationOptions );
 
       if ( relation.save )
