@@ -1,4 +1,4 @@
-Rekord.on( Rekord.Events.Plugins, function(model, db, options)
+addPlugin(function(model, db, options)
 {
   var extend = options.extend || Defaults.extend;
 

@@ -1,4 +1,4 @@
-Rekord.on( Rekord.Events.Options, function(options)
+addPlugin(function(options)
 {
   var shard = options.shard || Defaults.shard;
 
@@ -8,4 +8,5 @@ Rekord.on( Rekord.Events.Options, function(options)
   }
 
   options.createRest = Rekord.shard( shard );
-});
+  
+}, true );

@@ -373,3 +373,15 @@ function evaluate(x, avoidCopy, context)
 
   return avoidCopy ? x : copy( x );
 }
+
+function addPlugin( callback, beforeCreation )
+{
+  if ( beforeCreation )
+  {
+    return Rekord.on( Rekord.Events.Options, callback ); // (options)
+  }
+  else
+  {
+    return Rekord.on( Rekord.Events.Plugins, callback ); // (model, db, options)
+  }
+}

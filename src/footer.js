@@ -60,6 +60,7 @@
   Rekord.sizeof = sizeof;
   Rekord.isEmpty = isEmpty;
   Rekord.evaluate = evaluate;
+  Rekord.addPlugin = addPlugin;
 
   /* Array Functions */
   Rekord.toArray = toArray;

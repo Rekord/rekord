@@ -655,6 +655,18 @@ function evaluate(x, avoidCopy, context)
   return avoidCopy ? x : copy( x );
 }
 
+function addPlugin( callback, beforeCreation )
+{
+  if ( beforeCreation )
+  {
+    return Rekord.on( Rekord.Events.Options, callback ); // (options)
+  }
+  else
+  {
+    return Rekord.on( Rekord.Events.Plugins, callback ); // (model, db, options)
+  }
+}
+
 
  /**
   * A string, a function, or an array of mixed values.
@@ -15396,7 +15408,7 @@ setProperties( Shard.prototype,
 
 });
 
-Rekord.on( Rekord.Events.Plugins, function(model, db, options)
+addPlugin(function(model, db, options)
 {
 
   /**
@@ -15420,9 +15432,10 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
   {
     return db.models;
   };
+  
 });
 
-Rekord.on( Rekord.Events.Plugins, function(model, db, options)
+addPlugin(function(model, db, options)
 {
 
   /**
@@ -15467,7 +15480,7 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
   };
 });
 
-Rekord.on( Rekord.Events.Plugins, function(model, db, options)
+addPlugin(function(model, db, options)
 {
 
   /**
@@ -15501,7 +15514,7 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
   };
 });
 
-Rekord.on( Rekord.Events.Plugins, function(model, db, options)
+addPlugin(function(model, db, options)
 {
 
   /**
@@ -15527,7 +15540,7 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
   };
 });
 
-Rekord.on( Rekord.Events.Plugins, function(model, db, options)
+addPlugin(function(model, db, options)
 {
 
   /**
@@ -15564,7 +15577,7 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
   };
 });
 
-Rekord.on( Rekord.Events.Plugins, function(model, db, options)
+addPlugin(function(model, db, options)
 {
   var dynamics = collapse( options.dynamic, Defaults.dynamic );
 
@@ -15622,7 +15635,7 @@ function addDynamicProperty(modelPrototype, property, definition)
   }
 }
 
-Rekord.on( Rekord.Events.Plugins, function(model, db, options)
+addPlugin(function(model, db, options)
 {
   var events = collapse( options.events, Defaults.events );
 
@@ -15741,7 +15754,7 @@ function applyEventListeners(target, listeners)
   }
 }
 
-Rekord.on( Rekord.Events.Plugins, function(model, db, options)
+addPlugin(function(model, db, options)
 {
   var extend = options.extend || Defaults.extend;
 
@@ -15851,7 +15864,7 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 
 });
 
-Rekord.on( Rekord.Events.Plugins, function(model, db, options)
+addPlugin(function(model, db, options)
 {
 
   /**
@@ -15912,7 +15925,7 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
   };
 });
 
-Rekord.on( Rekord.Events.Plugins, function(model, db, options)
+addPlugin(function(model, db, options)
 {
 
   /**
@@ -15948,7 +15961,7 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
   };
 });
 
-Rekord.on( Rekord.Events.Plugins, function(model, db, options)
+addPlugin(function(model, db, options)
 {
   var files = options.files || Defaults.files;
 
@@ -16278,7 +16291,7 @@ function FileEncoder(input, model, field, forSaving)
   return input;
 }
 
-Rekord.on( Rekord.Events.Plugins, function(model, db, options)
+addPlugin(function(model, db, options)
 {
 
   model.filtered = function(whereProperties, whereValue, whereEquals)
@@ -16287,7 +16300,7 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
   };
 });
 
-Rekord.on( Rekord.Events.Plugins, function(model, db, options)
+addPlugin(function(model, db, options)
 {
   model.first = model.find = function(whereProperties, whereValue, whereEquals)
   {
@@ -16295,7 +16308,7 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
   };
 });
 
-Rekord.on( Rekord.Events.Plugins, function(model, db, options)
+addPlugin(function(model, db, options)
 {
 
   /**
@@ -16376,7 +16389,7 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
   };
 });
 
-Rekord.on( Rekord.Events.Plugins, function(model, db, options)
+addPlugin(function(model, db, options)
 {
 
   /**
@@ -16424,7 +16437,7 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
   };
 });
 
-Rekord.on( Rekord.Events.Plugins, function(model, db, options)
+addPlugin(function(model, db, options)
 {
 
   /**
@@ -16484,7 +16497,7 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
   };
 });
 
-Rekord.on( Rekord.Events.Plugins, function(model, db, options)
+addPlugin(function(model, db, options)
 {
 
   /**
@@ -16543,7 +16556,7 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
 });
 
 
-Rekord.on( Rekord.Events.Plugins, function(model, db, options)
+addPlugin( function(model, db, options)
 {
   if ( options.keyChanges )
   {
@@ -16619,7 +16632,7 @@ function disableKeyChanges()
   setProperty( Map.prototype, 'remove', Map_remove );
 }
 
-Rekord.on( Rekord.Events.Plugins, function(model, db, options)
+addPlugin(function(model, db, options)
 {
   var methods = collapse( options.methods, Defaults.methods );
 
@@ -16629,7 +16642,7 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
   }
 });
 
-Rekord.on( Rekord.Events.Plugins, function(model, db, options)
+addPlugin(function(model, db, options)
 {
 
   /**
@@ -16680,7 +16693,7 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
   };
 });
 
-Rekord.on( Rekord.Events.Plugins, function(model, db, options)
+addPlugin(function(model, db, options)
 {
 
   /**
@@ -16719,7 +16732,7 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
   };
 });
 
-Rekord.on( Rekord.Events.Plugins, function(model, db, options)
+addPlugin(function(model, db, options)
 {
 
   /**
@@ -16750,7 +16763,7 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
   };
 });
 
-Rekord.on( Rekord.Events.Plugins, function(model, db, options)
+addPlugin(function(model, db, options)
 {
 
   /**
@@ -16792,7 +16805,7 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
   };
 });
 
-Rekord.on( Rekord.Events.Plugins, function(model, db, options)
+addPlugin(function(model, db, options)
 {
 
   /**
@@ -16842,7 +16855,7 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
   };
 });
 
-Rekord.on( Rekord.Events.Options, function(options)
+addPlugin(function(options)
 {
   var shard = options.shard || Defaults.shard;
 
@@ -16852,9 +16865,10 @@ Rekord.on( Rekord.Events.Options, function(options)
   }
 
   options.createRest = Rekord.shard( shard );
-});
+  
+}, true );
 
-Rekord.on( Rekord.Events.Plugins, function(model, db, options)
+addPlugin(function(model, db, options)
 {
   var time = options.timestamps || Defaults.timestamps;
   var timeFormat = collapseOption( options.timestampFormat, Defaults.timestampFormat );
@@ -17044,7 +17058,7 @@ Rekord.Timestamp = Timestamp;
 Rekord.formatDate = noop;
 Rekord.convertDate = convertDate;
 
-Rekord.on( Rekord.Events.Plugins, function(model, db, options)
+addPlugin(function(model, db, options)
 {
 
   model.where = function(whereProperties, whereValue, whereEquals, out)
@@ -17115,6 +17129,7 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
   Rekord.sizeof = sizeof;
   Rekord.isEmpty = isEmpty;
   Rekord.evaluate = evaluate;
+  Rekord.addPlugin = addPlugin;
 
   /* Array Functions */
   Rekord.toArray = toArray;

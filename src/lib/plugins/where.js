@@ -1,4 +1,4 @@
-Rekord.on( Rekord.Events.Plugins, function(model, db, options)
+addPlugin(function(model, db, options)
 {
 
   model.where = function(whereProperties, whereValue, whereEquals, out)

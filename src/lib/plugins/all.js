@@ -1,4 +1,4 @@
-Rekord.on( Rekord.Events.Plugins, function(model, db, options)
+addPlugin(function(model, db, options)
 {
 
   /**
@@ -22,4 +22,5 @@ Rekord.on( Rekord.Events.Plugins, function(model, db, options)
   {
     return db.models;
   };
+  
 });
