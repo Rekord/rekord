@@ -280,7 +280,7 @@ function bind(context, func)
 {
   return function bindedFunction()
   {
-    func.apply( context, arguments );
+    return func.apply( context, arguments );
   };
 }
 
