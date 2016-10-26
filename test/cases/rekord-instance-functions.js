@@ -22,6 +22,35 @@ test( 'all', function(assert)
   deepEqual( all.all().toArray(), [a0, a1, a2, a4] );
 });
 
+test( 'at', function(assert)
+{
+  var at = Rekord({
+    name: 'at',
+    fields: ['id']
+  });
+
+  deepEqual( at.at( 0 ), void 0 );
+
+  var a0 = at.create();
+  var a1 = at.create();
+  var a2 = at.create();
+  var a3 = at.create();
+  var a4 = at.create();
+
+  strictEqual( at.at(0), a0 );
+  strictEqual( at.at(1), a1 );
+  strictEqual( at.at(2), a2 );
+  strictEqual( at.at(3), a3 );
+  strictEqual( at.at(4), a4 );
+
+  a3.$remove();
+
+  strictEqual( at.at(0), a0 );
+  strictEqual( at.at(1), a1 );
+  strictEqual( at.at(2), a2 );
+  strictEqual( at.at(3), a4 );
+});
+
 test( 'create', function(assert)
 {
   var create = Rekord({
