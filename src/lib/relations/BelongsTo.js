@@ -95,6 +95,27 @@ extend( RelationSingle, BelongsTo,
     }
   }),
 
+  sync: function(model, removeUnrelated)
+  {
+    var relation = model.$relations[ this.name ];
+    var relatedValue = this.grabInitial( model, this.local );
+    var remoteData = true;
+    var ignoreLoaded = true;
+    var dontClear = true;
+
+    if ( relation )
+    {
+      if ( !isEmpty( relatedValue ) )
+      {
+        this.grabModel( relatedValue, this.handleModel( relation, remoteData, ignoreLoaded ), remoteData );
+      }
+      else if ( removeUnrelated )
+      {
+        this.clearRelated( relation, remoteData, dontClear );
+      }
+    }
+  },
+
   postRemove: function(model)
   {
     var relation = model.$relations[ this.name ];

@@ -168,6 +168,40 @@ extend( RelationMultiple, HasManyThrough,
     this.setProperty( relation );
   }),
 
+  sync: function(model, removeUnrelated)
+  {
+    var throughDatabase = this.through.Database;
+    var relation = model.$relations[ this.name ];
+
+    if ( relation )
+    {
+      var existing = relation.throughs.values;
+      var remoteData = true;
+      var relator = this;
+
+      var onRelated = function(throughs)
+      {
+        if ( removeUnrelated )
+        {
+          var given = this.createCollection();
+          given.reset( throughs );
+
+          for (var i = 0; i < existing.length; i++)
+          {
+            var existingThrough = existing[ i ];
+
+            if ( !given.has( existingThrough.$key() ) )
+            {
+              relator.removeModelFromThrough( relation, existingThrough, remoteData );
+            }
+          }
+        }
+      };
+
+      throughDatabase.ready( this.handleLazyLoad( relation, onRelated ), this );
+    }
+  },
+
   preClone: function(model, clone, properties)
   {
     var related = this.get( model );
@@ -264,13 +298,18 @@ extend( RelationMultiple, HasManyThrough,
     };
   },
 
-  handleLazyLoad: function(relation)
+  handleLazyLoad: function(relation, onRelated)
   {
     return function (throughDatabase)
     {
       var throughs = throughDatabase.filter( relation.isRelated );
 
       Rekord.debug( Rekord.Debugs.HASMANYTHRU_LAZY_LOAD, this, relation, throughs );
+
+      if ( onRelated )
+      {
+        onRelated.call( this, throughs );
+      }
 
       if ( throughs.length )
       {
@@ -438,14 +477,14 @@ extend( RelationMultiple, HasManyThrough,
     return this.finishRemoveThrough( relation, through, related, true, remoteData );
   },
 
-  removeModelFromThrough: function(relation, through)
+  removeModelFromThrough: function(relation, through, remoteData)
   {
     var relatedDatabase = this.model.Database;
     var relatedKey = relatedDatabase.keyHandler.buildKey( through, this.foreign );
 
-    if ( this.finishRemoveThrough( relation, through ) )
+    if ( this.finishRemoveThrough( relation, through, undefined, undefined, remoteData ) )
     {
-      this.finishRemoveRelated( relation, relatedKey );
+      this.finishRemoveRelated( relation, relatedKey, remoteData );
     }
   },
 
@@ -481,7 +520,7 @@ extend( RelationMultiple, HasManyThrough,
     return removing;
   },
 
-  finishRemoveRelated: function(relation, relatedKey)
+  finishRemoveRelated: function(relation, relatedKey, remoteData)
   {
     var pending = relation.pending;
     var relateds = relation.related;
@@ -498,7 +537,7 @@ extend( RelationMultiple, HasManyThrough,
       related.$off( Model.Events.Change, relation.onChange );
 
       this.sort( relation );
-      this.checkSave( relation );
+      this.checkSave( relation, remoteData );
     }
 
     delete pending[ relatedKey ];

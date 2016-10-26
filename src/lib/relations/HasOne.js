@@ -79,24 +79,50 @@ extend( RelationSingle, HasOne,
     {
       Rekord.debug( Rekord.Debugs.HASONE_INITIAL, this, model, initialValue );
 
-      if ( isObject( initialValue ) && relation.child )
-      {
-        var src = toArray( this.local );
-        var dst = toArray( this.model.Database.key );
-
-        for (var k = 0; k < src.length; k++)
-        {
-          initialValue[ dst[ k ] ] = model[ src[ k ] ];
-        }
-      }
-
-      this.grabModel( initialValue, this.handleModel( relation ), remoteData );
+      this.populateInitial( initialValue, relation, model );
+      this.grabModel( initialValue, this.handleModel( relation, remoteData ), remoteData );
     }
     else if ( this.query )
     {
       relation.query = this.executeQuery( model );
     }
   }),
+
+  populateInitial: function(initialValue, relation, model)
+  {
+    if ( isObject( initialValue ) && relation.child )
+    {
+      var src = toArray( this.local );
+      var dst = toArray( this.model.Database.key );
+
+      for (var k = 0; k < src.length; k++)
+      {
+        initialValue[ dst[ k ] ] = model[ src[ k ] ];
+      }
+    }
+  },
+
+  sync: function(model, removeUnrelated)
+  {
+    var relation = model.$relations[ this.name ];
+    var relatedValue = this.grabInitial( model, this.local );
+    var remoteData = true;
+    var ignoreLoaded = true;
+    var dontClear = true;
+
+    if ( relation )
+    {
+      if ( !isEmpty( relatedValue ) )
+      {
+        this.populateInitial( relatedValue, relation, model );
+        this.grabModel( relatedValue, this.handleModel( relation, remoteData, ignoreLoaded ), remoteData );
+      }
+      else if ( removeUnrelated )
+      {
+        this.clearRelated( relation, remoteData, dontClear );
+      }
+    }
+  },
 
   isDependent: function(relation, related)
   {

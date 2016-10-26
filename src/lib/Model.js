@@ -334,6 +334,16 @@ setProperties( Model.prototype,
     this.$db.decode( this );
   },
 
+  $sync: function(prop, removeUnrelated)
+  {
+    var relation = this.$getRelation( prop );
+
+    if ( relation )
+    {
+      relation.sync( this, removeUnrelated );
+    }
+  },
+
   $relate: function(prop, relate, remoteData)
   {
     var relation = this.$getRelation( prop );

@@ -4756,6 +4756,16 @@ setProperties( Model.prototype,
     this.$db.decode( this );
   },
 
+  $sync: function(prop, removeUnrelated)
+  {
+    var relation = this.$getRelation( prop );
+
+    if ( relation )
+    {
+      relation.sync( this, removeUnrelated );
+    }
+  },
+
   $relate: function(prop, relate, remoteData)
   {
     var relation = this.$getRelation( prop );
@@ -10232,6 +10242,25 @@ extendArray( ModelCollection, RelationCollection,
   },
 
   /**
+   * Syncrhonizes the related models in this collection by re-evaluating all
+   * models for a relationship.
+   *
+   * @method
+   * @memberof Rekord.RelationCollection#
+   * @param {boolean} [removeUnrelated=false] -
+   *    Whether to remove models that are no longer related. The $remove
+   *    function is not called on these models.
+   * @return {Rekord.RelationCollection} -
+   *    The reference to this collection.
+   */
+  sync: function(removeUnrelated)
+  {
+    this.relator.sync( this.model, removeUnrelated );
+
+    return this;
+  },
+
+  /**
    * Unrelates any models in this collection which meet the where expression.
    *
    * @method
@@ -12317,7 +12346,12 @@ setProperties( Relation.prototype,
 
   },
 
-  unrelate: function(model, input)
+  unrelate: function(model, input, remoteData)
+  {
+
+  },
+
+  sync: function(model, removeUnrelated)
   {
 
   },
@@ -12414,9 +12448,9 @@ setProperties( Relation.prototype,
     return new RelationCollection( this.model.Database, model, this );
   },
 
-  createCollection: function()
+  createCollection: function(initial)
   {
-    return new ModelCollection( this.model.Database );
+    return new ModelCollection( this.model.Database, initial );
   },
 
   parseModel: function(input, remoteData)
@@ -12838,7 +12872,7 @@ extend( Relation, RelationSingle,
     return true;
   },
 
-  handleModel: function(relation, remoteData)
+  handleModel: function(relation, remoteData, ignoreLoaded)
   {
     return function(related)
     {
@@ -12846,7 +12880,7 @@ extend( Relation, RelationSingle,
 
       Rekord.debug( this.debugLoaded, this, model, relation, related );
 
-      if ( relation.loaded === false )
+      if ( relation.loaded === false || ignoreLoaded )
       {
         if ( related && !related.$isDeleted() )
         {
@@ -13122,14 +13156,14 @@ extend( Relation, RelationMultiple,
     }
   },
 
-  handleModel: function(relation, remoteData)
+  handleModel: function(relation, remoteData, ignoreLoaded)
   {
     return function (related)
     {
       var pending = relation.pending;
       var key = related.$key();
 
-      if ( key in pending )
+      if ( key in pending || ignoreLoaded )
       {
         Rekord.debug( this.debugInitialGrabbed, this, relation, related );
 
@@ -13253,6 +13287,27 @@ extend( RelationSingle, BelongsTo,
     }
   }),
 
+  sync: function(model, removeUnrelated)
+  {
+    var relation = model.$relations[ this.name ];
+    var relatedValue = this.grabInitial( model, this.local );
+    var remoteData = true;
+    var ignoreLoaded = true;
+    var dontClear = true;
+
+    if ( relation )
+    {
+      if ( !isEmpty( relatedValue ) )
+      {
+        this.grabModel( relatedValue, this.handleModel( relation, remoteData, ignoreLoaded ), remoteData );
+      }
+      else if ( removeUnrelated )
+      {
+        this.clearRelated( relation, remoteData, dontClear );
+      }
+    }
+  },
+
   postRemove: function(model)
   {
     var relation = model.$relations[ this.name ];
@@ -13364,24 +13419,50 @@ extend( RelationSingle, HasOne,
     {
       Rekord.debug( Rekord.Debugs.HASONE_INITIAL, this, model, initialValue );
 
-      if ( isObject( initialValue ) && relation.child )
-      {
-        var src = toArray( this.local );
-        var dst = toArray( this.model.Database.key );
-
-        for (var k = 0; k < src.length; k++)
-        {
-          initialValue[ dst[ k ] ] = model[ src[ k ] ];
-        }
-      }
-
-      this.grabModel( initialValue, this.handleModel( relation ), remoteData );
+      this.populateInitial( initialValue, relation, model );
+      this.grabModel( initialValue, this.handleModel( relation, remoteData ), remoteData );
     }
     else if ( this.query )
     {
       relation.query = this.executeQuery( model );
     }
   }),
+
+  populateInitial: function(initialValue, relation, model)
+  {
+    if ( isObject( initialValue ) && relation.child )
+    {
+      var src = toArray( this.local );
+      var dst = toArray( this.model.Database.key );
+
+      for (var k = 0; k < src.length; k++)
+      {
+        initialValue[ dst[ k ] ] = model[ src[ k ] ];
+      }
+    }
+  },
+
+  sync: function(model, removeUnrelated)
+  {
+    var relation = model.$relations[ this.name ];
+    var relatedValue = this.grabInitial( model, this.local );
+    var remoteData = true;
+    var ignoreLoaded = true;
+    var dontClear = true;
+
+    if ( relation )
+    {
+      if ( !isEmpty( relatedValue ) )
+      {
+        this.populateInitial( relatedValue, relation, model );
+        this.grabModel( relatedValue, this.handleModel( relation, remoteData, ignoreLoaded ), remoteData );
+      }
+      else if ( removeUnrelated )
+      {
+        this.clearRelated( relation, remoteData, dontClear );
+      }
+    }
+  },
 
   isDependent: function(relation, related)
   {
@@ -13613,6 +13694,38 @@ extend( RelationMultiple, HasMany,
     this.setProperty( relation );
   }),
 
+  sync: function(model, removeUnrelated)
+  {
+    var relation = model.$relations[ this.name ];
+
+    if ( relation )
+    {
+      var existing = relation.related;
+      var remoteData = true;
+      var dontClear = true;
+      var relator = this;
+
+      var onRelated = function(related)
+      {
+        if ( removeUnrelated )
+        {
+          var given = this.createCollection();
+          given.reset( related );
+
+          existing.each(function(existingModel)
+          {
+            if ( !given.has( existingModel.$key() ) )
+            {
+              relator.removeModel( relation, existingModel, remoteData, dontClear );
+            }
+          });
+        }
+      };
+
+      this.ready( this.handleLazyLoad( relation, onRelated ) );
+    }
+  },
+
   postClone: function(model, clone, properties)
   {
     var related = this.get( model );
@@ -13705,13 +13818,18 @@ extend( RelationMultiple, HasMany,
     };
   },
 
-  handleLazyLoad: function(relation)
+  handleLazyLoad: function(relation, onRelated)
   {
     return function (relatedDatabase)
     {
       var related = relatedDatabase.filter( relation.isRelated );
 
       Rekord.debug( Rekord.Debugs.HASMANY_LAZY_LOAD, this, relation, related );
+
+      if ( onRelated )
+      {
+        onRelated.call( this, related );
+      }
 
       if ( related.length )
       {
@@ -14012,6 +14130,40 @@ extend( RelationMultiple, HasManyThrough,
     this.setProperty( relation );
   }),
 
+  sync: function(model, removeUnrelated)
+  {
+    var throughDatabase = this.through.Database;
+    var relation = model.$relations[ this.name ];
+
+    if ( relation )
+    {
+      var existing = relation.throughs.values;
+      var remoteData = true;
+      var relator = this;
+
+      var onRelated = function(throughs)
+      {
+        if ( removeUnrelated )
+        {
+          var given = this.createCollection();
+          given.reset( throughs );
+
+          for (var i = 0; i < existing.length; i++)
+          {
+            var existingThrough = existing[ i ];
+
+            if ( !given.has( existingThrough.$key() ) )
+            {
+              relator.removeModelFromThrough( relation, existingThrough, remoteData );
+            }
+          }
+        }
+      };
+
+      throughDatabase.ready( this.handleLazyLoad( relation, onRelated ), this );
+    }
+  },
+
   preClone: function(model, clone, properties)
   {
     var related = this.get( model );
@@ -14108,13 +14260,18 @@ extend( RelationMultiple, HasManyThrough,
     };
   },
 
-  handleLazyLoad: function(relation)
+  handleLazyLoad: function(relation, onRelated)
   {
     return function (throughDatabase)
     {
       var throughs = throughDatabase.filter( relation.isRelated );
 
       Rekord.debug( Rekord.Debugs.HASMANYTHRU_LAZY_LOAD, this, relation, throughs );
+
+      if ( onRelated )
+      {
+        onRelated.call( this, throughs );
+      }
 
       if ( throughs.length )
       {
@@ -14282,14 +14439,14 @@ extend( RelationMultiple, HasManyThrough,
     return this.finishRemoveThrough( relation, through, related, true, remoteData );
   },
 
-  removeModelFromThrough: function(relation, through)
+  removeModelFromThrough: function(relation, through, remoteData)
   {
     var relatedDatabase = this.model.Database;
     var relatedKey = relatedDatabase.keyHandler.buildKey( through, this.foreign );
 
-    if ( this.finishRemoveThrough( relation, through ) )
+    if ( this.finishRemoveThrough( relation, through, undefined, undefined, remoteData ) )
     {
-      this.finishRemoveRelated( relation, relatedKey );
+      this.finishRemoveRelated( relation, relatedKey, remoteData );
     }
   },
 
@@ -14325,7 +14482,7 @@ extend( RelationMultiple, HasManyThrough,
     return removing;
   },
 
-  finishRemoveRelated: function(relation, relatedKey)
+  finishRemoveRelated: function(relation, relatedKey, remoteData)
   {
     var pending = relation.pending;
     var relateds = relation.related;
@@ -14342,7 +14499,7 @@ extend( RelationMultiple, HasManyThrough,
       related.$off( Model.Events.Change, relation.onChange );
 
       this.sort( relation );
-      this.checkSave( relation );
+      this.checkSave( relation, remoteData );
     }
 
     delete pending[ relatedKey ];

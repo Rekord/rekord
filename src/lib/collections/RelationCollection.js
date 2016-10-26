@@ -114,6 +114,25 @@ extendArray( ModelCollection, RelationCollection,
   },
 
   /**
+   * Syncrhonizes the related models in this collection by re-evaluating all
+   * models for a relationship.
+   *
+   * @method
+   * @memberof Rekord.RelationCollection#
+   * @param {boolean} [removeUnrelated=false] -
+   *    Whether to remove models that are no longer related. The $remove
+   *    function is not called on these models.
+   * @return {Rekord.RelationCollection} -
+   *    The reference to this collection.
+   */
+  sync: function(removeUnrelated)
+  {
+    this.relator.sync( this.model, removeUnrelated );
+
+    return this;
+  },
+
+  /**
    * Unrelates any models in this collection which meet the where expression.
    *
    * @method

@@ -687,3 +687,46 @@ test( 'child table default function', function(assert)
   deepEqual( i0.$saved, {id: i0.id, name: 'i0'} );
   deepEqual( p0.$saved, {item_id: i0.id, brand: 'brand', model: 'model'} );
 });
+
+test( 'sync', function(assert)
+{
+  var prefix = 'hasOne_sync_';
+
+  var TaskList = Rekord({
+    name: prefix + 'list',
+    fields: ['name']
+  });
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['list_id', 'name', 'done'],
+    hasOne: {
+      list: {
+        model: TaskList,
+        local: 'list_id'
+      }
+    }
+  });
+
+  var l0 = TaskList.create({name: 'l0'});
+  var l1 = TaskList.create({name: 'l1'});
+  var l2 = TaskList.create({name: 'l2'});
+
+  var t0 = Task.create({list_id: l0.id});
+
+  strictEqual( t0.list, l0 );
+
+  t0.list_id = null;
+  t0.$sync( 'list' );
+
+  strictEqual( t0.list, l0 );
+
+  t0.$sync( 'list', true );
+
+  strictEqual( t0.list, null );
+
+  t0.list_id = l1.id;
+  t0.$sync( 'list' );
+
+  strictEqual( t0.list, l1 );
+});

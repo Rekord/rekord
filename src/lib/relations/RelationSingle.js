@@ -165,7 +165,7 @@ extend( Relation, RelationSingle,
     return true;
   },
 
-  handleModel: function(relation, remoteData)
+  handleModel: function(relation, remoteData, ignoreLoaded)
   {
     return function(related)
     {
@@ -173,7 +173,7 @@ extend( Relation, RelationSingle,
 
       Rekord.debug( this.debugLoaded, this, model, relation, related );
 
-      if ( relation.loaded === false )
+      if ( relation.loaded === false || ignoreLoaded )
       {
         if ( related && !related.$isDeleted() )
         {

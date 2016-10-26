@@ -217,14 +217,14 @@ extend( Relation, RelationMultiple,
     }
   },
 
-  handleModel: function(relation, remoteData)
+  handleModel: function(relation, remoteData, ignoreLoaded)
   {
     return function (related)
     {
       var pending = relation.pending;
       var key = related.$key();
 
-      if ( key in pending )
+      if ( key in pending || ignoreLoaded )
       {
         Rekord.debug( this.debugInitialGrabbed, this, relation, related );
 

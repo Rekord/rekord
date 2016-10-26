@@ -990,3 +990,62 @@ test( 'relation true', function(assert)
 
   strictEqual( l0.relation_true_task.length, 4 );
 });
+
+test( 'sync', function(assert)
+{
+  var prefix = 'hasMany_sync_';
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['list_id', 'name', 'done']
+  });
+
+  var TaskList = Rekord({
+    name: prefix + 'list',
+    fields: ['name'],
+    hasMany: {
+      tasks: {
+        model: Task,
+        foreign: 'list_id',
+        comparator: 'name'
+      }
+    }
+  });
+
+  var t0 = Task.create({name: 't0'});
+  var t1 = Task.create({name: 't1', list_id: 2});
+  var t2 = Task.create({name: 't2'});
+  var t3 = Task.create({name: 't3', list_id: 2});
+
+  var l0 = TaskList.create({id: 2, name: 'l0'});
+
+  strictEqual( l0.tasks.length, 2 );
+  strictEqual( l0.tasks[0], t1 );
+  strictEqual( l0.tasks[1], t3 );
+
+  l0.tasks.sync();
+
+  strictEqual( l0.tasks.length, 2 );
+  strictEqual( l0.tasks[0], t1 );
+  strictEqual( l0.tasks[1], t3 );
+
+  t1.list_id = 3;
+
+  l0.tasks.sync();
+
+  strictEqual( l0.tasks.length, 2 );
+  strictEqual( l0.tasks[0], t1 );
+  strictEqual( l0.tasks[1], t3 );
+
+  l0.tasks.sync( true );
+
+  strictEqual( l0.tasks.length, 1 );
+  strictEqual( l0.tasks[0], t3 );
+
+  t0.list_id = 2;
+  l0.tasks.sync();
+
+  strictEqual( l0.tasks.length, 2 );
+  strictEqual( l0.tasks[0], t0 );
+  strictEqual( l0.tasks[1], t3 );
+});

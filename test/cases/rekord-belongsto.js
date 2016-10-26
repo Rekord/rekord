@@ -513,3 +513,46 @@ test( 'clone', function(assert)
   notStrictEqual( a1, a0 );
   strictEqual( a1.creator, a0.creator );
 });
+
+test( 'sync', function(assert)
+{
+  var prefix = 'belongsTo_sync_';
+
+  var TaskList = Rekord({
+    name: prefix + 'list',
+    fields: ['name']
+  });
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['list_id', 'name', 'done'],
+    belongsTo: {
+      list: {
+        model: TaskList,
+        local: 'list_id'
+      }
+    }
+  });
+
+  var l0 = TaskList.create({name: 'l0'});
+  var l1 = TaskList.create({name: 'l1'});
+  var l2 = TaskList.create({name: 'l2'});
+
+  var t0 = Task.create({list_id: l0.id});
+
+  strictEqual( t0.list, l0 );
+
+  t0.list_id = null;
+  t0.$sync( 'list' );
+
+  strictEqual( t0.list, l0 );
+
+  t0.$sync( 'list', true );
+
+  strictEqual( t0.list, null );
+
+  t0.list_id = l1.id;
+  t0.$sync( 'list' );
+
+  strictEqual( t0.list, l1 );
+});

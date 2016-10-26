@@ -127,7 +127,12 @@ setProperties( Relation.prototype,
 
   },
 
-  unrelate: function(model, input)
+  unrelate: function(model, input, remoteData)
+  {
+
+  },
+
+  sync: function(model, removeUnrelated)
   {
 
   },
@@ -224,9 +229,9 @@ setProperties( Relation.prototype,
     return new RelationCollection( this.model.Database, model, this );
   },
 
-  createCollection: function()
+  createCollection: function(initial)
   {
-    return new ModelCollection( this.model.Database );
+    return new ModelCollection( this.model.Database, initial );
   },
 
   parseModel: function(input, remoteData)

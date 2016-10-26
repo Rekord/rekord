@@ -142,6 +142,38 @@ extend( RelationMultiple, HasMany,
     this.setProperty( relation );
   }),
 
+  sync: function(model, removeUnrelated)
+  {
+    var relation = model.$relations[ this.name ];
+
+    if ( relation )
+    {
+      var existing = relation.related;
+      var remoteData = true;
+      var dontClear = true;
+      var relator = this;
+
+      var onRelated = function(related)
+      {
+        if ( removeUnrelated )
+        {
+          var given = this.createCollection();
+          given.reset( related );
+
+          existing.each(function(existingModel)
+          {
+            if ( !given.has( existingModel.$key() ) )
+            {
+              relator.removeModel( relation, existingModel, remoteData, dontClear );
+            }
+          });
+        }
+      };
+
+      this.ready( this.handleLazyLoad( relation, onRelated ) );
+    }
+  },
+
   postClone: function(model, clone, properties)
   {
     var related = this.get( model );
@@ -234,13 +266,18 @@ extend( RelationMultiple, HasMany,
     };
   },
 
-  handleLazyLoad: function(relation)
+  handleLazyLoad: function(relation, onRelated)
   {
     return function (relatedDatabase)
     {
       var related = relatedDatabase.filter( relation.isRelated );
 
       Rekord.debug( Rekord.Debugs.HASMANY_LAZY_LOAD, this, relation, related );
+
+      if ( onRelated )
+      {
+        onRelated.call( this, related );
+      }
 
       if ( related.length )
       {

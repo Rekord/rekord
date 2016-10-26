@@ -200,7 +200,7 @@ test( 'isRelated', function(assert)
   ok( u0.groups.isRelated( g1 ) );
   ok( u0.groups.isRelated( [g2] ) );
   ok( u0.groups.isRelated( [g0.id] ) );
-  
+
   g1.$remove();
 
   notOk( u0.groups.isRelated( g1 ) );
@@ -209,7 +209,7 @@ test( 'isRelated', function(assert)
 test( 'get', function(assert)
 {
   var prefix = 'hasManyThrough_get_';
-  
+
   var test = createUserGroups1( prefix );
   var User = test.User;
   var Group = test.Group;
@@ -229,7 +229,7 @@ test( 'get', function(assert)
 test( 'encode', function(assert)
 {
   var prefix = 'hasManyThrough_encode_';
-  
+
   var userOptions = {
     save: Rekord.Save.Model,
     store: Rekord.Store.Model
@@ -248,12 +248,12 @@ test( 'encode', function(assert)
   var storing0 = u0.$toJSON( false );
 
   deepEqual( saving0, {
-    id: u0.id, name: u0.name, 
+    id: u0.id, name: u0.name,
     groups: [ g0.$saved, g1.$saved ]
   });
 
   deepEqual( storing0, {
-    id: u0.id, name: u0.name, 
+    id: u0.id, name: u0.name,
     groups: [ g0.$local, g1.$local ]
   });
 
@@ -263,12 +263,12 @@ test( 'encode', function(assert)
   var storing1 = u0.$toJSON( false );
 
   deepEqual( saving1, {
-    id: u0.id, name: u0.name, 
+    id: u0.id, name: u0.name,
     groups: []
   });
 
   deepEqual( storing1, {
-    id: u0.id, name: u0.name, 
+    id: u0.id, name: u0.name,
     groups: []
   });
 });
@@ -276,7 +276,7 @@ test( 'encode', function(assert)
 test( 'auto save parent', function(assert)
 {
   var prefix = 'hasManyThrough_auto_save_parent_';
-  
+
   var userOptions = {
     save: Rekord.Save.Model
   };
@@ -313,7 +313,7 @@ test( 'auto save parent', function(assert)
 test( 'test ninja through remove', function(assert)
 {
   var prefix = 'hasManyThrough_ninja_through_remove_';
-  
+
   var test = createUserGroups1( prefix );
   var User = test.User;
   var Group = test.Group;
@@ -408,7 +408,7 @@ test( 'boot', function(assert)
   strictEqual( ug3.user_id, 1 );
 });
 
-test( 'wait until dependents are saved', function(assert) 
+test( 'wait until dependents are saved', function(assert)
 {
   var timer = assert.timer();
   var prefix = 'hasManyThrough_wait_dependents_';
@@ -455,7 +455,7 @@ test( 'wait until dependents are saved', function(assert)
   notOk( ug1.$isSaved() );
   notOk( ug2.$isSaved() );
   notOk( u0.$isSaved() );
-  
+
   urest.delay = 2;
   ugrest.delay = 2;
 
@@ -547,4 +547,46 @@ test( 'clone', function(assert)
   strictEqual( u1g1.user, u1 );
   strictEqual( u1g0.group, g0 );
   strictEqual( u1g1.group, g1 );
+});
+
+test( 'sync', function(assert)
+{
+  var prefix = 'hasManyThrough_sync_';
+
+  var options = {
+    listenForRelated: false,
+    comparator: 'name'
+  };
+  var test = createUserGroups2( prefix, options, options );
+  var User = test.User;
+  var Group = test.Group;
+  var UserGroup = test.UserGroup;
+
+  var u0 = User.create({id: 1, name: 'u0'});
+  var g0 = Group.create({id: 2, name: 'g0'});
+  var g1 = Group.create({id: 3, name: 'g1'});
+  var g2 = Group.create({id: 4, name: 'g2'});
+  var ug00 = UserGroup.create({user_id: 1, group_id: 2});
+  var ug01 = UserGroup.create({user_id: 1, group_id: 3});
+
+  strictEqual( u0.groups.length, 0 );
+
+  u0.groups.sync();
+
+  strictEqual( u0.groups.length, 2 );
+  strictEqual( u0.groups[0], g0 );
+  strictEqual( u0.groups[1], g1 );
+
+  var ug02 = UserGroup.create({user_id: 1, group_id: 4});
+
+  strictEqual( u0.groups.length, 2 );
+  strictEqual( u0.groups[0], g0 );
+  strictEqual( u0.groups[1], g1 );
+
+  u0.groups.sync();
+
+  strictEqual( u0.groups.length, 3 );
+  strictEqual( u0.groups[0], g0 );
+  strictEqual( u0.groups[1], g1 );
+  strictEqual( u0.groups[2], g2 );
 });
