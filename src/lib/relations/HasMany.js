@@ -290,11 +290,7 @@ extend( RelationMultiple, HasMany,
       this.updateForeignKey( related, model, remoteData );
 
       this.sort( relation );
-
-      if ( !remoteData )
-      {
-        this.checkSave( relation );
-      }
+      this.checkSave( relation, remoteData );
     }
 
     return adding;
@@ -349,7 +345,7 @@ extend( RelationMultiple, HasMany,
       }
 
       this.sort( relation );
-      this.checkSave( relation );
+      this.checkSave( relation, remoteData );
     }
 
     delete pending[ key ];

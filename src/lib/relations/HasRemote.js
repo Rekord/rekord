@@ -135,11 +135,7 @@ extend( RelationMultiple, HasRemote,
       }
 
       this.sort( relation );
-
-      if ( !remoteData )
-      {
-        this.checkSave( relation );
-      }
+      this.checkSave( relation, remoteData );
     }
 
     return adding;
@@ -168,7 +164,7 @@ extend( RelationMultiple, HasRemote,
       related.$off( Model.Events.Change, relation.onChange );
 
       this.sort( relation );
-      this.checkSave( relation );
+      this.checkSave( relation, remoteData );
     }
 
     delete pending[ key ];

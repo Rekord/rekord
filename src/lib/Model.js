@@ -334,23 +334,23 @@ setProperties( Model.prototype,
     this.$db.decode( this );
   },
 
-  $relate: function(prop, relate)
+  $relate: function(prop, relate, remoteData)
   {
     var relation = this.$getRelation( prop );
 
     if ( relation )
     {
-      relation.relate( this, relate );
+      relation.relate( this, relate, remoteData );
     }
   },
 
-  $unrelate: function(prop, unrelated)
+  $unrelate: function(prop, unrelated, remoteData)
   {
     var relation = this.$getRelation( prop );
 
     if ( relation )
     {
-      relation.unrelate( this, unrelated );
+      relation.unrelate( this, unrelated, remoteData );
     }
   },
 

@@ -126,7 +126,7 @@ extend( Relation, RelationSingle,
 
       relation.parent.$dependents.remove( related );
 
-      if ( !dontClear )
+      if ( !dontClear && !remoteData )
       {
         if ( this.clearKey )
         {

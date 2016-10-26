@@ -4756,23 +4756,23 @@ setProperties( Model.prototype,
     this.$db.decode( this );
   },
 
-  $relate: function(prop, relate)
+  $relate: function(prop, relate, remoteData)
   {
     var relation = this.$getRelation( prop );
 
     if ( relation )
     {
-      relation.relate( this, relate );
+      relation.relate( this, relate, remoteData );
     }
   },
 
-  $unrelate: function(prop, unrelated)
+  $unrelate: function(prop, unrelated, remoteData)
   {
     var relation = this.$getRelation( prop );
 
     if ( relation )
     {
-      relation.unrelate( this, unrelated );
+      relation.unrelate( this, unrelated, remoteData );
     }
   },
 
@@ -10175,12 +10175,15 @@ extendArray( ModelCollection, RelationCollection,
    * @param {modelInput|modelInput[]} [input] -
    *    The model or array of models to relate. If input isn't specified, all
    *    models currently related are unrelated.
+   * @param {boolean} [remoteData=false] -
+   *    Whether this change is due to remote changes or changes that should not
+   *    trigger removes or saves.
    * @return {Rekord.RelationCollection} -
    *    The reference to this collection.
    */
-  set: function(input)
+  set: function(input, remoteData)
   {
-    this.relator.set( this.model, input );
+    this.relator.set( this.model, input, remoteData );
 
     return this;
   },
@@ -10193,12 +10196,15 @@ extendArray( ModelCollection, RelationCollection,
    * @memberof Rekord.RelationCollection#
    * @param {modelInput|modelInput[]} input -
    *    The model or array of models to relate.
+   * @param {boolean} [remoteData=false] -
+   *    Whether this change is due to remote changes or changes that should not
+   *    trigger removes or saves.
    * @return {Rekord.RelationCollection} -
    *    The reference to this collection.
    */
-  relate: function(input)
+  relate: function(input, remoteData)
   {
-    this.relator.relate( this.model, input );
+    this.relator.relate( this.model, input, remoteData );
 
     return this;
   },
@@ -10212,12 +10218,15 @@ extendArray( ModelCollection, RelationCollection,
    * @memberof Rekord.RelationCollection#
    * @param {modelInput|modelInput[]} input -
    *    The model or array of models to relate.
+   * @param {boolean} [remoteData=false] -
+   *    Whether this change is due to remote changes or changes that should not
+   *    trigger removes or saves.
    * @return {Rekord.RelationCollection} -
    *    The reference to this collection.
    */
-  unrelate: function(input)
+  unrelate: function(input, remoteData)
   {
-    this.relator.unrelate( this.model, input );
+    this.relator.unrelate( this.model, input, remoteData );
 
     return this;
   },
@@ -12790,7 +12799,7 @@ extend( Relation, RelationSingle,
 
       relation.parent.$dependents.remove( related );
 
-      if ( !dontClear )
+      if ( !dontClear && !remoteData )
       {
         if ( this.clearKey )
         {
@@ -13752,11 +13761,7 @@ extend( RelationMultiple, HasMany,
       this.updateForeignKey( related, model, remoteData );
 
       this.sort( relation );
-
-      if ( !remoteData )
-      {
-        this.checkSave( relation );
-      }
+      this.checkSave( relation, remoteData );
     }
 
     return adding;
@@ -13811,7 +13816,7 @@ extend( RelationMultiple, HasMany,
       }
 
       this.sort( relation );
-      this.checkSave( relation );
+      this.checkSave( relation, remoteData );
     }
 
     delete pending[ key ];
@@ -14520,11 +14525,7 @@ extend( RelationMultiple, HasRemote,
       }
 
       this.sort( relation );
-
-      if ( !remoteData )
-      {
-        this.checkSave( relation );
-      }
+      this.checkSave( relation, remoteData );
     }
 
     return adding;
@@ -14553,7 +14554,7 @@ extend( RelationMultiple, HasRemote,
       related.$off( Model.Events.Change, relation.onChange );
 
       this.sort( relation );
-      this.checkSave( relation );
+      this.checkSave( relation, remoteData );
     }
 
     delete pending[ key ];

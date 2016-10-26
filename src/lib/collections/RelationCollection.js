@@ -57,12 +57,15 @@ extendArray( ModelCollection, RelationCollection,
    * @param {modelInput|modelInput[]} [input] -
    *    The model or array of models to relate. If input isn't specified, all
    *    models currently related are unrelated.
+   * @param {boolean} [remoteData=false] -
+   *    Whether this change is due to remote changes or changes that should not
+   *    trigger removes or saves.
    * @return {Rekord.RelationCollection} -
    *    The reference to this collection.
    */
-  set: function(input)
+  set: function(input, remoteData)
   {
-    this.relator.set( this.model, input );
+    this.relator.set( this.model, input, remoteData );
 
     return this;
   },
@@ -75,12 +78,15 @@ extendArray( ModelCollection, RelationCollection,
    * @memberof Rekord.RelationCollection#
    * @param {modelInput|modelInput[]} input -
    *    The model or array of models to relate.
+   * @param {boolean} [remoteData=false] -
+   *    Whether this change is due to remote changes or changes that should not
+   *    trigger removes or saves.
    * @return {Rekord.RelationCollection} -
    *    The reference to this collection.
    */
-  relate: function(input)
+  relate: function(input, remoteData)
   {
-    this.relator.relate( this.model, input );
+    this.relator.relate( this.model, input, remoteData );
 
     return this;
   },
@@ -94,12 +100,15 @@ extendArray( ModelCollection, RelationCollection,
    * @memberof Rekord.RelationCollection#
    * @param {modelInput|modelInput[]} input -
    *    The model or array of models to relate.
+   * @param {boolean} [remoteData=false] -
+   *    Whether this change is due to remote changes or changes that should not
+   *    trigger removes or saves.
    * @return {Rekord.RelationCollection} -
    *    The reference to this collection.
    */
-  unrelate: function(input)
+  unrelate: function(input, remoteData)
   {
-    this.relator.unrelate( this.model, input );
+    this.relator.unrelate( this.model, input, remoteData );
 
     return this;
   },
