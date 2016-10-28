@@ -1,9 +1,10 @@
 {
   "name": "rekord",
-  "version": "1.4.7",
+  "version": "1.4.8",
   "description": "A javascript REST ORM that is offline and real-time capable http://rekord.github.io/rekord/",
   "author": "Philip Diffenderfer",
   "license": "MIT",
+  "main": "build/rekord.js",
   "repository": {
     "type": "git",
     "url": "git://github.com/Rekord/rekord.git"
