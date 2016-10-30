@@ -1,7 +1,4 @@
 
-  /* Top-Level Function */
-  global.Rekord = Rekord;
-
   /* Classes */
   Rekord.Model = Model;
   Rekord.Database = Database;
@@ -139,4 +136,6 @@
   Rekord.saveWhere = saveWhere;
   Rekord.createWhere = createWhere;
 
-})(this);
+  return Rekord;
+
+}));
