@@ -1,11 +1,11 @@
-/* rekord 1.4.9 - A javascript REST ORM that is offline and real-time capable http://rekord.github.io/rekord/ by Philip Diffenderfer */
+/* rekord 1.4.10 - A javascript REST ORM that is offline and real-time capable http://rekord.github.io/rekord/ by Philip Diffenderfer */
 // UMD (Universal Module Definition)
 (function (root, factory)
 {
   if (typeof define === 'function' && define.amd) // jshint ignore:line
   {
     // AMD. Register as an anonymous module.
-    define('Rekord', [], function() { // jshint ignore:line
+    define('rekord', [], function() { // jshint ignore:line
       return factory(root);
     });
   }
@@ -2891,7 +2891,13 @@ Rekord.setLive = function(factory, overwrite)
 
 
 // Initial online
-Rekord.online = global.navigator.onLine !== false;
+
+Rekord.isOnline = function()
+{
+  return !global.navigator || global.navigator.onLine !== false;
+};
+
+Rekord.online = Rekord.isOnline();
 
 Rekord.forceOffline = false;
 
@@ -2934,7 +2940,7 @@ Rekord.listenToNetworkStatus = function()
 // Check to see if the network status has changed.
 Rekord.checkNetworkStatus = function()
 {
-  var online = global.navigator.onLine;
+  var online = Rekord.isOnline();
 
   if ( Rekord.forceOffline )
   {

@@ -4,7 +4,7 @@
   if (typeof define === 'function' && define.amd) // jshint ignore:line
   {
     // AMD. Register as an anonymous module.
-    define('Rekord', [], function() { // jshint ignore:line
+    define('rekord', [], function() { // jshint ignore:line
       return factory(root);
     });
   }

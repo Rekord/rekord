@@ -1,6 +1,12 @@
 
 // Initial online
-Rekord.online = global.navigator.onLine !== false;
+
+Rekord.isOnline = function()
+{
+  return !global.navigator || global.navigator.onLine !== false;
+};
+
+Rekord.online = Rekord.isOnline();
 
 Rekord.forceOffline = false;
 
@@ -43,7 +49,7 @@ Rekord.listenToNetworkStatus = function()
 // Check to see if the network status has changed.
 Rekord.checkNetworkStatus = function()
 {
-  var online = global.navigator.onLine;
+  var online = Rekord.isOnline();
 
   if ( Rekord.forceOffline )
   {
