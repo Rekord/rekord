@@ -745,6 +745,53 @@ test( 'search single', function(assert)
   timer.run();
 });
 
+test( 'searchAt success', function(assert)
+{
+  var timer = assert.timer();
+  var prefix = 'Rekord_searchAt_success_';
+
+  expect( 4 );
+
+  var Todo = Rekord({
+    name: prefix + 'todo',
+    fields: ['name', 'done'],
+    load: Rekord.Load.None
+  });
+
+  var remote = Todo.Database.rest;
+
+  remote.queries.put( 'http://rekord.io', [
+    {id: 1, name: 't1', done: true},
+    {id: 2, name: 't2', done: false},
+    {id: 3, name: 't3', done: true}
+  ]);
+
+  remote.delay = 1;
+
+  var p = Todo.searchAt( 1, 'http://rekord.io' );
+
+  expect( 4 );
+
+  p.complete(function()
+  {
+    ok( true, 'completed' );
+  });
+
+  p.success(function(model)
+  {
+    ok( true, 'success' );
+    isInstance( model, Todo, 'model is Todo' );
+    strictEqual( 2, model.id, 'correct model' );
+  });
+
+  p.failure(function()
+  {
+    ok( false, 'failure' );
+  });
+
+  timer.run();
+});
+
 test( 'ready', function(assert)
 {
   var prefix = 'Rekord_ready_';
