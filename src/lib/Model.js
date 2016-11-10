@@ -125,7 +125,7 @@ Class.create( Model,
         return;
       }
 
-      this.$db.all[ key ] = this;
+      this.$db.addReference( this, key );
       this.$set( props, undefined, remoteData );
     }
     else
@@ -226,7 +226,7 @@ Class.create( Model,
     // in the all map and set the cached key.
     if ( isValue( key ) )
     {
-      this.$db.all[ key ] = this;
+      this.$db.addReference( this, key );
       this.$$key = key;
     }
 
@@ -685,7 +685,7 @@ Class.create( Model,
       }
 
       delete db.all[ oldKey ];
-      db.all[ newKey ] = this;
+      db.addReference( this, newKey );
 
       this.$$key = newKey;
 

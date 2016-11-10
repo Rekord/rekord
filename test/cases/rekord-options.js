@@ -1086,6 +1086,30 @@ test( 'events global default', function(assert)
   delete Rekord.Defaults.events;
 });
 
+test( 'noReferences', function(assert)
+{
+  var prefix = 'noReferences_';
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['name', 'done'],
+    noReferences: true
+  });
+
+  deepEqual( Task.Database.all, {} );
+  strictEqual( Task.all().length, 0 );
+
+  var t0 = new Task({name: 't0'});
+
+  deepEqual( Task.Database.all, {} );
+  strictEqual( Task.all().length, 0 );
+
+  t0.$save();
+
+  deepEqual( Task.Database.all, {} );
+  strictEqual( Task.all().length, 0 );
+});
+
 test( 'encodings decodings', function(assert)
 {
   var prefix = 'encodings_decodings_';

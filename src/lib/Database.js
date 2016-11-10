@@ -196,6 +196,7 @@ var Defaults = Database.Defaults =
   cache:                Cache.All,
   fullSave:             false,
   fullPublish:          false,
+  noReferences:         false,
   encodings:            {},
   decodings:            {},
   prepare:              noop,
@@ -523,7 +524,7 @@ Class.create( Database,
 
     for (var i = 0; i < keys.length; i++)
     {
-      db.all[ keys[ i ] ] = models[ i ];
+      db.addReference( models[ i ], keys[ i ] );
     }
   },
 
@@ -571,7 +572,7 @@ Class.create( Database,
         key = model.$setKey( db.keyHandler.getKey( decoded, true ) );
       }
 
-      db.all[ key ] = model;
+      db.addReference( model, key );
 
       if ( !model.$saved )
       {
@@ -641,7 +642,7 @@ Class.create( Database,
 
       if ( !db.models.has( key ) )
       {
-        db.models.put( key, model );
+        db.saveReference( model, key );
         db.trigger( Database.Events.ModelAdded, [model, true] );
       }
     }
@@ -686,7 +687,7 @@ Class.create( Database,
 
     if ( !db.models.has( key ) )
     {
-      db.models.put( key, model );
+      db.saveReference( model, key );
       db.trigger( Database.Events.ModelAdded, [model, remoteData] );
     }
 
@@ -827,7 +828,7 @@ Class.create( Database,
             Rekord.debug( Rekord.Debugs.LOCAL_LOAD_SAVED, db, model );
           }
 
-          db.models.put( key, model, true );
+          db.saveReference( model, key, true );
         }
       }
     });
@@ -881,7 +882,7 @@ Class.create( Database,
         if ( model.$status !== Model.Status.Removed )
         {
           db.loaded[ key ] = model;
-          db.all[ key ] = model;
+          db.addReference( model, key );
         }
       }
 
@@ -1134,9 +1135,20 @@ Class.create( Database,
     return new this.Model( data, remoteData );
   },
 
-  addReference: function(model)
+  addReference: function(model, key)
   {
-    this.all[ model.$key() ] = model;
+    if (!this.noReferences)
+    {
+      this.all[ key || model.$key() ] = model;
+    }
+  },
+
+  saveReference: function(model, key, delaySort)
+  {
+    if ( !this.noReferences )
+    {
+      this.models.put( key || model.$key(), model, delaySort );
+    }
   },
 
   // Save the model
@@ -1162,7 +1174,7 @@ Class.create( Database,
     }
     else
     {
-      db.models.put( key, model );
+      db.saveReference( model, key );
       db.trigger( Database.Events.ModelAdded, [model] );
       db.updated();
 
