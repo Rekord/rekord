@@ -24,6 +24,8 @@
 }(this, function(global, undefined)
 {
 
+  var win = typeof window !== 'undefined' ? window : global;   // jshint ignore:line
+
 
 var AP = Array.prototype;
 
@@ -2122,11 +2124,11 @@ function createPropertyResolver(properties)
 }
 
 
-var Settings = global.RekordSettings || {};
+var Settings = global.RekordSettings || win.RekordSettings || {};
 
-if ( global.document && global.document.currentScript )
+if ( win.document && win.document.currentScript )
 {
-  var script = global.document.currentScript;
+  var script = win.document.currentScript;
 
   if (script.getAttribute('native-array') !== null)
   {
@@ -3023,7 +3025,7 @@ Rekord.setLive = function(factory, overwrite)
 
 Rekord.isOnline = function()
 {
-  return !global.navigator || global.navigator.onLine !== false;
+  return !win.navigator || win.navigator.onLine !== false;
 };
 
 Rekord.online = Rekord.isOnline();
@@ -3054,15 +3056,15 @@ Rekord.setOffline = function()
 // online/offline detection instead of solely using status codes of 0.
 Rekord.listenToNetworkStatus = function()
 {
-  if (global.addEventListener)
+  if (win.addEventListener)
   {
-    global.addEventListener( Rekord.Events.Online, Rekord.setOnline, false );
-    global.addEventListener( Rekord.Events.Offline, Rekord.setOffline, false );
+    win.addEventListener( Rekord.Events.Online, Rekord.setOnline, false );
+    win.addEventListener( Rekord.Events.Offline, Rekord.setOffline, false );
   }
   else
   {
-    global.document.body.ononline = Rekord.setOnline;
-    global.document.body.onoffline = Rekord.setOffline;
+    win.document.body.ononline = Rekord.setOnline;
+    win.document.body.onoffline = Rekord.setOffline;
   }
 };
 
@@ -16415,20 +16417,20 @@ Rekord.fileProperties =
 
 function isFilesSupported()
 {
-  return global.File && global.FileReader && global.FileList;
+  return win.File && win.FileReader && win.FileList;
 }
 
 function toFile(input)
 {
-  if ( input instanceof global.File )
+  if ( input instanceof win.File )
   {
     return input;
   }
-  else if ( input instanceof global.Blob )
+  else if ( input instanceof win.Blob )
   {
     return input;
   }
-  else if ( input instanceof global.FileList && input.length > 0 )
+  else if ( input instanceof win.FileList && input.length > 0 )
   {
     return input[0];
   }
@@ -16503,7 +16505,7 @@ function fileReader(method, converter, options)
 {
   var processor = Rekord.fileProcessors[ options.processor ];
 
-  if ( !(method in global.FileReader.prototype) )
+  if ( !(method in win.FileReader.prototype) )
   {
     Rekord.trigger( Rekord.Events.FilesNotSupported );
   }
@@ -16514,7 +16516,7 @@ function fileReader(method, converter, options)
 
     if ( file !== false )
     {
-      var reader = new global.FileReader();
+      var reader = new win.FileReader();
       var result;
       var done = false;
 

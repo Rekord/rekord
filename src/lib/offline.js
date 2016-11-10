@@ -3,7 +3,7 @@
 
 Rekord.isOnline = function()
 {
-  return !global.navigator || global.navigator.onLine !== false;
+  return !win.navigator || win.navigator.onLine !== false;
 };
 
 Rekord.online = Rekord.isOnline();
@@ -34,15 +34,15 @@ Rekord.setOffline = function()
 // online/offline detection instead of solely using status codes of 0.
 Rekord.listenToNetworkStatus = function()
 {
-  if (global.addEventListener)
+  if (win.addEventListener)
   {
-    global.addEventListener( Rekord.Events.Online, Rekord.setOnline, false );
-    global.addEventListener( Rekord.Events.Offline, Rekord.setOffline, false );
+    win.addEventListener( Rekord.Events.Online, Rekord.setOnline, false );
+    win.addEventListener( Rekord.Events.Offline, Rekord.setOffline, false );
   }
   else
   {
-    global.document.body.ononline = Rekord.setOnline;
-    global.document.body.onoffline = Rekord.setOffline;
+    win.document.body.ononline = Rekord.setOnline;
+    win.document.body.onoffline = Rekord.setOffline;
   }
 };
 

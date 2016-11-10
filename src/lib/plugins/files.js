@@ -67,20 +67,20 @@ Rekord.fileProperties =
 
 function isFilesSupported()
 {
-  return global.File && global.FileReader && global.FileList;
+  return win.File && win.FileReader && win.FileList;
 }
 
 function toFile(input)
 {
-  if ( input instanceof global.File )
+  if ( input instanceof win.File )
   {
     return input;
   }
-  else if ( input instanceof global.Blob )
+  else if ( input instanceof win.Blob )
   {
     return input;
   }
-  else if ( input instanceof global.FileList && input.length > 0 )
+  else if ( input instanceof win.FileList && input.length > 0 )
   {
     return input[0];
   }
@@ -155,7 +155,7 @@ function fileReader(method, converter, options)
 {
   var processor = Rekord.fileProcessors[ options.processor ];
 
-  if ( !(method in global.FileReader.prototype) )
+  if ( !(method in win.FileReader.prototype) )
   {
     Rekord.trigger( Rekord.Events.FilesNotSupported );
   }
@@ -166,7 +166,7 @@ function fileReader(method, converter, options)
 
     if ( file !== false )
     {
-      var reader = new global.FileReader();
+      var reader = new win.FileReader();
       var result;
       var done = false;
 

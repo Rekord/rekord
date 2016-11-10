@@ -1,9 +1,9 @@
 
-var Settings = global.RekordSettings || {};
+var Settings = global.RekordSettings || win.RekordSettings || {};
 
-if ( global.document && global.document.currentScript )
+if ( win.document && win.document.currentScript )
 {
-  var script = global.document.currentScript;
+  var script = win.document.currentScript;
 
   if (script.getAttribute('native-array') !== null)
   {

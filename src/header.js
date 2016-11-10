@@ -22,3 +22,5 @@
   }
 }(this, function(global, undefined)
 {
+
+  var win = typeof window !== 'undefined' ? window : global;   // jshint ignore:line
