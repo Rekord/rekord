@@ -2,8 +2,7 @@ function RelationSingle()
 {
 }
 
-
-extend( Relation, RelationSingle,
+Class.extend( Relation, RelationSingle,
 {
 
   debugInit: null,

@@ -36,7 +36,7 @@ function ModelCollection(database, models, remoteData)
  * @member {Rekord.Database} database
  */
 
-extendArray( Collection, ModelCollection,
+Class.extend( Collection, ModelCollection,
 {
 
   /**
@@ -59,7 +59,7 @@ extendArray( Collection, ModelCollection,
    */
   init: function(database, models, remoteData)
   {
-    setProperties(this, {
+    Class.props(this, {
       database: database,
       map: new Map()
     });
@@ -148,7 +148,7 @@ extendArray( Collection, ModelCollection,
   {
     var filter = createWhere( whereProperties, whereValue, whereEquals );
 
-    return new FilteredModelCollection( this, filter );
+    return FilteredModelCollection.create( this, filter );
   },
 
   /**
@@ -1264,7 +1264,7 @@ extendArray( Collection, ModelCollection,
       }
     }
 
-    return new ModelCollection( this.database, source, true );
+    return ModelCollection.create( this.database, source, true );
   },
 
   /**
@@ -1277,7 +1277,7 @@ extendArray( Collection, ModelCollection,
    */
   cloneEmpty: function()
   {
-    return new ModelCollection( this.database );
+    return ModelCollection.create( this.database );
   }
 
 });

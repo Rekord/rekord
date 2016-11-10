@@ -20,7 +20,7 @@ Page.Events =
   Changes:      'change'
 };
 
-extendArray( Array, Page,
+Class.extend( Array, Page,
 {
 
   setPageSize: function(pageSize)
@@ -196,5 +196,6 @@ extendArray( Array, Page,
 
 });
 
-addEventful( Page.prototype );
-addEventFunction( Page.prototype, 'change', Page.Events.Changes );
+addEventful( Page );
+
+addEventFunction( Page, 'change', Page.Events.Changes );

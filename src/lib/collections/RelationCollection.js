@@ -20,7 +20,7 @@
  */
 function RelationCollection(database, model, relator, models, remoteData)
 {
-  setProperties(this, {
+  Class.props(this, {
     model:    model,
     relator:  relator
   });
@@ -42,7 +42,7 @@ function RelationCollection(database, model, relator, models, remoteData)
   * @member {Rekord.Relation} relator
   */
 
-extendArray( ModelCollection, RelationCollection,
+Class.extend( ModelCollection, RelationCollection,
 {
 
   /**
@@ -179,7 +179,7 @@ extendArray( ModelCollection, RelationCollection,
    */
   clone: function()
   {
-    return new RelationCollection( this.database, this.model, this.relator, this, true );
+    return RelationCollection.create( this.database, this.model, this.relator, this, true );
   },
 
   /**
@@ -192,7 +192,7 @@ extendArray( ModelCollection, RelationCollection,
    */
   cloneEmpty: function()
   {
-    return new RelationCollection( this.database, this.model, this.relator );
+    return RelationCollection.create( this.database, this.model, this.relator );
   }
 
 });

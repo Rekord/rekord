@@ -23,7 +23,7 @@ BelongsTo.Defaults =
   discriminatorToModel: {}
 };
 
-extend( RelationSingle, BelongsTo,
+Class.extend( RelationSingle, BelongsTo,
 {
 
   type: 'belongsTo',

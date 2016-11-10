@@ -29,7 +29,7 @@ HasMany.Defaults =
   discriminatorToModel: {}
 };
 
-extend( RelationMultiple, HasMany,
+Class.extend( RelationMultiple, HasMany,
 {
 
   type: 'hasMany',

@@ -4,7 +4,7 @@ function KeySimple(database)
   this.init( database );
 }
 
-extend( KeyHandler, KeySimple,
+Class.extend( KeyHandler, KeySimple,
 {
   getKeys: function(model)
   {

@@ -7,8 +7,9 @@ function Dependents(subject)
   this.subject = subject;
 }
 
-Dependents.prototype =
+Class.create( Dependents,
 {
+
   add: function(model, relator)
   {
     var key = model.$uid();
@@ -79,4 +80,4 @@ Dependents.prototype =
     return true;
   }
 
-};
+});

@@ -20,8 +20,12 @@ function Rekord(options)
 
   var database = new Database( options );
 
-  var model = new Function('return function ' + database.className + '(props, remoteData) { this.$init( props, remoteData ) }')(); // jshint ignore:line
-  model.prototype = new Model( database );
+  var model = Class.dynamic(
+    Model,
+    new Model( database ),
+    database.className,
+    '(props, remoteData) { this.$init( props, remoteData ) }'
+  );
 
   database.Model = model;
   model.Database = database;

@@ -4,7 +4,7 @@ function addEventFunction(target, functionName, events, secret)
   var on = secret ? '$on' : 'on';
   var off = secret ? '$off' : 'off';
 
-  setProperty( target, functionName, function(callback, context)
+  var eventFunction = function(callback, context)
   {
     var subject = this;
     var unlistened = false;
@@ -31,7 +31,16 @@ function addEventFunction(target, functionName, events, secret)
     subject[ on ]( events, listener );
 
     return unlistener;
-  });
+  };
+
+  if (target.$methods)
+  {
+    Class.method( target, functionName, eventFunction );
+  }
+  else
+  {
+    Class.prop( target, functionName, eventFunction );
+  }
 }
 
 /**
@@ -102,7 +111,7 @@ function addEventful(target, secret)
 
     if ( !listeners )
     {
-      setProperty( $this, property, listeners = {} );
+      Class.prop( $this, property, listeners = {} );
     }
 
     for (var i = 0; i < events.length; i++)
@@ -356,24 +365,35 @@ function addEventful(target, secret)
     return this;
   }
 
+  var methods = null;
+
   if ( secret )
   {
-    setProperties(target, {
+    methods = {
       $on: on,
       $once: once,
       $after: after,
       $off: off,
       $trigger: trigger
-    });
+    };
   }
   else
   {
-    setProperties(target, {
+    methods = {
       on: on,
       once: once,
       after: after,
       off: off,
       trigger: trigger
-    });
+    };
+  }
+
+  if ( target.$methods )
+  {
+    Class.methods( target, methods );
+  }
+  else
+  {
+    Class.props( target, methods );
   }
 }

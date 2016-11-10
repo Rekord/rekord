@@ -23,7 +23,7 @@ HasOne.Defaults =
   discriminatorToModel: {}
 };
 
-extend( RelationSingle, HasOne,
+Class.extend( RelationSingle, HasOne,
 {
 
   type: 'hasOne',

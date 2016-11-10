@@ -3,7 +3,7 @@ function RemoveCache(model, cascade)
   this.reset( model, cascade );
 }
 
-extend( Operation, RemoveCache,
+Class.extend( Operation, RemoveCache,
 {
 
   cascading: Cascade.None,

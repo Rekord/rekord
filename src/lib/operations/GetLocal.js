@@ -3,7 +3,7 @@ function GetLocal(model, cascade)
   this.reset( model, cascade );
 }
 
-extend( Operation, GetLocal,
+Class.extend( Operation, GetLocal,
 {
 
   cascading: Cascade.Local,

@@ -30,7 +30,7 @@ HasManyThrough.Defaults =
   discriminatorToModel: {}
 };
 
-extend( RelationMultiple, HasManyThrough,
+Class.extend( RelationMultiple, HasManyThrough,
 {
 
   type: 'hasManyThrough',

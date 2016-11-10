@@ -26,7 +26,7 @@ Search.Defaults =
 {
 };
 
-setProperties( Search.prototype,
+Class.create( Search,
 {
 
   $getDefaults: function()
@@ -38,12 +38,12 @@ setProperties( Search.prototype,
   {
     applyOptions( this, options, this.$getDefaults(), true );
 
-    setProperty( this, '$db', database );
+    Class.prop( this, '$db', database );
 
     this.$append = false;
     this.$url = url;
     this.$set( props );
-    this.$results = new ModelCollection( database );
+    this.$results = ModelCollection.create( database );
     this.$promise = Promise.resolve( this );
 
     if ( run )

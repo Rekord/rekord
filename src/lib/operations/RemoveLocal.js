@@ -3,7 +3,7 @@ function RemoveLocal(model, cascade)
   this.reset( model, cascade );
 }
 
-extend( Operation, RemoveLocal,
+Class.extend( Operation, RemoveLocal,
 {
 
   cascading: Cascade.Local,

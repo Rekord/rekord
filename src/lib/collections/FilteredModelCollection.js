@@ -44,7 +44,7 @@ function FilteredModelCollection(base, filter)
   * @member {whereCallback} filter
   */
 
-extendArray( ModelCollection, FilteredModelCollection,
+Class.extend( ModelCollection, FilteredModelCollection,
 {
 
   /**
@@ -59,7 +59,7 @@ extendArray( ModelCollection, FilteredModelCollection,
   {
     Filtering.bind.apply( this );
 
-    setProperties(this, {
+    Class.props(this, {
       onModelUpdated: bind( this, this.handleModelUpdate )
     });
   },

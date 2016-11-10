@@ -30,13 +30,14 @@ addPlugin(function(model, db, options)
 
     if ( modelEvents.length )
     {
-      var $init = model.prototype.$init;
-
-      setProperty( model.prototype, '$init', function()
+      Class.replace( model, '$init', function($init)
       {
-        $init.apply( this, arguments );
+        return function()
+        {
+          $init.apply( this, arguments );
 
-        applyEventListeners( this, modelEvents );
+          applyEventListeners( this, modelEvents );
+        };
       });
     }
   }

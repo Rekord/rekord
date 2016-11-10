@@ -3,7 +3,7 @@ function RemoveNow(model, cascade)
   this.reset( model, cascade );
 }
 
-extend( Operation, RemoveNow,
+Class.extend( Operation, RemoveNow,
 {
 
   cascading: Cascade.Local,

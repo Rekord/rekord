@@ -44,7 +44,7 @@ function FilteredCollection(base, filter)
   * @member {whereCallback} filter
   */
 
-extendArray( Collection, FilteredCollection,
+Class.extend( Collection, FilteredCollection,
 {
 
   /**

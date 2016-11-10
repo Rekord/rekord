@@ -3,7 +3,7 @@ function RemoveRemote(model, cascade)
   this.reset( model, cascade );
 }
 
-extend( Operation, RemoveRemote,
+Class.extend( Operation, RemoveRemote,
 {
 
   cascading: Cascade.Remote,

@@ -17,7 +17,7 @@ HasList.Defaults =
   comparatorNullsFirst: false
 };
 
-extend( RelationMultiple, HasList,
+Class.extend( RelationMultiple, HasList,
 {
 
   type: 'hasList',

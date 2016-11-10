@@ -97,7 +97,7 @@ addPlugin(function(model, db, options)
 
     db.ignoredFields[ field ] = true;
 
-    replaceMethod( model.prototype, '$save', function($save)
+    Class.replace( model, '$save', function($save)
     {
       return function()
       {

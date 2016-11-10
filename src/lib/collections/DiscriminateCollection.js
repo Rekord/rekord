@@ -14,7 +14,8 @@
  */
 function DiscriminateCollection(collection, discriminator, discriminatorsToModel)
 {
-  setProperties(collection, {
+  Class.props( collection,
+  {
     discriminator: discriminator,
     discriminatorsToModel: discriminatorsToModel
   });
@@ -25,7 +26,7 @@ function DiscriminateCollection(collection, discriminator, discriminatorsToModel
   var clone = collection.clone;
   var cloneEmpty = collection.cloneEmpty;
 
-  setProperties( collection,
+  Class.props( collection,
   {
 
     /**

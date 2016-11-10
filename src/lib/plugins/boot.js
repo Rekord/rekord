@@ -32,7 +32,7 @@ addPlugin(function(model, db, options)
   {
     if ( isArray( input ) )
     {
-      return new ModelCollection( db, input, true );
+      return ModelCollection.create( db, input, true );
     }
     else if ( isObject( input ) )
     {

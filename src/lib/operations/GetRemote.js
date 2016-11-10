@@ -3,7 +3,7 @@ function GetRemote(model, cascade)
   this.reset( model, cascade );
 }
 
-extend( Operation, GetRemote,
+Class.extend( Operation, GetRemote,
 {
 
   cascading: Cascade.Rest,

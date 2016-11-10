@@ -4,7 +4,7 @@ function KeyComposite(database)
   this.init( database );
 }
 
-extend( KeyHandler, KeyComposite,
+Class.extend( KeyHandler, KeyComposite,
 {
   getKeys: function(input, otherFields)
   {

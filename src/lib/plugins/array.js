@@ -23,11 +23,11 @@ addPlugin(function(model, db, options)
    * @return {Rekord.ModelCollection} -
    *    The collection created.
    */
-  model.collect = function(a)
+  model.array = function(a)
   {
     var models = arguments.length > 1 || !isArray(a) ?
       AP.slice.call( arguments ) : a;
 
-    return ModelCollection.create( db, models );
+    return ModelCollection.native( db, models );
   };
 });

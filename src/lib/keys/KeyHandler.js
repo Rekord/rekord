@@ -4,8 +4,9 @@ function KeyHandler()
 
 }
 
-KeyHandler.prototype =
+Class.create( KeyHandler,
 {
+
   init: function(database)
   {
     this.key = database.key;
@@ -63,4 +64,5 @@ KeyHandler.prototype =
 
     return input;
   }
-};
+
+});

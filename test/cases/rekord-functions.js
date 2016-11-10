@@ -438,6 +438,27 @@ test( 'Rekord.saveComparator', function(assert)
   deepEqual( arr1.sort( c1 ), exp1 );
 });
 
+test( 'Rekord.collect', function(assert)
+{
+  var c0 = Rekord.collect([
+    1, 2, 3, 4
+  ]);
+
+  strictEqual( c0.length, 4 );
+  notDeepEqual( c0, [1, 2, 3, 4] );
+  deepEqual( c0.slice(), [1, 2, 3, 4] );
+});
+
+test( 'Rekord.array', function(assert)
+{
+  var c0 = Rekord.array([
+    1, 2, 3, 4
+  ]);
+
+  strictEqual( c0.length, 4 );
+  deepEqual( c0, [1, 2, 3, 4] );
+});
+
 test( 'Rekord.addComparator', function(assert)
 {
   var c0 = Rekord.collect([
@@ -1268,28 +1289,6 @@ test( 'Rekord.addMethods', function(assert)
   for (var prop in x) {
     ok( false, 'oops, it should not be enumerable' );
   }
-});
-
-test( 'Rekord.replaceMethod', function(assert)
-{
-  var am = Rekord.addMethod;
-  var rm = Rekord.replaceMethod;
-
-  var x = {};
-
-  am( x, 'foo', function() {
-    return 'bar';
-  });
-
-  strictEqual( x.foo(), 'bar' );
-
-  rm( x, 'foo', function(old) {
-    return function() {
-      return old() + 'ney'
-    };
-  });
-
-  strictEqual( x.foo(), 'barney' );
 });
 
 test( 'Rekord.applyOptions', function(assert)

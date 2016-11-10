@@ -63,19 +63,22 @@
   Rekord.toArray = toArray;
   Rekord.indexOf = indexOf;
   Rekord.collect = collect;
+  Rekord.array = collectArray;
   Rekord.swap = swap;
   Rekord.reverse = reverse;
   Rekord.isSorted = isSorted;
   Rekord.isPrimitiveArray = isPrimitiveArray;
 
   /* Class Functions */
-  Rekord.extend = extend;
-  Rekord.extendArray = extendArray;
-  Rekord.addMethod = Rekord.setProperty = setProperty;
-  Rekord.addMethods = Rekord.setProperties = setProperties;
-  Rekord.replaceMethod = replaceMethod;
-  Rekord.copyConstructor = copyConstructor;
-  Rekord.factory = factory;
+  Rekord.Settings = Settings;
+  Rekord.Class = Class;
+  Rekord.extend = Class.extend;
+  Rekord.extendArray = Class.extend;
+  Rekord.addMethod = Rekord.setProperty = Class.prop;
+  Rekord.addMethods = Rekord.setProperties = Class.props;
+  Rekord.replaceMethod = Class.replace;
+  Rekord.copyConstructor = Class.copyConstructor;
+  Rekord.factory = Class.factory;
 
   /* Comparator Functions */
   Rekord.Comparators = Comparators;

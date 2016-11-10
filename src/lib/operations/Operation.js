@@ -3,8 +3,9 @@ function Operation()
 {
 }
 
-setProperties( Operation.prototype,
+Class.create( Operation,
 {
+
   reset: function(model, cascade)
   {
     this.model = model;

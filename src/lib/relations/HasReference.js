@@ -15,7 +15,7 @@ HasReference.Defaults =
   dynamic:              false
 };
 
-extend( RelationSingle, HasReference,
+Class.extend( RelationSingle, HasReference,
 {
 
   type: 'hasReference',

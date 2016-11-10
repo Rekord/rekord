@@ -19,7 +19,7 @@ function Database(options)
   this.keyHandler.addToFields( this.fields );
 
   // Properties
-  this.models = new ModelCollection( this );
+  this.models = ModelCollection.create( this );
   this.all = {};
   this.loaded = {};
   this.className = this.className || toCamelCase( this.name );
@@ -209,7 +209,7 @@ var Defaults = Database.Defaults =
   createLive:           defaultCreateLive
 };
 
-setProperties( Database.prototype,
+Class.create( Database,
 {
 
   setStoreEnabled: function(enabled)
@@ -1208,5 +1208,6 @@ setProperties( Database.prototype,
 
 });
 
-addEventful( Database.prototype );
-addEventFunction( Database.prototype, 'change', Database.Events.Changes );
+addEventful( Database );
+
+addEventFunction( Database, 'change', Database.Events.Changes );

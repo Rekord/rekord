@@ -3,7 +3,7 @@ function SaveRemote(model, cascade)
   this.reset( model, cascade );
 }
 
-extend( Operation, SaveRemote,
+Class.extend( Operation, SaveRemote,
 {
 
   cascading: Cascade.Remote,

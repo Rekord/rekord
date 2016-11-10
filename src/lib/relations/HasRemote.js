@@ -20,7 +20,7 @@ HasRemote.Defaults =
   autoRefresh:          false // Model.Events.RemoteGets
 };
 
-extend( RelationMultiple, HasRemote,
+Class.extend( RelationMultiple, HasRemote,
 {
 
   type: 'hasRemote',

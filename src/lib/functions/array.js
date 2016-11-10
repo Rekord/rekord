@@ -102,7 +102,32 @@ function collect(a)
 {
   var values = arguments.length > 1 || !isArray(a) ? Array.prototype.slice.call( arguments ) : a;
 
-  return new Collection( values );
+  return Collection.create( values );
+}
+
+/**
+ * Returns an instance of {@link Rekord.Collection} with the initial values
+ * passed as arguments to this function.
+ *
+ * ```javascript
+ * Rekord.collectArray(1, 2, 3, 4);
+ * Rekord.collectArray([1, 2, 3, 4]); // same as above
+ * Rekord.collectArray();
+ * Rekord.collectArray([]); // same as above
+ * ```
+ *
+ * @memberof Rekord
+ * @param {Any[]|...Any} a
+ *    The initial values in the collection. You can pass an array of values
+ *    or any number of arguments.
+ * @return {Rekord.Collection} -
+ *    A newly created instance containing the given values.
+ */
+function collectArray(a)
+{
+  var values = arguments.length > 1 || !isArray(a) ? Array.prototype.slice.call( arguments ) : a;
+
+  return Collection.native( values );
 }
 
 function swap(a, i, k)

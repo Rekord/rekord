@@ -163,7 +163,7 @@ Collection.Events =
 
 };
 
-extendArray( Array, Collection,
+Class.extend( Array, Collection,
 {
 
   /**
@@ -343,7 +343,7 @@ extendArray( Array, Collection,
   {
     var filter = createWhere( whereProperties, whereValue, whereEquals );
 
-    return new FilteredCollection( this, filter );
+    return FilteredCollection.create( this, filter );
   },
 
   /**
@@ -2065,7 +2065,7 @@ extendArray( Array, Collection,
    */
   clone: function()
   {
-    return new this.constructor( this );
+    return this.constructor.create( this );
   },
 
   /**
@@ -2078,12 +2078,12 @@ extendArray( Array, Collection,
    */
   cloneEmpty: function()
   {
-    return new this.constructor();
+    return this.constructor.create();
   }
 
 });
 
-addEventful( Collection.prototype );
+addEventful( Collection );
 
 /**
  * Adds a listener for change events on this collection.
@@ -2098,4 +2098,4 @@ addEventful( Collection.prototype );
  *    A function to call to stop listening for change events.
  * @see Rekord.Collection#event:changes
  */
-addEventFunction( Collection.prototype, 'change', Collection.Events.Changes );
+addEventFunction( Collection, 'change', Collection.Events.Changes );

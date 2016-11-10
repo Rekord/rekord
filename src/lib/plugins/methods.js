@@ -4,6 +4,6 @@ addPlugin(function(model, db, options)
 
   if ( !isEmpty( methods ) )
   {
-    setProperties( model.prototype, methods );
+    Class.methods( model, methods );
   }
 });

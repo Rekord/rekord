@@ -44,7 +44,7 @@ SearchPaged.Defaults =
   total:       0
 };
 
-extend( Search, SearchPaged,
+Class.extend( Search, SearchPaged,
 {
 
   $getDefaults: function()

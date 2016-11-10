@@ -22,7 +22,7 @@ Relation.Defaults =
   discriminatorToModel: {}
 };
 
-setProperties( Relation.prototype,
+Class.create( Relation,
 {
 
   debugQuery: null,
@@ -58,7 +58,7 @@ setProperties( Relation.prototype,
         throw 'Polymorphic feature is required to use the discriminated option.';
       }
 
-      setProperties( this, Polymorphic );
+      Class.props( this, Polymorphic );
     }
 
     this.setReferences( database, field, options );
@@ -226,12 +226,12 @@ setProperties( Relation.prototype,
 
   createRelationCollection: function(model)
   {
-    return new RelationCollection( this.model.Database, model, this );
+    return RelationCollection.create( this.model.Database, model, this );
   },
 
   createCollection: function(initial)
   {
-    return new ModelCollection( this.model.Database, initial );
+    return ModelCollection.create( this.model.Database, initial );
   },
 
   parseModel: function(input, remoteData)

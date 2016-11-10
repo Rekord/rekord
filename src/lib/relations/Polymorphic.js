@@ -68,12 +68,12 @@ var Polymorphic =
 
   createRelationCollection: function(model)
   {
-    return DiscriminateCollection( new RelationCollection( undefined, model, this ), this.discriminator, this.discriminatorToModel );
+    return DiscriminateCollection( RelationCollection.create( undefined, model, this ), this.discriminator, this.discriminatorToModel );
   },
 
   createCollection: function()
   {
-    return DiscriminateCollection( new ModelCollection(), this.discriminator, this.discriminatorToModel );
+    return DiscriminateCollection( ModelCollection.create(), this.discriminator, this.discriminatorToModel );
   },
 
   ready: function(callback)

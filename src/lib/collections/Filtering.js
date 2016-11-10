@@ -4,7 +4,7 @@ var Filtering = {
 
   bind: function()
   {
-    setProperties(this, {
+    Class.props(this, {
       onAdd:      bind( this, Filtering.handleAdd ),
       onAdds:     bind( this, Filtering.handleAdds ),
       onRemove:   bind( this, Filtering.handleRemove ),
@@ -24,13 +24,13 @@ var Filtering = {
         this.disconnect();
       }
 
-      setProperty( this, 'base', base );
+      Class.prop( this, 'base', base );
 
       this.connect();
     }
 
-    setProperty( this, 'filter', filter );
-    
+    Class.prop( this, 'filter', filter );
+
     this.sync();
 
     return this;
@@ -160,12 +160,12 @@ var Filtering = {
 
   clone: function()
   {
-    return new this.constructor( this.base, this.filter );
+    return this.constructor.create( this.base, this.filter );
   },
 
   cloneEmpty: function()
   {
-    return new this.constructor( this.base, this.filter );
+    return this.constructor.create( this.base, this.filter );
   }
 
 };

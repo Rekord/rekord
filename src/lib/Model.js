@@ -10,7 +10,7 @@
  */
 function Model(db)
 {
-  setProperty( this, '$db', db );
+  Class.prop( this, '$db', db );
 
   /**
    * @property {Database} $db
@@ -98,14 +98,14 @@ Model.Blocked =
   valueOf: true
 };
 
-setProperties( Model.prototype,
+Class.create( Model,
 {
 
   $init: function(props, remoteData)
   {
     this.$status = Model.Status.Synced;
 
-    setProperties(this, {
+    Class.props(this, {
       $operation: null,
       $relations: {},
       $dependents: new Dependents( this ),
@@ -120,7 +120,7 @@ setProperties( Model.prototype,
 
       if ( !isValue( key ) )
       {
-        setProperty( this, '$invalid', true );
+        Class.prop( this, '$invalid', true );
 
         return;
       }
@@ -811,9 +811,9 @@ setProperties( Model.prototype,
 
 });
 
-addEventful( Model.prototype, true );
+addEventful( Model, true );
 
-addEventFunction( Model.prototype, '$change', Model.Events.Changes, true );
+addEventFunction( Model, '$change', Model.Events.Changes, true );
 
 function createModelPromise(model, cascade, restSuccess, restFailure, restOffline, localSuccess, localFailure)
 {

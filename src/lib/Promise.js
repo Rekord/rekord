@@ -4,7 +4,7 @@ function Promise(executor, cancelable)
   this.status = Promise.Status.Pending;
   this.cancelable = cancelable !== false;
 
-  setProperty( this, 'results', null );
+  Class.prop( this, 'results', null );
 
   if ( isFunction( executor ) )
   {
@@ -198,7 +198,7 @@ Promise.singularity = (function()
 
 })();
 
-setProperties( Promise.prototype,
+Class.create( Promise,
 {
   resolve: function()
   {
@@ -351,4 +351,4 @@ setProperties( Promise.prototype,
 
 });
 
-addEventful( Promise.prototype );
+addEventful( Promise );

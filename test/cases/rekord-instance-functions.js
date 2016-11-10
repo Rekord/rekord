@@ -1,5 +1,41 @@
 module( 'Rekord instance functions' );
 
+test( 'collect', function(assert)
+{
+  var Task = Rekord({
+    name: 'task',
+    fields: ['name']
+  });
+
+  var tasks = Task.collect();
+
+  ok( tasks instanceof Array );
+  ok( tasks instanceof Rekord.Collection );
+  notOk( Array.isArray( tasks ) );
+
+  tasks.add(new Task({name: 't0'}));
+
+  strictEqual( tasks.length, 1 );
+});
+
+test( 'array', function(assert)
+{
+  var Task = Rekord({
+    name: 'task',
+    fields: ['name']
+  });
+
+  var tasks = Task.array();
+
+  ok( tasks instanceof Array );
+  notOk( tasks instanceof Rekord.Collection );
+  ok( Array.isArray( tasks ) );
+
+  tasks.add(new Task({name: 't0'}));
+
+  strictEqual( tasks.length, 1 );
+});
+
 test( 'all', function(assert)
 {
   var all = Rekord({

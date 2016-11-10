@@ -128,7 +128,32 @@ function collect(a)
 {
   var values = arguments.length > 1 || !isArray(a) ? Array.prototype.slice.call( arguments ) : a;
 
-  return new Collection( values );
+  return Collection.create( values );
+}
+
+/**
+ * Returns an instance of {@link Rekord.Collection} with the initial values
+ * passed as arguments to this function.
+ *
+ * ```javascript
+ * Rekord.collectArray(1, 2, 3, 4);
+ * Rekord.collectArray([1, 2, 3, 4]); // same as above
+ * Rekord.collectArray();
+ * Rekord.collectArray([]); // same as above
+ * ```
+ *
+ * @memberof Rekord
+ * @param {Any[]|...Any} a
+ *    The initial values in the collection. You can pass an array of values
+ *    or any number of arguments.
+ * @return {Rekord.Collection} -
+ *    A newly created instance containing the given values.
+ */
+function collectArray(a)
+{
+  var values = arguments.length > 1 || !isArray(a) ? Array.prototype.slice.call( arguments ) : a;
+
+  return Collection.native( values );
 }
 
 function swap(a, i, k)
@@ -185,121 +210,188 @@ function isPrimitiveArray(array)
 }
 
 
-function extend(parent, child, override)
-{
-  // Avoid calling the parent constructor
-  parent = copyConstructor( parent );
-  // Child instances are instanceof parent
-  child.prototype = new parent();
-  // Copy new methods into child prototype
-  setProperties( child.prototype, override );
-  // Set the correct constructor
-  child.prototype.constructor = child;
-}
+// Class.create( construct, methods )
+// Class.extend( parent, construct, override )
+// Class.prop( target, name, value )
+// Class.props( target, properties )
+// Class.method( construct, methodName, method )
+// Class.method( construct, methods )
+// Class.replace( construct, methodName, methodFactory(super) )
 
-function extendArray(parent, child, override)
-{
-  // If direct extension of array is supported...
-  if ( extendArraySupported() )
-  {
-    extend( parent, child, override );
-    child.create = factory( child );
-  }
-  // Otherwise copy all of the methods
-  else
-  {
-    // Avoid calling the parent constructor
-    parent = copyConstructor( parent );
+// constructor.create( ... )
+// constructor.native( ... ) // for arrays
+// constructor.$constuctor
+// constructor.prototype.$super
+// constructor.$methods
+// constructor.$prop( name, value ) // add to prototype
+// constructor.$method( methodName, method ) // add to prototype
+// constructor.$replace( methodName, methodFactory(super) )
 
-    // TODO fix for IE8
-    child.create = function()
+var Class =
+{
+
+  create: function( construct, methods )
+  {
+    Class.prop( construct, 'create', Class.factory( construct ) );
+    Class.build( construct, methods, noop );
+  },
+
+  extend: function( parent, construct, override )
+  {
+    var methods = collapse( override, parent.$methods );
+    var parentCopy = Class.copyConstructor( parent );
+
+    construct.prototype = new parentCopy();
+
+    var instanceFactory = Class.factory( construct );
+
+    if ( Class.isArray( parent ) )
     {
-      var created = new parent();
-      child.apply( created, arguments );
-      transfer( override, created );
-      return created;
+      var nativeArray = function()
+      {
+        var arr = [];
+        Class.props( arr, methods );
+        construct.apply( arr, arguments );
+        return arr;
+      };
+
+      Class.prop( construct, 'native', nativeArray );
+      Class.prop( construct, 'create', Settings.nativeArray ? nativeArray : instanceFactory );
+    }
+    else
+    {
+      Class.prop( construct, 'create', instanceFactory );
+    }
+
+    Class.build( construct, methods, parent );
+  },
+
+  dynamic: function(parent, parentInstance, className, code)
+  {
+    var DynamicClass = new Function('return function ' + className + code)(); // jshint ignore:line
+
+    DynamicClass.prototype = parentInstance;
+
+    Class.build( DynamicClass, {}, parent );
+
+    return DynamicClass;
+  },
+
+  build: function(construct, methods, parent)
+  {
+    Class.prop( construct, '$methods', methods );
+    Class.prop( construct, '$prop', Class.propThis );
+    Class.prop( construct, '$method', Class.methodThis );
+    Class.prop( construct, '$replace', Class.replaceThis );
+    Class.prop( construct.prototype, '$super', parent );
+    Class.prop( construct.prototype, 'constructor', construct );
+    Class.props( construct.prototype, methods );
+  },
+
+  isArray: function( construct )
+  {
+    return Array === construct || construct.prototype instanceof Array;
+  },
+
+  method: function( construct, methodName, method )
+  {
+    if (construct.$methods)
+    {
+      construct.$methods[ methodName ] = method;
+    }
+
+    Class.prop( construct.prototype, methodName, method );
+  },
+
+  methodThis: function( methodName, method )
+  {
+    Class.method( this, methodName, method );
+  },
+
+  methods: function( construct, methods )
+  {
+    for (var methodName in methods)
+    {
+      Class.method( construct, methodName, methods[ methodName ] );
+    }
+  },
+
+  prop: (function()
+  {
+    if (Object.defineProperty)
+    {
+      return function( target, property, value )
+      {
+        Object.defineProperty( target, property, {
+          configurable: true,
+          enumerable: false,
+          writable: true,
+          value: value
+        });
+      };
+    }
+    else
+    {
+      return function( target, property, value )
+      {
+        target[ property ] = value;
+      };
+    }
+  })(),
+
+  propThis: function( property, value )
+  {
+    Class.prop( this.prototype, property, value );
+  },
+
+  props: function( target, properties )
+  {
+    for (var propertyName in properties)
+    {
+      Class.prop( target, propertyName, properties[ propertyName ] );
+    }
+  },
+
+  replace: function( target, methodName, methodFactory )
+  {
+    var existingMethod = target.prototype[ methodName ] || target[ methodName ] || noop;
+
+    Class.method( target, methodName, methodFactory( existingMethod ) );
+  },
+
+  replaceThis: function( methodName, methodFactory )
+  {
+    Class.replace( this, methodName, methodFactory );
+  },
+
+  copyConstructor: function(construct)
+  {
+    function F()
+    {
+
+    }
+
+    F.prototype = construct.prototype;
+
+    return F;
+  },
+
+  factory: function(construct)
+  {
+    function F(args)
+    {
+      construct.apply( this, args );
+    }
+
+    F.prototype = construct.prototype;
+
+    return function()
+    {
+      return new F( arguments );
     };
   }
-}
 
-// Is directly extending an array supported?
-function extendArraySupported()
-{
-  function EA() {}
-
-  if ( extendArraySupported.supported === undefined )
-  {
-    EA.prototype = [];
-    var eq = new EA();
-    eq.push(0);
-    extendArraySupported.supported = (eq.length === 1);
-  }
-
-  return extendArraySupported.supported;
-}
-
-var setProperty = (function()
-{
-  if ( Object.defineProperty )
-  {
-    return function(target, methodName, method)
-    {
-      Object.defineProperty( target, methodName, {
-        configurable: true,
-        enumerable: false,
-        writable: true,
-        value: method
-      });
-    };
-  }
-  else
-  {
-    return function(target, methodName, method)
-    {
-      target[ methodName ] = method;
-    };
-  }
-
-})();
-
-function setProperties(target, methods)
-{
-  for (var methodName in methods)
-  {
-    setProperty( target, methodName, methods[ methodName ] );
-  }
-}
-
-function replaceMethod(target, methodName, methodFactory)
-{
-  setProperty( target, methodName, methodFactory( target[ methodName ] ) );
-}
-
-
-// Copies a constructor function returning a function that can be called to
-// return an instance and doesn't invoke the original constructor.
-function copyConstructor(func)
-{
-  function F() {}
-  F.prototype = func.prototype;
-  return F;
-}
-
-// Creates a factory for instantiating
-function factory(constructor)
-{
-  function F(args)
-  {
-    return constructor.apply( this, args );
-  }
-
-  F.prototype = constructor.prototype;
-
-  return function()
-  {
-    return new F( arguments );
-  };
-}
+};
 
 
 /**
@@ -1029,7 +1121,7 @@ function addEventFunction(target, functionName, events, secret)
   var on = secret ? '$on' : 'on';
   var off = secret ? '$off' : 'off';
 
-  setProperty( target, functionName, function(callback, context)
+  var eventFunction = function(callback, context)
   {
     var subject = this;
     var unlistened = false;
@@ -1056,7 +1148,16 @@ function addEventFunction(target, functionName, events, secret)
     subject[ on ]( events, listener );
 
     return unlistener;
-  });
+  };
+
+  if (target.$methods)
+  {
+    Class.method( target, functionName, eventFunction );
+  }
+  else
+  {
+    Class.prop( target, functionName, eventFunction );
+  }
 }
 
 /**
@@ -1127,7 +1228,7 @@ function addEventful(target, secret)
 
     if ( !listeners )
     {
-      setProperty( $this, property, listeners = {} );
+      Class.prop( $this, property, listeners = {} );
     }
 
     for (var i = 0; i < events.length; i++)
@@ -1381,25 +1482,36 @@ function addEventful(target, secret)
     return this;
   }
 
+  var methods = null;
+
   if ( secret )
   {
-    setProperties(target, {
+    methods = {
       $on: on,
       $once: once,
       $after: after,
       $off: off,
       $trigger: trigger
-    });
+    };
   }
   else
   {
-    setProperties(target, {
+    methods = {
       on: on,
       once: once,
       after: after,
       off: off,
       trigger: trigger
-    });
+    };
+  }
+
+  if ( target.$methods )
+  {
+    Class.methods( target, methods );
+  }
+  else
+  {
+    Class.props( target, methods );
   }
 }
 
@@ -2010,6 +2122,19 @@ function createPropertyResolver(properties)
 }
 
 
+var Settings = global.RekordSettings || {};
+
+if ( global.document && global.document.currentScript )
+{
+  var script = global.document.currentScript;
+
+  if (script.getAttribute('native-array') !== null)
+  {
+    Settings.nativeArray = true;
+  }
+}
+
+
 function camelCaseReplacer(match)
 {
   return match.length === 1 ? match.toUpperCase() : match.charAt(1).toUpperCase();
@@ -2262,8 +2387,12 @@ function Rekord(options)
 
   var database = new Database( options );
 
-  var model = new Function('return function ' + database.className + '(props, remoteData) { this.$init( props, remoteData ) }')(); // jshint ignore:line
-  model.prototype = new Model( database );
+  var model = Class.dynamic(
+    Model,
+    new Model( database ),
+    database.className,
+    '(props, remoteData) { this.$init( props, remoteData ) }'
+  );
 
   database.Model = model;
   model.Database = database;
@@ -3256,7 +3385,7 @@ function Database(options)
   this.keyHandler.addToFields( this.fields );
 
   // Properties
-  this.models = new ModelCollection( this );
+  this.models = ModelCollection.create( this );
   this.all = {};
   this.loaded = {};
   this.className = this.className || toCamelCase( this.name );
@@ -3446,7 +3575,7 @@ var Defaults = Database.Defaults =
   createLive:           defaultCreateLive
 };
 
-setProperties( Database.prototype,
+Class.create( Database,
 {
 
   setStoreEnabled: function(enabled)
@@ -4445,8 +4574,9 @@ setProperties( Database.prototype,
 
 });
 
-addEventful( Database.prototype );
-addEventFunction( Database.prototype, 'change', Database.Events.Changes );
+addEventful( Database );
+
+addEventFunction( Database, 'change', Database.Events.Changes );
 
 
 /**
@@ -4460,7 +4590,7 @@ addEventFunction( Database.prototype, 'change', Database.Events.Changes );
  */
 function Model(db)
 {
-  setProperty( this, '$db', db );
+  Class.prop( this, '$db', db );
 
   /**
    * @property {Database} $db
@@ -4548,14 +4678,14 @@ Model.Blocked =
   valueOf: true
 };
 
-setProperties( Model.prototype,
+Class.create( Model,
 {
 
   $init: function(props, remoteData)
   {
     this.$status = Model.Status.Synced;
 
-    setProperties(this, {
+    Class.props(this, {
       $operation: null,
       $relations: {},
       $dependents: new Dependents( this ),
@@ -4570,7 +4700,7 @@ setProperties( Model.prototype,
 
       if ( !isValue( key ) )
       {
-        setProperty( this, '$invalid', true );
+        Class.prop( this, '$invalid', true );
 
         return;
       }
@@ -5261,9 +5391,9 @@ setProperties( Model.prototype,
 
 });
 
-addEventful( Model.prototype, true );
+addEventful( Model, true );
 
-addEventFunction( Model.prototype, '$change', Model.Events.Changes, true );
+addEventFunction( Model, '$change', Model.Events.Changes, true );
 
 function createModelPromise(model, cascade, restSuccess, restFailure, restOffline, localSuccess, localFailure)
 {
@@ -5339,7 +5469,7 @@ function Map()
   this.indices = {};
 }
 
-setProperties( Map.prototype,
+Class.create( Map,
 {
 
   /**
@@ -5657,8 +5787,9 @@ function Dependents(subject)
   this.subject = subject;
 }
 
-Dependents.prototype =
+Class.create( Dependents,
 {
+
   add: function(model, relator)
   {
     var key = model.$uid();
@@ -5729,7 +5860,7 @@ Dependents.prototype =
     return true;
   }
 
-};
+});
 
 
 function KeyHandler()
@@ -5737,8 +5868,9 @@ function KeyHandler()
 
 }
 
-KeyHandler.prototype =
+Class.create( KeyHandler,
 {
+
   init: function(database)
   {
     this.key = database.key;
@@ -5796,7 +5928,8 @@ KeyHandler.prototype =
 
     return input;
   }
-};
+
+});
 
 
 function KeySimple(database)
@@ -5804,7 +5937,7 @@ function KeySimple(database)
   this.init( database );
 }
 
-extend( KeyHandler, KeySimple,
+Class.extend( KeyHandler, KeySimple,
 {
   getKeys: function(model)
   {
@@ -5917,7 +6050,7 @@ function KeyComposite(database)
   this.init( database );
 }
 
-extend( KeyHandler, KeyComposite,
+Class.extend( KeyHandler, KeyComposite,
 {
   getKeys: function(input, otherFields)
   {
@@ -6219,7 +6352,7 @@ Collection.Events =
 
 };
 
-extendArray( Array, Collection,
+Class.extend( Array, Collection,
 {
 
   /**
@@ -6399,7 +6532,7 @@ extendArray( Array, Collection,
   {
     var filter = createWhere( whereProperties, whereValue, whereEquals );
 
-    return new FilteredCollection( this, filter );
+    return FilteredCollection.create( this, filter );
   },
 
   /**
@@ -8121,7 +8254,7 @@ extendArray( Array, Collection,
    */
   clone: function()
   {
-    return new this.constructor( this );
+    return this.constructor.create( this );
   },
 
   /**
@@ -8134,12 +8267,12 @@ extendArray( Array, Collection,
    */
   cloneEmpty: function()
   {
-    return new this.constructor();
+    return this.constructor.create();
   }
 
 });
 
-addEventful( Collection.prototype );
+addEventful( Collection );
 
 /**
  * Adds a listener for change events on this collection.
@@ -8154,7 +8287,7 @@ addEventful( Collection.prototype );
  *    A function to call to stop listening for change events.
  * @see Rekord.Collection#event:changes
  */
-addEventFunction( Collection.prototype, 'change', Collection.Events.Changes );
+addEventFunction( Collection, 'change', Collection.Events.Changes );
 
 
 // The methods necessary for a filtered collection.
@@ -8162,7 +8295,7 @@ var Filtering = {
 
   bind: function()
   {
-    setProperties(this, {
+    Class.props(this, {
       onAdd:      bind( this, Filtering.handleAdd ),
       onAdds:     bind( this, Filtering.handleAdds ),
       onRemove:   bind( this, Filtering.handleRemove ),
@@ -8182,13 +8315,13 @@ var Filtering = {
         this.disconnect();
       }
 
-      setProperty( this, 'base', base );
+      Class.prop( this, 'base', base );
 
       this.connect();
     }
 
-    setProperty( this, 'filter', filter );
-    
+    Class.prop( this, 'filter', filter );
+
     this.sync();
 
     return this;
@@ -8318,12 +8451,12 @@ var Filtering = {
 
   clone: function()
   {
-    return new this.constructor( this.base, this.filter );
+    return this.constructor.create( this.base, this.filter );
   },
 
   cloneEmpty: function()
   {
-    return new this.constructor( this.base, this.filter );
+    return this.constructor.create( this.base, this.filter );
   }
 
 };
@@ -8350,7 +8483,7 @@ Page.Events =
   Changes:      'change'
 };
 
-extendArray( Array, Page,
+Class.extend( Array, Page,
 {
 
   setPageSize: function(pageSize)
@@ -8526,8 +8659,9 @@ extendArray( Array, Page,
 
 });
 
-addEventful( Page.prototype );
-addEventFunction( Page.prototype, 'change', Page.Events.Changes );
+addEventful( Page );
+
+addEventFunction( Page, 'change', Page.Events.Changes );
 
 
 /**
@@ -8575,7 +8709,7 @@ function FilteredCollection(base, filter)
   * @member {whereCallback} filter
   */
 
-extendArray( Collection, FilteredCollection,
+Class.extend( Collection, FilteredCollection,
 {
 
   /**
@@ -8718,7 +8852,7 @@ function ModelCollection(database, models, remoteData)
  * @member {Rekord.Database} database
  */
 
-extendArray( Collection, ModelCollection,
+Class.extend( Collection, ModelCollection,
 {
 
   /**
@@ -8741,7 +8875,7 @@ extendArray( Collection, ModelCollection,
    */
   init: function(database, models, remoteData)
   {
-    setProperties(this, {
+    Class.props(this, {
       database: database,
       map: new Map()
     });
@@ -8830,7 +8964,7 @@ extendArray( Collection, ModelCollection,
   {
     var filter = createWhere( whereProperties, whereValue, whereEquals );
 
-    return new FilteredModelCollection( this, filter );
+    return FilteredModelCollection.create( this, filter );
   },
 
   /**
@@ -9946,7 +10080,7 @@ extendArray( Collection, ModelCollection,
       }
     }
 
-    return new ModelCollection( this.database, source, true );
+    return ModelCollection.create( this.database, source, true );
   },
 
   /**
@@ -9959,7 +10093,7 @@ extendArray( Collection, ModelCollection,
    */
   cloneEmpty: function()
   {
-    return new ModelCollection( this.database );
+    return ModelCollection.create( this.database );
   }
 
 });
@@ -10010,7 +10144,7 @@ function FilteredModelCollection(base, filter)
   * @member {whereCallback} filter
   */
 
-extendArray( ModelCollection, FilteredModelCollection,
+Class.extend( ModelCollection, FilteredModelCollection,
 {
 
   /**
@@ -10025,7 +10159,7 @@ extendArray( ModelCollection, FilteredModelCollection,
   {
     Filtering.bind.apply( this );
 
-    setProperties(this, {
+    Class.props(this, {
       onModelUpdated: bind( this, this.handleModelUpdate )
     });
   },
@@ -10176,7 +10310,7 @@ extendArray( ModelCollection, FilteredModelCollection,
  */
 function RelationCollection(database, model, relator, models, remoteData)
 {
-  setProperties(this, {
+  Class.props(this, {
     model:    model,
     relator:  relator
   });
@@ -10198,7 +10332,7 @@ function RelationCollection(database, model, relator, models, remoteData)
   * @member {Rekord.Relation} relator
   */
 
-extendArray( ModelCollection, RelationCollection,
+Class.extend( ModelCollection, RelationCollection,
 {
 
   /**
@@ -10335,7 +10469,7 @@ extendArray( ModelCollection, RelationCollection,
    */
   clone: function()
   {
-    return new RelationCollection( this.database, this.model, this.relator, this, true );
+    return RelationCollection.create( this.database, this.model, this.relator, this, true );
   },
 
   /**
@@ -10348,7 +10482,7 @@ extendArray( ModelCollection, RelationCollection,
    */
   cloneEmpty: function()
   {
-    return new RelationCollection( this.database, this.model, this.relator );
+    return RelationCollection.create( this.database, this.model, this.relator );
   }
 
 });
@@ -10369,7 +10503,8 @@ extendArray( ModelCollection, RelationCollection,
  */
 function DiscriminateCollection(collection, discriminator, discriminatorsToModel)
 {
-  setProperties(collection, {
+  Class.props( collection,
+  {
     discriminator: discriminator,
     discriminatorsToModel: discriminatorsToModel
   });
@@ -10380,7 +10515,7 @@ function DiscriminateCollection(collection, discriminator, discriminatorsToModel
   var clone = collection.clone;
   var cloneEmpty = collection.cloneEmpty;
 
-  setProperties( collection,
+  Class.props( collection,
   {
 
     /**
@@ -10493,7 +10628,7 @@ Search.Defaults =
 {
 };
 
-setProperties( Search.prototype,
+Class.create( Search,
 {
 
   $getDefaults: function()
@@ -10505,12 +10640,12 @@ setProperties( Search.prototype,
   {
     applyOptions( this, options, this.$getDefaults(), true );
 
-    setProperty( this, '$db', database );
+    Class.prop( this, '$db', database );
 
     this.$append = false;
     this.$url = url;
     this.$set( props );
-    this.$results = new ModelCollection( database );
+    this.$results = ModelCollection.create( database );
     this.$promise = Promise.resolve( this );
 
     if ( run )
@@ -10687,7 +10822,7 @@ SearchPaged.Defaults =
   total:       0
 };
 
-extend( Search, SearchPaged,
+Class.extend( Search, SearchPaged,
 {
 
   $getDefaults: function()
@@ -10881,7 +11016,7 @@ function Promise(executor, cancelable)
   this.status = Promise.Status.Pending;
   this.cancelable = cancelable !== false;
 
-  setProperty( this, 'results', null );
+  Class.prop( this, 'results', null );
 
   if ( isFunction( executor ) )
   {
@@ -11075,7 +11210,7 @@ Promise.singularity = (function()
 
 })();
 
-setProperties( Promise.prototype,
+Class.create( Promise,
 {
   resolve: function()
   {
@@ -11228,15 +11363,16 @@ setProperties( Promise.prototype,
 
 });
 
-addEventful( Promise.prototype );
+addEventful( Promise );
 
 
 function Operation()
 {
 }
 
-setProperties( Operation.prototype,
+Class.create( Operation,
 {
+
   reset: function(model, cascade)
   {
     this.model = model;
@@ -11414,7 +11550,7 @@ function GetLocal(model, cascade)
   this.reset( model, cascade );
 }
 
-extend( Operation, GetLocal,
+Class.extend( Operation, GetLocal,
 {
 
   cascading: Cascade.Local,
@@ -11486,7 +11622,7 @@ function GetRemote(model, cascade)
   this.reset( model, cascade );
 }
 
-extend( Operation, GetRemote,
+Class.extend( Operation, GetRemote,
 {
 
   cascading: Cascade.Rest,
@@ -11567,7 +11703,7 @@ function RemoveCache(model, cascade)
   this.reset( model, cascade );
 }
 
-extend( Operation, RemoveCache,
+Class.extend( Operation, RemoveCache,
 {
 
   cascading: Cascade.None,
@@ -11595,7 +11731,7 @@ function RemoveLocal(model, cascade)
   this.reset( model, cascade );
 }
 
-extend( Operation, RemoveLocal,
+Class.extend( Operation, RemoveLocal,
 {
 
   cascading: Cascade.Local,
@@ -11666,7 +11802,7 @@ function RemoveNow(model, cascade)
   this.reset( model, cascade );
 }
 
-extend( Operation, RemoveNow,
+Class.extend( Operation, RemoveNow,
 {
 
   cascading: Cascade.Local,
@@ -11723,7 +11859,7 @@ function RemoveRemote(model, cascade)
   this.reset( model, cascade );
 }
 
-extend( Operation, RemoveRemote,
+Class.extend( Operation, RemoveRemote,
 {
 
   cascading: Cascade.Remote,
@@ -11846,7 +11982,7 @@ function SaveLocal(model, cascade)
   this.reset( model, cascade );
 }
 
-extend( Operation, SaveLocal,
+Class.extend( Operation, SaveLocal,
 {
 
   cascading: Cascade.Local,
@@ -12001,7 +12137,7 @@ function SaveNow(model, cascade)
   this.reset( model, cascade );
 }
 
-extend( Operation, SaveNow,
+Class.extend( Operation, SaveNow,
 {
 
   cascading: Cascade.Local,
@@ -12032,7 +12168,7 @@ function SaveRemote(model, cascade)
   this.reset( model, cascade );
 }
 
-extend( Operation, SaveRemote,
+Class.extend( Operation, SaveRemote,
 {
 
   cascading: Cascade.Remote,
@@ -12269,7 +12405,7 @@ Relation.Defaults =
   discriminatorToModel: {}
 };
 
-setProperties( Relation.prototype,
+Class.create( Relation,
 {
 
   debugQuery: null,
@@ -12305,7 +12441,7 @@ setProperties( Relation.prototype,
         throw 'Polymorphic feature is required to use the discriminated option.';
       }
 
-      setProperties( this, Polymorphic );
+      Class.props( this, Polymorphic );
     }
 
     this.setReferences( database, field, options );
@@ -12473,12 +12609,12 @@ setProperties( Relation.prototype,
 
   createRelationCollection: function(model)
   {
-    return new RelationCollection( this.model.Database, model, this );
+    return RelationCollection.create( this.model.Database, model, this );
   },
 
   createCollection: function(initial)
   {
-    return new ModelCollection( this.model.Database, initial );
+    return ModelCollection.create( this.model.Database, initial );
   },
 
   parseModel: function(input, remoteData)
@@ -12737,8 +12873,7 @@ function RelationSingle()
 {
 }
 
-
-extend( Relation, RelationSingle,
+Class.extend( Relation, RelationSingle,
 {
 
   debugInit: null,
@@ -12969,7 +13104,7 @@ function RelationMultiple()
 {
 }
 
-extend( Relation, RelationMultiple,
+Class.extend( Relation, RelationMultiple,
 {
 
   debugAutoSave: null,
@@ -13243,7 +13378,7 @@ BelongsTo.Defaults =
   discriminatorToModel: {}
 };
 
-extend( RelationSingle, BelongsTo,
+Class.extend( RelationSingle, BelongsTo,
 {
 
   type: 'belongsTo',
@@ -13391,7 +13526,7 @@ HasOne.Defaults =
   discriminatorToModel: {}
 };
 
-extend( RelationSingle, HasOne,
+Class.extend( RelationSingle, HasOne,
 {
 
   type: 'hasOne',
@@ -13609,7 +13744,7 @@ HasMany.Defaults =
   discriminatorToModel: {}
 };
 
-extend( RelationMultiple, HasMany,
+Class.extend( RelationMultiple, HasMany,
 {
 
   type: 'hasMany',
@@ -14020,7 +14155,7 @@ HasManyThrough.Defaults =
   discriminatorToModel: {}
 };
 
-extend( RelationMultiple, HasManyThrough,
+Class.extend( RelationMultiple, HasManyThrough,
 {
 
   type: 'hasManyThrough',
@@ -14595,7 +14730,7 @@ HasRemote.Defaults =
   autoRefresh:          false // Model.Events.RemoteGets
 };
 
-extend( RelationMultiple, HasRemote,
+Class.extend( RelationMultiple, HasRemote,
 {
 
   type: 'hasRemote',
@@ -14766,7 +14901,7 @@ HasList.Defaults =
   comparatorNullsFirst: false
 };
 
-extend( RelationMultiple, HasList,
+Class.extend( RelationMultiple, HasList,
 {
 
   type: 'hasList',
@@ -14923,7 +15058,7 @@ HasReference.Defaults =
   dynamic:              false
 };
 
-extend( RelationSingle, HasReference,
+Class.extend( RelationSingle, HasReference,
 {
 
   type: 'hasReference',
@@ -15066,12 +15201,12 @@ var Polymorphic =
 
   createRelationCollection: function(model)
   {
-    return DiscriminateCollection( new RelationCollection( undefined, model, this ), this.discriminator, this.discriminatorToModel );
+    return DiscriminateCollection( RelationCollection.create( undefined, model, this ), this.discriminator, this.discriminatorToModel );
   },
 
   createCollection: function()
   {
-    return DiscriminateCollection( new ModelCollection(), this.discriminator, this.discriminatorToModel );
+    return DiscriminateCollection( ModelCollection.create(), this.discriminator, this.discriminatorToModel );
   },
 
   ready: function(callback)
@@ -15292,7 +15427,7 @@ Rekord.shard = function(methods)
   {
     var shard = new Shard( database );
 
-    setProperties( shard, methods );
+    Class.props( shard, methods );
 
     shard.initialize( database );
 
@@ -15305,7 +15440,7 @@ function Shard(database)
   this.database = database;
 }
 
-setProperties( Shard.prototype,
+Class.create( Shard,
 {
 
   STATUS_FAIL_ALL: 500,
@@ -15625,6 +15760,40 @@ addPlugin(function(model, db, options)
 {
 
   /**
+   * Creates a collection of models.
+   *
+   * ```javascript
+   * var Task = Rekord({
+   *   fields: ['name']
+   * });
+   * var t0 = Task.create({id: 34, name: 't0'});
+   * var t1 = new Task({name: 't1'});
+   * var t2 = {name: 't2'};
+   *
+   * var c = Task.collect( 34, t1, t2 ); // or Task.collect( [34, t1, t2] )
+   * c; // [t0, t1, t2]
+   * ```
+   *
+   * @method collect
+   * @memberof Rekord.Model
+   * @param {modelInput[]|...modelInput} models -
+   *    The array of models to to return as a collection.
+   * @return {Rekord.ModelCollection} -
+   *    The collection created.
+   */
+  model.array = function(a)
+  {
+    var models = arguments.length > 1 || !isArray(a) ?
+      AP.slice.call( arguments ) : a;
+
+    return ModelCollection.native( db, models );
+  };
+});
+
+addPlugin(function(model, db, options)
+{
+
+  /**
    * Returns the model at the given index.
    *
    * ```javascript
@@ -15684,7 +15853,7 @@ addPlugin(function(model, db, options)
   {
     if ( isArray( input ) )
     {
-      return new ModelCollection( db, input, true );
+      return ModelCollection.create( db, input, true );
     }
     else if ( isObject( input ) )
     {
@@ -15725,7 +15894,7 @@ addPlugin(function(model, db, options)
     var models = arguments.length > 1 || !isArray(a) ?
       AP.slice.call( arguments ) : a;
 
-    return new ModelCollection( db, models );
+    return ModelCollection.create( db, models );
   };
 });
 
@@ -15882,13 +16051,14 @@ addPlugin(function(model, db, options)
 
     if ( modelEvents.length )
     {
-      var $init = model.prototype.$init;
-
-      setProperty( model.prototype, '$init', function()
+      Class.replace( model, '$init', function($init)
       {
-        $init.apply( this, arguments );
+        return function()
+        {
+          $init.apply( this, arguments );
 
-        applyEventListeners( this, modelEvents );
+          applyEventListeners( this, modelEvents );
+        };
       });
     }
   }
@@ -16837,14 +17007,14 @@ function mapKeyChangeRemove(key)
 
 function enableKeyChanges()
 {
-  setProperty( Map.prototype, 'put', mapKeyChangePut );
-  setProperty( Map.prototype, 'remove', mapKeyChangeRemove );
+  Class.method( Map, 'put', mapKeyChangePut );
+  Class.method( Map, 'remove', mapKeyChangeRemove );
 }
 
 function disableKeyChanges()
 {
-  setProperty( Map.prototype, 'put', Map_put );
-  setProperty( Map.prototype, 'remove', Map_remove );
+  Class.method( Map, 'put', Map_put );
+  Class.method( Map, 'remove', Map_remove );
 }
 
 addPlugin(function(model, db, options)
@@ -16853,7 +17023,7 @@ addPlugin(function(model, db, options)
 
   if ( !isEmpty( methods ) )
   {
-    setProperties( model.prototype, methods );
+    Class.methods( model, methods );
   }
 });
 
@@ -17182,7 +17352,7 @@ addPlugin(function(model, db, options)
 
     db.ignoredFields[ field ] = true;
 
-    replaceMethod( model.prototype, '$save', function($save)
+    Class.replace( model, '$save', function($save)
     {
       return function()
       {
@@ -17347,19 +17517,22 @@ addPlugin(function(model, db, options)
   Rekord.toArray = toArray;
   Rekord.indexOf = indexOf;
   Rekord.collect = collect;
+  Rekord.array = collectArray;
   Rekord.swap = swap;
   Rekord.reverse = reverse;
   Rekord.isSorted = isSorted;
   Rekord.isPrimitiveArray = isPrimitiveArray;
 
   /* Class Functions */
-  Rekord.extend = extend;
-  Rekord.extendArray = extendArray;
-  Rekord.addMethod = Rekord.setProperty = setProperty;
-  Rekord.addMethods = Rekord.setProperties = setProperties;
-  Rekord.replaceMethod = replaceMethod;
-  Rekord.copyConstructor = copyConstructor;
-  Rekord.factory = factory;
+  Rekord.Settings = Settings;
+  Rekord.Class = Class;
+  Rekord.extend = Class.extend;
+  Rekord.extendArray = Class.extend;
+  Rekord.addMethod = Rekord.setProperty = Class.prop;
+  Rekord.addMethods = Rekord.setProperties = Class.props;
+  Rekord.replaceMethod = Class.replace;
+  Rekord.copyConstructor = Class.copyConstructor;
+  Rekord.factory = Class.factory;
 
   /* Comparator Functions */
   Rekord.Comparators = Comparators;

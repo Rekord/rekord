@@ -2,7 +2,7 @@ function RelationMultiple()
 {
 }
 
-extend( Relation, RelationMultiple,
+Class.extend( Relation, RelationMultiple,
 {
 
   debugAutoSave: null,

@@ -3,7 +3,7 @@ function SaveNow(model, cascade)
   this.reset( model, cascade );
 }
 
-extend( Operation, SaveNow,
+Class.extend( Operation, SaveNow,
 {
 
   cascading: Cascade.Local,
