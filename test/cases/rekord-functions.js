@@ -1323,3 +1323,111 @@ test( 'Rekord.applyOptions', function(assert)
   strictEqual( target.w, options.w );
   strictEqual( target.m, options.m );
 });
+
+test( 'Rekord.clear', function(assert)
+{
+  Rekord.clear( true );
+
+  var prefix = 'Rekord_clear_';
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['name']
+  });
+
+  deepEqual( Task.Database.all, {} );
+  strictEqual( Task.all().length, 0 );
+
+  var t0 = new Task({id: 2, name: 't0'});
+
+  deepEqual( Task.Database.all, {2: t0} );
+  strictEqual( Task.all().length, 0 );
+  strictEqual( Task.Database.store.map.size(), 0 );
+
+  t0.$save();
+
+  deepEqual( Task.Database.all, {2: t0} );
+  strictEqual( Task.all().length, 1 );
+
+  Rekord.clear( false );
+
+  deepEqual( Task.Database.all, {} );
+  strictEqual( Task.all().length, 0 );
+  strictEqual( Task.Database.store.map.size(), 1 );
+});
+
+test( 'Rekord.reset success', function(assert)
+{
+  Rekord.clear( true );
+
+  var prefix = 'Rekord_reset_success_';
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['name']
+  });
+
+  deepEqual( Task.Database.all, {} );
+  strictEqual( Task.all().length, 0 );
+
+  var t0 = new Task({id: 2, name: 't0'});
+
+  deepEqual( Task.Database.all, {2: t0} );
+  strictEqual( Task.all().length, 0 );
+  strictEqual( Task.Database.store.map.size(), 0 );
+
+  t0.$save();
+
+  deepEqual( Task.Database.all, {2: t0} );
+  strictEqual( Task.all().length, 1 );
+
+  var promise = Rekord.reset( false, false );
+
+  deepEqual( Task.Database.all, {} );
+  strictEqual( Task.all().length, 0 );
+  strictEqual( Task.Database.store.map.size(), 0 );
+
+  ok( promise.isSuccess() );
+});
+
+test( 'Rekord.reset failure', function(assert)
+{
+  Rekord.clear( true );
+
+  var prefix = 'Rekord_reset_failure_';
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['name']
+  });
+
+  deepEqual( Task.Database.all, {} );
+  strictEqual( Task.all().length, 0 );
+
+  var t0 = new Task({id: 2, name: 't0'});
+
+  deepEqual( Task.Database.all, {2: t0} );
+  strictEqual( Task.all().length, 0 );
+  strictEqual( Task.Database.store.map.size(), 0 );
+
+  offline();
+
+  t0.$save();
+
+  ok( t0.$isPending() );
+
+  deepEqual( Task.Database.all, {2: t0} );
+  strictEqual( Task.all().length, 1 );
+  strictEqual( Task.Database.store.map.size(), 1 );
+
+  var promise = Rekord.reset( true, false );
+
+  deepEqual( Task.Database.all, {2: t0} );
+  strictEqual( Task.all().length, 1 );
+  strictEqual( Task.Database.store.map.size(), 1 );
+
+  notOk( promise.isSuccess() );
+  ok( promise.isFailure() );
+
+  online();
+});

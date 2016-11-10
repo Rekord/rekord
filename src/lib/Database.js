@@ -270,6 +270,57 @@ Class.create( Database,
     return this.readyPromise.success( callback, context, persistent );
   },
 
+  clear: function(removeListeners)
+  {
+    var db = this;
+
+    db.all = {};
+    db.models.clear();
+
+    if ( removeListeners )
+    {
+      db.off();
+    }
+
+    return db;
+  },
+
+  hasPending: function()
+  {
+    return this.models.contains(function(model)
+    {
+      return model.$isPending();
+    });
+  },
+
+  reset: function(failOnPendingChanges, removeListeners)
+  {
+    var db = this;
+    var promise = new Rekord.Promise();
+
+    if ( failOnPendingChanges && db.hasPending() )
+    {
+      promise.reject( db );
+    }
+    else
+    {
+      db.clear( removeListeners );
+
+      db.store.reset( [], [],
+        function()
+        {
+          promise.resolve( db );
+        },
+        function()
+        {
+          promise.reject( db );
+        }
+      );
+    }
+
+    return promise;
+  },
+
   // Determines whether the given object has data to save
   hasData: function(saving)
   {

@@ -122,10 +122,50 @@ Rekord.get = function(name)
 
 Rekord.export = function()
 {
-  for (var className in Rekord.classes)
+  var classes = Rekord.classes;
+
+  for (var className in classes)
   {
-    win[ className ] = Rekord.classes[ className ];
+    win[ className ] = classes[ className ];
   }
+};
+
+Rekord.clear = function(removeListeners)
+{
+  var classes = Rekord.classes;
+
+  for (var className in classes)
+  {
+    classes[ className ].clear( removeListeners );
+  }
+};
+
+Rekord.reset = function(failOnPendingChanges, removeListeners)
+{
+  var classes = Rekord.classes;
+
+  if ( failOnPendingChanges )
+  {
+    for (var className in classes)
+    {
+      var db = classes[ className ].Database;
+
+      if ( db.hasPending() )
+      {
+        return Promise.reject( db );
+      }
+    }
+  }
+
+  return Promise.singularity(this, function()
+  {
+    for (var className in classes)
+    {
+      var db = classes[ className ].Database;
+
+      db.reset( false, removeListeners );
+    }
+  });
 };
 
 /**

@@ -36,6 +36,108 @@ test( 'array', function(assert)
   strictEqual( tasks.length, 1 );
 });
 
+test( 'clear', function(assert)
+{
+  var prefix = 'Rekord_instance_clear_';
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['name']
+  });
+
+  deepEqual( Task.Database.all, {} );
+  strictEqual( Task.all().length, 0 );
+
+  var t0 = new Task({id: 2, name: 't0'});
+
+  deepEqual( Task.Database.all, {2: t0} );
+  strictEqual( Task.all().length, 0 );
+  strictEqual( Task.Database.store.map.size(), 0 );
+
+  t0.$save();
+
+  deepEqual( Task.Database.all, {2: t0} );
+  strictEqual( Task.all().length, 1 );
+
+  Task.clear( false );
+
+  deepEqual( Task.Database.all, {} );
+  strictEqual( Task.all().length, 0 );
+  strictEqual( Task.Database.store.map.size(), 1 );
+});
+
+test( 'reset_success', function(assert)
+{
+  var prefix = 'Rekord_instance_reset_success_';
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['name']
+  });
+
+  deepEqual( Task.Database.all, {} );
+  strictEqual( Task.all().length, 0 );
+
+  var t0 = new Task({id: 2, name: 't0'});
+
+  deepEqual( Task.Database.all, {2: t0} );
+  strictEqual( Task.all().length, 0 );
+  strictEqual( Task.Database.store.map.size(), 0 );
+
+  t0.$save();
+
+  deepEqual( Task.Database.all, {2: t0} );
+  strictEqual( Task.all().length, 1 );
+
+  var promise = Task.reset( false, false );
+
+  deepEqual( Task.Database.all, {} );
+  strictEqual( Task.all().length, 0 );
+  strictEqual( Task.Database.store.map.size(), 0 );
+
+  ok( promise.isSuccess() );
+});
+
+test( 'reset_failure', function(assert)
+{
+  var prefix = 'Rekord_instance_reset_failure_';
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['name']
+  });
+
+  deepEqual( Task.Database.all, {} );
+  strictEqual( Task.all().length, 0 );
+
+  var t0 = new Task({id: 2, name: 't0'});
+
+  deepEqual( Task.Database.all, {2: t0} );
+  strictEqual( Task.all().length, 0 );
+  strictEqual( Task.Database.store.map.size(), 0 );
+
+  offline();
+
+  t0.$save();
+
+  ok( t0.$isPending() );
+
+  deepEqual( Task.Database.all, {2: t0} );
+  strictEqual( Task.all().length, 1 );
+  strictEqual( Task.Database.store.map.size(), 1 );
+
+  var promise = Task.reset( true, false );
+
+  deepEqual( Task.Database.all, {2: t0} );
+  strictEqual( Task.all().length, 1 );
+  strictEqual( Task.Database.store.map.size(), 1 );
+
+  notOk( promise.isSuccess() );
+  ok( promise.isFailure() );
+
+  online();
+});
+
 test( 'all', function(assert)
 {
   var all = Rekord({

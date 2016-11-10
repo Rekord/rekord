@@ -2491,10 +2491,50 @@ Rekord.get = function(name)
 
 Rekord.export = function()
 {
-  for (var className in Rekord.classes)
+  var classes = Rekord.classes;
+
+  for (var className in classes)
   {
-    win[ className ] = Rekord.classes[ className ];
+    win[ className ] = classes[ className ];
   }
+};
+
+Rekord.clear = function(removeListeners)
+{
+  var classes = Rekord.classes;
+
+  for (var className in classes)
+  {
+    classes[ className ].clear( removeListeners );
+  }
+};
+
+Rekord.reset = function(failOnPendingChanges, removeListeners)
+{
+  var classes = Rekord.classes;
+
+  if ( failOnPendingChanges )
+  {
+    for (var className in classes)
+    {
+      var db = classes[ className ].Database;
+
+      if ( db.hasPending() )
+      {
+        return Promise.reject( db );
+      }
+    }
+  }
+
+  return Promise.singularity(this, function()
+  {
+    for (var className in classes)
+    {
+      var db = classes[ className ].Database;
+
+      db.reset( false, removeListeners );
+    }
+  });
 };
 
 /**
@@ -3644,6 +3684,57 @@ Class.create( Database,
   ready: function(callback, context, persistent)
   {
     return this.readyPromise.success( callback, context, persistent );
+  },
+
+  clear: function(removeListeners)
+  {
+    var db = this;
+
+    db.all = {};
+    db.models.clear();
+
+    if ( removeListeners )
+    {
+      db.off();
+    }
+
+    return db;
+  },
+
+  hasPending: function()
+  {
+    return this.models.contains(function(model)
+    {
+      return model.$isPending();
+    });
+  },
+
+  reset: function(failOnPendingChanges, removeListeners)
+  {
+    var db = this;
+    var promise = new Rekord.Promise();
+
+    if ( failOnPendingChanges && db.hasPending() )
+    {
+      promise.reject( db );
+    }
+    else
+    {
+      db.clear( removeListeners );
+
+      db.store.reset( [], [],
+        function()
+        {
+          promise.resolve( db );
+        },
+        function()
+        {
+          promise.reject( db );
+        }
+      );
+    }
+
+    return promise;
   },
 
   // Determines whether the given object has data to save
@@ -15888,6 +15979,16 @@ addPlugin(function(model, db, options)
 
 addPlugin(function(model, db, options)
 {
+  
+  model.clear = function(removeListeners)
+  {
+    return db.clear( removeListeners );
+  };
+
+});
+
+addPlugin(function(model, db, options)
+{
 
   /**
    * Creates a collection of models.
@@ -17168,6 +17269,16 @@ addPlugin(function(model, db, options)
   {
     return db.refresh( callback, context );
   };
+});
+
+addPlugin(function(model, db, options)
+{
+
+  model.reset = function(failOnPendingChanges, removeListeners)
+  {
+    return db.reset( failOnPendingChanges, removeListeners );
+  };
+
 });
 
 addPlugin(function(model, db, options)

@@ -319,6 +319,19 @@ TestStore.prototype =
   {
     this.lastOperation = 'all';
     this.finishDelayed( success, failure, this.map.values, this.map.keys );
+  },
+  reset: function(keys, values, success, failure)
+  {
+    this.lastOperation = 'reset';
+
+    var map = this.map;
+    function onReset()
+    {
+      map.reset();
+      success.apply( this, arguments );
+    }
+
+    this.finishDelayed( onReset, failure );
   }
 };
 
