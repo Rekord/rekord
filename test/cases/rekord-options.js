@@ -1927,3 +1927,39 @@ test( 'keyChanges', function(assert)
 
   Rekord.disableKeyChanges();
 });
+
+test( 'saveAlways empty', function(assert)
+{
+  var prefix = 'saveAlways_empty_';
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['name', 'done'],
+    saveAlways: []
+  });
+
+  var t0 = Task.create({id: 2, name: 't0', done: true});
+
+  t0.name = 't1';
+  t0.$save();
+
+  deepEqual( Task.Database.rest.lastRecord, {name: 't1'} );
+});
+
+test( 'saveAlways field', function(assert)
+{
+  var prefix = 'saveAlways_field_';
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['name', 'done'],
+    saveAlways: ['done']
+  });
+
+  var t0 = Task.create({id: 2, name: 't0', done: true});
+
+  t0.name = 't1';
+  t0.$save();
+
+  deepEqual( Task.Database.rest.lastRecord, {name: 't1', done: true} );
+});

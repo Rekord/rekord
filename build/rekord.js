@@ -3601,6 +3601,7 @@ var Defaults = Database.Defaults =
   ignoredFields:        {},
   defaults:             {},
   publishAlways:        [],
+  saveAlways:           [],
   comparator:           null,
   comparatorNullsFirst: null,
   revision:             null,
@@ -12162,23 +12163,24 @@ Class.extend( Operation, SaveLocal,
     var remote = model.$toJSON( true );
     var changes = model.$getChanges( remote );
 
-    var saving = db.fullSave ? remote : changes;
-    var publish = db.fullPublish ? remote : this.publishAlways( db, changes, remote );
+    var saving = db.fullSave ? remote : this.grabAlways( db.saveAlways, changes, remote );
+    var publish = db.fullPublish ? remote : this.grabAlways( db.publishAlways, changes, remote );
+    var always = db.saveAlways;
 
     model.$status = Model.Status.SavePending;
     model.$saving = saving;
     model.$publish = publish;
   },
 
-  publishAlways: function(db, changes, encoded)
+  grabAlways: function(always, changes, encoded)
   {
     var changesCopy = null;
 
-    if ( db.publishAlways.length )
+    if ( always.length )
     {
-      for (var i = 0; i < db.publishAlways.length; i++)
+      for (var i = 0; i < always.length; i++)
       {
-        var prop = db.publishAlways[ i ];
+        var prop = always[ i ];
 
         if ( !(prop in changes) )
         {
