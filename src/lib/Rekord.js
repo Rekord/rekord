@@ -120,6 +120,14 @@ Rekord.get = function(name)
   return existing;
 };
 
+Rekord.export = function()
+{
+  for (var className in Rekord.classes)
+  {
+    win[ className ] = Rekord.classes[ className ];
+  }
+};
+
 /**
  * A value which identifies a model instance. This can be the key of the model,
  * an array of values (if the model has composite keys), an object which at
