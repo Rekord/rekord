@@ -111,7 +111,8 @@ Class.create( Model,
       $dependents: new Dependents( this ),
       $savedState: false,
       $saved: false,
-      $local: false
+      $local: false,
+      $touched: now()
     });
 
     if ( remoteData )
@@ -425,6 +426,8 @@ Class.create( Model,
     {
       batchExecute(function()
       {
+        this.$touch();
+
         this.$db.addReference( this );
 
         this.$set( setProperties, setValue );
@@ -432,6 +435,8 @@ Class.create( Model,
         this.$trigger( Model.Events.PreSave, [this] );
 
         this.$db.save( this, cascade );
+
+        this.$db.pruneModels();
 
         this.$trigger( Model.Events.PostSave, [this] );
 
@@ -733,6 +738,14 @@ Class.create( Model,
   $isNew: function()
   {
     return !(this.$saved || this.$local);
+  },
+
+  $touch: function()
+  {
+    if ( this.$db.hasPruning() )
+    {
+      this.$touched = now();
+    }
   },
 
   $getChanges: function(alreadyEncoded)

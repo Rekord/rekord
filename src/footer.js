@@ -58,6 +58,7 @@
   Rekord.isEmpty = isEmpty;
   Rekord.evaluate = evaluate;
   Rekord.addPlugin = addPlugin;
+  Rekord.now = now;
 
   /* Array Functions */
   Rekord.toArray = toArray;

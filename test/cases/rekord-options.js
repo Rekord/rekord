@@ -1110,6 +1110,80 @@ test( 'noReferences', function(assert)
   strictEqual( Task.all().length, 0 );
 });
 
+test( 'prune max', function(assert)
+{
+  var prefix = 'prune_max_';
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['name'],
+    prune: {
+      active: true,
+      max: 3,
+      removeLocal: true
+    }
+  });
+
+  var now = Rekord.now();
+
+  var t1 = Task.create({id: 1, name: 't1'});
+  var t2 = Task.create({id: 2, name: 't2'});
+  var t3 = Task.create({id: 3, name: 't3'});
+
+  t1.$touched = now - 3;
+  t2.$touched = now - 2;
+  t3.$touched = now - 1;
+
+  strictEqual( 3, Task.Database.store.map.size() );
+  deepEqual( Task.Database.store.map.keys, [1, 2, 3] );
+  strictEqual( 3, Task.Database.rest.map.size() );
+  strictEqual( 3, Task.all().length );
+
+  var t4 = Task.create({id: 4, name: 't4'});
+
+  strictEqual( 3, Task.Database.store.map.size() );
+  deepEqual( Task.Database.store.map.keys, [4, 2, 3] );
+  strictEqual( 4, Task.Database.rest.map.size() );
+  strictEqual( 3, Task.all().length );
+});
+
+test( 'prune keepAlive', function(assert)
+{
+  var prefix = 'prune_keepAlive_';
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['name'],
+    prune: {
+      active: true,
+      keepAlive: 1000, // 1s
+      removeLocal: true
+    }
+  });
+
+  var now = Rekord.now();
+
+  var t1 = Task.create({id: 1, name: 't1'});
+  var t2 = Task.create({id: 2, name: 't2'});
+  var t3 = Task.create({id: 3, name: 't3'});
+
+  t1.$touched = now - 1200;
+  t2.$touched = now - 800;
+  t3.$touched = now - 400;
+
+  strictEqual( 3, Task.Database.store.map.size() );
+  deepEqual( Task.Database.store.map.keys, [1, 2, 3] );
+  strictEqual( 3, Task.Database.rest.map.size() );
+  strictEqual( 3, Task.all().length );
+
+  var t4 = Task.create({id: 4, name: 't4'});
+
+  strictEqual( 3, Task.Database.store.map.size() );
+  deepEqual( Task.Database.store.map.keys, [4, 2, 3] );
+  strictEqual( 4, Task.Database.rest.map.size() );
+  strictEqual( 3, Task.all().length );
+});
+
 test( 'encodings decodings', function(assert)
 {
   var prefix = 'encodings_decodings_';

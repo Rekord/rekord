@@ -200,6 +200,7 @@ var Defaults = Database.Defaults =
   noReferences:         false,
   encodings:            {},
   decodings:            {},
+  prune:                {active: false, max: 0, keepAlive: 0, removeLocal: false},
   prepare:              noop,
   encode:               defaultEncode,
   decode:               defaultDecode,
@@ -748,6 +749,15 @@ Class.create( Database,
 
   destroyModel: function(model, modelKey)
   {
+    this.pruneModel( model, modelKey );
+
+    model.$trigger( Model.Events.RemoteAndRemove );
+
+    Rekord.debug( Rekord.Debugs.REMOTE_REMOVE, this, model );
+  },
+
+  pruneModel: function(model, modelKey)
+  {
     var db = this;
     var key = modelKey || model.$key();
 
@@ -755,10 +765,58 @@ Class.create( Database,
 
     db.models.remove( key );
     db.trigger( Database.Events.ModelRemoved, [model] );
+  },
 
-    model.$trigger( Model.Events.RemoteAndRemove );
+  hasPruning: function()
+  {
+    return this.prune.max || this.prune.keepAlive;
+  },
 
-    Rekord.debug( Rekord.Debugs.REMOTE_REMOVE, db, model );
+  pruneModels: function()
+  {
+    var db = this;
+    var prune = db.prune;
+    var models = db.models;
+
+    if (prune.max || prune.keepAlive)
+    {
+      if (prune.active)
+      {
+        var youngestAllowed = now() - prune.keepAlive;
+
+        var pruneModel = function(model)
+        {
+          if (prune.removeLocal)
+          {
+            model.$remove( Cascade.Local );
+          }
+          else
+          {
+            db.pruneModel( model );
+          }
+        };
+
+        var isTooYoung = function(model)
+        {
+          return model.$touched <= youngestAllowed;
+        };
+
+        while ( prune.max && models.length > prune.max )
+        {
+          var youngest = models.minModel('$touched');
+
+          if (youngest)
+          {
+            pruneModel( youngest );
+          }
+        }
+
+        if ( prune.keepAlive )
+        {
+          models.eachWhere( pruneModel, isTooYoung );
+        }
+      }
+    }
   },
 
   destroyLocalUncachedModel: function(model, key)

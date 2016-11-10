@@ -698,7 +698,10 @@ function S4()
   return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
 }
 
-
+var now = Date.now || function()
+{
+  return new Date().getTime();
+};
 
 function sizeof(x)
 {
@@ -3616,6 +3619,7 @@ var Defaults = Database.Defaults =
   noReferences:         false,
   encodings:            {},
   decodings:            {},
+  prune:                {active: false, max: 0, keepAlive: 0, removeLocal: false},
   prepare:              noop,
   encode:               defaultEncode,
   decode:               defaultDecode,
@@ -4164,6 +4168,15 @@ Class.create( Database,
 
   destroyModel: function(model, modelKey)
   {
+    this.pruneModel( model, modelKey );
+
+    model.$trigger( Model.Events.RemoteAndRemove );
+
+    Rekord.debug( Rekord.Debugs.REMOTE_REMOVE, this, model );
+  },
+
+  pruneModel: function(model, modelKey)
+  {
     var db = this;
     var key = modelKey || model.$key();
 
@@ -4171,10 +4184,58 @@ Class.create( Database,
 
     db.models.remove( key );
     db.trigger( Database.Events.ModelRemoved, [model] );
+  },
 
-    model.$trigger( Model.Events.RemoteAndRemove );
+  hasPruning: function()
+  {
+    return this.prune.max || this.prune.keepAlive;
+  },
 
-    Rekord.debug( Rekord.Debugs.REMOTE_REMOVE, db, model );
+  pruneModels: function()
+  {
+    var db = this;
+    var prune = db.prune;
+    var models = db.models;
+
+    if (prune.max || prune.keepAlive)
+    {
+      if (prune.active)
+      {
+        var youngestAllowed = now() - prune.keepAlive;
+
+        var pruneModel = function(model)
+        {
+          if (prune.removeLocal)
+          {
+            model.$remove( Cascade.Local );
+          }
+          else
+          {
+            db.pruneModel( model );
+          }
+        };
+
+        var isTooYoung = function(model)
+        {
+          return model.$touched <= youngestAllowed;
+        };
+
+        while ( prune.max && models.length > prune.max )
+        {
+          var youngest = models.minModel('$touched');
+
+          if (youngest)
+          {
+            pruneModel( youngest );
+          }
+        }
+
+        if ( prune.keepAlive )
+        {
+          models.eachWhere( pruneModel, isTooYoung );
+        }
+      }
+    }
   },
 
   destroyLocalUncachedModel: function(model, key)
@@ -4805,7 +4866,8 @@ Class.create( Model,
       $dependents: new Dependents( this ),
       $savedState: false,
       $saved: false,
-      $local: false
+      $local: false,
+      $touched: now()
     });
 
     if ( remoteData )
@@ -5119,6 +5181,8 @@ Class.create( Model,
     {
       batchExecute(function()
       {
+        this.$touch();
+
         this.$db.addReference( this );
 
         this.$set( setProperties, setValue );
@@ -5126,6 +5190,8 @@ Class.create( Model,
         this.$trigger( Model.Events.PreSave, [this] );
 
         this.$db.save( this, cascade );
+
+        this.$db.pruneModels();
 
         this.$trigger( Model.Events.PostSave, [this] );
 
@@ -5427,6 +5493,14 @@ Class.create( Model,
   $isNew: function()
   {
     return !(this.$saved || this.$local);
+  },
+
+  $touch: function()
+  {
+    if ( this.$db.hasPruning() )
+    {
+      this.$touched = now();
+    }
   },
 
   $getChanges: function(alreadyEncoded)
@@ -17679,6 +17753,7 @@ addPlugin(function(model, db, options)
   Rekord.isEmpty = isEmpty;
   Rekord.evaluate = evaluate;
   Rekord.addPlugin = addPlugin;
+  Rekord.now = now;
 
   /* Array Functions */
   Rekord.toArray = toArray;
