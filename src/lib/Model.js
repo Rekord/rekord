@@ -748,6 +748,13 @@ Class.create( Model,
     }
   },
 
+  $project: function(projectionInput)
+  {
+    var projection = Projection.parse( this.$db, projectionInput );
+
+    return projection.project( this );
+  },
+
   $getChanges: function(alreadyEncoded)
   {
     var saved = this.$saved;

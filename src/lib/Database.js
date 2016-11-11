@@ -98,6 +98,12 @@ function Database(options)
       this.relationNames.push( name );
     }
   }
+
+  // Projections
+  for (var projectionName in this.projections)
+  {
+    this.projections[ projectionName ] = Projection.parse( this, projectionName );
+  }
 }
 
 function defaultEncode(model, data, forSaving)
@@ -200,6 +206,7 @@ var Defaults = Database.Defaults =
   noReferences:         false,
   encodings:            {},
   decodings:            {},
+  projections:          {},
   prune:                {active: false, max: 0, keepAlive: 0, removeLocal: false},
   prepare:              noop,
   encode:               defaultEncode,

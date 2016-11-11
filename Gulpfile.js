@@ -33,6 +33,7 @@ var build = {
     './src/lib/Model.js',
     './src/lib/Map.js',
     './src/lib/Dependents.js',
+    './src/lib/Projection.js',
     './src/lib/keys/KeyHandler.js',
     './src/lib/keys/KeySimple.js',
     './src/lib/keys/KeyComposite.js',

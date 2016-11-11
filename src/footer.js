@@ -39,6 +39,10 @@
   Rekord.HasRemote = HasRemote;
   Rekord.HasList = HasList;
 
+  /* Projections */
+  Rekord.Filters = {};
+  Rekord.Projection = Projection;
+
   /* Common Functions */
   Rekord.isRekord = isRekord;
   Rekord.isDefined = isDefined;

@@ -1219,6 +1219,20 @@ Class.extend( Collection, ModelCollection,
     return changes;
   },
 
+  // TODO
+  project: function(projectionInput, out)
+  {
+    var target = out || [];
+    var projection = Projection.parse( this.database, projectionInput );
+
+    for (var i = 0; i < this.length; i++)
+    {
+      target.push( projection.project( this[ i ] ) );
+    }
+
+    return target;
+  },
+
   /**
    * Converts this collection into an object where the keys of the models are
    * the object properties and the models are the values.
