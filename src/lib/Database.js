@@ -19,8 +19,8 @@ function Database(options)
   this.keyHandler.addToFields( this.fields );
 
   // Properties
-  this.models = ModelCollection.create( this );
-  this.all = {};
+  this.modelsCached = this.models = ModelCollection.create( this );
+  this.allCached = this.all = {};
   this.loaded = {};
   this.className = this.className || toCamelCase( this.name );
   this.initialized = false;
@@ -32,6 +32,8 @@ function Database(options)
   this.afterOnline = false;
   this.saveFields = copy( this.fields );
   this.readyPromise = new Promise( null, false );
+  this.context = null;
+  this.contextIndex = -1;
 
   // Prepare
   this.prepare( this, options );
@@ -279,11 +281,25 @@ Class.create( Database,
     return this.readyPromise.success( callback, context, persistent );
   },
 
+  clearAll: function()
+  {
+    var db = this;
+
+    if (db.context)
+    {
+      db.context.clear( this );
+    }
+    else
+    {
+      db.allCached = db.all = {};
+    }
+  },
+
   clear: function(removeListeners)
   {
     var db = this;
 
-    db.all = {};
+    db.clearAll();
     db.models.clear();
 
     if ( removeListeners )
@@ -580,7 +596,7 @@ Class.create( Database,
     var keys = db.models.keys;
     var models = db.models;
 
-    db.all = {};
+    db.clearAll();
 
     for (var i = 0; i < keys.length; i++)
     {
@@ -768,10 +784,14 @@ Class.create( Database,
     var db = this;
     var key = modelKey || model.$key();
 
-    delete db.all[ key ];
-
+    db.removeReference( key );
     db.models.remove( key );
     db.trigger( Database.Events.ModelRemoved, [model] );
+  },
+
+  removeReference: function(key)
+  {
+    delete this.all[ key ];
   },
 
   hasPruning: function()

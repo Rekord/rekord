@@ -101,7 +101,7 @@ Class.extend( Operation, RemoveRemote,
     }
 
     // Remove the model reference for good!
-    delete db.all[ key ];
+    db.removeReference( key );
   },
 
   liveRemove: function()

@@ -689,7 +689,7 @@ Class.create( Model,
         throw 'Key changes are not supported, see the documentation on how to enable key changes.';
       }
 
-      delete db.all[ oldKey ];
+      db.removeReference( oldKey );
       db.addReference( this, newKey );
 
       this.$$key = newKey;

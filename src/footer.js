@@ -30,6 +30,7 @@
   Rekord.ModelCollection = ModelCollection;
   Rekord.FilteredModelCollection = FilteredModelCollection;
   Rekord.Page = Page;
+  Rekord.Context = Context;
 
   /* Relationships */
   Rekord.HasOne = HasOne;

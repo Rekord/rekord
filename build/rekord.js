@@ -3438,8 +3438,8 @@ function Database(options)
   this.keyHandler.addToFields( this.fields );
 
   // Properties
-  this.models = ModelCollection.create( this );
-  this.all = {};
+  this.modelsCached = this.models = ModelCollection.create( this );
+  this.allCached = this.all = {};
   this.loaded = {};
   this.className = this.className || toCamelCase( this.name );
   this.initialized = false;
@@ -3451,6 +3451,8 @@ function Database(options)
   this.afterOnline = false;
   this.saveFields = copy( this.fields );
   this.readyPromise = new Promise( null, false );
+  this.context = null;
+  this.contextIndex = -1;
 
   // Prepare
   this.prepare( this, options );
@@ -3698,11 +3700,25 @@ Class.create( Database,
     return this.readyPromise.success( callback, context, persistent );
   },
 
+  clearAll: function()
+  {
+    var db = this;
+
+    if (db.context)
+    {
+      db.context.clear( this );
+    }
+    else
+    {
+      db.allCached = db.all = {};
+    }
+  },
+
   clear: function(removeListeners)
   {
     var db = this;
 
-    db.all = {};
+    db.clearAll();
     db.models.clear();
 
     if ( removeListeners )
@@ -3999,7 +4015,7 @@ Class.create( Database,
     var keys = db.models.keys;
     var models = db.models;
 
-    db.all = {};
+    db.clearAll();
 
     for (var i = 0; i < keys.length; i++)
     {
@@ -4187,10 +4203,14 @@ Class.create( Database,
     var db = this;
     var key = modelKey || model.$key();
 
-    delete db.all[ key ];
-
+    db.removeReference( key );
     db.models.remove( key );
     db.trigger( Database.Events.ModelRemoved, [model] );
+  },
+
+  removeReference: function(key)
+  {
+    delete this.all[ key ];
   },
 
   hasPruning: function()
@@ -5451,7 +5471,7 @@ Class.create( Model,
         throw 'Key changes are not supported, see the documentation on how to enable key changes.';
       }
 
-      delete db.all[ oldKey ];
+      db.removeReference( oldKey );
       db.addReference( this, newKey );
 
       this.$$key = newKey;
@@ -6388,6 +6408,132 @@ Projection.parse = function(database, input)
 
   return input;
 };
+
+
+function Context(models)
+{
+  this.databases = [];
+  this.alls = [];
+  this.models = [];
+
+  var classes = Rekord.classes;
+
+  if ( isEmpty( models ) )
+  {
+    for (var name in classes)
+    {
+      this.add( classes[ name ].Database );
+    }
+  }
+  else if ( isArray( models ) )
+  {
+    for (var i = 0; i < models.length; i++)
+    {
+      this.add( classes[ models[ i ] ].Database );
+    }
+  }
+}
+
+Context.start = function(models)
+{
+  var context = new Context( models );
+
+  context.apply();
+
+  return context;
+};
+
+Class.create( Context,
+{
+
+  add: function(db)
+  {
+    this.databases.push( db );
+    this.alls.push( {} );
+    this.models.push( new ModelCollection( db ) );
+  },
+
+  getApplied: function()
+  {
+    var applied = 0;
+
+    this.each(function(db)
+    {
+      if (db.context === this)
+      {
+        applied++;
+      }
+    });
+
+    return applied / this.databases.length;
+  },
+
+  apply: function()
+  {
+    this.each( this.applyDatabase );
+  },
+
+  applyDatabase: function(db, all, models, i)
+  {
+    db.all = all;
+    db.models = models;
+    db.context = this;
+    db.contextIndex = i;
+  },
+
+  discard: function()
+  {
+    this.each( this.discardDatabase );
+  },
+
+  discardDatabase: function(db)
+  {
+    if (db.context === this)
+    {
+      db.all = db.allCached;
+      db.models = db.modelsCached;
+      db.context = null;
+      db.contextIndex = -1;
+    }
+  },
+
+  destroy: function()
+  {
+    this.each( this.destroyDatabase );
+
+    this.databases.length = 0;
+    this.alls.length = 0;
+    this.models.length = 0;
+  },
+
+  destroyDatabase: function(db, alls, models, i)
+  {
+    this.discardDatabase( db );
+
+    this.databases[ i ] = null;
+    this.alls[ i ] = null;
+    this.models[ i ].clear();
+    this.models[ i ] = null;
+  },
+
+  clear: function(db)
+  {
+    this.alls[ db.contextIndex ] = {};
+  },
+
+  each: function(iterator)
+  {
+    var dbs = this.databases;
+    var alls = this.alls;
+    var models = this.models;
+
+    for (var i = 0; i < dbs.length; i++)
+    {
+      iterator.call( this, dbs[ i ], alls[ i ], models[ i ], i );
+    }
+  }
+
+});
 
 
 function KeyHandler()
@@ -12498,7 +12644,7 @@ Class.extend( Operation, RemoveRemote,
     }
 
     // Remove the model reference for good!
-    delete db.all[ key ];
+    db.removeReference( key );
   },
 
   liveRemove: function()
@@ -18088,6 +18234,7 @@ addPlugin(function(model, db, options)
   Rekord.ModelCollection = ModelCollection;
   Rekord.FilteredModelCollection = FilteredModelCollection;
   Rekord.Page = Page;
+  Rekord.Context = Context;
 
   /* Relationships */
   Rekord.HasOne = HasOne;
