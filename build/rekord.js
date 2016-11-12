@@ -6416,20 +6416,18 @@ function Context(models)
   this.alls = [];
   this.models = [];
 
-  var classes = Rekord.classes;
-
   if ( isEmpty( models ) )
   {
-    for (var name in classes)
+    for (var name in Rekord.classes)
     {
-      this.add( classes[ name ].Database );
+      this.add( name );
     }
   }
   else if ( isArray( models ) )
   {
     for (var i = 0; i < models.length; i++)
     {
-      this.add( classes[ models[ i ] ].Database );
+      this.add( models[ i ] );
     }
   }
 }
@@ -6446,11 +6444,24 @@ Context.start = function(models)
 Class.create( Context,
 {
 
-  add: function(db)
+  add: function(type)
   {
-    this.databases.push( db );
-    this.alls.push( {} );
-    this.models.push( new ModelCollection( db ) );
+    if ( isString( type ) )
+    {
+      type = Rekord.classes[ type ];
+    }
+
+    if ( isRekord( type ) )
+    {
+      type = type.Database;
+    }
+
+    if ( type instanceof Database )
+    {
+      this.databases.push( type );
+      this.alls.push( {} );
+      this.models.push( new ModelCollection( type ) );
+    }
   },
 
   getApplied: function()
