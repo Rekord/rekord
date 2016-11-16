@@ -275,7 +275,8 @@ gulp.task( 'default', ['js:min']);
 
 gulp.task( 'test:normal', ['js'], executeTest( './test/index.html' ) );
 gulp.task( 'test:nativearray', ['js'], executeTest( './test/index-nativearray.html' ) );
-gulp.task( 'test', ['test:normal', 'test:nativearray'] );
+gulp.task( 'test:requirejs', ['js'], executeTest( './test/index-requirejs.html' ) );
+gulp.task( 'test', ['test:normal', 'test:nativearray', 'test:requirejs'] );
 
 gulp.task( 'docs', shell.task(['./node_modules/.bin/jsdoc -c jsdoc.json']));
 gulp.task( 'clean', shell.task(['rm -rf build/*.js', 'rm -rf build/*.map']));
