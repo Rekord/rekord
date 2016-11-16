@@ -609,6 +609,65 @@ test( 'Rekord.createWhere all', function(assert)
   ok(    where( m3 ) );
 });
 
+test( 'Rekord.not', function(assert)
+{
+  var where = Rekord.createWhere;
+  var not = Rekord.not;
+
+  var m0 = {done: false, name: 't2'};
+  var m1 = {done: true, name: 't29'};
+  var m2 = {name: 'x'};
+
+  var w0 = where({done: true});
+  var w1 = where({done: not(true)});
+  var w2 = not(where({done: false}));
+
+  notOk( w0( m0 ) );
+  ok( w0( m1 ) );
+  notOk( w0( m2 ) );
+
+  ok( w1( m0 ) );
+  notOk( w1( m1 ) );
+  ok( w1( m2 ) );
+
+  notOk( w2( m0 ) );
+  ok( w2( m1 ) );
+  ok( w2( m2 ) );
+});
+
+test( 'Rekord.oneOf', function(assert)
+{
+  var where = Rekord.createWhere;
+  var oneOf = Rekord.oneOf;
+
+  var m0 = {x: 1};
+  var m1 = {x: 2};
+  var m2 = {x: 4};
+
+  var w0 = where({x: oneOf(1, 2, 3)});
+
+  ok( w0( m0 ) );
+  ok( w0( m1 ) );
+  notOk( w0( m2 ) );
+});
+
+test( 'Rekord.not oneOf', function(assert)
+{
+  var where = Rekord.createWhere;
+  var oneOf = Rekord.oneOf;
+  var not = Rekord.not;
+
+  var m0 = {x: 1};
+  var m1 = {x: 2};
+  var m2 = {x: 4};
+
+  var w0 = where({x: not(oneOf(1, 2, 3))});
+
+  notOk( w0( m0 ) );
+  notOk( w0( m1 ) );
+  ok( w0( m2 ) );
+});
+
 test( 'Rekord.savePropertyResolver', function(assert)
 {
   Rekord.savePropertyResolver( 'prop0', 'name' );

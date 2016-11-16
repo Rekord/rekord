@@ -144,6 +144,12 @@
   Rekord.Wheres = Wheres;
   Rekord.saveWhere = saveWhere;
   Rekord.createWhere = createWhere;
+  Rekord.expr = expr;
+  Rekord.not = not;
+  Rekord.oneOf = oneOf;
+  Rekord.isExpr = isExpr;
+  Rekord.exprEqualsTester = exprEqualsTester;
+  Rekord.exprEquals = exprEquals;
 
   return Rekord;
 

@@ -138,11 +138,23 @@ function createWhere(properties, value, equals)
   }
   else if ( isObject( properties ) )
   {
+    var props = [];
+
+    for (var prop in properties)
+    {
+      props.push({
+        tester:   exprEqualsTester( properties[ prop ], equality ),
+        resolver: createPropertyResolver( prop )
+      });
+    }
+
     return function whereEqualsObject(model)
     {
-      for (var prop in properties)
+      for (var i = 0; i < props.length; i++)
       {
-        if ( !equality( model[ prop ], properties[ prop ] ) )
+        var prop = props[ i ];
+
+        if ( !prop.tester( prop.resolver( model ) ) )
         {
           return false;
         }
@@ -162,9 +174,11 @@ function createWhere(properties, value, equals)
 
     if ( isValue( value ) )
     {
+      var tester = exprEqualsTester( value, equality );
+
       return function whereEqualsValue(model)
       {
-        return equality( resolver( model ), value );
+        return tester( resolver( model ) );
       };
     }
     else
@@ -182,4 +196,79 @@ function createWhere(properties, value, equals)
       return true;
     };
   }
+}
+
+function expr(func)
+{
+  func.expression = true;
+
+  return func;
+}
+
+function exprEquals(value, test, equals)
+{
+  return isExpr( value ) ? value( test, equals ) : equals( value, test );
+}
+
+function exprEqualsTester(value, equals)
+{
+  if ( isExpr( value ) )
+  {
+    return function tester(test)
+    {
+      return value( test, equals );
+    };
+  }
+
+  return function tester(test)
+  {
+    return equals( value, test );
+  };
+}
+
+function isExpr(x)
+{
+  return isFunction( x ) && x.expression;
+}
+
+function not(x)
+{
+  if ( isExpr( x ) )
+  {
+    return expr(function notExpr(value, equals)
+    {
+      return !x( value, equals );
+    });
+  }
+
+  if ( isFunction( x ) )
+  {
+    return function notWhere(value)
+    {
+      return !x( value );
+    };
+  }
+
+  return expr(function notValue(value, equals)
+  {
+    return !equals( value, x );
+  });
+}
+
+function oneOf(input)
+{
+  var values = isArray( input ) ? input : AP.slice.call( arguments );
+
+  return expr(function oneOfValue(value, equals)
+  {
+    for (var i = 0; i < values.length; i++)
+    {
+      if (exprEquals( values[ i ], value, equals ) )
+      {
+        return true;
+      }
+    }
+
+    return false;
+  });
 }
