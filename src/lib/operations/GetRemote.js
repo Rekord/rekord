@@ -1,6 +1,6 @@
-function GetRemote(model, cascade)
+function GetRemote(model, cascade, options)
 {
-  this.reset( model, cascade );
+  this.reset( model, cascade, options );
 }
 
 Class.extend( Operation, GetRemote,
@@ -24,7 +24,7 @@ Class.extend( Operation, GetRemote,
     {
       batchExecute(function()
       {
-        db.rest.get( model, this.success(), this.failure() );
+        db.rest.get( model, this.options || db.getOptions, this.success(), this.failure() );
 
       }, this );
     }

@@ -535,7 +535,7 @@ test( 'override refresh', function(assert)
     name: TaskName,
     fields: ['name', 'done'],
     executeRefresh: function(success, failure) {
-      this.rest.query('/url', {}, success, failure);
+      this.rest.query('/url', {}, {}, success, failure);
     }
   });
 

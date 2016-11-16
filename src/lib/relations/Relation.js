@@ -13,6 +13,8 @@ Relation.Defaults =
   store:                Store.None,
   save:                 Save.None,
   auto:                 true,
+  autoCascade:          Cascade.All,
+  autoOptions:          null,
   property:             true,
   preserve:             true,
   clearKey:             true,
@@ -359,7 +361,7 @@ Class.create( Relation,
 
     if ( changes && !remoteData && this.auto && !target.$isNew() )
     {
-      target.$save( cascade );
+      target.$save( cascade || this.autoCascade, this.autoOptions );
     }
 
     return changes;
@@ -373,7 +375,7 @@ Class.create( Relation,
     {
       if ( this.auto && !target.$isNew() && !remoteData )
       {
-        target.$save();
+        target.$save( this.autoCascade, this.autoOptions );
       }
 
       target.$trigger( Model.Events.KeyUpdate, [target, source, targetFields, sourceFields] );

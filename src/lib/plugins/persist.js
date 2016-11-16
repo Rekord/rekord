@@ -30,15 +30,15 @@ addPlugin(function(model, db, options)
    *    The saved model instance or undefined if the model database has not
    *    finished loading.
    */
-  model.persist = function( input, cascade, callback, context )
+  model.persist = function( input, cascade, options, callback, context )
   {
     var callbackContext = context || this;
 
-    return model.findOrCreate( input, cascade, function(instance, created)
+    return model.findOrCreate( input, cascade, options, function(instance, created)
     {
       if ( !created )
       {
-        instance.$save( cascade );
+        instance.$save( cascade, options );
       }
 
       if ( callback )

@@ -11,6 +11,7 @@
 // expression?savedWhere
 // alias:expression
 // expression#resolve
+// relations@sum=field
 
 function Projection(database, input)
 {
@@ -133,165 +134,297 @@ Projection.TOKENS =
   ']': 'pluckValueEnd',
   '{': 'pluckObjectStart',
   ':': 'pluckObjectDelimiter',
-  '}': 'pluckObjectEnd'
+  '}': 'pluckObjectEnd',
+  '@': 'aggregateStart',
+  '=': 'aggregateProperty'
 };
 
 Projection.TOKEN_HANDLER =
 {
-  property: {
-    post: function(words, tokens, types, projection) {
+
+  property:
+  {
+    post: function(words, tokens, types, projection)
+    {
       var propertyName = words[0];
       var sourceType = types[0];
-      if (!(sourceType instanceof Database)) {
+
+      if (!(sourceType instanceof Database))
+      {
         throw ('The property ' + propertyName + ' can only be taken from a Model');
       }
+
       var relation = sourceType.relations[ propertyName ];
-      if (relation) {
-        if (relation instanceof RelationSingle) {
+
+      if (relation)
+      {
+        if (relation instanceof RelationSingle)
+        {
           types.unshift( relation.model.Database );
-        } else {
+        }
+        else
+        {
           types.unshift( relation );
         }
       }
+
       var fieldIndex = indexOf( sourceType.fields, propertyName );
-      if (fieldIndex === false && !relation) {
+
+      if (fieldIndex === false && !relation)
+      {
         throw ('The property ' + propertyName + ' does not exist as a field or relation on the Model ' + sourceType.name );
       }
-      return function(resolver) {
-        return function(model) {
-          if ( !isValue( model ) ) {
+
+      return function(resolver)
+      {
+        return function(model)
+        {
+          if ( !isValue( model ) )
+          {
             return null;
           }
+
           return resolver( model.$get( propertyName ) );
         };
       };
     }
   },
-  filter: {
-    post: function(words, tokens, types, projection) {
+
+  filter:
+  {
+    post: function(words, tokens, types, projection)
+    {
       var filterName = words[0];
       var filter = Rekord.Filters[ filterName ];
-      if (!filter) {
+
+      if (!filter)
+      {
         throw (filterName + ' is not a valid filter function');
       }
-      return function(resolver) {
-        return function(value) {
-          if ( !isValue( value ) ) {
+
+      return function(resolver)
+      {
+        return function(value)
+        {
+          if ( !isValue( value ) )
+          {
             return null;
           }
+
           return resolver( filter( value ) );
         };
       };
     }
   },
-  resolve: {
-    post: function(words, tokens, types, projection) {
+
+  resolve:
+  {
+    post: function(words, tokens, types, projection)
+    {
       var resolveName = words[0];
-      return function(resolver) {
-        return function(source) {
-          if ( !isValue( source ) ) {
+
+      return function(resolver)
+      {
+        return function(source)
+        {
+          if ( !isValue( source ) )
+          {
             return null;
           }
+
           var value = source[ resolveName ];
-          if ( isFunction( value ) ) {
+
+          if ( isFunction( value ) )
+          {
             value = value.apply( source );
           }
+
           return resolver( value );
         };
       };
     }
   },
-  where: {
-    post: function(words, tokens, types, projection) {
+
+  where:
+  {
+    post: function(words, tokens, types, projection)
+    {
       var whereName = words[0];
       var whereFrom = types[0];
       var where = Rekord.Wheres[ whereName ];
-      if (!where) {
+
+      if (!where)
+      {
         throw (whereName + ' is not a valid where expression');
       }
-      if (!(whereFrom instanceof RelationMultiple)) {
+
+      if (!(whereFrom instanceof RelationMultiple))
+      {
         throw (whereName + ' where expressions can only be used on relations');
       }
-      return function(resolver) {
-        return function(relation) {
-          if ( !isValue( relation ) ) {
+
+      return function(resolver)
+      {
+        return function(relation)
+        {
+          if ( !isValue( relation ) )
+          {
             return null;
           }
+
           return resolver( relation.where( where ) );
         };
       };
     }
   },
-  subEnd: {
-    pre: function(words, tokens, types, projection) {
+
+  aggregateProperty:
+  {
+    post: function(words, tokens, types, projection)
+    {
+      var property = words[0];
+      var aggregateFunction = words[1];
+      var aggregateFrom = types[0];
+
+      if (tokens[1] !== 'aggregateStart')
+      {
+        throw ('Aggregate function syntax error, a = must follow a @');
+      }
+
+      if (!(aggregateFrom instanceof Relation))
+      {
+        throw ('Aggregate functions like ' + aggregateFunction + ' from ' + aggregateFrom + ' can only be used on relations');
+      }
+
+      return function (resolver)
+      {
+        return function (relation)
+        {
+          if ( !isValue( relation ) )
+          {
+            return null;
+          }
+
+          return resolver( relation[ aggregateFunction ]( property ) );
+        };
+      };
+    }
+  },
+
+  subEnd:
+  {
+    pre: function(words, tokens, types, projection)
+    {
       var projectionName = words[0];
       var whereFrom = types[0];
-      if (tokens[1] !== 'subStart') {
+
+      if (tokens[1] !== 'subStart')
+      {
         throw ('Sub projection syntax error, an ending ) requires a starting (');
       }
-      if (!(whereFrom instanceof Relation)) {
+
+      if (!(whereFrom instanceof Relation))
+      {
         throw ('Sub projections like ' + projectionName + ' from ' + words[1] + ' can only be used on relations');
       }
-      if (!whereFrom.model.Database.projections[ projectionName ]) {
+
+      if (!whereFrom.model.Database.projections[ projectionName ])
+      {
         throw ('The projection ' + projectionName + ' does not exist on ' + whereFrom.model.Database.name);
       }
-      if (whereFrom instanceof RelationSingle) {
-        return function(resolver) {
-          return function (relation) {
-            if ( !isValue( relation ) ) {
+
+      if (whereFrom instanceof RelationSingle)
+      {
+        return function(resolver)
+        {
+          return function (relation)
+          {
+            if ( !isValue( relation ) )
+            {
               return null;
             }
+
             return resolver( relation.$project( projectionName ) );
           };
         };
-      } else {
-        return function(resolver) {
-          return function(relations) {
-            if ( !isValue( relations ) ) {
+      }
+      else
+      {
+        return function(resolver)
+        {
+          return function(relations)
+          {
+            if ( !isValue( relations ) )
+            {
               return null;
             }
+
             return resolver( relations.project( projectionName ) );
           };
         };
       }
     }
   },
-  pluckValueEnd: {
-    pre: function(words, tokens, types, projection) {
+
+  pluckValueEnd:
+  {
+    pre: function(words, tokens, types, projection)
+    {
       var properties = words[0];
       var whereFrom = types[0];
-      if (tokens[1] !== 'pluckValueStart') {
+
+      if (tokens[1] !== 'pluckValueStart')
+      {
         throw ('Pluck value syntax error, an ending ] requires a starting [');
       }
-      if (!(whereFrom instanceof RelationMultiple)) {
+
+      if (!(whereFrom instanceof RelationMultiple))
+      {
         throw ('Pluck values like ' + properties + ' from ' + words[1] + ' can only be used on relations');
       }
-      return function (resolver) {
-        return function (relations) {
-          if ( !isValue( relations ) ) {
+
+      return function (resolver)
+      {
+        return function (relations)
+        {
+          if ( !isValue( relations ) )
+          {
             return null;
           }
+
           return resolver( relations.pluck( properties ) );
         };
       };
     }
   },
-  pluckObjectEnd: {
-    pre: function(words, tokens, types, projection) {
+
+  pluckObjectEnd:
+  {
+    pre: function(words, tokens, types, projection)
+    {
       var properties = words[0];
       var keys = words[1];
       var whereFrom = types[0];
-      if (tokens[1] !== 'pluckObjectDelimiter' || tokens[2] !== 'pluckObjectStart') {
+
+      if (tokens[1] !== 'pluckObjectDelimiter' || tokens[2] !== 'pluckObjectStart')
+      {
         throw ('Pluck object syntax error, must be {key: value}');
       }
-      if (!(whereFrom instanceof RelationMultiple)) {
+
+      if (!(whereFrom instanceof RelationMultiple))
+      {
         throw ('Pluck values like ' + properties + ' from ' + words[1] + ' can only be used on relations');
       }
-      return function (resolver) {
-        return function (relations) {
-          if ( !isValue( relations ) ) {
+
+      return function (resolver)
+      {
+        return function (relations)
+        {
+          if ( !isValue( relations ) )
+          {
             return null;
           }
+
           return resolver( relations.pluck( properties, keys ) );
         };
       };

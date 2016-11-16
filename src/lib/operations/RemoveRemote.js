@@ -1,6 +1,6 @@
-function RemoveRemote(model, cascade)
+function RemoveRemote(model, cascade, options)
 {
-  this.reset( model, cascade );
+  this.reset( model, cascade, options );
 }
 
 Class.extend( Operation, RemoveRemote,
@@ -28,7 +28,7 @@ Class.extend( Operation, RemoveRemote,
 
       batchExecute(function()
       {
-        db.rest.remove( model, this.success(), this.failure() );
+        db.rest.remove( model, this.options || this.removeOptions, this.success(), this.failure() );
 
       }, this );
     }

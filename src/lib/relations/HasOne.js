@@ -11,13 +11,18 @@ HasOne.Defaults =
   query:                false,
   store:                Store.None,
   save:                 Save.None,
+  saveCascade:          Cascade.All,
+  saveOptions:          null,
   auto:                 true,
+  autoCascade:          Cascade.All,
+  autoOptions:          null,
   property:             true,
   preserve:             true,
   clearKey:             true,
   dynamic:              false,
   local:                null,
   cascade:              Cascade.All,
+  cascadeRemoveOptions: null,
   discriminator:        'discriminator',
   discriminators:       {},
   discriminatorToModel: {}
@@ -157,7 +162,7 @@ Class.extend( RelationSingle, HasOne,
 
         relation.saving = true;
 
-        related.$save();
+        related.$save( this.saveCascade, this.saveOptions );
 
         relation.saving = false;
         relation.dirty = false;
@@ -192,7 +197,7 @@ Class.extend( RelationSingle, HasOne,
 
       if ( this.cascade && !related.$isDeleted() )
       {
-        related.$remove( this.cascade );
+        related.$remove( this.cascade, this.cascadeRemoveOptions );
       }
 
       relation.related = null;

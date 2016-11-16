@@ -240,7 +240,7 @@ test( 'fetch callback', function(assert)
 
   expect(3);
 
-  var t0 = Task.fetch( 4, function(t1)
+  var t0 = Task.fetch( 4, {}, function(t1)
   {
     strictEqual( t0, t1 );
     strictEqual( t0.name, 'This' );
@@ -267,7 +267,7 @@ test( 'grab', function(assert)
 
   expect(2);
 
-  var t0 = Task.grab( 4, function(fetched)
+  var t0 = Task.grab( 4, {}, function(fetched)
   {
     strictEqual( fetched.name, 'That' );
   });

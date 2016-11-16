@@ -49,7 +49,7 @@ Class.extend( Operation, RemoveLocal,
 
     if ( model.$saved && this.canCascade( Cascade.Remote ) )
     {
-      model.$addOperation( RemoveRemote, this.cascade );
+      model.$addOperation( RemoveRemote, this.cascade, this.options );
     }
   },
 
@@ -63,7 +63,7 @@ Class.extend( Operation, RemoveLocal,
 
     if ( model.$saved && this.canCascade( Cascade.Remote ) )
     {
-      model.$addOperation( RemoveRemote, this.cascade );
+      model.$addOperation( RemoveRemote, this.cascade, this.options );
     }
   }
 

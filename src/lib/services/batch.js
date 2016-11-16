@@ -76,24 +76,26 @@ function createModelHandler(operations, batch)
       switch (op)
       {
         case 'all':
-          rest.all = function(success, failure) // jshint ignore:line
+          rest.all = function(options, success, failure) // jshint ignore:line
           {
             batch.push({
               database: db,
               class: modelClass,
               operation: 'all',
+              options: options,
               success: success,
               failure: failure
             });
           };
           break;
         case 'get':
-          rest.get = function(model, success, failure) // jshint ignore:line
+          rest.get = function(model, options, success, failure) // jshint ignore:line
           {
             batch.push({
               database: db,
               class: modelClass,
               operation: 'get',
+              options: options,
               success: success,
               failure: failure,
               model: model
@@ -101,12 +103,13 @@ function createModelHandler(operations, batch)
           };
           break;
         case 'create':
-          rest.create = function(model, encoded, success, failure) // jshint ignore:line
+          rest.create = function(model, encoded, options, success, failure) // jshint ignore:line
           {
             batch.push({
               database: db,
               class: modelClass,
               operation: 'create',
+              options: options,
               success: success,
               failure: failure,
               model: model,
@@ -115,12 +118,13 @@ function createModelHandler(operations, batch)
           };
           break;
         case 'update':
-          rest.update = function(model, encoded, success, failure) // jshint ignore:line
+          rest.update = function(model, encoded, options, success, failure) // jshint ignore:line
           {
             batch.push({
               database: db,
               class: modelClass,
               operation: 'update',
+              options: options,
               success: success,
               failure: failure,
               model: model,
@@ -129,12 +133,13 @@ function createModelHandler(operations, batch)
           };
           break;
         case 'remove':
-          rest.remove = function(model, success, failure) // jshint ignore:line
+          rest.remove = function(model, options, success, failure) // jshint ignore:line
           {
             batch.push({
               database: db,
               class: modelClass,
               operation: 'remove',
+              options: options,
               success: success,
               failure: failure,
               model: model
@@ -142,12 +147,13 @@ function createModelHandler(operations, batch)
           };
           break;
         case 'query':
-          rest.query = function(url, query, success, failure) // jshint ignore:line
+          rest.query = function(url, query, options, success, failure) // jshint ignore:line
           {
             batch.push({
               database: db,
               class: modelClass,
               operation: 'query',
+              options: options,
               success: success,
               failure: failure,
               url: url,

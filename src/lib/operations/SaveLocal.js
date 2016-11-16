@@ -1,6 +1,6 @@
-function SaveLocal(model, cascade)
+function SaveLocal(model, cascade, options)
 {
-  this.reset( model, cascade );
+  this.reset( model, cascade, options );
 }
 
 Class.extend( Operation, SaveLocal,

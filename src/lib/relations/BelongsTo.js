@@ -12,12 +12,15 @@ BelongsTo.Defaults =
   store:                Store.None,
   save:                 Save.None,
   auto:                 true,
+  autoCascade:          Cascade.All,
+  autoOptions:          null,
   property:             true,
   preserve:             true,
   clearKey:             true,
   dynamic:              false,
   local:                null,
   cascade:              Cascade.Local,
+  cascadeRemoveOptions: null,
   discriminator:        'discriminator',
   discriminators:       {},
   discriminatorToModel: {}
@@ -55,7 +58,7 @@ Class.extend( RelationSingle, BelongsTo,
       {
         Rekord.debug( Rekord.Debugs.BELONGSTO_NINJA_REMOVE, this, model, relation );
 
-        model.$remove( this.cascade );
+        model.$remove( this.cascade, this.cascadeRemoveOptions );
         this.clearRelated( relation, false, true );
       },
 

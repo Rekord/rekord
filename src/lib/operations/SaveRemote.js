@@ -1,6 +1,6 @@
-function SaveRemote(model, cascade)
+function SaveRemote(model, cascade, options)
 {
-  this.reset( model, cascade );
+  this.reset( model, cascade, options );
 }
 
 Class.extend( Operation, SaveRemote,
@@ -39,11 +39,11 @@ Class.extend( Operation, SaveRemote,
       {
         if ( model.$saved )
         {
-          db.rest.update( model, model.$saving, this.success(), this.failure() );
+          db.rest.update( model, model.$saving, this.options || db.updateOptions || db.saveOptions, this.success(), this.failure() );
         }
         else
         {
-          db.rest.create( model, model.$saving, this.success(), this.failure() );
+          db.rest.create( model, model.$saving, this.options || db.createOptions || db.saveOptions, this.success(), this.failure() );
         }
 
       }, this );
@@ -211,7 +211,7 @@ Class.extend( Operation, SaveRemote,
   {
     var model = this.model;
 
-    model.$addOperation( SaveLocal, this.cascade );
+    model.$addOperation( SaveLocal, this.cascade, this.options );
   }
 
 });

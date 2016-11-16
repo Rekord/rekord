@@ -1,6 +1,6 @@
-function GetLocal(model, cascade)
+function GetLocal(model, cascade, options)
 {
-  this.reset( model, cascade );
+  this.reset( model, cascade, options );
 }
 
 Class.extend( Operation, GetLocal,

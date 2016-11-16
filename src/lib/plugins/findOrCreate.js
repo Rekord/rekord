@@ -28,11 +28,15 @@ addPlugin(function(model, db, options)
    * @memberof Rekord.Model
    * @param {Object} [input] -
    *    The values to set in the model instance found or created.
+   * @param {Number} [cascade] -
+   *    Which operations should be performed out of: store, rest, & live.
+   * @param {Any} [options] -
+   *    The options to pass to the REST service.
    * @return {Rekord.Model} -
    *    The saved model instance or undefined if the model database has not
    *    finished loading.
    */
-  model.findOrCreate = function( input, cascade, callback, context )
+  model.findOrCreate = function( input, cascade, options, callback, context )
   {
     var callbackContext = context || this;
     var instance = db.get( input );
@@ -44,7 +48,7 @@ addPlugin(function(model, db, options)
       {
         if ( !grabbed )
         {
-          instance = model.create( input, cascade );
+          instance = model.create( input, cascade, options );
           created = true;
         }
         else
@@ -55,7 +59,7 @@ addPlugin(function(model, db, options)
           // grab model created an instance that needs to be "created"
           if ( !instance.$isSaved() )
           {
-            instance.$save( cascade );
+            instance.$save( cascade, options );
           }
         }
 

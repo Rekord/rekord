@@ -20,6 +20,8 @@ addPlugin(function(model, db, options)
    * @memberof Rekord.Model
    * @param {modelInput} input -
    *    The model input used to determine the key and load the model.
+   * @param {Any} [options] -
+   *    The options to pass to the REST service.
    * @param {Function} [callback] -
    *    The function to invoke passing the reference of the model once it's
    *    successfully remotely loaded.
@@ -28,7 +30,7 @@ addPlugin(function(model, db, options)
    * @return {Rekord.Model} -
    *    The model instance.
    */
-  model.fetch = function( input, callback, context )
+  model.fetch = function( input, options, callback, context )
   {
     var key = db.keyHandler.buildKeyFromInput( input );
     var instance = db.get( key );
@@ -53,7 +55,7 @@ addPlugin(function(model, db, options)
       });
     }
 
-    instance.$refresh();
+    instance.$refresh( Cascade.Rest, options );
 
     return instance;
   };

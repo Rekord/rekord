@@ -816,7 +816,7 @@ Class.extend( Collection, ModelCollection,
    * @emits Rekord.ModelCollection#removes
    * @emits Rekord.ModelCollection#sort
    */
-  removeWhere: function(callRemove, whereProperties, whereValue, whereEquals, out, delaySort)
+  removeWhere: function(callRemove, whereProperties, whereValue, whereEquals, out, delaySort, cascade, options)
   {
     var where = createWhere( whereProperties, whereValue, whereEquals );
     var removed = out || this.cloneEmpty();
@@ -836,7 +836,7 @@ Class.extend( Collection, ModelCollection,
 
           if ( callRemove )
           {
-            model.$remove();
+            model.$remove( cascade, options );
           }
         }
       }
@@ -872,12 +872,14 @@ Class.extend( Collection, ModelCollection,
    *    True for NOT calling {@link Rekord.Model#$save}, otherwise false.
    * @param {Number} [cascade] -
    *    Which operations should be performed out of: store, rest, & live.
+   * @param {Any} [options] -
+   *    The options to pass to the REST service.
    * @return {Rekord.ModelCollection} -
    *    The reference to this collection.
    * @emits Rekord.ModelCollection#updates
    * @emits Rekord.ModelCollection#sort
    */
-  update: function(props, value, remoteData, avoidSave, cascade)
+  update: function(props, value, remoteData, avoidSave, cascade, options)
   {
     batchExecute(function()
     {
@@ -889,7 +891,7 @@ Class.extend( Collection, ModelCollection,
 
         if ( !avoidSave )
         {
-          model.$save();
+          model.$save( cascade, options );
         }
       }
 
@@ -922,12 +924,14 @@ Class.extend( Collection, ModelCollection,
    *    True for NOT calling {@link Rekord.Model#$save}, otherwise false.
    * @param {Number} [cascade] -
    *    Which operations should be performed out of: store, rest, & live.
+   * @param {Any} [options] -
+   *    The options to pass to the REST service.
    * @return {Rekord.Model[]} -
    *    An array of models updated.
    * @emits Rekord.ModelCollection#updates
    * @emits Rekord.ModelCollection#sort
    */
-  updateWhere: function(where, props, value, remoteData, avoidSave, cascade)
+  updateWhere: function(where, props, value, remoteData, avoidSave, cascade, options)
   {
     var updated = [];
 
@@ -943,7 +947,7 @@ Class.extend( Collection, ModelCollection,
 
           if ( !avoidSave )
           {
-            model.$save( cascade );
+            model.$save( cascade, options );
           }
 
           updated.push( model );
@@ -1094,16 +1098,20 @@ Class.extend( Collection, ModelCollection,
    *    See {@link Rekord.createWhere}
    * @param {equalityCallback} [equals=Rekord.equalsStrict] -
    *    See {@link Rekord.createWhere}
+   * @param {Number} [cascade] -
+   *    Which operations should be performed out of: store, rest, & live.
+   * @param {Any} [options] -
+   *    The options to pass to the REST service.
    * @return {Rekord.ModelCollection} -
    *    The reference to this collection.
    * @see Rekord.createWhere
    * @see Rekord.Model#$refresh
    */
-  refreshWhere: function(properties, value, equals)
+  refreshWhere: function(properties, value, equals, cascade, options)
   {
     function refreshIt(model)
     {
-      model.$refresh();
+      model.$refresh( cascade, options );
     }
 
     batchExecute(function()
@@ -1132,16 +1140,18 @@ Class.extend( Collection, ModelCollection,
    *    expression.
    * @param {Number} [cascade] -
    *    Which operations should be performed out of: store, rest, & live.
+   * @param {Any} [options] -
+   *    The options to pass to the REST service.
    * @return {Rekord.ModelCollection} -
    *    The reference to this collection.
    * @see Rekord.createWhere
    * @see Rekord.Model#$refresh
    */
-  saveWhere: function(properties, value, equals, props, cascade)
+  saveWhere: function(properties, value, equals, props, cascade, options)
   {
     function saveIt(model)
     {
-      model.$save( props, cascade );
+      model.$save( props, cascade, options );
     }
 
     batchExecute(function()

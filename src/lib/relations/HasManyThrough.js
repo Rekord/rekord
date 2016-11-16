@@ -12,6 +12,8 @@ HasManyThrough.Defaults =
   store:                Store.None,
   save:                 Save.None,
   auto:                 true,
+  autoCascade:          Cascade.All,
+  autoOptions:          null,
   property:             true,
   dynamic:              false,
   through:              undefined,
@@ -24,7 +26,12 @@ HasManyThrough.Defaults =
   where:                false,
   cascadeRemove:        Cascade.NoRest,
   cascadeSave:          Cascade.All,
+  cascadeSaveOptions:   null,
   cascadeSaveRelated:   Cascade.None,
+  cascadeSaveRelatedOptions: null,
+  saveParentCascade:    Cascade.All,
+  saveParentOptions:    null,
+  cascadeRemoveThroughOptions: null,
   discriminator:        'discriminator',
   discriminators:       {},
   discriminatorToModel: {}
@@ -228,7 +235,7 @@ Class.extend( RelationMultiple, HasManyThrough,
 
           if ( !through.$isDeleted() && through.$hasChanges() )
           {
-            through.$save( this.cascadeSave );
+            through.$save( this.cascadeSave, this.cascadeSaveOptions );
           }
         }
       }
@@ -248,7 +255,7 @@ Class.extend( RelationMultiple, HasManyThrough,
 
           if ( !related.$isDeleted() && related.$hasChanges() )
           {
-            related.$save( this.cascadeSaveRelated );
+            related.$save( this.cascadeSaveRelated, this.cascadeSaveRelatedOptions );
           }
         }
 
@@ -277,7 +284,7 @@ Class.extend( RelationMultiple, HasManyThrough,
           {
             var through = throughs[ i ];
 
-            through.$remove( this.cascadeRemove );
+            through.$remove( this.cascadeRemove, this.cascadeRemoveThroughOptions );
           }
         });
 
@@ -408,7 +415,7 @@ Class.extend( RelationMultiple, HasManyThrough,
       {
         if ( model.$isSaved() )
         {
-          through.$save( this.cascadeSave );
+          through.$save( this.cascadeSave, this.cascadeSaveOptions );
         }
         else
         {
@@ -511,7 +518,7 @@ Class.extend( RelationMultiple, HasManyThrough,
 
       if ( callRemove )
       {
-        through.$remove( remoteData ? Cascade.Local : Cascade.All );
+        through.$remove( remoteData ? Cascade.Local : Cascade.All, this.cascadeRemoveThroughOptions );
       }
 
       throughs.remove( throughKey );

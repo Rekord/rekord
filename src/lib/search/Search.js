@@ -83,12 +83,13 @@ Class.create( Search,
     var encoded = this.$encode();
     var success = bind( this, this.$handleSuccess );
     var failure = bind( this, this.$handleFailure );
+    var options = this.$options || this.$db.queryOptions;
 
     batchExecute(function()
     {
       this.$cancel();
       this.$promise = new Promise();
-      this.$db.rest.query( this.$url, encoded, success, failure );
+      this.$db.rest.query( this.$url, encoded, options, success, failure );
 
     }, this );
 

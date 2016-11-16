@@ -152,7 +152,7 @@ var Polymorphic =
 
     if ( changes && !remoteData && this.auto && !target.$isNew() )
     {
-      target.$save();
+      target.$save( this.autoCascade, this.autoOptions );
     }
 
     return changes;
@@ -176,7 +176,7 @@ var Polymorphic =
     {
       if ( this.auto && !target.$isNew() && !remoteData )
       {
-        target.$save();
+        target.$save( this.autoCascade, this.autoOptions );
       }
 
       target.$trigger( Model.Events.KeyUpdate, [target, source, targetFields, sourceFields] );

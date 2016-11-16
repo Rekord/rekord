@@ -62,14 +62,14 @@ Class.create( Shard,
 
   },
 
-  all: function(success, failure)
+  all: function(options, success, failure)
   {
     var shards = this.getShards( true );
     var all = [];
 
     function invoke(shard, onShardSuccess, onShardFailure)
     {
-      shard.all( onShardSuccess, onShardFailure );
+      shard.all( options, onShardSuccess, onShardFailure );
     }
     function onSuccess(models)
     {
@@ -93,14 +93,14 @@ Class.create( Shard,
     this.multiplex( shards, this.ATOMIC_ALL, invoke, onSuccess, failure, onComplete );
   },
 
-  get: function(model, success, failure)
+  get: function(model, options, success, failure)
   {
     var shards = this.getShardsForModel( model, true );
     var gotten = null;
 
     function invoke(shard, onShardSuccess, onShardFailure)
     {
-      shard.get( model, onShardSuccess, onShardFailure );
+      shard.get( model, options, onShardSuccess, onShardFailure );
     }
     function onSuccess(data)
     {
@@ -124,14 +124,14 @@ Class.create( Shard,
     this.multiplex( shards, this.ATOMIC_GET, invoke, onSuccess, noop, onComplete );
   },
 
-  create: function( model, encoded, success, failure )
+  create: function( model, encoded, options, success, failure )
   {
     var shards = this.getShardsForModel( model, false );
     var returned = null;
 
     function invoke(shard, onShardSuccess, onShardFailure)
     {
-      shard.create( model, encoded, onShardSuccess, onShardFailure );
+      shard.create( model, encoded, options, onShardSuccess, onShardFailure );
     }
     function onSuccess(data)
     {
@@ -155,14 +155,14 @@ Class.create( Shard,
     this.multiplex( shards, this.ATOMIC_CREATE, invoke, onSuccess, noop, onComplete );
   },
 
-  update: function( model, encoded, success, failure )
+  update: function( model, encoded, options, success, failure )
   {
     var shards = this.getShardsForModel( model, false );
     var returned = null;
 
     function invoke(shard, onShardSuccess, onShardFailure)
     {
-      shard.update( model, encoded, onShardSuccess, onShardFailure );
+      shard.update( model, encoded, options, onShardSuccess, onShardFailure );
     }
     function onSuccess(data)
     {
@@ -186,14 +186,14 @@ Class.create( Shard,
     this.multiplex( shards, this.ATOMIC_UPDATE, invoke, onSuccess, noop, onComplete );
   },
 
-  remove: function( model, success, failure )
+  remove: function( model, options, success, failure )
   {
     var shards = this.getShardsForModel( model, false );
     var returned = null;
 
     function invoke(shard, onShardSuccess, onShardFailure)
     {
-      shard.remove( model, onShardSuccess, onShardFailure );
+      shard.remove( model, options, onShardSuccess, onShardFailure );
     }
     function onSuccess(data)
     {
@@ -217,14 +217,14 @@ Class.create( Shard,
     this.multiplex( shards, this.ATOMIC_REMOVE, invoke, onSuccess, noop, onComplete );
   },
 
-  query: function( url, query, success, failure )
+  query: function( url, query, options, success, failure )
   {
     var shards = this.getShardsForQuery( url, query );
     var results = [];
 
     function invoke(shard, onShardSuccess, onShardFailure)
     {
-      shard.query( url, query, onShardSuccess, onShardFailure );
+      shard.query( url, query, options, onShardSuccess, onShardFailure );
     }
     function onSuccess(models)
     {

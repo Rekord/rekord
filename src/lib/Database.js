@@ -209,6 +209,14 @@ var Defaults = Database.Defaults =
   encodings:            {},
   decodings:            {},
   projections:          {},
+  allOptions:           null,
+  fetchOptions:         null,
+  getOptions:           null,
+  updateOptions:        null,
+  createOptions:        null,
+  saveOptions:          null,
+  removeOptions:        null,
+  queryOptions:         null,
   prune:                {active: false, max: 0, keepAlive: 0, removeLocal: false},
   prepare:              noop,
   encode:               defaultEncode,
@@ -403,7 +411,7 @@ Class.create( Database,
             }
           });
 
-          result.$refresh();
+          result.$refresh( Cascade.All, db.fetchOptions );
         }
         else
         {
@@ -1189,7 +1197,7 @@ Class.create( Database,
 
   executeRefresh: function(success, failure)
   {
-    this.rest.all( success, failure );
+    this.rest.all( this.allOptions, success, failure );
   },
 
   // Loads all data remotely
@@ -1289,7 +1297,7 @@ Class.create( Database,
   },
 
   // Save the model
-  save: function(model, cascade)
+  save: function(model, cascade, options)
   {
     var db = this;
 
@@ -1318,11 +1326,11 @@ Class.create( Database,
       model.$trigger( Model.Events.CreateAndSave );
     }
 
-    model.$addOperation( SaveLocal, cascade );
+    model.$addOperation( SaveLocal, cascade, options );
   },
 
   // Remove the model
-  remove: function(model, cascade)
+  remove: function(model, cascade, options)
   {
     var db = this;
 
@@ -1337,7 +1345,7 @@ Class.create( Database,
 
     model.$status = Model.Status.RemovePending;
 
-    model.$addOperation( RemoveLocal, cascade );
+    model.$addOperation( RemoveLocal, cascade, options );
   },
 
   removeFromModels: function(model)

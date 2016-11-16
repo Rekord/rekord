@@ -395,12 +395,26 @@ Class.create( Model,
     return false;
   },
 
-  $save: function(setProperties, setValue, cascade)
+  $save: function(setProperties, setValue, cascade, options)
   {
-    var cascade =
-      (arguments.length === 3 ? cascade :
-        (arguments.length === 2 && isObject( setProperties ) && isNumber( setValue ) ? setValue :
-          (arguments.length === 1 && isNumber( setProperties ) ?  setProperties : this.$db.cascade ) ) );
+    if ( isObject( setProperties ) )
+    {
+      options = cascade;
+      cascade = setValue;
+      setValue = undefined;
+    }
+    else if ( isNumber( setProperties ) )
+    {
+      options = setValue;
+      cascade = setProperties;
+      setValue = undefined;
+      setProperties = undefined;
+    }
+
+    if ( !isNumber( cascade ) )
+    {
+      cascade = this.$db.cascade;
+    }
 
     if ( this.$isDeleted() )
     {
@@ -430,11 +444,14 @@ Class.create( Model,
 
         this.$db.addReference( this );
 
-        this.$set( setProperties, setValue );
+        if ( setProperties !== undefined )
+        {
+          this.$set( setProperties, setValue );
+        }
 
         this.$trigger( Model.Events.PreSave, [this] );
 
-        this.$db.save( this, cascade );
+        this.$db.save( this, cascade, options );
 
         this.$db.pruneModels();
 
@@ -444,7 +461,7 @@ Class.create( Model,
     });
   },
 
-  $remove: function(cascade)
+  $remove: function(cascade, options)
   {
     var cascade = isNumber( cascade ) ? cascade : this.$db.cascade;
 
@@ -467,7 +484,7 @@ Class.create( Model,
       {
         this.$trigger( Model.Events.PreRemove, [this] );
 
-        this.$db.remove( this, cascade );
+        this.$db.remove( this, cascade, options );
 
         this.$trigger( Model.Events.PostRemove, [this] );
 
@@ -475,7 +492,7 @@ Class.create( Model,
     });
   },
 
-  $refresh: function(cascade)
+  $refresh: function(cascade, options)
   {
     var promise = createModelPromise( this, cascade,
       Model.Events.RemoteGet,
@@ -487,11 +504,11 @@ Class.create( Model,
 
     if ( canCascade( cascade, Cascade.Rest ) )
     {
-      this.$addOperation( GetRemote, cascade );
+      this.$addOperation( GetRemote, cascade, options );
     }
     else if ( canCascade( cascade, Cascade.Local ) )
     {
-      this.$addOperation( GetLocal, cascade );
+      this.$addOperation( GetLocal, cascade, options );
     }
     else
     {
@@ -501,18 +518,23 @@ Class.create( Model,
     return promise;
   },
 
-  $autoRefresh: function()
+  $autoRefresh: function(cascade, options)
   {
-    Rekord.on( Rekord.Events.Online, this.$refresh, this );
+    var callRefresh = function()
+    {
+      this.$refresh( cascade, options );
+    };
+
+    Rekord.on( Rekord.Events.Online, callRefresh, this );
 
     return this;
   },
 
-  $cancel: function(reset)
+  $cancel: function(reset, options)
   {
     if ( this.$saved )
     {
-      this.$save( this.$saved );
+      this.$save( this.$saved, this.$db.cascade, options );
     }
     else if ( reset )
     {
@@ -610,9 +632,9 @@ Class.create( Model,
     return !this.$isDeleted() && this.$db.models.has( this.$key() );
   },
 
-  $addOperation: function(OperationType, cascade)
+  $addOperation: function(OperationType, cascade, options)
   {
-    var operation = new OperationType( this, cascade );
+    var operation = new OperationType( this, cascade, options );
 
     if ( !this.$operation )
     {
@@ -794,7 +816,7 @@ Class.create( Model,
     return false;
   },
 
-  $listenForOnline: function(cascade)
+  $listenForOnline: function(cascade, options)
   {
     if (!this.$offline)
     {
@@ -803,7 +825,11 @@ Class.create( Model,
       Rekord.once( Rekord.Events.Online, this.$resume, this );
     }
 
-    this.$resumeCascade = cascade;
+    Class.props(this,
+    {
+      $resumeCascade: cascade,
+      $resumeOptions: options
+    });
   },
 
   $resume: function()
@@ -812,13 +838,13 @@ Class.create( Model,
     {
       Rekord.debug( Rekord.Debugs.REMOVE_RESUME, this );
 
-      this.$addOperation( RemoveRemote, this.$resumeCascade );
+      this.$addOperation( RemoveRemote, this.$resumeCascade, this.$resumeOptions );
     }
     else if (this.$status === Model.Status.SavePending)
     {
       Rekord.debug( Rekord.Debugs.SAVE_RESUME, this );
 
-      this.$addOperation( SaveRemote, this.$resumeCascade );
+      this.$addOperation( SaveRemote, this.$resumeCascade, this.$resumeOptions );
     }
 
     this.$offline = false;

@@ -12,6 +12,8 @@ HasMany.Defaults =
   store:                Store.None,
   save:                 Save.None,
   auto:                 true,
+  autoCascade:          Cascade.All,
+  autoOptions:          null,
   property:             true,
   preserve:             true,
   clearKey:             true,
@@ -22,8 +24,12 @@ HasMany.Defaults =
   listenForRelated:     true,
   loadRelated:          true,
   where:                false,
+  saveParentCascade:    Cascade.All,
+  saveParentOptions:    null,
   cascadeRemove:        Cascade.Local,
+  cascadeRemoveOptions: null,
   cascadeSave:          Cascade.None,
+  cascadeSaveOptions:   null,
   discriminator:        'discriminator',
   discriminators:       {},
   discriminatorToModel: {}
@@ -216,7 +222,7 @@ Class.extend( RelationMultiple, HasMany,
 
           if ( !related.$isDeleted() && related.$hasChanges() )
           {
-            related.$save( this.cascadeSave );
+            related.$save( this.cascadeSave, this.cascadeSaveOptions );
           }
         }
 
@@ -245,7 +251,7 @@ Class.extend( RelationMultiple, HasMany,
           {
             var related = models[ i ];
 
-            related.$remove( this.cascadeRemove );
+            related.$remove( this.cascadeRemove, this.cascadeRemoveOptions );
           }
         });
 
@@ -376,7 +382,7 @@ Class.extend( RelationMultiple, HasMany,
           }
           else
           {
-            related.$remove( this.cascadeRemove );
+            related.$remove( this.cascadeRemove, this.cascadeRemoveOptions );
           }
         }
       }

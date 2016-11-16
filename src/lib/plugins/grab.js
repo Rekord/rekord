@@ -30,7 +30,7 @@ addPlugin(function(model, db, options)
    *    The model instance of it exists locally at the moment, or undefined
    *    if the model hasn't been loaded yet.
    */
-  model.grab = function( input, callback, context )
+  model.grab = function( input, options, callback, context )
   {
     var callbackContext = context || this;
     var instance = db.get( input );
@@ -49,7 +49,7 @@ addPlugin(function(model, db, options)
         }
         else
         {
-          model.fetch( input, callback, context );
+          model.fetch( input, options, callback, context );
         }
       });
     }

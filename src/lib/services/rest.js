@@ -8,42 +8,42 @@ Rekord.defaultRest = Rekord.rest = function(database)
 
     // success ( data[] )
     // failure ( data[], status )
-    all: function( success, failure )
+    all: function( options, success, failure )
     {
       success( [] );
     },
 
     // success( data )
     // failure( data, status )
-    get: function( model, success, failure )
+    get: function( model, options, success, failure )
     {
       failure( null, -1 );
     },
 
     // success ( data )
     // failure ( data, status )
-    create: function( model, encoded, success, failure )
+    create: function( model, encoded, options, success, failure )
     {
       success( {} );
     },
 
     // success ( data )
     // failure ( data, status )
-    update: function( model, encoded, success, failure )
+    update: function( model, encoded, options, success, failure )
     {
       success( {} );
     },
 
     // success ( data )
     // failure ( data, status )
-    remove: function( model, success, failure )
+    remove: function( model,options,  success, failure )
     {
       success( {} );
     },
 
     // success ( data[] )
     // failure ( data[], status )
-    query: function( url, query, success, failure )
+    query: function( url, query, options, success, failure )
     {
       success( [] );
     }

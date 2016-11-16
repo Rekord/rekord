@@ -2578,6 +2578,15 @@ Rekord.Events =
   Error:        'error'
 };
 
+
+var Cache =
+{
+  None:       'none',
+  Pending:    'pending',
+  All:        'all'
+};
+
+
 var Cascade =
 {
   None:       0,
@@ -2595,19 +2604,21 @@ function canCascade(cascade, type)
   return !isNumber( cascade ) || (cascade & type) === type;
 }
 
-var Cache =
-{
-  None:       'none',
-  Pending:    'pending',
-  All:        'all'
-};
-
-var Store =
+var Load =
 {
   None:   0,
-  Model:  1,
-  Key:    2,
-  Keys:   3
+  All:    1,
+  Lazy:   2,
+  Both:   3
+};
+
+
+
+var RestStatus =
+{
+  Conflict:   {409: true},
+  NotFound:   {404: true, 410: true},
+  Offline:    {0: true}
 };
 
 var Save =
@@ -2618,20 +2629,258 @@ var Save =
   Keys:   6
 };
 
-var Load =
+var Store =
 {
   None:   0,
-  All:    1,
-  Lazy:   2,
-  Both:   3
+  Model:  1,
+  Key:    2,
+  Keys:   3
 };
 
-var RestStatus =
+
+var batchDepth = 0;
+var batches = [];
+var batchHandlers = [];
+var batchOverwrites = [];
+
+function batch(namesInput, operationsInput, handler)
 {
-  Conflict:   {409: true},
-  NotFound:   {404: true, 410: true},
-  Offline:    {0: true}
-};
+  var names = toArray( namesInput, /\s*,\s/ );
+  var operations = toArray( operationsInput, /\s*,\s/ );
+  var batchID = batchHandlers.push( handler ) - 1;
+  var batch = batches[ batchID ] = new Collection();
+
+  for (var i = 0; i < names.length; i++)
+  {
+    var modelName = names[ i ];
+    var modelHandler = createModelHandler( operations, batch );
+
+    if ( isString( modelName ) )
+    {
+      if ( modelName in Rekord.classes )
+      {
+        modelHandler( Rekord.classes[ modelName ] );
+      }
+      else
+      {
+        earlyModelHandler( modelName, modelHandler );
+      }
+    }
+    else if ( isRekord( modelName ) )
+    {
+      modelHandler( modelName );
+    }
+    else if ( modelName === true )
+    {
+      for (var databaseName in Rekord.classes)
+      {
+        modelHandler( Rekord.classes[ databaseName ] );
+      }
+
+      Rekord.on( Rekord.Events.Plugins, modelHandler );
+    }
+    else
+    {
+      throw modelName + ' is not a valid input for batching';
+    }
+  }
+}
+
+function earlyModelHandler(name, modelHandler)
+{
+  var off = Rekord.on( Rekord.Events.Plugins, function(model, database)
+  {
+    if ( database.name === name )
+    {
+      modelHandler( model );
+
+      off();
+    }
+  });
+}
+
+function createModelHandler(operations, batch)
+{
+  return function(modelClass)
+  {
+    var db = modelClass.Database;
+    var rest = db.rest;
+
+    for (var i = 0; i < operations.length; i++)
+    {
+      var op = operations[ i ];
+
+      batchOverwrites.push( rest, op, rest[ op ] );
+
+      switch (op)
+      {
+        case 'all':
+          rest.all = function(options, success, failure) // jshint ignore:line
+          {
+            batch.push({
+              database: db,
+              class: modelClass,
+              operation: 'all',
+              options: options,
+              success: success,
+              failure: failure
+            });
+          };
+          break;
+        case 'get':
+          rest.get = function(model, options, success, failure) // jshint ignore:line
+          {
+            batch.push({
+              database: db,
+              class: modelClass,
+              operation: 'get',
+              options: options,
+              success: success,
+              failure: failure,
+              model: model
+            });
+          };
+          break;
+        case 'create':
+          rest.create = function(model, encoded, options, success, failure) // jshint ignore:line
+          {
+            batch.push({
+              database: db,
+              class: modelClass,
+              operation: 'create',
+              options: options,
+              success: success,
+              failure: failure,
+              model: model,
+              encoded: encoded
+            });
+          };
+          break;
+        case 'update':
+          rest.update = function(model, encoded, options, success, failure) // jshint ignore:line
+          {
+            batch.push({
+              database: db,
+              class: modelClass,
+              operation: 'update',
+              options: options,
+              success: success,
+              failure: failure,
+              model: model,
+              encoded: encoded
+            });
+          };
+          break;
+        case 'remove':
+          rest.remove = function(model, options, success, failure) // jshint ignore:line
+          {
+            batch.push({
+              database: db,
+              class: modelClass,
+              operation: 'remove',
+              options: options,
+              success: success,
+              failure: failure,
+              model: model
+            });
+          };
+          break;
+        case 'query':
+          rest.query = function(url, query, options, success, failure) // jshint ignore:line
+          {
+            batch.push({
+              database: db,
+              class: modelClass,
+              operation: 'query',
+              options: options,
+              success: success,
+              failure: failure,
+              url: url,
+              encoded: query
+            });
+          };
+          break;
+        default:
+          throw op + ' is not a valid operation you can batch';
+      }
+    }
+  };
+}
+
+function batchRun()
+{
+  for (var i = 0; i < batches.length; i++)
+  {
+    var batch = batches[ i ];
+    var handler = batchHandlers[ i ];
+
+    if ( batch.length )
+    {
+      handler( batch );
+
+      batch.clear();
+    }
+  }
+}
+
+function batchStart()
+{
+  batchDepth++;
+}
+
+function batchEnd()
+{
+  batchDepth--;
+
+  if ( batchDepth === 0 )
+  {
+    batchRun();
+  }
+}
+
+function batchClear()
+{
+  for (var i = 0; i < batchOverwrites.length; i += 3)
+  {
+    var rest = batchOverwrites[ i + 0 ];
+    var prop = batchOverwrites[ i + 1 ];
+    var func = batchOverwrites[ i + 2 ];
+
+    rest[ prop ] = func;
+  }
+
+  batches.length = 0;
+  batchHandlers.length = 0;
+  batchOverwrites.length = 0;
+}
+
+function batchExecute(func, context)
+{
+  try
+  {
+    batchStart();
+
+    func.apply( context );
+  }
+  catch (ex)
+  {
+    Rekord.trigger( Rekord.Events.Error, [ex] );
+
+    throw ex;
+  }
+  finally
+  {
+    batchEnd();
+  }
+}
+
+Rekord.batch = batch;
+Rekord.batchRun = batchRun;
+Rekord.batchStart = batchStart;
+Rekord.batchEnd = batchEnd;
+Rekord.batchClear = batchClear;
+Rekord.batchExecute = batchExecute;
+Rekord.batchDepth = function() { return batchDepth; };
 
 
 Rekord.debug = function(event, source)  /*, data.. */
@@ -2829,6 +3078,126 @@ Rekord.Debugs = {
 };
 
 
+/**
+ * The factory responsible for creating a service which publishes operations
+ * and receives operations that have occurred. The first argument is a reference
+ * to the Database and the second argument is a function to invoke when a
+ * live operation occurs. This function must return a function that can be passed
+ * an operation to be delegated to other clients.
+ *
+ * @param  {Database} database
+ *         The database this live function is for.
+ * @return {function} -
+ *         The function which sends operations.
+ */
+Rekord.defaultLive = Rekord.live = function(database)
+{
+  return {
+
+    save: function(model, data)
+    {
+      // ignore save
+    },
+
+    remove: function(model)
+    {
+      // ignore remove
+    }
+
+  };
+};
+
+/**
+ * Sets the live implementation provided the factory function. This function
+ * can only be called once - all subsequent calls will be ignored unless
+ * `overwrite` is given as a truthy value.
+ *
+ * @memberof Rekord
+ * @param {Function} factory -
+ *    The factory which provides live implementations.
+ * @param {Boolean} [overwrite=false] -
+ *    True if existing implementations are to be ignored and the given factory
+ *    should be the implementation.
+ */
+Rekord.setLive = function(factory, overwrite)
+{
+  if ( !Rekord.liveSet || overwrite )
+  {
+    Rekord.live = factory;
+    Rekord.liveSet = true;
+  }
+};
+
+
+// Initial online
+
+Rekord.isOnline = function()
+{
+  return !win.navigator || win.navigator.onLine !== false;
+};
+
+Rekord.online = Rekord.isOnline();
+
+Rekord.forceOffline = false;
+
+// Set network status to online and notify all listeners
+Rekord.setOnline = function()
+{
+  Rekord.online = true;
+  Rekord.debug( Rekord.Debugs.ONLINE );
+
+  batchExecute(function()
+  {
+    Rekord.trigger( Rekord.Events.Online );
+  });
+};
+
+// Set network status to offline and notify all listeners
+Rekord.setOffline = function()
+{
+  Rekord.online = false;
+  Rekord.debug( Rekord.Debugs.OFFLINE );
+  Rekord.trigger( Rekord.Events.Offline );
+};
+
+// This must be called manually - this will try to use built in support for
+// online/offline detection instead of solely using status codes of 0.
+Rekord.listenToNetworkStatus = function()
+{
+  if (win.addEventListener)
+  {
+    win.addEventListener( Rekord.Events.Online, Rekord.setOnline, false );
+    win.addEventListener( Rekord.Events.Offline, Rekord.setOffline, false );
+  }
+  else
+  {
+    win.document.body.ononline = Rekord.setOnline;
+    win.document.body.onoffline = Rekord.setOffline;
+  }
+};
+
+// Check to see if the network status has changed.
+Rekord.checkNetworkStatus = function()
+{
+  var online = Rekord.isOnline();
+
+  if ( Rekord.forceOffline )
+  {
+    online = false;
+  }
+
+  if (online === true && Rekord.online === false)
+  {
+    Rekord.setOnline();
+  }
+
+  else if (online === false && Rekord.online === true)
+  {
+    Rekord.setOffline();
+  }
+};
+
+
 // Rekord.rest = function(options, success(data), failure(data, status))
 
 Rekord.defaultRest = Rekord.rest = function(database)
@@ -2838,42 +3207,42 @@ Rekord.defaultRest = Rekord.rest = function(database)
 
     // success ( data[] )
     // failure ( data[], status )
-    all: function( success, failure )
+    all: function( options, success, failure )
     {
       success( [] );
     },
 
     // success( data )
     // failure( data, status )
-    get: function( model, success, failure )
+    get: function( model, options, success, failure )
     {
       failure( null, -1 );
     },
 
     // success ( data )
     // failure ( data, status )
-    create: function( model, encoded, success, failure )
+    create: function( model, encoded, options, success, failure )
     {
       success( {} );
     },
 
     // success ( data )
     // failure ( data, status )
-    update: function( model, encoded, success, failure )
+    update: function( model, encoded, options, success, failure )
     {
       success( {} );
     },
 
     // success ( data )
     // failure ( data, status )
-    remove: function( model, success, failure )
+    remove: function( model,options,  success, failure )
     {
       success( {} );
     },
 
     // success ( data[] )
     // failure ( data[], status )
-    query: function( url, query, success, failure )
+    query: function( url, query, options, success, failure )
     {
       success( [] );
     }
@@ -3019,365 +3388,6 @@ Rekord.setStore = function(factory, overwrite)
     Rekord.storeSet = true;
   }
 };
-
-
-/**
- * The factory responsible for creating a service which publishes operations
- * and receives operations that have occurred. The first argument is a reference
- * to the Database and the second argument is a function to invoke when a
- * live operation occurs. This function must return a function that can be passed
- * an operation to be delegated to other clients.
- *
- * @param  {Database} database
- *         The database this live function is for.
- * @return {function} -
- *         The function which sends operations.
- */
-Rekord.defaultLive = Rekord.live = function(database)
-{
-  return {
-
-    save: function(model, data)
-    {
-      // ignore save
-    },
-
-    remove: function(model)
-    {
-      // ignore remove
-    }
-
-  };
-};
-
-/**
- * Sets the live implementation provided the factory function. This function
- * can only be called once - all subsequent calls will be ignored unless
- * `overwrite` is given as a truthy value.
- *
- * @memberof Rekord
- * @param {Function} factory -
- *    The factory which provides live implementations.
- * @param {Boolean} [overwrite=false] -
- *    True if existing implementations are to be ignored and the given factory
- *    should be the implementation.
- */
-Rekord.setLive = function(factory, overwrite)
-{
-  if ( !Rekord.liveSet || overwrite )
-  {
-    Rekord.live = factory;
-    Rekord.liveSet = true;
-  }
-};
-
-
-// Initial online
-
-Rekord.isOnline = function()
-{
-  return !win.navigator || win.navigator.onLine !== false;
-};
-
-Rekord.online = Rekord.isOnline();
-
-Rekord.forceOffline = false;
-
-// Set network status to online and notify all listeners
-Rekord.setOnline = function()
-{
-  Rekord.online = true;
-  Rekord.debug( Rekord.Debugs.ONLINE );
-
-  batchExecute(function()
-  {
-    Rekord.trigger( Rekord.Events.Online );
-  });
-};
-
-// Set network status to offline and notify all listeners
-Rekord.setOffline = function()
-{
-  Rekord.online = false;
-  Rekord.debug( Rekord.Debugs.OFFLINE );
-  Rekord.trigger( Rekord.Events.Offline );
-};
-
-// This must be called manually - this will try to use built in support for
-// online/offline detection instead of solely using status codes of 0.
-Rekord.listenToNetworkStatus = function()
-{
-  if (win.addEventListener)
-  {
-    win.addEventListener( Rekord.Events.Online, Rekord.setOnline, false );
-    win.addEventListener( Rekord.Events.Offline, Rekord.setOffline, false );
-  }
-  else
-  {
-    win.document.body.ononline = Rekord.setOnline;
-    win.document.body.onoffline = Rekord.setOffline;
-  }
-};
-
-// Check to see if the network status has changed.
-Rekord.checkNetworkStatus = function()
-{
-  var online = Rekord.isOnline();
-
-  if ( Rekord.forceOffline )
-  {
-    online = false;
-  }
-
-  if (online === true && Rekord.online === false)
-  {
-    Rekord.setOnline();
-  }
-
-  else if (online === false && Rekord.online === true)
-  {
-    Rekord.setOffline();
-  }
-};
-
-
-var batchDepth = 0;
-var batches = [];
-var batchHandlers = [];
-var batchOverwrites = [];
-
-function batch(namesInput, operationsInput, handler)
-{
-  var names = toArray( namesInput, /\s*,\s/ );
-  var operations = toArray( operationsInput, /\s*,\s/ );
-  var batchID = batchHandlers.push( handler ) - 1;
-  var batch = batches[ batchID ] = new Collection();
-
-  for (var i = 0; i < names.length; i++)
-  {
-    var modelName = names[ i ];
-    var modelHandler = createModelHandler( operations, batch );
-
-    if ( isString( modelName ) )
-    {
-      if ( modelName in Rekord.classes )
-      {
-        modelHandler( Rekord.classes[ modelName ] );
-      }
-      else
-      {
-        earlyModelHandler( modelName, modelHandler );
-      }
-    }
-    else if ( isRekord( modelName ) )
-    {
-      modelHandler( modelName );
-    }
-    else if ( modelName === true )
-    {
-      for (var databaseName in Rekord.classes)
-      {
-        modelHandler( Rekord.classes[ databaseName ] );
-      }
-
-      Rekord.on( Rekord.Events.Plugins, modelHandler );
-    }
-    else
-    {
-      throw modelName + ' is not a valid input for batching';
-    }
-  }
-}
-
-function earlyModelHandler(name, modelHandler)
-{
-  var off = Rekord.on( Rekord.Events.Plugins, function(model, database)
-  {
-    if ( database.name === name )
-    {
-      modelHandler( model );
-
-      off();
-    }
-  });
-}
-
-function createModelHandler(operations, batch)
-{
-  return function(modelClass)
-  {
-    var db = modelClass.Database;
-    var rest = db.rest;
-
-    for (var i = 0; i < operations.length; i++)
-    {
-      var op = operations[ i ];
-
-      batchOverwrites.push( rest, op, rest[ op ] );
-
-      switch (op)
-      {
-        case 'all':
-          rest.all = function(success, failure) // jshint ignore:line
-          {
-            batch.push({
-              database: db,
-              class: modelClass,
-              operation: 'all',
-              success: success,
-              failure: failure
-            });
-          };
-          break;
-        case 'get':
-          rest.get = function(model, success, failure) // jshint ignore:line
-          {
-            batch.push({
-              database: db,
-              class: modelClass,
-              operation: 'get',
-              success: success,
-              failure: failure,
-              model: model
-            });
-          };
-          break;
-        case 'create':
-          rest.create = function(model, encoded, success, failure) // jshint ignore:line
-          {
-            batch.push({
-              database: db,
-              class: modelClass,
-              operation: 'create',
-              success: success,
-              failure: failure,
-              model: model,
-              encoded: encoded
-            });
-          };
-          break;
-        case 'update':
-          rest.update = function(model, encoded, success, failure) // jshint ignore:line
-          {
-            batch.push({
-              database: db,
-              class: modelClass,
-              operation: 'update',
-              success: success,
-              failure: failure,
-              model: model,
-              encoded: encoded
-            });
-          };
-          break;
-        case 'remove':
-          rest.remove = function(model, success, failure) // jshint ignore:line
-          {
-            batch.push({
-              database: db,
-              class: modelClass,
-              operation: 'remove',
-              success: success,
-              failure: failure,
-              model: model
-            });
-          };
-          break;
-        case 'query':
-          rest.query = function(url, query, success, failure) // jshint ignore:line
-          {
-            batch.push({
-              database: db,
-              class: modelClass,
-              operation: 'query',
-              success: success,
-              failure: failure,
-              url: url,
-              encoded: query
-            });
-          };
-          break;
-        default:
-          throw op + ' is not a valid operation you can batch';
-      }
-    }
-  };
-}
-
-function batchRun()
-{
-  for (var i = 0; i < batches.length; i++)
-  {
-    var batch = batches[ i ];
-    var handler = batchHandlers[ i ];
-
-    if ( batch.length )
-    {
-      handler( batch );
-
-      batch.clear();
-    }
-  }
-}
-
-function batchStart()
-{
-  batchDepth++;
-}
-
-function batchEnd()
-{
-  batchDepth--;
-
-  if ( batchDepth === 0 )
-  {
-    batchRun();
-  }
-}
-
-function batchClear()
-{
-  for (var i = 0; i < batchOverwrites.length; i += 3)
-  {
-    var rest = batchOverwrites[ i + 0 ];
-    var prop = batchOverwrites[ i + 1 ];
-    var func = batchOverwrites[ i + 2 ];
-
-    rest[ prop ] = func;
-  }
-
-  batches.length = 0;
-  batchHandlers.length = 0;
-  batchOverwrites.length = 0;
-}
-
-function batchExecute(func, context)
-{
-  try
-  {
-    batchStart();
-
-    func.apply( context );
-  }
-  catch (ex)
-  {
-    Rekord.trigger( Rekord.Events.Error, [ex] );
-
-    throw ex;
-  }
-  finally
-  {
-    batchEnd();
-  }
-}
-
-Rekord.batch = batch;
-Rekord.batchRun = batchRun;
-Rekord.batchStart = batchStart;
-Rekord.batchEnd = batchEnd;
-Rekord.batchClear = batchClear;
-Rekord.batchExecute = batchExecute;
-Rekord.batchDepth = function() { return batchDepth; };
 
 
 function Gate(callback)
@@ -3628,6 +3638,14 @@ var Defaults = Database.Defaults =
   encodings:            {},
   decodings:            {},
   projections:          {},
+  allOptions:           null,
+  fetchOptions:         null,
+  getOptions:           null,
+  updateOptions:        null,
+  createOptions:        null,
+  saveOptions:          null,
+  removeOptions:        null,
+  queryOptions:         null,
   prune:                {active: false, max: 0, keepAlive: 0, removeLocal: false},
   prepare:              noop,
   encode:               defaultEncode,
@@ -3822,7 +3840,7 @@ Class.create( Database,
             }
           });
 
-          result.$refresh();
+          result.$refresh( Cascade.All, db.fetchOptions );
         }
         else
         {
@@ -4608,7 +4626,7 @@ Class.create( Database,
 
   executeRefresh: function(success, failure)
   {
-    this.rest.all( success, failure );
+    this.rest.all( this.allOptions, success, failure );
   },
 
   // Loads all data remotely
@@ -4708,7 +4726,7 @@ Class.create( Database,
   },
 
   // Save the model
-  save: function(model, cascade)
+  save: function(model, cascade, options)
   {
     var db = this;
 
@@ -4737,11 +4755,11 @@ Class.create( Database,
       model.$trigger( Model.Events.CreateAndSave );
     }
 
-    model.$addOperation( SaveLocal, cascade );
+    model.$addOperation( SaveLocal, cascade, options );
   },
 
   // Remove the model
-  remove: function(model, cascade)
+  remove: function(model, cascade, options)
   {
     var db = this;
 
@@ -4756,7 +4774,7 @@ Class.create( Database,
 
     model.$status = Model.Status.RemovePending;
 
-    model.$addOperation( RemoveLocal, cascade );
+    model.$addOperation( RemoveLocal, cascade, options );
   },
 
   removeFromModels: function(model)
@@ -5177,12 +5195,26 @@ Class.create( Model,
     return false;
   },
 
-  $save: function(setProperties, setValue, cascade)
+  $save: function(setProperties, setValue, cascade, options)
   {
-    var cascade =
-      (arguments.length === 3 ? cascade :
-        (arguments.length === 2 && isObject( setProperties ) && isNumber( setValue ) ? setValue :
-          (arguments.length === 1 && isNumber( setProperties ) ?  setProperties : this.$db.cascade ) ) );
+    if ( isObject( setProperties ) )
+    {
+      options = cascade;
+      cascade = setValue;
+      setValue = undefined;
+    }
+    else if ( isNumber( setProperties ) )
+    {
+      options = setValue;
+      cascade = setProperties;
+      setValue = undefined;
+      setProperties = undefined;
+    }
+
+    if ( !isNumber( cascade ) )
+    {
+      cascade = this.$db.cascade;
+    }
 
     if ( this.$isDeleted() )
     {
@@ -5212,11 +5244,14 @@ Class.create( Model,
 
         this.$db.addReference( this );
 
-        this.$set( setProperties, setValue );
+        if ( setProperties !== undefined )
+        {
+          this.$set( setProperties, setValue );
+        }
 
         this.$trigger( Model.Events.PreSave, [this] );
 
-        this.$db.save( this, cascade );
+        this.$db.save( this, cascade, options );
 
         this.$db.pruneModels();
 
@@ -5226,7 +5261,7 @@ Class.create( Model,
     });
   },
 
-  $remove: function(cascade)
+  $remove: function(cascade, options)
   {
     var cascade = isNumber( cascade ) ? cascade : this.$db.cascade;
 
@@ -5249,7 +5284,7 @@ Class.create( Model,
       {
         this.$trigger( Model.Events.PreRemove, [this] );
 
-        this.$db.remove( this, cascade );
+        this.$db.remove( this, cascade, options );
 
         this.$trigger( Model.Events.PostRemove, [this] );
 
@@ -5257,7 +5292,7 @@ Class.create( Model,
     });
   },
 
-  $refresh: function(cascade)
+  $refresh: function(cascade, options)
   {
     var promise = createModelPromise( this, cascade,
       Model.Events.RemoteGet,
@@ -5269,11 +5304,11 @@ Class.create( Model,
 
     if ( canCascade( cascade, Cascade.Rest ) )
     {
-      this.$addOperation( GetRemote, cascade );
+      this.$addOperation( GetRemote, cascade, options );
     }
     else if ( canCascade( cascade, Cascade.Local ) )
     {
-      this.$addOperation( GetLocal, cascade );
+      this.$addOperation( GetLocal, cascade, options );
     }
     else
     {
@@ -5283,18 +5318,23 @@ Class.create( Model,
     return promise;
   },
 
-  $autoRefresh: function()
+  $autoRefresh: function(cascade, options)
   {
-    Rekord.on( Rekord.Events.Online, this.$refresh, this );
+    var callRefresh = function()
+    {
+      this.$refresh( cascade, options );
+    };
+
+    Rekord.on( Rekord.Events.Online, callRefresh, this );
 
     return this;
   },
 
-  $cancel: function(reset)
+  $cancel: function(reset, options)
   {
     if ( this.$saved )
     {
-      this.$save( this.$saved );
+      this.$save( this.$saved, this.$db.cascade, options );
     }
     else if ( reset )
     {
@@ -5392,9 +5432,9 @@ Class.create( Model,
     return !this.$isDeleted() && this.$db.models.has( this.$key() );
   },
 
-  $addOperation: function(OperationType, cascade)
+  $addOperation: function(OperationType, cascade, options)
   {
-    var operation = new OperationType( this, cascade );
+    var operation = new OperationType( this, cascade, options );
 
     if ( !this.$operation )
     {
@@ -5576,7 +5616,7 @@ Class.create( Model,
     return false;
   },
 
-  $listenForOnline: function(cascade)
+  $listenForOnline: function(cascade, options)
   {
     if (!this.$offline)
     {
@@ -5585,7 +5625,11 @@ Class.create( Model,
       Rekord.once( Rekord.Events.Online, this.$resume, this );
     }
 
-    this.$resumeCascade = cascade;
+    Class.props(this,
+    {
+      $resumeCascade: cascade,
+      $resumeOptions: options
+    });
   },
 
   $resume: function()
@@ -5594,13 +5638,13 @@ Class.create( Model,
     {
       Rekord.debug( Rekord.Debugs.REMOVE_RESUME, this );
 
-      this.$addOperation( RemoveRemote, this.$resumeCascade );
+      this.$addOperation( RemoveRemote, this.$resumeCascade, this.$resumeOptions );
     }
     else if (this.$status === Model.Status.SavePending)
     {
       Rekord.debug( Rekord.Debugs.SAVE_RESUME, this );
 
-      this.$addOperation( SaveRemote, this.$resumeCascade );
+      this.$addOperation( SaveRemote, this.$resumeCascade, this.$resumeOptions );
     }
 
     this.$offline = false;
@@ -6097,6 +6141,7 @@ Class.create( Dependents,
 // expression?savedWhere
 // alias:expression
 // expression#resolve
+// relations@sum=field
 
 function Projection(database, input)
 {
@@ -6219,165 +6264,297 @@ Projection.TOKENS =
   ']': 'pluckValueEnd',
   '{': 'pluckObjectStart',
   ':': 'pluckObjectDelimiter',
-  '}': 'pluckObjectEnd'
+  '}': 'pluckObjectEnd',
+  '@': 'aggregateStart',
+  '=': 'aggregateProperty'
 };
 
 Projection.TOKEN_HANDLER =
 {
-  property: {
-    post: function(words, tokens, types, projection) {
+
+  property:
+  {
+    post: function(words, tokens, types, projection)
+    {
       var propertyName = words[0];
       var sourceType = types[0];
-      if (!(sourceType instanceof Database)) {
+
+      if (!(sourceType instanceof Database))
+      {
         throw ('The property ' + propertyName + ' can only be taken from a Model');
       }
+
       var relation = sourceType.relations[ propertyName ];
-      if (relation) {
-        if (relation instanceof RelationSingle) {
+
+      if (relation)
+      {
+        if (relation instanceof RelationSingle)
+        {
           types.unshift( relation.model.Database );
-        } else {
+        }
+        else
+        {
           types.unshift( relation );
         }
       }
+
       var fieldIndex = indexOf( sourceType.fields, propertyName );
-      if (fieldIndex === false && !relation) {
+
+      if (fieldIndex === false && !relation)
+      {
         throw ('The property ' + propertyName + ' does not exist as a field or relation on the Model ' + sourceType.name );
       }
-      return function(resolver) {
-        return function(model) {
-          if ( !isValue( model ) ) {
+
+      return function(resolver)
+      {
+        return function(model)
+        {
+          if ( !isValue( model ) )
+          {
             return null;
           }
+
           return resolver( model.$get( propertyName ) );
         };
       };
     }
   },
-  filter: {
-    post: function(words, tokens, types, projection) {
+
+  filter:
+  {
+    post: function(words, tokens, types, projection)
+    {
       var filterName = words[0];
       var filter = Rekord.Filters[ filterName ];
-      if (!filter) {
+
+      if (!filter)
+      {
         throw (filterName + ' is not a valid filter function');
       }
-      return function(resolver) {
-        return function(value) {
-          if ( !isValue( value ) ) {
+
+      return function(resolver)
+      {
+        return function(value)
+        {
+          if ( !isValue( value ) )
+          {
             return null;
           }
+
           return resolver( filter( value ) );
         };
       };
     }
   },
-  resolve: {
-    post: function(words, tokens, types, projection) {
+
+  resolve:
+  {
+    post: function(words, tokens, types, projection)
+    {
       var resolveName = words[0];
-      return function(resolver) {
-        return function(source) {
-          if ( !isValue( source ) ) {
+
+      return function(resolver)
+      {
+        return function(source)
+        {
+          if ( !isValue( source ) )
+          {
             return null;
           }
+
           var value = source[ resolveName ];
-          if ( isFunction( value ) ) {
+
+          if ( isFunction( value ) )
+          {
             value = value.apply( source );
           }
+
           return resolver( value );
         };
       };
     }
   },
-  where: {
-    post: function(words, tokens, types, projection) {
+
+  where:
+  {
+    post: function(words, tokens, types, projection)
+    {
       var whereName = words[0];
       var whereFrom = types[0];
       var where = Rekord.Wheres[ whereName ];
-      if (!where) {
+
+      if (!where)
+      {
         throw (whereName + ' is not a valid where expression');
       }
-      if (!(whereFrom instanceof RelationMultiple)) {
+
+      if (!(whereFrom instanceof RelationMultiple))
+      {
         throw (whereName + ' where expressions can only be used on relations');
       }
-      return function(resolver) {
-        return function(relation) {
-          if ( !isValue( relation ) ) {
+
+      return function(resolver)
+      {
+        return function(relation)
+        {
+          if ( !isValue( relation ) )
+          {
             return null;
           }
+
           return resolver( relation.where( where ) );
         };
       };
     }
   },
-  subEnd: {
-    pre: function(words, tokens, types, projection) {
+
+  aggregateProperty:
+  {
+    post: function(words, tokens, types, projection)
+    {
+      var property = words[0];
+      var aggregateFunction = words[1];
+      var aggregateFrom = types[0];
+
+      if (tokens[1] !== 'aggregateStart')
+      {
+        throw ('Aggregate function syntax error, a = must follow a @');
+      }
+
+      if (!(aggregateFrom instanceof Relation))
+      {
+        throw ('Aggregate functions like ' + aggregateFunction + ' from ' + aggregateFrom + ' can only be used on relations');
+      }
+
+      return function (resolver)
+      {
+        return function (relation)
+        {
+          if ( !isValue( relation ) )
+          {
+            return null;
+          }
+
+          return resolver( relation[ aggregateFunction ]( property ) );
+        };
+      };
+    }
+  },
+
+  subEnd:
+  {
+    pre: function(words, tokens, types, projection)
+    {
       var projectionName = words[0];
       var whereFrom = types[0];
-      if (tokens[1] !== 'subStart') {
+
+      if (tokens[1] !== 'subStart')
+      {
         throw ('Sub projection syntax error, an ending ) requires a starting (');
       }
-      if (!(whereFrom instanceof Relation)) {
+
+      if (!(whereFrom instanceof Relation))
+      {
         throw ('Sub projections like ' + projectionName + ' from ' + words[1] + ' can only be used on relations');
       }
-      if (!whereFrom.model.Database.projections[ projectionName ]) {
+
+      if (!whereFrom.model.Database.projections[ projectionName ])
+      {
         throw ('The projection ' + projectionName + ' does not exist on ' + whereFrom.model.Database.name);
       }
-      if (whereFrom instanceof RelationSingle) {
-        return function(resolver) {
-          return function (relation) {
-            if ( !isValue( relation ) ) {
+
+      if (whereFrom instanceof RelationSingle)
+      {
+        return function(resolver)
+        {
+          return function (relation)
+          {
+            if ( !isValue( relation ) )
+            {
               return null;
             }
+
             return resolver( relation.$project( projectionName ) );
           };
         };
-      } else {
-        return function(resolver) {
-          return function(relations) {
-            if ( !isValue( relations ) ) {
+      }
+      else
+      {
+        return function(resolver)
+        {
+          return function(relations)
+          {
+            if ( !isValue( relations ) )
+            {
               return null;
             }
+
             return resolver( relations.project( projectionName ) );
           };
         };
       }
     }
   },
-  pluckValueEnd: {
-    pre: function(words, tokens, types, projection) {
+
+  pluckValueEnd:
+  {
+    pre: function(words, tokens, types, projection)
+    {
       var properties = words[0];
       var whereFrom = types[0];
-      if (tokens[1] !== 'pluckValueStart') {
+
+      if (tokens[1] !== 'pluckValueStart')
+      {
         throw ('Pluck value syntax error, an ending ] requires a starting [');
       }
-      if (!(whereFrom instanceof RelationMultiple)) {
+
+      if (!(whereFrom instanceof RelationMultiple))
+      {
         throw ('Pluck values like ' + properties + ' from ' + words[1] + ' can only be used on relations');
       }
-      return function (resolver) {
-        return function (relations) {
-          if ( !isValue( relations ) ) {
+
+      return function (resolver)
+      {
+        return function (relations)
+        {
+          if ( !isValue( relations ) )
+          {
             return null;
           }
+
           return resolver( relations.pluck( properties ) );
         };
       };
     }
   },
-  pluckObjectEnd: {
-    pre: function(words, tokens, types, projection) {
+
+  pluckObjectEnd:
+  {
+    pre: function(words, tokens, types, projection)
+    {
       var properties = words[0];
       var keys = words[1];
       var whereFrom = types[0];
-      if (tokens[1] !== 'pluckObjectDelimiter' || tokens[2] !== 'pluckObjectStart') {
+
+      if (tokens[1] !== 'pluckObjectDelimiter' || tokens[2] !== 'pluckObjectStart')
+      {
         throw ('Pluck object syntax error, must be {key: value}');
       }
-      if (!(whereFrom instanceof RelationMultiple)) {
+
+      if (!(whereFrom instanceof RelationMultiple))
+      {
         throw ('Pluck values like ' + properties + ' from ' + words[1] + ' can only be used on relations');
       }
-      return function (resolver) {
-        return function (relations) {
-          if ( !isValue( relations ) ) {
+
+      return function (resolver)
+      {
+        return function (relations)
+        {
+          if ( !isValue( relations ) )
+          {
             return null;
           }
+
           return resolver( relations.pluck( properties, keys ) );
         };
       };
@@ -10316,7 +10493,7 @@ Class.extend( Collection, ModelCollection,
    * @emits Rekord.ModelCollection#removes
    * @emits Rekord.ModelCollection#sort
    */
-  removeWhere: function(callRemove, whereProperties, whereValue, whereEquals, out, delaySort)
+  removeWhere: function(callRemove, whereProperties, whereValue, whereEquals, out, delaySort, cascade, options)
   {
     var where = createWhere( whereProperties, whereValue, whereEquals );
     var removed = out || this.cloneEmpty();
@@ -10336,7 +10513,7 @@ Class.extend( Collection, ModelCollection,
 
           if ( callRemove )
           {
-            model.$remove();
+            model.$remove( cascade, options );
           }
         }
       }
@@ -10372,12 +10549,14 @@ Class.extend( Collection, ModelCollection,
    *    True for NOT calling {@link Rekord.Model#$save}, otherwise false.
    * @param {Number} [cascade] -
    *    Which operations should be performed out of: store, rest, & live.
+   * @param {Any} [options] -
+   *    The options to pass to the REST service.
    * @return {Rekord.ModelCollection} -
    *    The reference to this collection.
    * @emits Rekord.ModelCollection#updates
    * @emits Rekord.ModelCollection#sort
    */
-  update: function(props, value, remoteData, avoidSave, cascade)
+  update: function(props, value, remoteData, avoidSave, cascade, options)
   {
     batchExecute(function()
     {
@@ -10389,7 +10568,7 @@ Class.extend( Collection, ModelCollection,
 
         if ( !avoidSave )
         {
-          model.$save();
+          model.$save( cascade, options );
         }
       }
 
@@ -10422,12 +10601,14 @@ Class.extend( Collection, ModelCollection,
    *    True for NOT calling {@link Rekord.Model#$save}, otherwise false.
    * @param {Number} [cascade] -
    *    Which operations should be performed out of: store, rest, & live.
+   * @param {Any} [options] -
+   *    The options to pass to the REST service.
    * @return {Rekord.Model[]} -
    *    An array of models updated.
    * @emits Rekord.ModelCollection#updates
    * @emits Rekord.ModelCollection#sort
    */
-  updateWhere: function(where, props, value, remoteData, avoidSave, cascade)
+  updateWhere: function(where, props, value, remoteData, avoidSave, cascade, options)
   {
     var updated = [];
 
@@ -10443,7 +10624,7 @@ Class.extend( Collection, ModelCollection,
 
           if ( !avoidSave )
           {
-            model.$save( cascade );
+            model.$save( cascade, options );
           }
 
           updated.push( model );
@@ -10594,16 +10775,20 @@ Class.extend( Collection, ModelCollection,
    *    See {@link Rekord.createWhere}
    * @param {equalityCallback} [equals=Rekord.equalsStrict] -
    *    See {@link Rekord.createWhere}
+   * @param {Number} [cascade] -
+   *    Which operations should be performed out of: store, rest, & live.
+   * @param {Any} [options] -
+   *    The options to pass to the REST service.
    * @return {Rekord.ModelCollection} -
    *    The reference to this collection.
    * @see Rekord.createWhere
    * @see Rekord.Model#$refresh
    */
-  refreshWhere: function(properties, value, equals)
+  refreshWhere: function(properties, value, equals, cascade, options)
   {
     function refreshIt(model)
     {
-      model.$refresh();
+      model.$refresh( cascade, options );
     }
 
     batchExecute(function()
@@ -10632,16 +10817,18 @@ Class.extend( Collection, ModelCollection,
    *    expression.
    * @param {Number} [cascade] -
    *    Which operations should be performed out of: store, rest, & live.
+   * @param {Any} [options] -
+   *    The options to pass to the REST service.
    * @return {Rekord.ModelCollection} -
    *    The reference to this collection.
    * @see Rekord.createWhere
    * @see Rekord.Model#$refresh
    */
-  saveWhere: function(properties, value, equals, props, cascade)
+  saveWhere: function(properties, value, equals, props, cascade, options)
   {
     function saveIt(model)
     {
-      model.$save( props, cascade );
+      model.$save( props, cascade, options );
     }
 
     batchExecute(function()
@@ -11383,12 +11570,13 @@ Class.create( Search,
     var encoded = this.$encode();
     var success = bind( this, this.$handleSuccess );
     var failure = bind( this, this.$handleFailure );
+    var options = this.$options || this.$db.queryOptions;
 
     batchExecute(function()
     {
       this.$cancel();
       this.$promise = new Promise();
-      this.$db.rest.query( this.$url, encoded, success, failure );
+      this.$db.rest.query( this.$url, encoded, options, success, failure );
 
     }, this );
 
@@ -12071,10 +12259,11 @@ function Operation()
 Class.create( Operation,
 {
 
-  reset: function(model, cascade)
+  reset: function(model, cascade, options)
   {
     this.model = model;
     this.cascade = isNumber( cascade ) ? cascade : Cascade.All;
+    this.options = options;
     this.db = model.$db;
     this.next = null;
     this.finished = false;
@@ -12114,7 +12303,7 @@ Class.create( Operation,
 
     if ( setNext )
     {
-      this.next = new OperationType( this.model, this.cascade );
+      this.next = new OperationType( this.model, this.cascade, this.options );
     }
 
     return setNext;
@@ -12122,7 +12311,7 @@ Class.create( Operation,
 
   insertNext: function(OperationType)
   {
-    var op = new OperationType( this.model, this.cascade );
+    var op = new OperationType( this.model, this.cascade, this.options );
 
     op.next = this.next;
     this.next = op;
@@ -12243,9 +12432,9 @@ Class.create( Operation,
 
 });
 
-function GetLocal(model, cascade)
+function GetLocal(model, cascade, options)
 {
-  this.reset( model, cascade );
+  this.reset( model, cascade, options );
 }
 
 Class.extend( Operation, GetLocal,
@@ -12315,9 +12504,9 @@ Class.extend( Operation, GetLocal,
 
 });
 
-function GetRemote(model, cascade)
+function GetRemote(model, cascade, options)
 {
-  this.reset( model, cascade );
+  this.reset( model, cascade, options );
 }
 
 Class.extend( Operation, GetRemote,
@@ -12341,7 +12530,7 @@ Class.extend( Operation, GetRemote,
     {
       batchExecute(function()
       {
-        db.rest.get( model, this.success(), this.failure() );
+        db.rest.get( model, this.options || db.getOptions, this.success(), this.failure() );
 
       }, this );
     }
@@ -12475,7 +12664,7 @@ Class.extend( Operation, RemoveLocal,
 
     if ( model.$saved && this.canCascade( Cascade.Remote ) )
     {
-      model.$addOperation( RemoveRemote, this.cascade );
+      model.$addOperation( RemoveRemote, this.cascade, this.options );
     }
   },
 
@@ -12489,7 +12678,7 @@ Class.extend( Operation, RemoveLocal,
 
     if ( model.$saved && this.canCascade( Cascade.Remote ) )
     {
-      model.$addOperation( RemoveRemote, this.cascade );
+      model.$addOperation( RemoveRemote, this.cascade, this.options );
     }
   }
 
@@ -12552,9 +12741,9 @@ Class.extend( Operation, RemoveNow,
 
 });
 
-function RemoveRemote(model, cascade)
+function RemoveRemote(model, cascade, options)
 {
-  this.reset( model, cascade );
+  this.reset( model, cascade, options );
 }
 
 Class.extend( Operation, RemoveRemote,
@@ -12582,7 +12771,7 @@ Class.extend( Operation, RemoveRemote,
 
       batchExecute(function()
       {
-        db.rest.remove( model, this.success(), this.failure() );
+        db.rest.remove( model, this.options || this.removeOptions, this.success(), this.failure() );
 
       }, this );
     }
@@ -12675,9 +12864,9 @@ Class.extend( Operation, RemoveRemote,
 
 });
 
-function SaveLocal(model, cascade)
+function SaveLocal(model, cascade, options)
 {
-  this.reset( model, cascade );
+  this.reset( model, cascade, options );
 }
 
 Class.extend( Operation, SaveLocal,
@@ -12861,9 +13050,9 @@ Class.extend( Operation, SaveNow,
 
 });
 
-function SaveRemote(model, cascade)
+function SaveRemote(model, cascade, options)
 {
-  this.reset( model, cascade );
+  this.reset( model, cascade, options );
 }
 
 Class.extend( Operation, SaveRemote,
@@ -12902,11 +13091,11 @@ Class.extend( Operation, SaveRemote,
       {
         if ( model.$saved )
         {
-          db.rest.update( model, model.$saving, this.success(), this.failure() );
+          db.rest.update( model, model.$saving, this.options || db.updateOptions || db.saveOptions, this.success(), this.failure() );
         }
         else
         {
-          db.rest.create( model, model.$saving, this.success(), this.failure() );
+          db.rest.create( model, model.$saving, this.options || db.createOptions || db.saveOptions, this.success(), this.failure() );
         }
 
       }, this );
@@ -13074,7 +13263,7 @@ Class.extend( Operation, SaveRemote,
   {
     var model = this.model;
 
-    model.$addOperation( SaveLocal, this.cascade );
+    model.$addOperation( SaveLocal, this.cascade, this.options );
   }
 
 });
@@ -13094,6 +13283,8 @@ Relation.Defaults =
   store:                Store.None,
   save:                 Save.None,
   auto:                 true,
+  autoCascade:          Cascade.All,
+  autoOptions:          null,
   property:             true,
   preserve:             true,
   clearKey:             true,
@@ -13440,7 +13631,7 @@ Class.create( Relation,
 
     if ( changes && !remoteData && this.auto && !target.$isNew() )
     {
-      target.$save( cascade );
+      target.$save( cascade || this.autoCascade, this.autoOptions );
     }
 
     return changes;
@@ -13454,7 +13645,7 @@ Class.create( Relation,
     {
       if ( this.auto && !target.$isNew() && !remoteData )
       {
-        target.$save();
+        target.$save( this.autoCascade, this.autoOptions );
       }
 
       target.$trigger( Model.Events.KeyUpdate, [target, source, targetFields, sourceFields] );
@@ -14012,7 +14203,7 @@ Class.extend( Relation, RelationMultiple,
       {
         Rekord.debug( this.debugAutoSave, this, relation );
 
-        relation.parent.$save();
+        relation.parent.$save( this.saveParentCascade, this.saveParentOptions );
       }
     }
   },
@@ -14065,12 +14256,15 @@ BelongsTo.Defaults =
   store:                Store.None,
   save:                 Save.None,
   auto:                 true,
+  autoCascade:          Cascade.All,
+  autoOptions:          null,
   property:             true,
   preserve:             true,
   clearKey:             true,
   dynamic:              false,
   local:                null,
   cascade:              Cascade.Local,
+  cascadeRemoveOptions: null,
   discriminator:        'discriminator',
   discriminators:       {},
   discriminatorToModel: {}
@@ -14108,7 +14302,7 @@ Class.extend( RelationSingle, BelongsTo,
       {
         Rekord.debug( Rekord.Debugs.BELONGSTO_NINJA_REMOVE, this, model, relation );
 
-        model.$remove( this.cascade );
+        model.$remove( this.cascade, this.cascadeRemoveOptions );
         this.clearRelated( relation, false, true );
       },
 
@@ -14212,13 +14406,18 @@ HasOne.Defaults =
   query:                false,
   store:                Store.None,
   save:                 Save.None,
+  saveCascade:          Cascade.All,
+  saveOptions:          null,
   auto:                 true,
+  autoCascade:          Cascade.All,
+  autoOptions:          null,
   property:             true,
   preserve:             true,
   clearKey:             true,
   dynamic:              false,
   local:                null,
   cascade:              Cascade.All,
+  cascadeRemoveOptions: null,
   discriminator:        'discriminator',
   discriminators:       {},
   discriminatorToModel: {}
@@ -14358,7 +14557,7 @@ Class.extend( RelationSingle, HasOne,
 
         relation.saving = true;
 
-        related.$save();
+        related.$save( this.saveCascade, this.saveOptions );
 
         relation.saving = false;
         relation.dirty = false;
@@ -14393,7 +14592,7 @@ Class.extend( RelationSingle, HasOne,
 
       if ( this.cascade && !related.$isDeleted() )
       {
-        related.$remove( this.cascade );
+        related.$remove( this.cascade, this.cascadeRemoveOptions );
       }
 
       relation.related = null;
@@ -14425,6 +14624,8 @@ HasMany.Defaults =
   store:                Store.None,
   save:                 Save.None,
   auto:                 true,
+  autoCascade:          Cascade.All,
+  autoOptions:          null,
   property:             true,
   preserve:             true,
   clearKey:             true,
@@ -14435,8 +14636,12 @@ HasMany.Defaults =
   listenForRelated:     true,
   loadRelated:          true,
   where:                false,
+  saveParentCascade:    Cascade.All,
+  saveParentOptions:    null,
   cascadeRemove:        Cascade.Local,
+  cascadeRemoveOptions: null,
   cascadeSave:          Cascade.None,
+  cascadeSaveOptions:   null,
   discriminator:        'discriminator',
   discriminators:       {},
   discriminatorToModel: {}
@@ -14629,7 +14834,7 @@ Class.extend( RelationMultiple, HasMany,
 
           if ( !related.$isDeleted() && related.$hasChanges() )
           {
-            related.$save( this.cascadeSave );
+            related.$save( this.cascadeSave, this.cascadeSaveOptions );
           }
         }
 
@@ -14658,7 +14863,7 @@ Class.extend( RelationMultiple, HasMany,
           {
             var related = models[ i ];
 
-            related.$remove( this.cascadeRemove );
+            related.$remove( this.cascadeRemove, this.cascadeRemoveOptions );
           }
         });
 
@@ -14789,7 +14994,7 @@ Class.extend( RelationMultiple, HasMany,
           }
           else
           {
-            related.$remove( this.cascadeRemove );
+            related.$remove( this.cascadeRemove, this.cascadeRemoveOptions );
           }
         }
       }
@@ -14835,6 +15040,8 @@ HasManyThrough.Defaults =
   store:                Store.None,
   save:                 Save.None,
   auto:                 true,
+  autoCascade:          Cascade.All,
+  autoOptions:          null,
   property:             true,
   dynamic:              false,
   through:              undefined,
@@ -14847,7 +15054,12 @@ HasManyThrough.Defaults =
   where:                false,
   cascadeRemove:        Cascade.NoRest,
   cascadeSave:          Cascade.All,
+  cascadeSaveOptions:   null,
   cascadeSaveRelated:   Cascade.None,
+  cascadeSaveRelatedOptions: null,
+  saveParentCascade:    Cascade.All,
+  saveParentOptions:    null,
+  cascadeRemoveThroughOptions: null,
   discriminator:        'discriminator',
   discriminators:       {},
   discriminatorToModel: {}
@@ -15051,7 +15263,7 @@ Class.extend( RelationMultiple, HasManyThrough,
 
           if ( !through.$isDeleted() && through.$hasChanges() )
           {
-            through.$save( this.cascadeSave );
+            through.$save( this.cascadeSave, this.cascadeSaveOptions );
           }
         }
       }
@@ -15071,7 +15283,7 @@ Class.extend( RelationMultiple, HasManyThrough,
 
           if ( !related.$isDeleted() && related.$hasChanges() )
           {
-            related.$save( this.cascadeSaveRelated );
+            related.$save( this.cascadeSaveRelated, this.cascadeSaveRelatedOptions );
           }
         }
 
@@ -15100,7 +15312,7 @@ Class.extend( RelationMultiple, HasManyThrough,
           {
             var through = throughs[ i ];
 
-            through.$remove( this.cascadeRemove );
+            through.$remove( this.cascadeRemove, this.cascadeRemoveThroughOptions );
           }
         });
 
@@ -15231,7 +15443,7 @@ Class.extend( RelationMultiple, HasManyThrough,
       {
         if ( model.$isSaved() )
         {
-          through.$save( this.cascadeSave );
+          through.$save( this.cascadeSave, this.cascadeSaveOptions );
         }
         else
         {
@@ -15334,7 +15546,7 @@ Class.extend( RelationMultiple, HasManyThrough,
 
       if ( callRemove )
       {
-        through.$remove( remoteData ? Cascade.Local : Cascade.All );
+        through.$remove( remoteData ? Cascade.Local : Cascade.All, this.cascadeRemoveThroughOptions );
       }
 
       throughs.remove( throughKey );
@@ -15983,7 +16195,7 @@ var Polymorphic =
 
     if ( changes && !remoteData && this.auto && !target.$isNew() )
     {
-      target.$save();
+      target.$save( this.autoCascade, this.autoOptions );
     }
 
     return changes;
@@ -16007,7 +16219,7 @@ var Polymorphic =
     {
       if ( this.auto && !target.$isNew() && !remoteData )
       {
-        target.$save();
+        target.$save( this.autoCascade, this.autoOptions );
       }
 
       target.$trigger( Model.Events.KeyUpdate, [target, source, targetFields, sourceFields] );
@@ -16182,14 +16394,14 @@ Class.create( Shard,
 
   },
 
-  all: function(success, failure)
+  all: function(options, success, failure)
   {
     var shards = this.getShards( true );
     var all = [];
 
     function invoke(shard, onShardSuccess, onShardFailure)
     {
-      shard.all( onShardSuccess, onShardFailure );
+      shard.all( options, onShardSuccess, onShardFailure );
     }
     function onSuccess(models)
     {
@@ -16213,14 +16425,14 @@ Class.create( Shard,
     this.multiplex( shards, this.ATOMIC_ALL, invoke, onSuccess, failure, onComplete );
   },
 
-  get: function(model, success, failure)
+  get: function(model, options, success, failure)
   {
     var shards = this.getShardsForModel( model, true );
     var gotten = null;
 
     function invoke(shard, onShardSuccess, onShardFailure)
     {
-      shard.get( model, onShardSuccess, onShardFailure );
+      shard.get( model, options, onShardSuccess, onShardFailure );
     }
     function onSuccess(data)
     {
@@ -16244,14 +16456,14 @@ Class.create( Shard,
     this.multiplex( shards, this.ATOMIC_GET, invoke, onSuccess, noop, onComplete );
   },
 
-  create: function( model, encoded, success, failure )
+  create: function( model, encoded, options, success, failure )
   {
     var shards = this.getShardsForModel( model, false );
     var returned = null;
 
     function invoke(shard, onShardSuccess, onShardFailure)
     {
-      shard.create( model, encoded, onShardSuccess, onShardFailure );
+      shard.create( model, encoded, options, onShardSuccess, onShardFailure );
     }
     function onSuccess(data)
     {
@@ -16275,14 +16487,14 @@ Class.create( Shard,
     this.multiplex( shards, this.ATOMIC_CREATE, invoke, onSuccess, noop, onComplete );
   },
 
-  update: function( model, encoded, success, failure )
+  update: function( model, encoded, options, success, failure )
   {
     var shards = this.getShardsForModel( model, false );
     var returned = null;
 
     function invoke(shard, onShardSuccess, onShardFailure)
     {
-      shard.update( model, encoded, onShardSuccess, onShardFailure );
+      shard.update( model, encoded, options, onShardSuccess, onShardFailure );
     }
     function onSuccess(data)
     {
@@ -16306,14 +16518,14 @@ Class.create( Shard,
     this.multiplex( shards, this.ATOMIC_UPDATE, invoke, onSuccess, noop, onComplete );
   },
 
-  remove: function( model, success, failure )
+  remove: function( model, options, success, failure )
   {
     var shards = this.getShardsForModel( model, false );
     var returned = null;
 
     function invoke(shard, onShardSuccess, onShardFailure)
     {
-      shard.remove( model, onShardSuccess, onShardFailure );
+      shard.remove( model, options, onShardSuccess, onShardFailure );
     }
     function onSuccess(data)
     {
@@ -16337,14 +16549,14 @@ Class.create( Shard,
     this.multiplex( shards, this.ATOMIC_REMOVE, invoke, onSuccess, noop, onComplete );
   },
 
-  query: function( url, query, success, failure )
+  query: function( url, query, options, success, failure )
   {
     var shards = this.getShardsForQuery( url, query );
     var results = [];
 
     function invoke(shard, onShardSuccess, onShardFailure)
     {
-      shard.query( url, query, onShardSuccess, onShardFailure );
+      shard.query( url, query, options, onShardSuccess, onShardFailure );
     }
     function onSuccess(models)
     {
@@ -16654,16 +16866,20 @@ addPlugin(function(model, db, options)
    * @memberof Rekord.Model
    * @param {Object} [props] -
    *    The initial values for the new model - if any.
+   * @param {Number} [cascade] -
+   *    Which operations should be performed out of: store, rest, & live.
+   * @param {Any} [options] -
+   *    The options to pass to the REST service.
    * @return {Rekord.Model} -
    *    The saved model instance.
    */
-  model.create = function( props, cascade )
+  model.create = function( props, cascade, options )
   {
     var instance = isObject( props ) ?
       db.createModel( props ) :
       db.instantiate();
 
-    instance.$save( cascade );
+    instance.$save( cascade, options );
 
     return instance;
   };
@@ -16979,6 +17195,8 @@ addPlugin(function(model, db, options)
    * @memberof Rekord.Model
    * @param {modelInput} input -
    *    The model input used to determine the key and load the model.
+   * @param {Any} [options] -
+   *    The options to pass to the REST service.
    * @param {Function} [callback] -
    *    The function to invoke passing the reference of the model once it's
    *    successfully remotely loaded.
@@ -16987,7 +17205,7 @@ addPlugin(function(model, db, options)
    * @return {Rekord.Model} -
    *    The model instance.
    */
-  model.fetch = function( input, callback, context )
+  model.fetch = function( input, options, callback, context )
   {
     var key = db.keyHandler.buildKeyFromInput( input );
     var instance = db.get( key );
@@ -17012,7 +17230,7 @@ addPlugin(function(model, db, options)
       });
     }
 
-    instance.$refresh();
+    instance.$refresh( Cascade.Rest, options );
 
     return instance;
   };
@@ -17431,11 +17649,15 @@ addPlugin(function(model, db, options)
    * @memberof Rekord.Model
    * @param {Object} [input] -
    *    The values to set in the model instance found or created.
+   * @param {Number} [cascade] -
+   *    Which operations should be performed out of: store, rest, & live.
+   * @param {Any} [options] -
+   *    The options to pass to the REST service.
    * @return {Rekord.Model} -
    *    The saved model instance or undefined if the model database has not
    *    finished loading.
    */
-  model.findOrCreate = function( input, cascade, callback, context )
+  model.findOrCreate = function( input, cascade, options, callback, context )
   {
     var callbackContext = context || this;
     var instance = db.get( input );
@@ -17447,7 +17669,7 @@ addPlugin(function(model, db, options)
       {
         if ( !grabbed )
         {
-          instance = model.create( input, cascade );
+          instance = model.create( input, cascade, options );
           created = true;
         }
         else
@@ -17458,7 +17680,7 @@ addPlugin(function(model, db, options)
           // grab model created an instance that needs to be "created"
           if ( !instance.$isSaved() )
           {
-            instance.$save( cascade );
+            instance.$save( cascade, options );
           }
         }
 
@@ -17562,7 +17784,7 @@ addPlugin(function(model, db, options)
    *    The model instance of it exists locally at the moment, or undefined
    *    if the model hasn't been loaded yet.
    */
-  model.grab = function( input, callback, context )
+  model.grab = function( input, options, callback, context )
   {
     var callbackContext = context || this;
     var instance = db.get( input );
@@ -17581,7 +17803,7 @@ addPlugin(function(model, db, options)
         }
         else
         {
-          model.fetch( input, callback, context );
+          model.fetch( input, options, callback, context );
         }
       });
     }
@@ -17767,15 +17989,15 @@ addPlugin(function(model, db, options)
    *    The saved model instance or undefined if the model database has not
    *    finished loading.
    */
-  model.persist = function( input, cascade, callback, context )
+  model.persist = function( input, cascade, options, callback, context )
   {
     var callbackContext = context || this;
 
-    return model.findOrCreate( input, cascade, function(instance, created)
+    return model.findOrCreate( input, cascade, options, function(instance, created)
     {
       if ( !created )
       {
-        instance.$save( cascade );
+        instance.$save( cascade, options );
       }
 
       if ( callback )

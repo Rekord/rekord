@@ -212,7 +212,7 @@ Class.extend( Relation, RelationMultiple,
       {
         Rekord.debug( this.debugAutoSave, this, relation );
 
-        relation.parent.$save();
+        relation.parent.$save( this.saveParentCascade, this.saveParentOptions );
       }
     }
   },

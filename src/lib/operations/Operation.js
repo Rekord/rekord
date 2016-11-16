@@ -6,10 +6,11 @@ function Operation()
 Class.create( Operation,
 {
 
-  reset: function(model, cascade)
+  reset: function(model, cascade, options)
   {
     this.model = model;
     this.cascade = isNumber( cascade ) ? cascade : Cascade.All;
+    this.options = options;
     this.db = model.$db;
     this.next = null;
     this.finished = false;
@@ -49,7 +50,7 @@ Class.create( Operation,
 
     if ( setNext )
     {
-      this.next = new OperationType( this.model, this.cascade );
+      this.next = new OperationType( this.model, this.cascade, this.options );
     }
 
     return setNext;
@@ -57,7 +58,7 @@ Class.create( Operation,
 
   insertNext: function(OperationType)
   {
-    var op = new OperationType( this.model, this.cascade );
+    var op = new OperationType( this.model, this.cascade, this.options );
 
     op.next = this.next;
     this.next = op;

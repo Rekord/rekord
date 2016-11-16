@@ -29,7 +29,7 @@ test( 'get', function(assert)
 
   expect( 16 );
 
-  Task.fetch( 3, function(t)
+  Task.fetch( 3, {}, function(t)
   {
     ok( t );
     strictEqual( t.id, 3 );
@@ -37,7 +37,7 @@ test( 'get', function(assert)
     ok( t.$isSaved() );
   });
 
-  Task.fetch( 1, function(t)
+  Task.fetch( 1, {}, function(t)
   {
     ok( t );
     strictEqual( t.id, 1 );
@@ -45,7 +45,7 @@ test( 'get', function(assert)
     ok( t.$isSaved() );
   });
 
-  Task.fetch( 2, function(t)
+  Task.fetch( 2, {}, function(t)
   {
     ok( t );
     strictEqual( t.id, 2 );
@@ -53,7 +53,7 @@ test( 'get', function(assert)
     ok( t.$isSaved() );
   });
 
-  Task.fetch( 4, function(t)
+  Task.fetch( 4, {}, function(t)
   {
     ok( t );
     strictEqual( t.id, 4 );
@@ -92,7 +92,7 @@ test( 'get failure', function(assert)
 
   expect( 4 );
 
-  Task.fetch( 3, function(t)
+  Task.fetch( 3, {}, function(t)
   {
     ok( t );
     strictEqual( t.id, 3 );
@@ -131,7 +131,7 @@ test( 'get unknown', function(assert)
 
   expect( 16 );
 
-  Task.fetch( 3, function(t)
+  Task.fetch( 3, {}, function(t)
   {
     ok( t );
     strictEqual( t.id, 3 );
@@ -139,7 +139,7 @@ test( 'get unknown', function(assert)
     ok( t.$isSaved() );
   });
 
-  Task.fetch( 1, function(t)
+  Task.fetch( 1, {}, function(t)
   {
     ok( t );
     strictEqual( t.id, 1 );
@@ -147,7 +147,7 @@ test( 'get unknown', function(assert)
     ok( t.$isSaved() );
   });
 
-  Task.fetch( 2, function(t)
+  Task.fetch( 2, {}, function(t)
   {
     ok( t );
     strictEqual( t.id, 2 );
@@ -155,7 +155,7 @@ test( 'get unknown', function(assert)
     ok( t.$isSaved() );
   });
 
-  Task.fetch( 4, function(t)
+  Task.fetch( 4, {}, function(t)
   {
     ok( t );
     strictEqual( t.id, 4 );
