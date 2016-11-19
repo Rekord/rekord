@@ -273,10 +273,24 @@ gulp.task( 'js:modular:min', ['js:modular'], executeModular( modularized, true )
 
 gulp.task( 'default', ['js:min']);
 
+gulp.task( 'test:webpack:build', ['js'], shell.task([
+  'npm install',
+  'node node_modules/webpack/bin/webpack.js'
+], {
+  cwd: './test/webpack'
+}));
+
 gulp.task( 'test:normal', ['js'], executeTest( './test/index.html' ) );
 gulp.task( 'test:nativearray', ['js'], executeTest( './test/index-nativearray.html' ) );
 gulp.task( 'test:requirejs', ['js'], executeTest( './test/index-requirejs.html' ) );
-gulp.task( 'test', ['test:normal', 'test:nativearray', 'test:requirejs'] );
+gulp.task( 'test:webpack', ['test:webpack:build'], executeTest( './test/webpack/index.html' ) );
+
+gulp.task( 'test', [
+  'test:normal',
+  'test:nativearray',
+  'test:requirejs',
+  'test:webpack'
+]);
 
 gulp.task( 'docs', shell.task(['./node_modules/.bin/jsdoc -c jsdoc.json']));
 gulp.task( 'clean', shell.task(['rm -rf build/*.js', 'rm -rf build/*.map']));
