@@ -1,5 +1,5 @@
 require.config({
-  baseUrl: '../build'
+  baseUrl: '../../build'
 });
 
 module( 'Rekord RequireJS' );

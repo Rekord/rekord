@@ -1,0 +1,16 @@
+{
+  "name": "rekord-browserify-test",
+  "main": "bundle.js",
+  "description": "Rekord & Browserify Test",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/Rekord/rekord.git"
+  },
+  "author": "Philip Diffenderfer <pdiffenderfer@gmail.com> (http://github.com/ClickerMonkey)",
+  "dependencies": {
+    "browserify": "^13.1.1",
+    "qunitjs": "^2.0.1",
+    "rekord": "^1.4.10"
+  }
+}

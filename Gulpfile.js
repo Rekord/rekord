@@ -287,18 +287,27 @@ gulp.task( 'test:typescript:build', ['js'], shell.task([
   cwd: './test/typescript'
 }));
 
+gulp.task( 'test:browserify:build', ['js'], shell.task([
+  'npm install',
+  'node node_modules/browserify/bin/cmd.js test.js -o bundle.js'
+], {
+  cwd: './test/browserify'
+}));
+
 gulp.task( 'test:normal', ['js'], executeTest( './test/index.html' ) );
 gulp.task( 'test:nativearray', ['js'], executeTest( './test/index-nativearray.html' ) );
-gulp.task( 'test:requirejs', ['js'], executeTest( './test/index-requirejs.html' ) );
+gulp.task( 'test:requirejs', ['js'], executeTest( './test/requirejs/index.html' ) );
 gulp.task( 'test:webpack', ['test:webpack:build'], executeTest( './test/webpack/index.html' ) );
 gulp.task( 'test:typescript', ['test:typescript:build'], executeTest( './test/typescript/index.html' ) );
+gulp.task( 'test:browserify', ['test:browserify:build'], executeTest( './test/browserify/index.html' ) );
 
 gulp.task( 'test', [
   'test:normal',
   'test:nativearray',
   'test:requirejs',
   'test:webpack',
-  'test:typescript'
+  'test:typescript',
+  'test:browserify'
 ]);
 
 gulp.task( 'docs', shell.task(['./node_modules/.bin/jsdoc -c jsdoc.json']));
