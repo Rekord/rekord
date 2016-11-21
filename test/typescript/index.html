@@ -15,9 +15,7 @@
     <!-- Register Tests -->
     <script>
       require.config({
-        paths: {
-          'rekord': 'node_modules/rekord/build/rekord'
-        }
+        baseUrl: '../../build'
       });
 
       define('qunitjs', [], function() {

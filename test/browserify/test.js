@@ -1,5 +1,5 @@
 
-var Rekord = require('rekord')
+var Rekord = require('../../build/rekord')
 var QUnit = require('qunitjs')
 
 QUnit.config.autostart = false

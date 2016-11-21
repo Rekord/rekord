@@ -10,7 +10,6 @@
   "author": "Philip Diffenderfer <pdiffenderfer@gmail.com> (http://github.com/ClickerMonkey)",
   "dependencies": {
     "qunitjs": "^2.0.1",
-    "rekord": "^1.4.10",
     "webpack": "^1.13.3"
   }
 }
