@@ -280,16 +280,25 @@ gulp.task( 'test:webpack:build', ['js'], shell.task([
   cwd: './test/webpack'
 }));
 
+gulp.task( 'test:typescript:build', ['js'], shell.task([
+  'npm install',
+  'node node_modules/typescript/bin/tsc || true'
+], {
+  cwd: './test/typescript'
+}));
+
 gulp.task( 'test:normal', ['js'], executeTest( './test/index.html' ) );
 gulp.task( 'test:nativearray', ['js'], executeTest( './test/index-nativearray.html' ) );
 gulp.task( 'test:requirejs', ['js'], executeTest( './test/index-requirejs.html' ) );
 gulp.task( 'test:webpack', ['test:webpack:build'], executeTest( './test/webpack/index.html' ) );
+gulp.task( 'test:typescript', ['test:typescript:build'], executeTest( './test/typescript/index.html' ) );
 
 gulp.task( 'test', [
   'test:normal',
   'test:nativearray',
   'test:requirejs',
-  'test:webpack'
+  'test:webpack',
+  'test:typescript'
 ]);
 
 gulp.task( 'docs', shell.task(['./node_modules/.bin/jsdoc -c jsdoc.json']));

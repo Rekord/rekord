@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+  <head>
+
+    <!-- QUnit -->
+    <link rel="stylesheet" href="node_modules/qunitjs/qunit/qunit.css">
+    <script src="node_modules/qunitjs/qunit/qunit.js"></script>
+
+    <!-- RequireJS -->
+    <script src="node_modules/requirejs/require.js"></script>
+
+    <!-- Test -->
+    <script src="bundle.js"></script>
+
+    <!-- Register Tests -->
+    <script>
+      require.config({
+        paths: {
+          'rekord': 'node_modules/rekord/build/rekord'
+        }
+      });
+
+      define('qunitjs', [], function() {
+        return QUnit;
+      });
+
+      require(['test']);
+
+      QUnit.config.autostart = false
+    </script>
+
+  </head>
+  <body>
+
+    <!-- QUnit UI -->
+    <h1 id="qunit-header">Rekord & Typescript</h1>
+    <h2 id="qunit-banner"></h2>
+    <div id="qunit-testrunner-toolbar"></div>
+    <h2 id="qunit-userAgent"></h2>
+    <ol id="qunit-tests"></ol>
+    <div id="qunit-fixture">
+        <div id="container"></div>
+    </div>
+
+  </body>
+</html>

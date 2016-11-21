@@ -1,0 +1,21 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "target": "es5",
+    "module": "amd",
+    "sourceMap": false,
+    "removeComments": true,
+    "preserveConstEnums": true,
+    "rootDir": "./",
+    "allowJs": true,
+    "outFile": "bundle.js",
+    "allowSyntheticDefaultImports": false,
+    "skipDefaultLibCheck": false
+  },
+  "include": [
+    "test.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

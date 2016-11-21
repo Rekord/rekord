@@ -1,7 +1,7 @@
 {
-  "name": "rekord-webpack-test",
+  "name": "rekord-typescript-test",
   "main": "bundle.js",
-  "description": "Rekord & Webpack Test",
+  "description": "Rekord & Typescript Test",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -11,6 +11,8 @@
   "dependencies": {
     "qunitjs": "^2.0.1",
     "rekord": "^1.4.10",
-    "webpack": "^1.13.3"
+    "requirejs": "^2.3.2",
+    "ts-loader": "^1.2.2",
+    "typescript": "^2.0.10"
   }
 }
