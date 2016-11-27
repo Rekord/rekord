@@ -43,6 +43,71 @@ function addEventFunction(target, functionName, events, secret)
   }
 }
 
+function EventNode(before, callback, context, type, group)
+{
+  this.next = before ? before : this;
+  this.prev = before ? before.prev : this;
+
+  if ( before )
+  {
+    before.prev.next = this;
+    before.prev = this;
+  }
+
+  this.callback = callback;
+  this.context = context;
+  this.type = type;
+  this.group = group || 0;
+}
+
+EventNode.Types =
+{
+  Persistent: 1,
+  Once: 2,
+  After: 4
+};
+
+Class.create( EventNode,
+{
+  remove: function()
+  {
+    var next = this.next;
+    var prev = this.prev;
+
+    if ( next !== this )
+    {
+      prev.next = next;
+      next.prev = prev;
+      this.next = this.prev = this;
+    }
+  },
+
+  hasType: function(type)
+  {
+    return (this.type & type) !== 0;
+  },
+
+  trigger: function(group, args, after)
+  {
+    var type = this.type;
+    var isAfter = this.hasType( EventNode.Types.After );
+
+    if ( this.group !== group )
+    {
+      if ( (after && isAfter) || !isAfter )
+      {
+        this.group = group;
+        this.callback.apply( this.context, args );
+      }
+
+      if ( this.hasType( EventNode.Types.Once ) )
+      {
+        this.remove();
+      }
+    }
+  }
+});
+
 /**
  * Adds functions to the given object (or prototype) so you can listen for any
  * number of events on the given object, optionally once. Listeners can be
@@ -74,10 +139,6 @@ function addEventFunction(target, functionName, events, secret)
 function addEventful(target, secret)
 {
 
-  var CALLBACK_FUNCTION = 0;
-  var CALLBACK_CONTEXT = 1;
-  var CALLBACK_GROUP = 2;
-
   var triggerId = 0;
 
   /**
@@ -99,20 +160,23 @@ function addEventful(target, secret)
     */
 
   // Adds a listener to $this
-  function onListeners($this, property, eventsInput, callback, context)
+  function onListeners($this, eventsInput, callback, context, type)
   {
     if ( !isFunction( callback ) )
     {
       return noop;
     }
 
+    var callbackContext = context || $this;
     var events = toArray( eventsInput, ' ' );
-    var listeners = $this[ property ];
+    var listeners = $this.$$on;
 
     if ( !listeners )
     {
-      Class.prop( $this, property, listeners = {} );
+      Class.prop( $this, '$$on', listeners = {} );
     }
+
+    var nodes = [];
 
     for (var i = 0; i < events.length; i++)
     {
@@ -121,18 +185,20 @@ function addEventful(target, secret)
 
       if ( !eventListeners )
       {
-        eventListeners = listeners[ eventName ] = [];
+        eventListeners = listeners[ eventName ] = new EventNode();
       }
 
-      eventListeners.push( [ callback, context || $this, 0 ] );
+      nodes.push( new EventNode( eventListeners, callback, callbackContext, type, triggerId ) );
     }
 
     return function ignore()
     {
-      for (var i = 0; i < events.length; i++)
+      for (var i = 0; i < nodes.length; i++)
       {
-        offListeners( listeners, events[ i ], callback );
+        nodes[ i ].remove();
       }
+
+      nodes.length = 0;
     };
   }
 
@@ -172,7 +238,7 @@ function addEventful(target, secret)
 
   function on(events, callback, context)
   {
-    return onListeners( this, '$$on', events, callback, context );
+    return onListeners( this, events, callback, context, EventNode.Types.Persistent );
   }
 
   /**
@@ -211,12 +277,12 @@ function addEventful(target, secret)
 
   function once(events, callback, context)
   {
-    return onListeners( this, '$$once', events, callback, context );
+    return onListeners( this, events, callback, context, EventNode.Types.Once );
   }
 
   function after(events, callback, context)
   {
-    return onListeners( this, '$$after', events, callback, context );
+    return onListeners( this, events, callback, context, EventNode.Types.After );
   }
 
   // Removes a listener from an array of listeners.
@@ -225,13 +291,18 @@ function addEventful(target, secret)
     if (listeners && event in listeners)
     {
       var eventListeners = listeners[ event ];
+      var next, node = eventListeners.next;
 
-      for (var k = eventListeners.length - 1; k >= 0; k--)
+      while (node !== eventListeners)
       {
-        if (eventListeners[ k ][ CALLBACK_FUNCTION ] === callback)
+        next = node.next;
+
+        if (node.callback === callback)
         {
-          eventListeners.splice( k, 1 );
+          node.remove();
         }
+
+        node = next;
       }
     }
   }
@@ -267,8 +338,6 @@ function addEventful(target, secret)
     if ( !isDefined( eventsInput ) )
     {
       deleteProperty( this, '$$on' );
-      deleteProperty( this, '$$once' );
-      deleteProperty( this, '$$after' );
     }
     else
     {
@@ -280,8 +349,6 @@ function addEventful(target, secret)
         for (var i = 0; i < events.length; i++)
         {
           deleteProperty( this.$$on, events[i] );
-          deleteProperty( this.$$once, events[i] );
-          deleteProperty( this.$$after, events[i] );
         }
       }
       // Remove specific listener
@@ -290,8 +357,6 @@ function addEventful(target, secret)
         for (var i = 0; i < events.length; i++)
         {
           offListeners( this.$$on, events[i], callback );
-          offListeners( this.$$once, events[i], callback );
-          offListeners( this.$$after, events[i], callback );
         }
       }
     }
@@ -300,35 +365,28 @@ function addEventful(target, secret)
   }
 
   // Triggers listeneers for the given event
-  function triggerListeners(listeners, event, args, clear)
+  function triggerListeners(listeners, event, args)
   {
     if (listeners && event in listeners)
     {
       var eventListeners = listeners[ event ];
       var triggerGroup = ++triggerId;
+      var next, node = eventListeners.next;
 
-      for (var i = 0; i < eventListeners.length; i++)
+      while (node !== eventListeners)
       {
-        var callback = eventListeners[ i ];
-
-        if ( callback )
-        {
-          if ( callback[ CALLBACK_GROUP ] !== triggerGroup )
-          {
-            callback[ CALLBACK_GROUP ] = triggerGroup;
-            callback[ CALLBACK_FUNCTION ].apply( callback[ CALLBACK_CONTEXT ], args );
-
-            if ( callback !== eventListeners[ i ] )
-            {
-              i = -1;
-            }
-          }
-        }
+        next = node.next;
+        node.trigger( triggerGroup, args, false );
+        node = next;
       }
 
-      if ( clear )
+      node = eventListeners.next;
+
+      while (node !== eventListeners)
       {
-        delete listeners[ event ];
+        next = node.next;
+        node.trigger( triggerGroup, args, true );
+        node = next;
       }
     }
   }
@@ -350,11 +408,7 @@ function addEventful(target, secret)
 
       for (var i = 0; i < events.length; i++)
       {
-        var e = events[ i ];
-
-        triggerListeners( this.$$on, e, args, false );
-        triggerListeners( this.$$once, e, args, true );
-        triggerListeners( this.$$after, e, args, false );
+        triggerListeners( this.$$on, events[ i ], args );
       }
     }
     catch (ex)

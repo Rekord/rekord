@@ -329,7 +329,7 @@ Class.create( Database,
   reset: function(failOnPendingChanges, removeListeners)
   {
     var db = this;
-    var promise = new Rekord.Promise();
+    var promise = new Promise();
 
     if ( failOnPendingChanges && db.hasPending() )
     {

@@ -9,7 +9,7 @@ addPlugin(function(model, db, options)
       new SearchPaged( db, url, collapse( options, page ), props ) :
       new Search( db, url, options, props );
 
-    var promise = new Rekord.Promise();
+    var promise = new Promise();
 
     promise.success( success );
     promise.failure( failure );

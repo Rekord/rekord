@@ -3,6 +3,7 @@ function Promise(executor, cancelable)
 {
   this.status = Promise.Status.Pending;
   this.cancelable = cancelable !== false;
+  this.nexts = [];
 
   Class.prop( this, 'results', null );
 
@@ -80,7 +81,7 @@ Promise.race = function(iterable)
 
     if ( p instanceof Promise )
     {
-      p.then( race.resolve, race.reject, race.noline, race.cancel, race );
+      p.bind( race );
     }
   }
 
@@ -113,6 +114,13 @@ Promise.cancel = function()
   var p = new Promise();
   p.cancel.apply( p, arguments );
   return p;
+};
+
+Promise.then = function()
+{
+  var p = new Promise();
+  p.resolve();
+  return p.then.apply( p, arguments );
 };
 
 Promise.singularity = (function()
@@ -223,14 +231,46 @@ Class.create( Promise,
     }
   },
 
+  bind: function(promise)
+  {
+    this.success( promise.resolve, promise );
+    this.failure( promise.reject, promise );
+    this.offline( promise.noline, promise );
+    this.canceled( promise.cancel, promise );
+  },
+
   then: function(success, failure, offline, canceled, context, persistent )
   {
-    this.success( success, context, persistent );
-    this.failure( failure, context, persistent );
-    this.offline( offline, context, persistent );
-    this.canceled( canceled, context, persistent );
+    // The promise which can be resolved if any of the callbacks return
+    // a Promise which is resolved.
+    var next = new Promise();
 
-    return this;
+    this.success( success, context, persistent, next );
+    this.failure( failure, context, persistent, next );
+    this.offline( offline, context, persistent, next );
+    this.canceled( canceled, context, persistent, next );
+    this.addNext( next );
+    
+    return next;
+  },
+
+  addNext: function(next)
+  {
+    var nexts = this.nexts;
+
+    if (nexts.length === 0)
+    {
+      // If this promise is not successful, let all chained promises know.
+      this.unsuccessful(function()
+      {
+        for (var i = 0; i < nexts.length; i++)
+        {
+          nexts[ i ].finish( this.status, this.status, arguments );
+        }
+      });
+    }
+
+    nexts.push( next );
   },
 
   reset: function(clearListeners)
@@ -255,63 +295,75 @@ Class.create( Promise,
     }
   },
 
-  listenFor: function(immediate, events, callback, context, persistent)
+  listenFor: function(immediate, events, callback, context, persistent, next)
   {
     if ( isFunction( callback ) )
     {
+      var handleEvents = function()
+      {
+        var result = callback.apply( context || this, this.results );
+
+        if ( result instanceof Promise &&
+             next instanceof Promise &&
+             next.isPending() )
+        {
+          result.bind( next );
+        }
+      };
+
       if ( this.status === Promise.Status.Pending )
       {
         if ( persistent )
         {
-          this.on( events, callback, context );
+          this.on( events, handleEvents, this );
         }
         else
         {
-          this.once( events, callback, context );
+          this.once( events, handleEvents, this );
         }
       }
       else if ( immediate )
       {
-        callback.apply( context || this, this.results );
+        handleEvents.apply( this );
       }
     }
 
     return this;
   },
 
-  success: function(callback, context, persistent)
+  success: function(callback, context, persistent, next)
   {
-    return this.listenFor( this.isSuccess(), Promise.Events.Success, callback, context, persistent );
+    return this.listenFor( this.isSuccess(), Promise.Events.Success, callback, context, persistent, next );
   },
 
-  unsuccessful: function(callback, context, persistent)
+  unsuccessful: function(callback, context, persistent, next)
   {
-    return this.listenFor( this.isUnsuccessful(), Promise.Events.Unsuccessful, callback, context, persistent );
+    return this.listenFor( this.isUnsuccessful(), Promise.Events.Unsuccessful, callback, context, persistent, next );
   },
 
-  failure: function(callback, context, persistent)
+  failure: function(callback, context, persistent, next)
   {
-    return this.listenFor( this.isFailure(), Promise.Events.Failure, callback, context, persistent );
+    return this.listenFor( this.isFailure(), Promise.Events.Failure, callback, context, persistent, next );
   },
 
-  catch: function(callback, context, persistent)
+  catch: function(callback, context, persistent, next)
   {
-    return this.listenFor( this.isFailure(), Promise.Events.Failure, callback, context, persistent );
+    return this.listenFor( this.isFailure(), Promise.Events.Failure, callback, context, persistent, next );
   },
 
-  offline: function(callback, context, persistent)
+  offline: function(callback, context, persistent, next)
   {
-    return this.listenFor( this.isOffline(), Promise.Events.Offline, callback, context, persistent );
+    return this.listenFor( this.isOffline(), Promise.Events.Offline, callback, context, persistent, next );
   },
 
-  canceled: function(callback, context, persistent)
+  canceled: function(callback, context, persistent, next)
   {
-    return this.listenFor( this.isCanceled(), Promise.Events.Canceled, callback, context, persistent );
+    return this.listenFor( this.isCanceled(), Promise.Events.Canceled, callback, context, persistent, next );
   },
 
-  complete: function(callback, context, persistent)
+  complete: function(callback, context, persistent, next)
   {
-    return this.listenFor( true, Promise.Events.Complete, callback, context, persistent );
+    return this.listenFor( true, Promise.Events.Complete, callback, context, persistent, next );
   },
 
   isSuccess: function()

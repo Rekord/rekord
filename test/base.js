@@ -108,6 +108,39 @@ TestTimer.prototype =
         }
       }
     }
+  },
+  runTimed: function(millis, assert)
+  {
+    var done = assert.async();
+    var callbacks = this.callbacks;
+    var callbackIndex = 0;
+    var timer = this;
+
+    var makeCalls = function()
+    {
+      var calls = callbacks[ callbackIndex ];
+
+      timer.time = callbackIndex;
+
+      if ( calls )
+      {
+        for (var k = 0; k < calls.length; k++)
+        {
+          calls[ k ]();
+        }
+      }
+
+      if ( ++callbackIndex < callbacks.length )
+      {
+        setTimeout( makeCalls, millis );
+      }
+      else
+      {
+        done();
+      }
+    };
+
+    setTimeout( makeCalls, millis );
   }
 };
 

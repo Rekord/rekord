@@ -1220,3 +1220,233 @@ test( '.singularity() success', function(assert)
 
   ok( s.isSuccess(), 'second resolved, no longer pending' );
 });
+
+test( 'chaining success sync', function(assert)
+{
+  var p1 = new Rekord.Promise();
+  var p2 = new Rekord.Promise();
+
+  expect(4);
+
+  p1
+    .then(function(result) {
+      notOk(p1.isPending());
+      strictEqual(result, 'p1');
+      return p2;
+    })
+    .then(function(result) {
+      notOk(p2.isPending());
+      strictEqual(result, 'p2');
+    })
+    .catch(function() {
+      ok( false );
+    })
+  ;
+
+  p1.resolve('p1');
+  p2.resolve('p2');
+});
+
+test( 'chaining failure sync', function(assert)
+{
+  var p1 = new Rekord.Promise();
+  var p2 = new Rekord.Promise();
+
+  expect(4);
+
+  p1
+    .then(function(result) {
+      notOk(p1.isPending());
+      strictEqual(result, 'p1');
+      return p2;
+    })
+    .then(function(result) {
+      ok( false );
+    })
+    .catch(function(result) {
+      notOk(p2.isPending());
+      strictEqual(result, 'p2');
+    })
+  ;
+
+  p1.resolve('p1');
+  p2.reject('p2');
+});
+
+test( 'chaining failure sync 1st', function(assert)
+{
+  var p1 = new Rekord.Promise();
+  var p2 = new Rekord.Promise();
+
+  expect(2);
+
+  p1
+    .then(function(result) {
+      ok( false );
+      return p2;
+    })
+    .then(function(result) {
+      ok( false );
+    })
+    .catch(function(result) {
+      ok(p2.isPending());
+      strictEqual(result, 'p1');
+    })
+  ;
+
+  p1.reject('p1');
+  p2.resolve('p2');
+});
+
+test( 'chaining failure multiple', function(assert)
+{
+  var p1 = new Rekord.Promise();
+  var p2 = new Rekord.Promise();
+
+  expect(2);
+
+  p1
+    .then(function(result) {
+      ok( false );
+      return p2;
+    })
+    .then(function(result) {
+      ok( false );
+    })
+    .catch(function(result) {
+      ok( false );
+    })
+    .offline(function(result) {
+      ok(p2.isPending());
+      strictEqual(result, 'p1');
+    })
+  ;
+
+  p1.noline('p1');
+  p2.resolve('p2');
+});
+
+test( 'chaining success async', function(assert)
+{
+  var timer = assert.timer();
+  var p1 = new Rekord.Promise();
+  var p2 = new Rekord.Promise();
+
+  expect(4);
+
+  p1
+    .then(function(result) {
+      notOk(p1.isPending());
+      strictEqual(result, 'p1');
+      return p2;
+    })
+    .then(function(result) {
+      notOk(p2.isPending());
+      strictEqual(result, 'p2');
+    })
+    .catch(function() {
+      ok( false );
+    })
+  ;
+
+  timer.wait(1, function() {
+    p1.resolve('p1');
+  });
+  timer.wait(3, function() {
+    p2.resolve('p2');
+  });
+
+  timer.run();
+});
+
+test( 'chaining create update remove sync', function(assert)
+{
+  var prefix = 'chaining_create_update_remove_sync_';
+
+  var Task = Rekord({
+    name: 'task',
+    fields: ['name', 'done']
+  });
+
+  expect(2);
+
+  Rekord.Promise
+    .then(function() {
+      var t0 = new Task({
+        name: 't0',
+        done: false
+      });
+      return t0.$save();
+    })
+    .then(function(t0) {
+      ok( t0.$saved );
+      t0.done = true;
+      return t0.$save();
+    })
+    .then(function(t0) {
+      strictEqual( t0.$saved.done, true );
+      return t0.$remove();
+    })
+    .catch(function() {
+      ok( false );
+    })
+  ;
+});
+
+test( 'chaining create update remove async', function(assert)
+{
+  var timer = assert.timer();
+  var prefix = 'chaining_create_update_remove_async_';
+
+  var Task = Rekord({
+    name: 'task' + prefix,
+    fields: ['name', 'done']
+  });
+
+  Task.Database.rest.delay = 2;
+
+  expect(10);
+
+  var t0 = new Task({
+    id: 23,
+    name: 't0',
+    done: false
+  });
+
+  wait(1, function() {
+    notOk( t0.$isSaved(), 'not saved' );
+    notOk( t0.$isDeleted(), 'is not deleted' );
+  });
+
+  wait(3, function() {
+    ok( t0.$isSaved(), 'is saved' );
+    deepEqual( t0.$saved, {id: 23, name: 't0', done: false}, 'saved correctly' );
+    notOk( t0.$isDeleted(), 'is not deleted' );
+  });
+
+  wait(5, function() {
+    ok( t0.$isSaved(), 'is saved' );
+    deepEqual( t0.$saved, {id: 23, name: 't0', done: true}, 'updated correctly' );
+    ok( t0.$isDeleted(), 'is deleted' );
+  });
+
+  Rekord.Promise
+    .then(function() { // at 0
+      return t0.$save();
+    })
+    .then(function(t0) { // at 2
+      ok( t0.$saved, 'is saved, updating...' );
+      t0.done = true;
+      return t0.$save();
+    })
+    .then(function(t0) { // at 4
+      strictEqual( t0.$saved.done, true, 'saved done correctly, removing...' );
+      return t0.$remove();
+    })
+    .catch(function() {
+      ok( false );
+    })
+  ;
+
+  timer.runTimed( 1, assert );
+});

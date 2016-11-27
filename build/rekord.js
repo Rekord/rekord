@@ -1,4 +1,4 @@
-/* rekord 1.5.0 - A javascript REST ORM that is offline and real-time capable http://rekord.github.io/rekord/ by Philip Diffenderfer */
+/* rekord 1.5.1 - A javascript REST ORM that is offline and real-time capable http://rekord.github.io/rekord/ by Philip Diffenderfer */
 // UMD (Universal Module Definition)
 (function (root, factory)
 {
@@ -1165,6 +1165,71 @@ function addEventFunction(target, functionName, events, secret)
   }
 }
 
+function EventNode(before, callback, context, type, group)
+{
+  this.next = before ? before : this;
+  this.prev = before ? before.prev : this;
+
+  if ( before )
+  {
+    before.prev.next = this;
+    before.prev = this;
+  }
+
+  this.callback = callback;
+  this.context = context;
+  this.type = type;
+  this.group = group || 0;
+}
+
+EventNode.Types =
+{
+  Persistent: 1,
+  Once: 2,
+  After: 4
+};
+
+Class.create( EventNode,
+{
+  remove: function()
+  {
+    var next = this.next;
+    var prev = this.prev;
+
+    if ( next !== this )
+    {
+      prev.next = next;
+      next.prev = prev;
+      this.next = this.prev = this;
+    }
+  },
+
+  hasType: function(type)
+  {
+    return (this.type & type) !== 0;
+  },
+
+  trigger: function(group, args, after)
+  {
+    var type = this.type;
+    var isAfter = this.hasType( EventNode.Types.After );
+
+    if ( this.group !== group )
+    {
+      if ( (after && isAfter) || !isAfter )
+      {
+        this.group = group;
+        this.callback.apply( this.context, args );
+      }
+
+      if ( this.hasType( EventNode.Types.Once ) )
+      {
+        this.remove();
+      }
+    }
+  }
+});
+
 /**
  * Adds functions to the given object (or prototype) so you can listen for any
  * number of events on the given object, optionally once. Listeners can be
@@ -1196,10 +1261,6 @@ function addEventFunction(target, functionName, events, secret)
 function addEventful(target, secret)
 {
 
-  var CALLBACK_FUNCTION = 0;
-  var CALLBACK_CONTEXT = 1;
-  var CALLBACK_GROUP = 2;
-
   var triggerId = 0;
 
   /**
@@ -1221,20 +1282,23 @@ function addEventful(target, secret)
     */
 
   // Adds a listener to $this
-  function onListeners($this, property, eventsInput, callback, context)
+  function onListeners($this, eventsInput, callback, context, type)
   {
     if ( !isFunction( callback ) )
     {
       return noop;
     }
 
+    var callbackContext = context || $this;
     var events = toArray( eventsInput, ' ' );
-    var listeners = $this[ property ];
+    var listeners = $this.$$on;
 
     if ( !listeners )
     {
-      Class.prop( $this, property, listeners = {} );
+      Class.prop( $this, '$$on', listeners = {} );
     }
+
+    var nodes = [];
 
     for (var i = 0; i < events.length; i++)
     {
@@ -1243,18 +1307,20 @@ function addEventful(target, secret)
 
       if ( !eventListeners )
       {
-        eventListeners = listeners[ eventName ] = [];
+        eventListeners = listeners[ eventName ] = new EventNode();
       }
 
-      eventListeners.push( [ callback, context || $this, 0 ] );
+      nodes.push( new EventNode( eventListeners, callback, callbackContext, type, triggerId ) );
     }
 
     return function ignore()
     {
-      for (var i = 0; i < events.length; i++)
+      for (var i = 0; i < nodes.length; i++)
       {
-        offListeners( listeners, events[ i ], callback );
+        nodes[ i ].remove();
       }
+
+      nodes.length = 0;
     };
   }
 
@@ -1294,7 +1360,7 @@ function addEventful(target, secret)
 
   function on(events, callback, context)
   {
-    return onListeners( this, '$$on', events, callback, context );
+    return onListeners( this, events, callback, context, EventNode.Types.Persistent );
   }
 
   /**
@@ -1333,12 +1399,12 @@ function addEventful(target, secret)
 
   function once(events, callback, context)
   {
-    return onListeners( this, '$$once', events, callback, context );
+    return onListeners( this, events, callback, context, EventNode.Types.Once );
   }
 
   function after(events, callback, context)
   {
-    return onListeners( this, '$$after', events, callback, context );
+    return onListeners( this, events, callback, context, EventNode.Types.After );
   }
 
   // Removes a listener from an array of listeners.
@@ -1347,13 +1413,18 @@ function addEventful(target, secret)
     if (listeners && event in listeners)
     {
       var eventListeners = listeners[ event ];
+      var next, node = eventListeners.next;
 
-      for (var k = eventListeners.length - 1; k >= 0; k--)
+      while (node !== eventListeners)
       {
-        if (eventListeners[ k ][ CALLBACK_FUNCTION ] === callback)
+        next = node.next;
+
+        if (node.callback === callback)
         {
-          eventListeners.splice( k, 1 );
+          node.remove();
         }
+
+        node = next;
       }
     }
   }
@@ -1389,8 +1460,6 @@ function addEventful(target, secret)
     if ( !isDefined( eventsInput ) )
     {
       deleteProperty( this, '$$on' );
-      deleteProperty( this, '$$once' );
-      deleteProperty( this, '$$after' );
     }
     else
     {
@@ -1402,8 +1471,6 @@ function addEventful(target, secret)
         for (var i = 0; i < events.length; i++)
         {
           deleteProperty( this.$$on, events[i] );
-          deleteProperty( this.$$once, events[i] );
-          deleteProperty( this.$$after, events[i] );
         }
       }
       // Remove specific listener
@@ -1412,8 +1479,6 @@ function addEventful(target, secret)
         for (var i = 0; i < events.length; i++)
         {
           offListeners( this.$$on, events[i], callback );
-          offListeners( this.$$once, events[i], callback );
-          offListeners( this.$$after, events[i], callback );
         }
       }
     }
@@ -1422,35 +1487,28 @@ function addEventful(target, secret)
   }
 
   // Triggers listeneers for the given event
-  function triggerListeners(listeners, event, args, clear)
+  function triggerListeners(listeners, event, args)
   {
     if (listeners && event in listeners)
     {
       var eventListeners = listeners[ event ];
       var triggerGroup = ++triggerId;
+      var next, node = eventListeners.next;
 
-      for (var i = 0; i < eventListeners.length; i++)
+      while (node !== eventListeners)
       {
-        var callback = eventListeners[ i ];
-
-        if ( callback )
-        {
-          if ( callback[ CALLBACK_GROUP ] !== triggerGroup )
-          {
-            callback[ CALLBACK_GROUP ] = triggerGroup;
-            callback[ CALLBACK_FUNCTION ].apply( callback[ CALLBACK_CONTEXT ], args );
-
-            if ( callback !== eventListeners[ i ] )
-            {
-              i = -1;
-            }
-          }
-        }
+        next = node.next;
+        node.trigger( triggerGroup, args, false );
+        node = next;
       }
 
-      if ( clear )
+      node = eventListeners.next;
+
+      while (node !== eventListeners)
       {
-        delete listeners[ event ];
+        next = node.next;
+        node.trigger( triggerGroup, args, true );
+        node = next;
       }
     }
   }
@@ -1472,11 +1530,7 @@ function addEventful(target, secret)
 
       for (var i = 0; i < events.length; i++)
       {
-        var e = events[ i ];
-
-        triggerListeners( this.$$on, e, args, false );
-        triggerListeners( this.$$once, e, args, true );
-        triggerListeners( this.$$after, e, args, false );
+        triggerListeners( this.$$on, events[ i ], args );
       }
     }
     catch (ex)
@@ -3847,7 +3901,7 @@ Class.create( Database,
   reset: function(failOnPendingChanges, removeListeners)
   {
     var db = this;
-    var promise = new Rekord.Promise();
+    var promise = new Promise();
 
     if ( failOnPendingChanges && db.hasPending() )
     {
@@ -11990,6 +12044,7 @@ function Promise(executor, cancelable)
 {
   this.status = Promise.Status.Pending;
   this.cancelable = cancelable !== false;
+  this.nexts = [];
 
   Class.prop( this, 'results', null );
 
@@ -12067,7 +12122,7 @@ Promise.race = function(iterable)
 
     if ( p instanceof Promise )
     {
-      p.then( race.resolve, race.reject, race.noline, race.cancel, race );
+      p.bind( race );
     }
   }
 
@@ -12100,6 +12155,13 @@ Promise.cancel = function()
   var p = new Promise();
   p.cancel.apply( p, arguments );
   return p;
+};
+
+Promise.then = function()
+{
+  var p = new Promise();
+  p.resolve();
+  return p.then.apply( p, arguments );
 };
 
 Promise.singularity = (function()
@@ -12210,14 +12272,46 @@ Class.create( Promise,
     }
   },
 
+  bind: function(promise)
+  {
+    this.success( promise.resolve, promise );
+    this.failure( promise.reject, promise );
+    this.offline( promise.noline, promise );
+    this.canceled( promise.cancel, promise );
+  },
+
   then: function(success, failure, offline, canceled, context, persistent )
   {
-    this.success( success, context, persistent );
-    this.failure( failure, context, persistent );
-    this.offline( offline, context, persistent );
-    this.canceled( canceled, context, persistent );
+    // The promise which can be resolved if any of the callbacks return
+    // a Promise which is resolved.
+    var next = new Promise();
 
-    return this;
+    this.success( success, context, persistent, next );
+    this.failure( failure, context, persistent, next );
+    this.offline( offline, context, persistent, next );
+    this.canceled( canceled, context, persistent, next );
+    this.addNext( next );
+    
+    return next;
+  },
+
+  addNext: function(next)
+  {
+    var nexts = this.nexts;
+
+    if (nexts.length === 0)
+    {
+      // If this promise is not successful, let all chained promises know.
+      this.unsuccessful(function()
+      {
+        for (var i = 0; i < nexts.length; i++)
+        {
+          nexts[ i ].finish( this.status, this.status, arguments );
+        }
+      });
+    }
+
+    nexts.push( next );
   },
 
   reset: function(clearListeners)
@@ -12242,63 +12336,75 @@ Class.create( Promise,
     }
   },
 
-  listenFor: function(immediate, events, callback, context, persistent)
+  listenFor: function(immediate, events, callback, context, persistent, next)
   {
     if ( isFunction( callback ) )
     {
+      var handleEvents = function()
+      {
+        var result = callback.apply( context || this, this.results );
+
+        if ( result instanceof Promise &&
+             next instanceof Promise &&
+             next.isPending() )
+        {
+          result.bind( next );
+        }
+      };
+
       if ( this.status === Promise.Status.Pending )
       {
         if ( persistent )
         {
-          this.on( events, callback, context );
+          this.on( events, handleEvents, this );
         }
         else
         {
-          this.once( events, callback, context );
+          this.once( events, handleEvents, this );
         }
       }
       else if ( immediate )
       {
-        callback.apply( context || this, this.results );
+        handleEvents.apply( this );
       }
     }
 
     return this;
   },
 
-  success: function(callback, context, persistent)
+  success: function(callback, context, persistent, next)
   {
-    return this.listenFor( this.isSuccess(), Promise.Events.Success, callback, context, persistent );
+    return this.listenFor( this.isSuccess(), Promise.Events.Success, callback, context, persistent, next );
   },
 
-  unsuccessful: function(callback, context, persistent)
+  unsuccessful: function(callback, context, persistent, next)
   {
-    return this.listenFor( this.isUnsuccessful(), Promise.Events.Unsuccessful, callback, context, persistent );
+    return this.listenFor( this.isUnsuccessful(), Promise.Events.Unsuccessful, callback, context, persistent, next );
   },
 
-  failure: function(callback, context, persistent)
+  failure: function(callback, context, persistent, next)
   {
-    return this.listenFor( this.isFailure(), Promise.Events.Failure, callback, context, persistent );
+    return this.listenFor( this.isFailure(), Promise.Events.Failure, callback, context, persistent, next );
   },
 
-  catch: function(callback, context, persistent)
+  catch: function(callback, context, persistent, next)
   {
-    return this.listenFor( this.isFailure(), Promise.Events.Failure, callback, context, persistent );
+    return this.listenFor( this.isFailure(), Promise.Events.Failure, callback, context, persistent, next );
   },
 
-  offline: function(callback, context, persistent)
+  offline: function(callback, context, persistent, next)
   {
-    return this.listenFor( this.isOffline(), Promise.Events.Offline, callback, context, persistent );
+    return this.listenFor( this.isOffline(), Promise.Events.Offline, callback, context, persistent, next );
   },
 
-  canceled: function(callback, context, persistent)
+  canceled: function(callback, context, persistent, next)
   {
-    return this.listenFor( this.isCanceled(), Promise.Events.Canceled, callback, context, persistent );
+    return this.listenFor( this.isCanceled(), Promise.Events.Canceled, callback, context, persistent, next );
   },
 
-  complete: function(callback, context, persistent)
+  complete: function(callback, context, persistent, next)
   {
-    return this.listenFor( true, Promise.Events.Complete, callback, context, persistent );
+    return this.listenFor( true, Promise.Events.Complete, callback, context, persistent, next );
   },
 
   isSuccess: function()
@@ -18240,7 +18346,7 @@ addPlugin(function(model, db, options)
       new SearchPaged( db, url, collapse( options, page ), props ) :
       new Search( db, url, options, props );
 
-    var promise = new Rekord.Promise();
+    var promise = new Promise();
 
     promise.success( success );
     promise.failure( failure );
