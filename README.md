@@ -12,15 +12,16 @@ Rekord's design allows for offline capable and real-time applications if desired
 Rekord is the most powerful client-side Model/Active Record/ORM you'll find guaranteed - or your money back!
 
 **Features**
-- Relationships `hasOne`, `belongsTo`, `hasMany`, `hasManyThrough`, `hasRemote`, & `hasList`
+- Relationships `hasOne`, `belongsTo`, `hasMany`, `hasManyThrough`, `hasRemote`, `hasList`, & `hasReference`
 - Polymorphic relationships for `hasOne`, `belongsTo` & `hasMany`
-- Validation (59 rules, 6 expressions, 13 transforms, and custom functions) through [rekord-validation](https://github.com/Rekord/rekord-validation)
+- Validation (59 rules, 6 expressions, 14 transforms, and custom functions) through [rekord-validation](https://github.com/Rekord/rekord-validation)
 - Migrations through [rekord-migrations](https://github.com/Rekord/rekord-migrations)
 - "Sessions" through [rekord-session](https://github.com/Rekord/rekord-session)
 - Batch REST execution for any/all types and operations
 - Inheritance (with `extend` option)
 - Horizontal scaling with `shard`ing
 - Supports composite keys
+- Purging algorithms and "Contexts" to control memory/local storage usage
 - Specify default values
 - Handle collisions with a "revision" field
 - Handle propagating primary key changes returned by the server
@@ -29,25 +30,27 @@ Rekord is the most powerful client-side Model/Active Record/ORM you'll find guar
 - Send only changed values to REST/real-time APIs or entire object
 - Convert values between client & server data types
 - Easily order by field, combination of fields, custom function, or expression
+- Use "Projections" to define subsets of data for efficient use
 - Control what information from relationships (if any) is stored locally or sent to the REST api
 - Add dynamic fields to model objects (setting & getting)
 - Data returned from REST calls or real-time events is intelligibly merged to avoid overwriting local unsaved changes
 - Add `updated_at` and `created_at` timestamps and their automatic behavior with a single option
 - Configurable date/timestamp transformations
 - Add custom methods to the model objects
+- Asynchronous methods return Promises which can be chained together
 - Load bootstrapped data with `model.boot( model or array of models )`
-- Execute searches (fields are sent to REST API and an array of models is expected) with `model.search( URL, [options], [post data], [run now?] )`
+- Execute searches (fields are sent to REST API and an array of models is expected) with `model.search( query, options, ... )`
 - Execute paginated searches
 - Add global event listeners to the "database" or all model instances
 - Stores data locally through `Rekord.store` interface (ex: [storkjs](https://github.com/Rekord/rekord-storkjs))
-- Stores data remotely through `Rekord.rest` interface (ex: [angular](https://github.com/Rekord/rekord-angular), [jquery](https://github.com/Rekord/rekord-jquery), [ajax](https://github.com/Rekord/rekord-ajax), [pouchdb](https://github.com/Rekord/rekord-pouchdb), [firebase](https://github.com/Rekord/rekord-firebase))
+- Stores data remotely through `Rekord.rest` interface (ex: [angular](https://github.com/Rekord/rekord-angular), [jquery](https://github.com/Rekord/rekord-jquery), [ajax](https://github.com/Rekord/rekord-ajax), [pouchdb](https://github.com/Rekord/rekord-pouchdb), [firebase](https://github.com/Rekord/rekord-firebase), [knexjs](https://github.com/Rekord/rekord-knex))
 - Real-time changes through `Rekord.live` interface (ex: [pubsub](https://github.com/Rekord/rekord-pubsub), [pouchdb](https://github.com/Rekord/rekord-pouchdb), [firebase](https://github.com/Rekord/rekord-firebase))
 - Create a live filtered view of any collection
 - Create a live paginated view of any collection
 - All collections have the following notable operations: sort, page, filtered, where, subtract, intersect, complement, clear, removeWhere, min, max, first, last, sum, avg, count, pluck, reduce, random, chunk, reverse, & group
 - Model collections have the following notable operations: removeWhere, update, updateWhere, & saveWhere
 
-**FAQ**
+**FAQ (client-side usage)**
 
 1. *Does Rekord directly interact with a database?*  
 No, of course not. It interacts with a REST API.
@@ -82,14 +85,15 @@ Examples exist in a separate project: https://github.com/Rekord/rekord-examples
 
 Bindings are used to implement core pieces of functionality in rekord - these interfaces allows any library to work with rekord.
 
-- [Angular](https://github.com/Rekord/rekord-angular) - implements `Rekord.rest` and adds `Rekord.Bind`
-- [React](https://github.com/Rekord/rekord-react) - adds `Rekord.Bind`
+- [Angular](https://github.com/Rekord/rekord-angular) - implements `Rekord.rest` and adds `Rekord.Sync`
+- [React](https://github.com/Rekord/rekord-react) - adds `Rekord.Sync`
 - [StorkJS](https://github.com/Rekord/rekord-storkjs) - implements `Rekord.store`
 - [PubSub](https://github.com/Rekord/rekord-pubsub) - implements `Rekord.live`
 - [Firebase](https://github.com/Rekord/rekord-firebase) - implements `Rekord.store`, `Rekord.rest`, & `Rekord.live`
 - [PouchDB](https://github.com/Rekord/rekord-pouchdb) - implements `Rekord.store`, `Rekord.rest`, & `Rekord.live`
 - [jQuery](https://github.com/Rekord/rekord-jquery) - implements `Rekord.rest`
 - [Ajax](https://github.com/Rekord/rekord-ajax) - implements `Rekord.rest`, dependency free
+- [Knex.JS](https://github.com/Rekord/rekord-knex) - implements `Rekord.rest` on the server-side
 - [Debugging](https://github.com/Rekord/rekord-debug) - implements `Rekord.debug`
 
 **Add-Ons**
