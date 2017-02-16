@@ -132,7 +132,8 @@ var modularized = {
     './src/lib/plugins/grabAll.js',
     './src/lib/plugins/methods.js',
     './src/lib/plugins/ready.js',
-    './src/lib/plugins/refresh.js'
+    './src/lib/plugins/refresh.js',
+    './src/lib/plugins/traits.js'
   ],
   modules: {
     S: [ // searching

@@ -2037,3 +2037,83 @@ test( 'saveAlways field', function(assert)
 
   deepEqual( Task.Database.rest.lastRecord, {name: 't1', done: true} );
 });
+
+test( 'traits simple', function(assert)
+{
+  var prefix = 'traits_simple_';
+
+  var TraitFoo = {
+    foo: function() { return 1; }
+  };
+
+  var TraitBar = {
+    bar: function() { return 2; }
+  };
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['name', 'done'],
+    traits: [TraitFoo, TraitBar]
+  });
+
+  var t0 = Task.create({name: 't0', done: false});
+
+  strictEqual( t0.foo(), 1 );
+  strictEqual( t0.bar(), 2 );
+});
+
+
+test( 'traits function', function(assert)
+{
+  var prefix = 'traits_function_';
+
+  var TraitFoo = {
+    foo: function() { return 1; }
+  };
+
+  var TraitBar = function(model, db, options) {
+    return {
+      bar: function() { return options.name; }
+    }
+  };
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['name', 'done'],
+    traits: [TraitFoo, TraitBar]
+  });
+
+  var t0 = Task.create({name: 't0', done: false});
+
+  strictEqual( t0.foo(), 1 );
+  strictEqual( t0.bar(), 'traits_function_task' );
+});
+
+
+test( 'traits generator', function(assert)
+{
+  var prefix = 'traits_generator_';
+
+  var TraitFoo = {
+    foo: function() { return 1; }
+  };
+
+  var TraitBar = {
+    bar: function() { return 2; }
+  };
+
+  var TraitGenerator = function() {
+    return [TraitFoo, TraitBar];
+  };
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['name', 'done'],
+    traits: TraitGenerator
+  });
+
+  var t0 = Task.create({name: 't0', done: false});
+
+  strictEqual( t0.foo(), 1 );
+  strictEqual( t0.bar(), 2 );
+});
