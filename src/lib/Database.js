@@ -123,19 +123,24 @@ function defaultEncode(model, data, forSaving)
   return data;
 }
 
-function defaultDecode(rawData)
+function defaultDecode(rawData, data)
 {
   var decodings = this.decodings;
+  var target = data || rawData;
 
   for (var prop in rawData)
   {
     if ( prop in decodings )
     {
-      rawData[ prop ] = decodings[ prop ]( rawData[ prop ], rawData, prop );
+      target[ prop ] = decodings[ prop ]( rawData[ prop ], rawData, prop );
+    }
+    else
+    {
+      target[ prop ] = rawData[ prop ];
     }
   }
 
-  return rawData;
+  return target;
 }
 
 function defaultSummarize(model)

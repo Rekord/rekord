@@ -374,7 +374,7 @@ test( 'auto true', function(assert)
   var u0 = User.create({name: 'You'});
   var t0 = Task.create({name: 'This'});
 
-  deepEqual( remote.lastRecord, {id: t0.id, name: t0.name, created_by: undefined} );
+  deepEqual( remote.lastRecord, {id: t0.id, name: t0.name} );
 
   t0.$set('creator', u0);
 
@@ -408,12 +408,12 @@ test( 'auto false', function(assert)
   var u0 = User.create({name: 'You'});
   var t0 = Task.create({name: 'This'});
 
-  deepEqual( remote.lastRecord, {id: t0.id, name: t0.name, created_by: undefined} );
+  deepEqual( remote.lastRecord, {id: t0.id, name: t0.name} );
 
   t0.$set('creator', u0);
 
   notDeepEqual( remote.lastRecord, {created_by: u0.id} );
-  deepEqual( remote.lastRecord, {id: t0.id, name: t0.name, created_by: undefined} );
+  deepEqual( remote.lastRecord, {id: t0.id, name: t0.name} );
   strictEqual( t0.created_by, u0.id );
 });
 

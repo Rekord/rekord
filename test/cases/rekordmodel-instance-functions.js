@@ -20,6 +20,36 @@ test( 'constructor', function(assert)
   strictEqual( n2.name, 'name2' );
 });
 
+test( '$remote', function(assert)
+{
+  var Task = Rekord({
+    name: 'Model_remote',
+    fields: ['name', 'done'],
+    decodings: {
+      done: function(x) {
+        return /(1|true|y|yes)/.test( (x + '').toLowerCase() );
+      }
+    }
+  });
+
+  var t0 = new Task.boot({name: 'Phil', done: '1'});
+
+  strictEqual( t0.name, 'Phil' );
+  strictEqual( t0.done, true );
+
+  ok( t0.$isSaved() );
+  notOk( t0.$hasChanges() );
+
+  t0.$remote({
+    done: 'no'
+  });
+
+  strictEqual( t0.done, false );
+
+  ok( t0.$isSaved() );
+  notOk( t0.$hasChanges() );
+});
+
 test( '$reset', function(assert)
 {
   var Todo = Rekord({

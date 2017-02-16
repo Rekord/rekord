@@ -637,7 +637,7 @@ test( 'child table default rekord', function(assert)
   ok( i0.$isSaved() );
   ok( p0.$isSaved() );
   deepEqual( i0.$saved, {id: i0.id, name: 'i0'} );
-  deepEqual( p0.$saved, {item_id: i0.id, brand: undefined, model: undefined} );
+  deepEqual( p0.$saved, {item_id: i0.id} );
 });
 
 test( 'child table default function', function(assert)

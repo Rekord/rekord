@@ -470,7 +470,7 @@ test( 'auto true', function(assert)
   strictEqual( t0.list, undefined );
   strictEqual( l0.tasks.length, 0 );
 
-  deepEqual( remote.lastRecord, {id: t0.id, name: t0.name, done: false, task_list_id: undefined} );
+  deepEqual( remote.lastRecord, {id: t0.id, name: t0.name, done: false} );
 
   l0.tasks.relate( t0 );
 
@@ -517,14 +517,14 @@ test( 'auto false', function(assert)
   strictEqual( t0.list, undefined );
   strictEqual( l0.tasks.length, 0 );
 
-  deepEqual( remote.lastRecord, {id: t0.id, name: t0.name, done: false, task_list_id: undefined} );
+  deepEqual( remote.lastRecord, {id: t0.id, name: t0.name, done: false} );
 
   l0.tasks.relate( t0 );
 
   strictEqual( t0.list, l0 );
   strictEqual( l0.tasks.length, 1 );
 
-  deepEqual( remote.lastRecord, {id: t0.id, name: t0.name, done: false, task_list_id: undefined} );
+  deepEqual( remote.lastRecord, {id: t0.id, name: t0.name, done: false} );
 });
 
 test( 'property true', function(assert)

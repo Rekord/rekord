@@ -3695,19 +3695,24 @@ function defaultEncode(model, data, forSaving)
   return data;
 }
 
-function defaultDecode(rawData)
+function defaultDecode(rawData, data)
 {
   var decodings = this.decodings;
+  var target = data || rawData;
 
   for (var prop in rawData)
   {
     if ( prop in decodings )
     {
-      rawData[ prop ] = decodings[ prop ]( rawData[ prop ], rawData, prop );
+      target[ prop ] = decodings[ prop ]( rawData[ prop ], rawData, prop );
+    }
+    else
+    {
+      target[ prop ] = rawData[ prop ];
     }
   }
 
-  return rawData;
+  return target;
 }
 
 function defaultSummarize(model)
@@ -5670,6 +5675,11 @@ Class.create( Model,
     return newKey;
   },
 
+  $remote: function(encoded, overwrite)
+  {
+    this.$db.putRemoteData( encoded, this.$key(), this, overwrite );
+  },
+
   $isSynced: function()
   {
     return this.$status === Model.Status.Synced;
@@ -5720,11 +5730,12 @@ Class.create( Model,
     return projection.project( this );
   },
 
-  $getChanges: function(alreadyEncoded)
+  $getChanges: function(alreadyDecoded)
   {
-    var saved = this.$saved;
-    var encoded = alreadyEncoded || this.$toJSON( true );
-    var fields = this.$db.saveFields;
+    var db = this.$db;
+    var saved = db.decode( this.$saved, {} );
+    var encoded = alreadyDecoded || this;
+    var fields = db.saveFields;
 
     return saved ? diff( encoded, saved, fields, equals ) : encoded;
   },
@@ -5736,13 +5747,15 @@ Class.create( Model,
       return true;
     }
 
-    var ignore = this.$db.ignoredFields;
-    var encoded = this.$toJSON( true );
-    var saved = this.$saved;
+    var db = this.$db;
+    var ignore = db.ignoredFields;
+    var saved = db.decode( this.$saved, {} );
+    var fields = db.saveFields;
 
-    for (var prop in encoded)
+    for (var i = 0; i < fields.length; i++)
     {
-      var currentValue = encoded[ prop ];
+      var prop = fields[ i ];
+      var currentValue = this[ prop ];
       var savedValue = saved[ prop ];
 
       if ( ignore[ prop ] )
