@@ -1,4 +1,4 @@
-/* rekord 1.5.2 - A javascript REST ORM that is offline and real-time capable http://rekord.github.io/rekord/ by Philip Diffenderfer */
+/* rekord 1.5.3 - A javascript REST ORM that is offline and real-time capable http://rekord.github.io/rekord/ by Philip Diffenderfer */
 // UMD (Universal Module Definition)
 (function (root, factory)
 {
@@ -2679,6 +2679,47 @@ Rekord.reset = function(failOnPendingChanges, removeListeners)
       var db = classes[ className ].Database;
 
       db.reset( false, removeListeners );
+    }
+  });
+};
+
+Rekord.unload = function(names, reset, failOnPendingChanges, removeListeners)
+{
+  var classes = Rekord.classes;
+  var promises = Rekord.promises;
+
+  if ( failOnPendingChanges )
+  {
+    for (var className in classes)
+    {
+      var db = classes[ className ].Database;
+      var check = ( !isArray( names ) || indexOf( names, className ) !== false );
+
+      if ( check && db.hasPending() )
+      {
+        return Promise.reject( db );
+      }
+    }
+  }
+
+  return Promise.singularity(this, function()
+  {
+    for (var className in classes)
+    {
+      var db = classes[ className ].Database;
+      var check = ( !isArray( names ) || indexOf( names, className ) !== false );
+
+      if ( check )
+      {
+        if ( reset )
+        {
+          db.reset( false, removeListeners );
+        }
+
+        delete classes[ className ];
+        delete promises[ db.name ];
+        delete promises[ db.className ];
+      }
     }
   });
 };
@@ -12304,7 +12345,7 @@ Class.create( Promise,
     this.offline( offline, context, persistent, next );
     this.canceled( canceled, context, persistent, next );
     this.addNext( next );
-    
+
     return next;
   },
 
@@ -16871,7 +16912,7 @@ addPlugin(function(model, db, options)
   {
     return db.models;
   };
-  
+
 });
 
 addPlugin(function(model, db, options)
@@ -16984,7 +17025,7 @@ addPlugin(function(model, db, options)
 
 addPlugin(function(model, db, options)
 {
-  
+
   model.clear = function(removeListeners)
   {
     return db.clear( removeListeners );
@@ -18441,7 +18482,7 @@ addPlugin(function(options)
   }
 
   options.createRest = Rekord.shard( shard );
-  
+
 }, true );
 
 addPlugin(function(model, db, options)

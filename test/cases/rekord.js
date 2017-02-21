@@ -424,3 +424,27 @@ test( 'load related before initialize with load none', function(assert)
 
   timer.run();
 });
+
+test( 'unload', function()
+{
+  var prefix = 'Rekord_unload_';
+  var TaskName = prefix + 'task';
+
+  var Task0 = Rekord({
+    name: TaskName,
+    fields: ['done', 'name'],
+    backend: 'firebase'
+  });
+
+  strictEqual( Task0.Database.backend, 'firebase' );
+
+  Rekord.unload( [TaskName], true, true, true );
+
+  var Task1 = Rekord({
+    name: TaskName,
+    fields: ['done', 'name'],
+    backend: 'local'
+  });
+
+  strictEqual( Task1.Database.backend, 'local' );
+});

@@ -168,6 +168,47 @@ Rekord.reset = function(failOnPendingChanges, removeListeners)
   });
 };
 
+Rekord.unload = function(names, reset, failOnPendingChanges, removeListeners)
+{
+  var classes = Rekord.classes;
+  var promises = Rekord.promises;
+
+  if ( failOnPendingChanges )
+  {
+    for (var className in classes)
+    {
+      var db = classes[ className ].Database;
+      var check = ( !isArray( names ) || indexOf( names, className ) !== false );
+
+      if ( check && db.hasPending() )
+      {
+        return Promise.reject( db );
+      }
+    }
+  }
+
+  return Promise.singularity(this, function()
+  {
+    for (var className in classes)
+    {
+      var db = classes[ className ].Database;
+      var check = ( !isArray( names ) || indexOf( names, className ) !== false );
+
+      if ( check )
+      {
+        if ( reset )
+        {
+          db.reset( false, removeListeners );
+        }
+
+        delete classes[ className ];
+        delete promises[ db.name ];
+        delete promises[ db.className ];
+      }
+    }
+  });
+};
+
 /**
  * A value which identifies a model instance. This can be the key of the model,
  * an array of values (if the model has composite keys), an object which at
