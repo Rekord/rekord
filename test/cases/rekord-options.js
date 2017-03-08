@@ -2043,11 +2043,15 @@ test( 'traits simple', function(assert)
   var prefix = 'traits_simple_';
 
   var TraitFoo = {
-    foo: function() { return 1; }
+    methods: {
+      foo: function() { return 1; }
+    }
   };
 
   var TraitBar = {
-    bar: function() { return 2; }
+    methods: {
+      bar: function() { return 2; }
+    }
   };
 
   var Task = Rekord({
@@ -2068,13 +2072,17 @@ test( 'traits function', function(assert)
   var prefix = 'traits_function_';
 
   var TraitFoo = {
-    foo: function() { return 1; }
+    methods: {
+      foo: function() { return 1; }
+    }
   };
 
-  var TraitBar = function(model, db, options) {
+  var TraitBar = function(options) {
     return {
-      bar: function() { return options.name; }
-    }
+      methods: {
+        bar: function() { return options.name; }
+      }
+    };
   };
 
   var Task = Rekord({
@@ -2095,11 +2103,15 @@ test( 'traits generator', function(assert)
   var prefix = 'traits_generator_';
 
   var TraitFoo = {
-    foo: function() { return 1; }
+    methods: {
+      foo: function() { return 1; }
+    }
   };
 
   var TraitBar = {
-    bar: function() { return 2; }
+    methods: {
+      bar: function() { return 2; }
+    }
   };
 
   var TraitGenerator = function() {
@@ -2116,4 +2128,108 @@ test( 'traits generator', function(assert)
 
   strictEqual( t0.foo(), 1 );
   strictEqual( t0.bar(), 2 );
+});
+
+test( 'traits realistic example', function(assert)
+{
+  var prefix = 'traits_realistic_';
+
+  var currentUser = 32;
+
+  var HasCreator = {
+    fields: ['created_by', 'created_at'],
+    timestamps: ['created_at'],
+    defaults: {
+      created_by: function() {
+        return currentUser;
+      }
+    },
+    belongsTo: {
+      creator: {
+        model: prefix + 'user',
+        local: 'created_by'
+      }
+    }
+  };
+
+  var HasUpdater = {
+    fields: ['updated_by', 'updated_at'],
+    timestamps: ['updated_at'],
+    defaults: {
+      updated_by: function() {
+        return currentUser;
+      }
+    },
+    belongsTo: {
+      updater: {
+        model: prefix + 'user',
+        local: 'updated_by'
+      }
+    },
+    events: {
+      preSave: function(model) {
+        model.updated_by = currentUser;
+      }
+    }
+  };
+
+  var HasChildren = function(key, children, parent) {
+    return function(options) {
+      var relation = {
+        hasMany: {},
+        belongsTo: {},
+        fields: key
+      };
+      relation.hasMany[ children ] = {
+        model: options.name,
+        foreign: key
+      };
+      relation.belongsTo[ parent ] = {
+        model: options.name,
+        local: key
+      };
+      return relation;
+    };
+  };
+
+  var ModifyCreator = {
+    belongsTo: {
+      creator: {
+        auto: false
+      }
+    }
+  };
+
+  var User = Rekord({
+    name: prefix + 'user',
+    fields: ['name']
+  });
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['name', 'done'],
+    traits: [HasCreator, HasUpdater, HasChildren('parent_id', 'children', 'parent'), ModifyCreator]
+  });
+
+  deepEqual( Task.Database.fields, ['id', 'name', 'done', 'created_by', 'created_at', 'updated_by', 'updated_at', 'parent_id']);
+
+  strictEqual( 3, Rekord.sizeof( Task.Database.belongsTo ) );
+  strictEqual( 1, Rekord.sizeof( Task.Database.hasMany ) );
+  strictEqual( false, Task.Database.belongsTo.creator.auto );
+
+  deepEqual( Task.Database.belongsTo, {
+    creator: {
+      model: prefix + 'user',
+      local: 'created_by',
+      auto: false
+    },
+    updater: {
+      model: prefix + 'user',
+      local: 'updated_by'
+    },
+    parent: {
+      model: prefix + 'task',
+      local: 'parent_id'
+    }
+  });
 });

@@ -6,7 +6,7 @@
   "freeze": true,
   "funcscope": true,
   "loopfunc": false,
-  "maxdepth": 5,
+  "maxdepth": 6,
   "noarg": true,
   "nocomma": true,
   "nonbsp": true,

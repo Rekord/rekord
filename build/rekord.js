@@ -1,4 +1,4 @@
-/* rekord 1.5.3 - A javascript REST ORM that is offline and real-time capable http://rekord.github.io/rekord/ by Philip Diffenderfer */
+/* rekord 1.5.4 - A javascript REST ORM that is offline and real-time capable http://rekord.github.io/rekord/ by Philip Diffenderfer */
 // UMD (Universal Module Definition)
 (function (root, factory)
 {
@@ -1572,6 +1572,59 @@ function addEventful(target, secret)
   {
     Class.props( target, methods );
   }
+}
+
+
+// Given two objects, merge src into dst.
+// - If a property in src has a truthy value in ignoreMap then skip merging it.
+// - If a property exists in src and not in dst, the property is added to dst.
+// - If an array property exists in src and in dst, the src elements are added to dst.
+// - If an array property exists in dst and a non array value exists in src, added the value to the dst array.
+// - If a property in dst is an object, try to merge the property from src into it.
+// - If a property exists in dst that is not an object or array, replace it with the value in src.
+function merge(dst, src, ignoreMap)
+{
+  if (isObject( dst ) && isObject( src ))
+  {
+    for (var prop in src)
+    {
+      if (!ignoreMap || !ignoreMap[ prop ])
+      {
+        var adding = src[ prop ];
+
+        if (prop in dst)
+        {
+          var existing = dst[ prop ];
+
+          if (isArray( existing ))
+          {
+            if (isArray( adding ))
+            {
+              existing.push.apply( existing, adding );
+            }
+            else
+            {
+              existing.push( adding );
+            }
+          }
+          else if (isObject( existing ))
+          {
+            merge( existing, adding, ignoreMap );
+          }
+          else
+          {
+            dst[ prop ] = copy( adding, true );
+          }
+        }
+        else
+        {
+          dst[ prop ] = copy( adding, true );
+        }
+      }
+    }
+  }
+
+  return dst;
 }
 
 
@@ -12345,7 +12398,7 @@ Class.create( Promise,
     this.offline( offline, context, persistent, next );
     this.canceled( canceled, context, persistent, next );
     this.addNext( next );
-
+    
     return next;
   },
 
@@ -16912,7 +16965,7 @@ addPlugin(function(model, db, options)
   {
     return db.models;
   };
-
+  
 });
 
 addPlugin(function(model, db, options)
@@ -17025,7 +17078,7 @@ addPlugin(function(model, db, options)
 
 addPlugin(function(model, db, options)
 {
-
+  
   model.clear = function(removeListeners)
   {
     return db.clear( removeListeners );
@@ -18482,7 +18535,7 @@ addPlugin(function(options)
   }
 
   options.createRest = Rekord.shard( shard );
-
+  
 }, true );
 
 addPlugin(function(model, db, options)
@@ -18675,7 +18728,9 @@ Rekord.Timestamp = Timestamp;
 Rekord.formatDate = noop;
 Rekord.convertDate = convertDate;
 
-addPlugin(function(model, db, options)
+var IGNORE_TRAITS = { traits: true };
+
+addPlugin(function(options)
 {
   var traits = options.traits || Defaults.traits;
 
@@ -18683,7 +18738,7 @@ addPlugin(function(model, db, options)
   {
     if ( isFunction( traits ) )
     {
-      traits = traits( model, db, options );
+      traits = traits( options );
     }
 
     if ( isArray( traits ) )
@@ -18694,16 +18749,16 @@ addPlugin(function(model, db, options)
 
         if ( isFunction( trait ) )
         {
-          trait = trait( model, db, options );
+          trait = trait( options );
         }
 
         if ( isObject( trait ) )
         {
-          Class.methods( model, trait );
+          merge( options, trait, IGNORE_TRAITS );
         }
         else
         {
-          throw 'traits are expected to be an object with methods or a function which returns an object of methods';
+          throw 'traits are expected to be an object or a function which returns an object of methods';
         }
       }
     }
@@ -18712,7 +18767,8 @@ addPlugin(function(model, db, options)
       throw 'traits are expected to be an array or a function which returns an array';
     }
   }
-});
+
+}, true );
 
 addPlugin(function(model, db, options)
 {
@@ -18789,6 +18845,7 @@ addPlugin(function(model, db, options)
   Rekord.evaluate = evaluate;
   Rekord.addPlugin = addPlugin;
   Rekord.now = now;
+  Rekord.merge = merge;
 
   /* Array Functions */
   Rekord.toArray = toArray;

@@ -1,4 +1,6 @@
-addPlugin(function(model, db, options)
+var IGNORE_TRAITS = { traits: true };
+
+addPlugin(function(options)
 {
   var traits = options.traits || Defaults.traits;
 
@@ -6,7 +8,7 @@ addPlugin(function(model, db, options)
   {
     if ( isFunction( traits ) )
     {
-      traits = traits( model, db, options );
+      traits = traits( options );
     }
 
     if ( isArray( traits ) )
@@ -17,16 +19,16 @@ addPlugin(function(model, db, options)
 
         if ( isFunction( trait ) )
         {
-          trait = trait( model, db, options );
+          trait = trait( options );
         }
 
         if ( isObject( trait ) )
         {
-          Class.methods( model, trait );
+          merge( options, trait, IGNORE_TRAITS );
         }
         else
         {
-          throw 'traits are expected to be an object with methods or a function which returns an object of methods';
+          throw 'traits are expected to be an object or a function which returns an object of methods';
         }
       }
     }
@@ -35,4 +37,5 @@ addPlugin(function(model, db, options)
       throw 'traits are expected to be an array or a function which returns an array';
     }
   }
-});
+
+}, true );

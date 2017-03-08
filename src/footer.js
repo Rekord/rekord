@@ -64,6 +64,7 @@
   Rekord.evaluate = evaluate;
   Rekord.addPlugin = addPlugin;
   Rekord.now = now;
+  Rekord.merge = merge;
 
   /* Array Functions */
   Rekord.toArray = toArray;
