@@ -9,7 +9,7 @@
   },
   "author": "Philip Diffenderfer <pdiffenderfer@gmail.com> (http://github.com/ClickerMonkey)",
   "dependencies": {
-    "qunitjs": "^2.0.1",
-    "webpack": "^1.13.3"
+    "qunitjs": "^2.3.0",
+    "webpack": "^2.3.3"
   }
 }
