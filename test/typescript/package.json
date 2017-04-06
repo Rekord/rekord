@@ -9,9 +9,9 @@
   },
   "author": "Philip Diffenderfer <pdiffenderfer@gmail.com> (http://github.com/ClickerMonkey)",
   "dependencies": {
-    "qunitjs": "^2.0.1",
-    "requirejs": "^2.3.2",
-    "ts-loader": "^1.2.2",
-    "typescript": "^2.0.10"
+    "qunitjs": "^2.3.0",
+    "requirejs": "^2.3.3",
+    "ts-loader": "^2.0.3",
+    "typescript": "^2.2.2"
   }
 }
