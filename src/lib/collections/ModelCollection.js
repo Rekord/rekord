@@ -236,7 +236,11 @@ Class.extend( Collection, ModelCollection,
    */
   clear: function()
   {
-    return this.map.reset();
+    var cleared = this.map.reset();
+
+    this.trigger( Collection.Events.Cleared, [this] );
+
+    return cleared;
   },
 
   /**
@@ -342,7 +346,7 @@ Class.extend( Collection, ModelCollection,
   put: function(key, model, delaySort)
   {
     this.map.put( key, model );
-    this.trigger( Collection.Events.Add, [this, model] );
+    this.trigger( Collection.Events.Add, [this, model, this.map.indices[ key ]] );
 
     if ( !delaySort )
     {
@@ -374,9 +378,10 @@ Class.extend( Collection, ModelCollection,
   add: function(input, delaySort, remoteData)
   {
     var model = this.parseModel( input, remoteData );
+    var key = model.$key();
 
-    this.map.put( model.$key(), model );
-    this.trigger( Collection.Events.Add, [this, model] );
+    this.map.put( key, model );
+    this.trigger( Collection.Events.Add, [this, model, this.map.indices[ key ]] );
 
     if ( !delaySort )
     {
@@ -401,16 +406,19 @@ Class.extend( Collection, ModelCollection,
    */
   push: function()
   {
-    var values = arguments;
+    var values = AP.slice.apply( arguments );
+    var indices = [];
 
     for (var i = 0; i < values.length; i++)
     {
       var model = this.parseModel( values[ i ] );
+      var key = model.$key();
 
-      this.map.put( model.$key(), model );
+      this.map.put( key, model );
+      indices.push( this.map.indices[ key ] );
     }
 
-    this.trigger( Collection.Events.Adds, [this, AP.slice.apply(values)] );
+    this.trigger( Collection.Events.Adds, [this, values, indices] );
     this.sort();
 
     return this.length;
@@ -457,14 +465,18 @@ Class.extend( Collection, ModelCollection,
   {
     if ( isArray( models ) )
     {
+      var indices = [];
+
       for (var i = 0; i < models.length; i++)
       {
         var model = this.parseModel( models[ i ], remoteData );
+        var key = model.$key();
 
-        this.map.put( model.$key(), model );
+        this.map.put( key, model );
+        indices.push( this.map.indices[ key ] );
       }
 
-      this.trigger( Collection.Events.Adds, [this, models] );
+      this.trigger( Collection.Events.Adds, [this, models, indices] );
 
       if ( !delaySort )
       {
@@ -617,8 +629,10 @@ Class.extend( Collection, ModelCollection,
 
     if ( removing )
     {
+      var i = this.map.indices[ key ];
+
       this.map.remove( key );
-      this.trigger( Collection.Events.Remove, [this, removing, input] );
+      this.trigger( Collection.Events.Remove, [this, removing, i] );
 
       if ( !delaySort )
       {
@@ -650,6 +664,7 @@ Class.extend( Collection, ModelCollection,
   {
     var map = this.map;
     var removed = [];
+    var removedIndices = [];
 
     for (var i = 0; i < inputs.length; i++)
     {
@@ -658,12 +673,19 @@ Class.extend( Collection, ModelCollection,
 
       if ( removing )
       {
-        map.remove( key );
+        removedIndices.push( map.indices[ key ] );
         removed.push( removing );
       }
     }
 
-    this.trigger( Collection.Events.Removes, [this, removed] );
+    removedIndices.sort();
+
+    for (var i = removedIndices.length - 1; i >= 0; i--)
+    {
+      map.removeAt( removedIndices[ i ] );
+    }
+
+    this.trigger( Collection.Events.Removes, [this, removed, removedIndices] );
 
     if ( !delaySort )
     {
@@ -766,6 +788,7 @@ Class.extend( Collection, ModelCollection,
   splice: function(start, deleteCount)
   {
     var adding = AP.slice.call( arguments, 2 );
+
     var addingKeys = [start, deleteCount];
     for (var i = 0; i < adding.length; i++)
     {
@@ -778,12 +801,12 @@ Class.extend( Collection, ModelCollection,
 
     if ( deleteCount )
     {
-      this.trigger( Collection.Events.Removes, [this, removed] );
+      this.trigger( Collection.Events.Removes, [this, removed, start, deleteCount] );
     }
 
     if ( adding.length )
     {
-      this.trigger( Collection.Events.Adds, [this, adding] );
+      this.trigger( Collection.Events.Adds, [this, adding, start] );
     }
 
     this.sort();
@@ -820,30 +843,37 @@ Class.extend( Collection, ModelCollection,
   {
     var where = createWhere( whereProperties, whereValue, whereEquals );
     var removed = out || this.cloneEmpty();
+    var removedIndices = [];
 
     batchExecute(function()
     {
       for (var i = 0; i < this.length; i++)
       {
         var model = this[ i ];
-        var key = model.$key();
 
         if ( where( model ) )
         {
-          this.map.remove( key );
+          removedIndices.push( i );
           removed.push( model );
-          i--;
+        }
+      }
 
-          if ( callRemove )
-          {
-            model.$remove( cascade, options );
-          }
+      for (var i = 0; i < removed.length; i++)
+      {
+        var model = removed[ i ];
+        var key = model.$key();
+
+        this.map.remove( key );
+
+        if ( callRemove )
+        {
+          model.$remove( cascade, options );
         }
       }
 
     }, this );
 
-    this.trigger( Collection.Events.Removes, [this, removed] );
+    this.trigger( Collection.Events.Removes, [this, removed, removedIndices] );
 
     if ( !delaySort )
     {

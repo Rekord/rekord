@@ -481,12 +481,12 @@ test( 'removeWhere', function(assert)
   c.on( Rekord.Collection.Events.Removes, function(arr, removed)
   {
     strictEqual( arr, c, 'collection matched' );
-    deepEqual( removed.toArray(), [6, 4, 2] );
+    deepEqual( removed.toArray(), [2, 4, 6] );
   });
 
   var r = c.removeWhere( EVEN );
 
-  deepEqual( r.toArray(), [6, 4, 2] );
+  deepEqual( r.toArray(), [2, 4, 6] );
   deepEqual( c.toArray(), [1, 3, 5] );
 });
 

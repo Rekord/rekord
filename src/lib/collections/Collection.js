@@ -54,6 +54,8 @@ Collection.Events =
    *    The collection that triggered the event.
    * @argument {T} value -
    *    The value added.
+   * @argument {number} index -
+   *    The index where the value was added.
    * @see Rekord.Collection#add
    * @see Rekord.Collection#insertAt
    * @see Rekord.ModelCollection#add
@@ -69,6 +71,8 @@ Collection.Events =
    *    The collection that triggered the event.
    * @argument {T[]} value -
    *    The values added.
+   * @argument {number|number[]} indices -
+   *    The index or indices where the values were added.
    * @see Rekord.Collection#addAll
    * @see Rekord.ModelCollection#addAll
    */
@@ -110,6 +114,10 @@ Collection.Events =
    *    The collection that triggered the event.
    * @argument {Any[]} removed -
    *    The array of elements removed from the collection.
+   * @argument {number|number[]} indices -
+   *    The index where the values were removed OR the array of indices.
+   * @argument {number} [removeCount] -
+   *    The number of values removed at the given index (undefined if array specified).
    * @see Rekord.Collection#removeAll
    * @see Rekord.Collection#removeWhere
    */
@@ -586,9 +594,11 @@ Class.extend( Array, Collection,
    */
   add: function(value, delaySort)
   {
+    var i = this.length;
+
     AP.push.call( this, value );
 
-    this.trigger( Collection.Events.Add, [this, value] );
+    this.trigger( Collection.Events.Add, [this, value, i] );
 
     if ( !delaySort )
     {
@@ -619,11 +629,12 @@ Class.extend( Array, Collection,
    */
   push: function()
   {
-    var values = arguments;
+    var values = AP.slice.apply(arguments);
+    var i = this.length;
 
     AP.push.apply( this, values );
 
-    this.trigger( Collection.Events.Adds, [this, AP.slice.apply(values)] );
+    this.trigger( Collection.Events.Adds, [this, values, i] );
 
     this.sort( undefined, undefined, true );
 
@@ -655,7 +666,7 @@ Class.extend( Array, Collection,
 
     AP.unshift.apply( this, values );
 
-    this.trigger( Collection.Events.Adds, [this, AP.slice.apply(values)] );
+    this.trigger( Collection.Events.Adds, [this, AP.slice.apply(values), 0] );
 
     this.sort( undefined, undefined, true );
 
@@ -688,9 +699,11 @@ Class.extend( Array, Collection,
   {
     if ( isArray( values ) && values.length )
     {
+      var i = this.length;
+
       AP.push.apply( this, values );
 
-      this.trigger( Collection.Events.Adds, [this, values] );
+      this.trigger( Collection.Events.Adds, [this, values, i] );
 
       if ( !delaySort )
       {
@@ -729,7 +742,8 @@ Class.extend( Array, Collection,
   insertAt: function(i, value, delaySort)
   {
     AP.splice.call( this, i, 0, value );
-    this.trigger( Collection.Events.Add, [this, value] );
+
+    this.trigger( Collection.Events.Add, [this, value, i] );
 
     if ( !delaySort )
     {
@@ -921,6 +935,7 @@ Class.extend( Array, Collection,
   removeAll: function(values, delaySort, equals)
   {
     var removed = [];
+    var removedIndices = [];
 
     if ( isArray( values ) && values.length )
     {
@@ -931,12 +946,19 @@ Class.extend( Array, Collection,
 
         if ( k !== -1 )
         {
-          AP.splice.call( this, k, 1 );
+          removedIndices.push( k );
           removed.push( value );
         }
       }
 
-      this.trigger( Collection.Events.Removes, [this, removed] );
+      removedIndices.sort();
+
+      for (var i = removedIndices.length - 1; i >= 0; i--)
+      {
+        AP.splice.call( this, removedIndices[ i ], 1 );
+      }
+
+      this.trigger( Collection.Events.Removes, [this, removed, removedIndices] );
 
       if ( !delaySort )
       {
@@ -982,19 +1004,25 @@ Class.extend( Array, Collection,
   {
     var where = createWhere( whereProperties, whereValue, whereEquals );
     var removed = out || this.cloneEmpty();
+    var removedIndices = [];
 
-    for (var i = this.length - 1; i >= 0; i--)
+    for (var i = 0; i < this.length; i++)
     {
       var value = this[ i ];
 
       if ( where( value ) )
       {
-        AP.splice.call( this, i, 1 );
+        removedIndices.push( i );
         removed.push( value );
       }
     }
 
-    this.trigger( Collection.Events.Removes, [this, removed] );
+    for (var i = removedIndices.length - 1; i >= 0; i--)
+    {
+      AP.splice.call( this, removedIndices[ i ], 1 );
+    }
+
+    this.trigger( Collection.Events.Removes, [this, removed, removedIndices] );
 
     if ( !delaySort )
     {
@@ -1037,12 +1065,12 @@ Class.extend( Array, Collection,
 
     if ( deleteCount )
     {
-      this.trigger( Collection.Events.Removes, [this, removed] );
+      this.trigger( Collection.Events.Removes, [this, removed, start, deleteCount] );
     }
 
     if ( adding.length )
     {
-      this.trigger( Collection.Events.Adds, [this, adding] );
+      this.trigger( Collection.Events.Adds, [this, adding, start] );
     }
 
     this.sort( undefined, undefined, true );
