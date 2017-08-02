@@ -1,4 +1,6 @@
 
+var Lives = {};
+
 /**
  * The factory responsible for creating a service which publishes operations
  * and receives operations that have occurred. The first argument is a reference
@@ -11,7 +13,9 @@
  * @return {function} -
  *         The function which sends operations.
  */
-Rekord.defaultLive = Rekord.live = function(database)
+Lives.Default =
+Rekord.defaultLive =
+Rekord.live = function(database)
 {
   return {
 

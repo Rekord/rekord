@@ -1,4 +1,4 @@
-/* rekord 1.5.5 - A javascript REST ORM that is offline and real-time capable http://rekord.github.io/rekord/ by Philip Diffenderfer */
+/* rekord 1.5.6 - A javascript REST ORM that is offline and real-time capable http://rekord.github.io/rekord/ by Philip Diffenderfer */
 // UMD (Universal Module Definition)
 (function (root, factory)
 {
@@ -3315,6 +3315,8 @@ Rekord.Debugs = {
 };
 
 
+var Lives = {};
+
 /**
  * The factory responsible for creating a service which publishes operations
  * and receives operations that have occurred. The first argument is a reference
@@ -3327,7 +3329,9 @@ Rekord.Debugs = {
  * @return {function} -
  *         The function which sends operations.
  */
-Rekord.defaultLive = Rekord.live = function(database)
+Lives.Default =
+Rekord.defaultLive =
+Rekord.live = function(database)
 {
   return {
 
@@ -3435,9 +3439,13 @@ Rekord.checkNetworkStatus = function()
 };
 
 
+var Rests = {};
+
 // Rekord.rest = function(options, success(data), failure(data, status))
 
-Rekord.defaultRest = Rekord.rest = function(database)
+Rests.Default =
+Rekord.defaultRest =
+Rekord.rest = function(database)
 {
 
   return {
@@ -3509,6 +3517,9 @@ Rekord.setRest = function(factory, overwrite)
   }
 };
 
+
+var Stores = {};
+
 /**
  * A factory function for returning an object capable of storing objects for
  * retrieval later by the application.
@@ -3518,7 +3529,9 @@ Rekord.setRest = function(factory, overwrite)
  * @return {Object} -
  *         An object with put, remove, and all functions.
  */
-Rekord.defaultStore = Rekord.store = function(database)
+Stores.Default =
+Rekord.defaultStore =
+Rekord.store = function(database)
 {
   return {
 
@@ -7371,8 +7384,8 @@ Collection.Events =
    *    The collection that triggered the event.
    * @argument {T[]} value -
    *    The values added.
-   * @argument {number} index -
-   *    The index where the values were added.
+   * @argument {number|number[]} indices -
+   *    The index or indices where the values were added.
    * @see Rekord.Collection#addAll
    * @see Rekord.ModelCollection#addAll
    */
@@ -18990,6 +19003,11 @@ addPlugin(function(model, db, options)
   Rekord.isExpr = isExpr;
   Rekord.exprEqualsTester = exprEqualsTester;
   Rekord.exprEquals = exprEquals;
+
+  /* Services */
+  Rekord.Stores = Stores;
+  Rekord.Lives = Lives;
+  Rekord.Rests = Rests;
 
   return Rekord;
 

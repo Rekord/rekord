@@ -1,7 +1,11 @@
 
+var Rests = {};
+
 // Rekord.rest = function(options, success(data), failure(data, status))
 
-Rekord.defaultRest = Rekord.rest = function(database)
+Rests.Default =
+Rekord.defaultRest =
+Rekord.rest = function(database)
 {
 
   return {

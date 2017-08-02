@@ -1,3 +1,6 @@
+
+var Stores = {};
+
 /**
  * A factory function for returning an object capable of storing objects for
  * retrieval later by the application.
@@ -7,7 +10,9 @@
  * @return {Object} -
  *         An object with put, remove, and all functions.
  */
-Rekord.defaultStore = Rekord.store = function(database)
+Stores.Default =
+Rekord.defaultStore =
+Rekord.store = function(database)
 {
   return {
 

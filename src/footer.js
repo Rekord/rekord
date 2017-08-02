@@ -152,6 +152,11 @@
   Rekord.exprEqualsTester = exprEqualsTester;
   Rekord.exprEquals = exprEquals;
 
+  /* Services */
+  Rekord.Stores = Stores;
+  Rekord.Lives = Lives;
+  Rekord.Rests = Rests;
+
   return Rekord;
 
 }));
