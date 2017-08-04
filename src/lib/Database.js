@@ -202,6 +202,7 @@ var Defaults = Database.Defaults =
   comparator:           null,
   comparatorNullsFirst: null,
   revision:             null,
+  traits:               [],
   cascade:              Cascade.All,
   load:                 Load.None,
   allComplete:          false,
@@ -1259,6 +1260,26 @@ Class.create( Database,
     }
 
     return filtered;
+  },
+
+  hasTrait: function(trait, comparator)
+  {
+    var cmp = comparator || equals;
+
+    return isArray( this.traits ) && indexOf( this.traits, trait, cmp ) !== false;
+  },
+
+  hasTraits: function(traits, comparator)
+  {
+    for (var i = 0; i < traits.length; i++)
+    {
+      if ( !this.hasTrait( traits[ i ], comparator ) )
+      {
+        return false;
+      }
+    }
+
+    return true;
   },
 
   liveSave: function(key, encoded)

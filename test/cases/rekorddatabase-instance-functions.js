@@ -785,3 +785,37 @@ test( 'reset_failure', function(assert)
 
   online();
 });
+
+test( 'hasTrait', function(assert)
+{
+  var prefix = 'Database_hasTrait_';
+
+  var Trait1 = {
+    load: Rekord.Load.All
+  };
+  var Trait2 = {
+    store: false
+  };
+  var TraitFunction = function(field, value) {
+    var trait = {};
+    trait[ field ] = value;
+    return trait;
+  };
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['name'],
+    traits: [
+      Trait1,
+      TraitFunction('rest', false)
+    ]
+  });
+
+  ok( Task.hasTrait( Trait1 ) );
+  notOk( Task.hasTrait( Trait2 ) );
+  ok( Task.hasTrait( TraitFunction('rest', false) ) );
+
+  ok( Task.Database.load === Rekord.Load.All );
+  ok( Task.Database.store !== false );
+  ok( Task.Database.rest instanceof TestRest === false );
+});

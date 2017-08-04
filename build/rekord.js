@@ -1,4 +1,4 @@
-/* rekord 1.5.6 - A javascript REST ORM that is offline and real-time capable http://rekord.github.io/rekord/ by Philip Diffenderfer */
+/* rekord 1.5.7 - A javascript REST ORM that is offline and real-time capable http://rekord.github.io/rekord/ by Philip Diffenderfer */
 // UMD (Universal Module Definition)
 (function (root, factory)
 {
@@ -3881,6 +3881,7 @@ var Defaults = Database.Defaults =
   comparator:           null,
   comparatorNullsFirst: null,
   revision:             null,
+  traits:               [],
   cascade:              Cascade.All,
   load:                 Load.None,
   allComplete:          false,
@@ -4938,6 +4939,26 @@ Class.create( Database,
     }
 
     return filtered;
+  },
+
+  hasTrait: function(trait, comparator)
+  {
+    var cmp = comparator || equals;
+
+    return isArray( this.traits ) && indexOf( this.traits, trait, cmp ) !== false;
+  },
+
+  hasTraits: function(traits, comparator)
+  {
+    for (var i = 0; i < traits.length; i++)
+    {
+      if ( !this.hasTrait( traits[ i ], comparator ) )
+      {
+        return false;
+      }
+    }
+
+    return true;
   },
 
   liveSave: function(key, encoded)
@@ -18241,6 +18262,22 @@ addPlugin(function(model, db, options)
 
     return models;
   };
+});
+
+
+addPlugin( function(model, db, options)
+{
+
+  model.hasTrait = function(trait, comparator)
+  {
+    return db.hasTrait(trait, comparator);
+  };
+
+  model.hasTraits = function(traits, comparator)
+  {
+    return db.hasTraits(traits, comparator);
+  };
+
 });
 
 
