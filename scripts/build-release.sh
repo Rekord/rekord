@@ -30,7 +30,7 @@ fi
 
 chosen="apply-version.tmp"
 root="rekord"
-prefix="rekord"
+prefix="rekord*"
 repos="https://api.github.com/repos/Rekord"
 
 # ################################
@@ -48,7 +48,7 @@ function iterate_projects() {
   fi
   if [[ $REPLY =~ ^[Yy]$ ]]; then
     cd "${base}"
-    for dir in ${prefix}* ; do
+    for dir in ${prefix} ; do
       cd "${dir}"
       if [ -f "${chosen}" ]; then
         eval ${function} "${dir}"
@@ -70,7 +70,7 @@ function iterate_project_file() {
   fi
   if [[ $REPLY =~ ^[Yy]$ ]]; then
     cd "$base"
-    for dir in ${base}/${prefix}* ; do
+    for dir in ${base}/${prefix} ; do
       if [ -f "${dir}/${chosen}" ]; then
         instance="${dir}/${filename}"
         if [ -f "${instance}" ]; then
@@ -135,7 +135,7 @@ function publish_node() {
 
 # choose_projects() // Allow user to choose which projects we're going to work with
 function choose_projects() {
-  for dir in ${prefix}*; do
+  for dir in ${prefix}; do
     read -p "${dir}? (y/n): " -n 1 -r
     echo
     file="${dir}/${chosen}"
