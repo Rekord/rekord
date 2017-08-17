@@ -1,4 +1,4 @@
-/* rekord 1.5.7 - A javascript REST ORM that is offline and real-time capable http://rekord.github.io/rekord/ by Philip Diffenderfer */
+/* rekord 1.5.8 - A javascript REST ORM that is offline and real-time capable http://rekord.github.io/rekord/ by Philip Diffenderfer */
 // UMD (Universal Module Definition)
 (function (root, factory)
 {
@@ -18645,6 +18645,16 @@ addPlugin(function(options)
   options.createRest = Rekord.shard( shard );
   
 }, true );
+
+addPlugin(function(model, db, options)
+{
+  var staticMethods = collapse( options.staticMethods, Defaults.staticMethods );
+
+  if ( !isEmpty( staticMethods ) )
+  {
+    Class.props( model, staticMethods );
+  }
+});
 
 addPlugin(function(model, db, options)
 {

@@ -777,6 +777,31 @@ test( 'decodings children', function(assert)
   strictEqual( t1.$saved.type, 1 );
 });
 
+test( 'staticMethods', function(assert)
+{
+  var Todo = Rekord({
+    name: 'staicMethods',
+    fields: ['name'],
+    staticMethods: {
+      search: function(term) {
+        return this.where(function(model) {
+          return model.name && model.name.indexOf( term ) !== -1;
+        });
+      }
+    }
+  });
+
+  Todo.create({name: 'yes'});
+  Todo.create({name: 'espanol'});
+  Todo.create({name: 'no'});
+
+  var found = Todo.search('es');
+
+  strictEqual( found.length, 2 );
+  strictEqual( found[0].name, 'yes' );
+  strictEqual( found[1].name, 'espanol' );
+});
+
 test( 'methods', function(assert)
 {
   var Todo = Rekord({
