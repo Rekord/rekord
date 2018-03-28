@@ -8,6 +8,8 @@
   Rekord.Search = Search;
   Rekord.SearchPaged = SearchPaged;
   Rekord.Promise = Promise;
+  Rekord.Dependents = Dependents;
+  Rekord.Shard = Shard;
 
   /* Keys */
   Rekord.KeyHandler = KeyHandler;
@@ -22,6 +24,7 @@
   Rekord.Store = Store;
   Rekord.Save = Save;
   Rekord.Load = Load;
+  Rekord.RestStatus = RestStatus;
 
   /* Collections */
   Rekord.Map = Map;
@@ -29,6 +32,7 @@
   Rekord.FilteredCollection = FilteredCollection;
   Rekord.ModelCollection = ModelCollection;
   Rekord.FilteredModelCollection = FilteredModelCollection;
+  Rekord.RelationCollection = RelationCollection;
   Rekord.Page = Page;
   Rekord.Context = Context;
 
@@ -39,6 +43,20 @@
   Rekord.HasManyThrough = HasManyThrough;
   Rekord.HasRemote = HasRemote;
   Rekord.HasList = HasList;
+  Rekord.HasReference = HasReference;
+  Rekord.RelationMultiple = RelationMultiple;
+  Rekord.RelationSingle = RelationSingle;
+
+  /* Operations */
+  Rekord.GetLocal = GetLocal;
+  Rekord.GetRemote = GetRemote;
+  Rekord.RemoveCache = RemoveCache;
+  Rekord.RemoveLocal = RemoveLocal;
+  Rekord.RemoveNow = RemoveNow;
+  Rekord.RemoveRemote = RemoveRemote;
+  Rekord.SaveLocal = SaveLocal;
+  Rekord.SaveNow = SaveNow;
+  Rekord.SaveRemote = SaveRemote;
 
   /* Projections */
   Rekord.Filters = {};
@@ -65,6 +83,14 @@
   Rekord.addPlugin = addPlugin;
   Rekord.now = now;
   Rekord.merge = merge;
+
+  /* Morphing Functions */
+  Rekord.Gate = Gate;
+  Rekord.DiscriminateCollection = DiscriminateCollection;
+
+  /* Morphing Objects */
+  Rekord.Filtering = Filtering;
+  Rekord.Polymorphic = Polymorphic;
 
   /* Array Functions */
   Rekord.toArray = toArray;
