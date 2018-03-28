@@ -483,8 +483,76 @@ test( 'refresh with decoding', function()
   strictEqual( t1.done, true );
 
   Task.Database.live.liveSave({id: 1, done: 'no'});
-  
+
   notOk( t1.$hasChanges() );
   notOk( t1.$hasChange('done') );
   strictEqual( t1.done, false );
+});
+
+
+test( 'repeated searches second finishes first', function(assert)
+{
+  var prefix = 'repeated_searches_second_finishes_first_';
+  var timer = assert.timer();
+
+  var Todo = Rekord({
+    name: prefix + 'todo',
+    fields: ['name', 'done']
+  });
+
+  var remote = Todo.Database.rest;
+
+  remote.queries.put( '1', [
+    {id: 1, name: 't1', done: true},
+    {id: 2, name: 't2', done: false},
+    {id: 3, name: 't3', done: true}
+  ]);
+
+  remote.queries.put( '2', [
+    {id: 4, name: 't4', done: true}
+  ]);
+
+  remote.queries.put( '3', [
+    {id: 5, name: 't5', done: false},
+    {id: 6, name: 't6', done: false}
+  ]);
+
+  remote.delay = 4;
+
+  var q0 = Todo.search();
+  var r0 = q0.$results;
+  var p0 = q0.$run('1');
+
+  remote.delay = 2;
+
+  var p1 = q0.$run('2');
+
+  remote.delay = 6;
+
+  var p2 = q0.$run('3');
+
+  expect(6);
+
+  wait( 1, function() {
+    strictEqual( r0.length, 0 );
+  });
+
+  // 2 (p1) finishes, but not latest
+  wait( 3, function() {
+    strictEqual( r0.length, 0 );
+  });
+
+  // 1 (p0) finishes, but not latest
+  wait( 5, function() {
+    strictEqual( r0.length, 0 );
+  });
+
+  // 3 (p2) finishes, is latest
+  wait( 7, function() {
+    strictEqual( r0.length, 2 );
+    strictEqual( r0[0].id, 5 );
+    strictEqual( r0[1].id, 6 );
+  });
+
+  timer.run();
 });

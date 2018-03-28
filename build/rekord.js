@@ -11930,15 +11930,16 @@ Class.create( Search,
     this.$url = url || this.$url;
     this.$set( props );
 
+    var promise = new Promise();
     var encoded = this.$encode();
-    var success = bind( this, this.$handleSuccess );
-    var failure = bind( this, this.$handleFailure );
+    var success = bind( this, this.$handleSuccess( promise ) );
+    var failure = bind( this, this.$handleFailure( promise ) );
     var options = this.$options || this.$db.queryOptions;
 
     batchExecute(function()
     {
       this.$cancel();
-      this.$promise = new Promise();
+      this.$promise = promise;
       this.$db.rest.query( this.$url, encoded, options, success, failure );
 
     }, this );
@@ -11946,51 +11947,57 @@ Class.create( Search,
     return this.$promise;
   },
 
-  $handleSuccess: function(response)
+  $handleSuccess: function(promise)
   {
-    if ( !this.$promise.isPending() )
+    return function(response)
     {
-      return;
-    }
+      if ( !this.$promise.isPending() || promise !== this.$promise )
+      {
+        return;
+      }
 
-    var models = this.$decode.apply( this, arguments );
+      var models = this.$decode.apply( this, arguments );
 
-    if ( this.$append )
-    {
-      this.$results.addAll( models, false, true );
-    }
-    else
-    {
-      this.$results.reset( models, true );
-    }
+      if ( this.$append )
+      {
+        this.$results.addAll( models, false, true );
+      }
+      else
+      {
+        this.$results.reset( models, true );
+      }
 
-    this.$promise.resolve( this, response, this.$results );
+      this.$promise.resolve( this, response, this.$results );
+    };
   },
 
-  $handleFailure: function(response, status)
+  $handleFailure: function(promise)
   {
-    if ( !this.$promise.isPending() )
+    return function(response, status)
     {
-      return;
-    }
+      if ( !this.$promise.isPending() || promise !== this.$promise )
+      {
+        return;
+      }
 
-    var offline = RestStatus.Offline[ status ];
+      var offline = RestStatus.Offline[ status ];
 
-    if ( offline )
-    {
-      Rekord.checkNetworkStatus();
+      if ( offline )
+      {
+        Rekord.checkNetworkStatus();
 
-      offline = !Rekord.online;
-    }
+        offline = !Rekord.online;
+      }
 
-    if ( offline )
-    {
-      this.$promise.noline( this, response, status );
-    }
-    else
-    {
-      this.$promise.reject( this, response, status );
-    }
+      if ( offline )
+      {
+        this.$promise.noline( this, response, status );
+      }
+      else
+      {
+        this.$promise.reject( this, response, status );
+      }
+    };
   },
 
   $cancel: function()
