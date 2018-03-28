@@ -44,6 +44,7 @@ Class.create( Search,
     this.$url = url;
     this.$set( props );
     this.$results = ModelCollection.create( database );
+    this.$results.$search = this;
     this.$promise = Promise.resolve( this );
 
     if ( run )
