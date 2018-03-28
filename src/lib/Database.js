@@ -669,7 +669,7 @@ Class.create( Database,
         model.$saved = {};
       }
 
-      var current = model.$toJSON( true );
+      var current = model; // model.$toJSON( true );
       var conflicts = {};
       var conflicted = false;
       var updated = {};
@@ -677,6 +677,7 @@ Class.create( Database,
       var saved = {};
       var notReallySaved = isEmpty( model.$saved );
       var relations = db.relations;
+      var compareTo = db.decode( model.$saved ); // model.$saved
 
       for (var prop in encoded)
       {
@@ -693,7 +694,7 @@ Class.create( Database,
         }
 
         var currentValue = current[ prop ];
-        var savedValue = model.$saved[ prop ];
+        var savedValue = compareTo[ prop ];
 
         previous[ prop ] = model[ prop ];
         saved[ prop ] = savedValue;

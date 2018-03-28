@@ -448,3 +448,43 @@ test( 'unload', function()
 
   strictEqual( Task1.Database.backend, 'local' );
 });
+
+test( 'refresh with decoding', function()
+{
+  var prefix = 'Rekord_refresh_decoding_';
+  var TaskName = prefix + 'task';
+
+  var Task = Rekord({
+    name: TaskName,
+    fields: ['done', 'name'],
+    decodings: {
+      done: function(value) {
+        return /^(yes|y|ya|1|t|true)$/i.test(value + '');
+      }
+    }
+  });
+
+  var t1 = Task.boot({id: 1, done: 'y', name: 't1'});
+
+  notOk( t1.$hasChanges() );
+  notOk( t1.$hasChange('done') );
+  strictEqual( t1.done, true );
+
+  t1.$remote({done: 'f'});
+
+  notOk( t1.$hasChanges() );
+  notOk( t1.$hasChange('done') );
+  strictEqual( t1.done, false );
+
+  t1.$remote({done: 't'}, true);
+
+  notOk( t1.$hasChanges() );
+  notOk( t1.$hasChange('done') );
+  strictEqual( t1.done, true );
+
+  Task.Database.live.liveSave({id: 1, done: 'no'});
+  
+  notOk( t1.$hasChanges() );
+  notOk( t1.$hasChange('done') );
+  strictEqual( t1.done, false );
+});
