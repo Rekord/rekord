@@ -5868,16 +5868,18 @@ Class.create( Model,
     return saved ? diff( encoded, saved, fields, equals ) : encoded;
   },
 
-  $hasChanges: function()
+  $hasChanges: function(local)
   {
-    if (!this.$saved)
+    var compareTo = local ? this.$local : this.$saved;
+
+    if (!compareTo)
     {
       return true;
     }
 
     var db = this.$db;
     var ignore = db.ignoredFields;
-    var saved = db.decode( this.$saved, {} );
+    var saved = db.decode( compareTo, {} );
     var fields = db.saveFields;
 
     for (var i = 0; i < fields.length; i++)
@@ -5898,6 +5900,23 @@ Class.create( Model,
     }
 
     return false;
+  },
+
+  $hasChange: function(prop, local)
+  {
+    var compareTo = local ? this.$local : this.$saved;
+
+    if (!compareTo)
+    {
+      return true;
+    }
+
+    var db = this.$db;
+    var decoder = db.decodings[ prop ];
+    var currentValue = this[ prop ];
+    var savedValue = decoder ? decoder( compareTo[ prop ], compareTo, prop ) : compareTo[ prop ];
+
+    return !equals( currentValue, savedValue );
   },
 
   $listenForOnline: function(cascade, options)
@@ -11873,6 +11892,7 @@ Class.create( Search,
     this.$url = url;
     this.$set( props );
     this.$results = ModelCollection.create( database );
+    this.$results.$search = this;
     this.$promise = Promise.resolve( this );
 
     if ( run )
@@ -18506,6 +18526,39 @@ addPlugin(function(model, db, options)
     return db.reset( failOnPendingChanges, removeListeners );
   };
 
+});
+
+addPlugin(function(model, db, options)
+{
+
+  /**
+   * Creates a new search for model instances and returns the results collection.
+   *
+   * ```javascript
+   * var Task = Rekord({
+   *  fields: ['name', 'done']
+   * });
+   * var results = Task.results('/api/task/search', {name: 'like this', done: true});
+   * // results populated when search finishes running.
+   * // results.$search is the Search object.
+   * // results.$search.$promise is the promise of the search.
+   * ```
+   *
+   * @method results
+   * @memberof Rekord.Model
+   * @param {String} url -
+   *    A URL to send the search data to.
+   * @param {Object} [props] -
+   *    Initial set of properties on the search.
+   * @param {searchOptions} [options] -
+   *    Options for the search.
+   * @return {Rekord.ModelCollection} -
+   *    A collection containing the results of the search.
+   */
+  model.results = function(url, props, options)
+  {
+    return new Search( db, url, options, props, true ).$results;
+  };
 });
 
 addPlugin(function(model, db, options)

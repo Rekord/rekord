@@ -564,6 +564,30 @@ test( '$hasChanges', function(assert)
   notOk( t0.$hasChanges() );
 });
 
+test( '$hasChange', function(assert)
+{
+  var Todo = Rekord({
+    name: 'Model_hasChange',
+    fields: ['id', 'name']
+  });
+
+  var t0 = new Todo({name: 'this'});
+
+  ok( t0.$hasChange('name') );
+
+  t0.$save();
+
+  notOk( t0.$hasChange('name') );
+
+  t0.name = 'changed!';
+
+  ok( t0.$hasChange('name') );
+
+  t0.$save();
+
+  notOk( t0.$hasChange('name') );
+});
+
 test( '$hasChanges ignored fields', function(assert)
 {
   var prefix = 'Model_hasChanges_ignored_';

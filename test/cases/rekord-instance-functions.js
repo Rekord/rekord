@@ -750,8 +750,6 @@ test( 'searchAt success', function(assert)
   var timer = assert.timer();
   var prefix = 'Rekord_searchAt_success_';
 
-  expect( 4 );
-
   var Todo = Rekord({
     name: prefix + 'todo',
     fields: ['name', 'done'],
@@ -967,4 +965,31 @@ test( 'count', function(assert)
 
   strictEqual( Task.count(), 4 );
   strictEqual( Task.count('done', true), 2 );
+});
+
+test( 'results', function(assert)
+{
+  var timer = assert.timer();
+  var prefix = 'Rekord_results_';
+
+  var Task = Rekord({
+    name: prefix + 'task',
+    fields: ['name', 'done'],
+    load: Rekord.Load.None
+  });
+
+  var remote = Task.Database.rest;
+
+  remote.queries.put( 'http://rekord.io', [
+    {id: 1, name: 't1', done: true},
+    {id: 2, name: 't2', done: false},
+    {id: 3, name: 't3', done: true}
+  ]);
+
+  var tasks = Task.results( 'http://rekord.io' );
+
+  strictEqual( tasks.length, 3 );
+  strictEqual( tasks[0].id, 1 );
+  strictEqual( tasks[1].id, 2 );
+  strictEqual( tasks[2].id, 3 );
 });

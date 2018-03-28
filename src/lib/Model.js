@@ -792,16 +792,18 @@ Class.create( Model,
     return saved ? diff( encoded, saved, fields, equals ) : encoded;
   },
 
-  $hasChanges: function()
+  $hasChanges: function(local)
   {
-    if (!this.$saved)
+    var compareTo = local ? this.$local : this.$saved;
+
+    if (!compareTo)
     {
       return true;
     }
 
     var db = this.$db;
     var ignore = db.ignoredFields;
-    var saved = db.decode( this.$saved, {} );
+    var saved = db.decode( compareTo, {} );
     var fields = db.saveFields;
 
     for (var i = 0; i < fields.length; i++)
@@ -822,6 +824,23 @@ Class.create( Model,
     }
 
     return false;
+  },
+
+  $hasChange: function(prop, local)
+  {
+    var compareTo = local ? this.$local : this.$saved;
+
+    if (!compareTo)
+    {
+      return true;
+    }
+
+    var db = this.$db;
+    var decoder = db.decodings[ prop ];
+    var currentValue = this[ prop ];
+    var savedValue = decoder ? decoder( compareTo[ prop ], compareTo, prop ) : compareTo[ prop ];
+
+    return !equals( currentValue, savedValue );
   },
 
   $listenForOnline: function(cascade, options)
