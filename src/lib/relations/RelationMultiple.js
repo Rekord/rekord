@@ -61,7 +61,7 @@ Class.extend( Relation, RelationMultiple,
       {
         for (var i = 0; i < input.length; i++)
         {
-          var related = this.parseModel( input[ i ], remoteData );
+          var related = this.parseModel( input[ i ], remoteData, relation );
 
           if ( related )
           {
@@ -71,7 +71,7 @@ Class.extend( Relation, RelationMultiple,
       }
       else
       {
-        var related = this.parseModel( input, remoteData );
+        var related = this.parseModel( input, remoteData, relation );
 
         if ( related )
         {
@@ -108,7 +108,7 @@ Class.extend( Relation, RelationMultiple,
       {
         for (var i = 0; i < input.length; i++)
         {
-          var related = this.parseModel( input[ i ], remoteData );
+          var related = this.parseModel( input[ i ], remoteData, relation );
 
           if ( related )
           {
@@ -119,7 +119,7 @@ Class.extend( Relation, RelationMultiple,
     }
     else if ( isValue( input ) )
     {
-      var related = this.parseModel( input, remoteData );
+      var related = this.parseModel( input, remoteData, relation );
 
       if ( related )
       {
@@ -138,7 +138,7 @@ Class.extend( Relation, RelationMultiple,
       {
         for (var i = 0; i < input.length; i++)
         {
-          var related = this.parseModel( input[ i ] );
+          var related = this.parseModel( input[ i ], remoteData, relation );
 
           if ( related )
           {
@@ -149,7 +149,7 @@ Class.extend( Relation, RelationMultiple,
     }
     else if ( isValue( input ) )
     {
-      var related = this.parseModel( input );
+      var related = this.parseModel( input, remoteData, relation );
 
       if ( related )
       {
@@ -179,7 +179,7 @@ Class.extend( Relation, RelationMultiple,
     {
       for (var i = 0; i < input.length; i++)
       {
-        var related = this.parseModel( input[ i ] );
+        var related = this.parseModel( input[ i ], false, relation );
 
         if ( related && !existing.has( related.$key() ) )
         {
@@ -191,7 +191,7 @@ Class.extend( Relation, RelationMultiple,
     }
     else if ( isValue( input ) )
     {
-      var related = this.parseModel( input );
+      var related = this.parseModel( input, false, relation );
 
       return related && existing.has( related.$key() );
     }

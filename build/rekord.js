@@ -13722,6 +13722,8 @@ Class.create( Relation,
   debugQuery: null,
   debugQueryResults: null,
 
+  hasDiscriminator: false,
+
   getDefaults: function(database, field, options)
   {
     return Relation.Defaults;
@@ -13928,7 +13930,7 @@ Class.create( Relation,
     return ModelCollection.create( this.model.Database, initial );
   },
 
-  parseModel: function(input, remoteData)
+  parseModel: function(input, remoteData, relation)
   {
     return this.model.Database.parseModel( input, remoteData );
   },
@@ -13941,7 +13943,7 @@ Class.create( Relation,
     }
   },
 
-  grabModel: function(input, callback, remoteData)
+  grabModel: function(input, callback, remoteData, relation)
   {
     this.model.Database.grabModel( input, callback, this, remoteData );
   },
@@ -14194,6 +14196,8 @@ Class.extend( Relation, RelationSingle,
   debugClearKey: null,
   debugUpdateKey: null,
 
+  hasDiscriminator: true,
+
   onInitialized: function(database, field, options)
   {
     if ( !this.discriminated )
@@ -14217,7 +14221,7 @@ Class.extend( Relation, RelationSingle,
     else
     {
       var relation = model.$relations[ this.name ];
-      var related = this.parseModel( input, remoteData );
+      var related = this.parseModel( input, remoteData, relation );
 
       if ( related && relation.related !== related )
       {
@@ -14230,7 +14234,7 @@ Class.extend( Relation, RelationSingle,
   relate: function(model, input, remoteData)
   {
     var relation = model.$relations[ this.name ];
-    var related = this.parseModel( input, remoteData );
+    var related = this.parseModel( input, remoteData, relation );
 
     if ( related && relation.related !== related )
     {
@@ -14242,7 +14246,7 @@ Class.extend( Relation, RelationSingle,
   unrelate: function(model, input, remoteData)
   {
     var relation = model.$relations[ this.name ];
-    var related = this.parseModel( input );
+    var related = this.parseModel( input, remoteData, relation );
 
     if ( !related || relation.related === related )
     {
@@ -14253,7 +14257,7 @@ Class.extend( Relation, RelationSingle,
   isRelated: function(model, input)
   {
     var relation = model.$relations[ this.name ];
-    var related = this.parseModel( input );
+    var related = this.parseModel( input, false, relation );
 
     return related === relation.related;
   },
@@ -14474,7 +14478,7 @@ Class.extend( Relation, RelationMultiple,
       {
         for (var i = 0; i < input.length; i++)
         {
-          var related = this.parseModel( input[ i ], remoteData );
+          var related = this.parseModel( input[ i ], remoteData, relation );
 
           if ( related )
           {
@@ -14484,7 +14488,7 @@ Class.extend( Relation, RelationMultiple,
       }
       else
       {
-        var related = this.parseModel( input, remoteData );
+        var related = this.parseModel( input, remoteData, relation );
 
         if ( related )
         {
@@ -14521,7 +14525,7 @@ Class.extend( Relation, RelationMultiple,
       {
         for (var i = 0; i < input.length; i++)
         {
-          var related = this.parseModel( input[ i ], remoteData );
+          var related = this.parseModel( input[ i ], remoteData, relation );
 
           if ( related )
           {
@@ -14532,7 +14536,7 @@ Class.extend( Relation, RelationMultiple,
     }
     else if ( isValue( input ) )
     {
-      var related = this.parseModel( input, remoteData );
+      var related = this.parseModel( input, remoteData, relation );
 
       if ( related )
       {
@@ -14551,7 +14555,7 @@ Class.extend( Relation, RelationMultiple,
       {
         for (var i = 0; i < input.length; i++)
         {
-          var related = this.parseModel( input[ i ] );
+          var related = this.parseModel( input[ i ], remoteData, relation );
 
           if ( related )
           {
@@ -14562,7 +14566,7 @@ Class.extend( Relation, RelationMultiple,
     }
     else if ( isValue( input ) )
     {
-      var related = this.parseModel( input );
+      var related = this.parseModel( input, remoteData, relation );
 
       if ( related )
       {
@@ -14592,7 +14596,7 @@ Class.extend( Relation, RelationMultiple,
     {
       for (var i = 0; i < input.length; i++)
       {
-        var related = this.parseModel( input[ i ] );
+        var related = this.parseModel( input[ i ], false, relation );
 
         if ( related && !existing.has( related.$key() ) )
         {
@@ -14604,7 +14608,7 @@ Class.extend( Relation, RelationMultiple,
     }
     else if ( isValue( input ) )
     {
-      var related = this.parseModel( input );
+      var related = this.parseModel( input, false, relation );
 
       return related && existing.has( related.$key() );
     }
@@ -14756,7 +14760,7 @@ Class.extend( RelationSingle, BelongsTo,
     {
       Rekord.debug( Rekord.Debugs.BELONGSTO_INITIAL, this, model, initialValue );
 
-      this.grabModel( initialValue, this.handleModel( relation, remoteData ), remoteData );
+      this.grabModel( initialValue, this.handleModel( relation, remoteData ), remoteData, relation );
     }
     else if ( this.query )
     {
@@ -14902,7 +14906,7 @@ Class.extend( RelationSingle, HasOne,
       Rekord.debug( Rekord.Debugs.HASONE_INITIAL, this, model, initialValue );
 
       this.populateInitial( initialValue, relation, model );
-      this.grabModel( initialValue, this.handleModel( relation, remoteData ), remoteData );
+      this.grabModel( initialValue, this.handleModel( relation, remoteData ), remoteData, relation );
     }
     else if ( this.query )
     {
@@ -14937,7 +14941,7 @@ Class.extend( RelationSingle, HasOne,
       if ( !isEmpty( relatedValue ) )
       {
         this.populateInitial( relatedValue, relation, model );
-        this.grabModel( relatedValue, this.handleModel( relation, remoteData, ignoreLoaded ), remoteData );
+        this.grabModel( relatedValue, this.handleModel( relation, remoteData, ignoreLoaded ), remoteData, relation );
       }
       else if ( removeUnrelated )
       {
@@ -15143,7 +15147,7 @@ Class.extend( RelationMultiple, HasMany,
           return;
         }
 
-        if ( relator.where && !relator.where( this ) )
+        if ( relator.where && !relator.where( this, relation ) )
         {
           relator.removeModel( relation, this, false, true );
         }
@@ -15338,7 +15342,7 @@ Class.extend( RelationMultiple, HasMany,
 
   addModel: function(relation, related, remoteData)
   {
-    if ( related.$isDeleted() || (this.where && !this.where( related ) ) )
+    if ( related.$isDeleted() || (this.where && !this.where( related, relation ) ) )
     {
       return;
     }
@@ -15578,7 +15582,7 @@ Class.extend( RelationMultiple, HasManyThrough,
           return;
         }
 
-        if ( relator.where && !relator.where( this ) )
+        if ( relator.where && !relator.where( this, relation ) )
         {
           relator.removeModel( relation, this );
         }
@@ -15787,7 +15791,7 @@ Class.extend( RelationMultiple, HasManyThrough,
 
   addModel: function(relation, related, remoteData)
   {
-    if ( related.$isDeleted() || (this.where && !this.where( related ) ) )
+    if ( related.$isDeleted() || (this.where && !this.where( related, relation ) ) )
     {
       return;
     }
@@ -15836,7 +15840,7 @@ Class.extend( RelationMultiple, HasManyThrough,
   {
     return function onAddModelFromThrough(related)
     {
-      if ( related && ( !this.where || this.where( related ) ) )
+      if ( related && ( !this.where || this.where( related, relation ) ) )
       {
         this.finishAddThrough( relation, through, remoteData );
         this.finishAddModel( relation, related, remoteData );
@@ -16118,7 +16122,7 @@ Class.extend( RelationMultiple, HasRemote,
           return;
         }
 
-        if ( relator.where && !relator.where( this ) )
+        if ( relator.where && !relator.where( this, relation ) )
         {
           relator.removeModel( relation, this, true );
         }
@@ -16152,7 +16156,7 @@ Class.extend( RelationMultiple, HasRemote,
 
   addModel: function(relation, related, remoteData)
   {
-    if ( related.$isDeleted() || (this.where && !this.where( related ) ) )
+    if ( related.$isDeleted() || (this.where && !this.where( related, relation ) ) )
     {
       return;
     }
@@ -16428,7 +16432,7 @@ Class.extend( RelationSingle, HasReference,
     {
       Rekord.debug( Rekord.Debugs.HASREFERENCE_INITIAL, this, model, initialValue );
 
-      this.grabModel( initialValue, this.handleModel( relation ), remoteData );
+      this.grabModel( initialValue, this.handleModel( relation ), remoteData, relation );
     }
     else if ( this.query )
     {
@@ -16482,18 +16486,36 @@ var Polymorphic =
     return function (model)
     {
       var isRelated = isRelatedFactory.call( this, model );
-      var discriminator = this.getDiscriminatorForModel( model );
       var discriminatorField = this.discriminator;
 
-      return function (related)
+      if (this.hasDiscriminator)
       {
-        if ( !isRelated( related ) )
+        return function(related)
         {
-          return false;
-        }
+          if ( !isRelated( related ) )
+          {
+            return false;
+          }
 
-        return equals( discriminator, related[ discriminatorField ] );
-      };
+          var discriminator = this.getDiscriminatorForModel( related );
+
+          return equals( discriminator, model[ discriminatorField ] );
+        };
+      }
+      else
+      {
+        var discriminator = this.getDiscriminatorForModel( model );
+
+        return function (related)
+        {
+          if ( !isRelated( related ) )
+          {
+            return false;
+          }
+
+          return equals( discriminator, related[ discriminatorField ] );
+        };
+      }
     };
   },
 
@@ -16586,7 +16608,7 @@ var Polymorphic =
     return search;
   },
 
-  parseModel: function(input, remoteData)
+  parseModel: function(input, remoteData, relation)
   {
     if ( input instanceof Model )
     {
@@ -16594,7 +16616,9 @@ var Polymorphic =
     }
     else if ( isObject( input ) )
     {
-      var db = this.getDiscriminatorDatabase( input );
+      var db = this.hasDiscriminator ?
+        this.getDiscriminatorDatabase( relation.parent ) :
+        this.getDiscriminatorDatabase( input );
 
       if ( db )
       {
@@ -16652,28 +16676,22 @@ var Polymorphic =
 
   grabInitial: function( model, fields )
   {
-    var discriminator = this.discriminator;
-    var discriminatorValue = model[ discriminator ];
-
-    if ( hasFields( model, fields, isValue ) && isValue( discriminatorValue ) )
+    if ( this.hasDiscriminator && hasFields( model, fields, isValue ) )
     {
-      var related = this.discriminatorToModel[ discriminatorValue ];
+      var related = this.getDiscriminatorDatabase( model );
 
-      if ( related.Database )
+      if ( related )
       {
-        var db = related.Database;
         var initial = {};
 
-        initial[ discriminator ] = discriminatorValue;
-
-        updateFieldsReturnChanges( initial, db.key, model, fields );
+        updateFieldsReturnChanges( initial, related.key, model, fields );
 
         return initial;
       }
     }
   },
 
-  grabModel: function(input, callback, remoteData)
+  grabModel: function(input, callback, remoteData, relation)
   {
     if ( input instanceof Model )
     {
@@ -16683,7 +16701,9 @@ var Polymorphic =
     // object we can't really determine the related database.
     else if ( isObject( input ) )
     {
-      var db = this.getDiscriminatorDatabase( input );
+      var db = this.hasDiscriminator ?
+        this.getDiscriminatorDatabase( relation.parent ) :
+        this.getDiscriminatorDatabase( input );
 
       if ( db !== false )
       {

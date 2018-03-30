@@ -90,7 +90,7 @@ Class.extend( RelationSingle, BelongsTo,
     {
       Rekord.debug( Rekord.Debugs.BELONGSTO_INITIAL, this, model, initialValue );
 
-      this.grabModel( initialValue, this.handleModel( relation, remoteData ), remoteData );
+      this.grabModel( initialValue, this.handleModel( relation, remoteData ), remoteData, relation );
     }
     else if ( this.query )
     {

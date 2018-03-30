@@ -85,7 +85,7 @@ Class.extend( RelationSingle, HasOne,
       Rekord.debug( Rekord.Debugs.HASONE_INITIAL, this, model, initialValue );
 
       this.populateInitial( initialValue, relation, model );
-      this.grabModel( initialValue, this.handleModel( relation, remoteData ), remoteData );
+      this.grabModel( initialValue, this.handleModel( relation, remoteData ), remoteData, relation );
     }
     else if ( this.query )
     {
@@ -120,7 +120,7 @@ Class.extend( RelationSingle, HasOne,
       if ( !isEmpty( relatedValue ) )
       {
         this.populateInitial( relatedValue, relation, model );
-        this.grabModel( relatedValue, this.handleModel( relation, remoteData, ignoreLoaded ), remoteData );
+        this.grabModel( relatedValue, this.handleModel( relation, remoteData, ignoreLoaded ), remoteData, relation );
       }
       else if ( removeUnrelated )
       {

@@ -17,18 +17,36 @@ var Polymorphic =
     return function (model)
     {
       var isRelated = isRelatedFactory.call( this, model );
-      var discriminator = this.getDiscriminatorForModel( model );
       var discriminatorField = this.discriminator;
 
-      return function (related)
+      if (this.hasDiscriminator)
       {
-        if ( !isRelated( related ) )
+        return function(related)
         {
-          return false;
-        }
+          if ( !isRelated( related ) )
+          {
+            return false;
+          }
 
-        return equals( discriminator, related[ discriminatorField ] );
-      };
+          var discriminator = this.getDiscriminatorForModel( related );
+
+          return equals( discriminator, model[ discriminatorField ] );
+        };
+      }
+      else
+      {
+        var discriminator = this.getDiscriminatorForModel( model );
+
+        return function (related)
+        {
+          if ( !isRelated( related ) )
+          {
+            return false;
+          }
+
+          return equals( discriminator, related[ discriminatorField ] );
+        };
+      }
     };
   },
 
@@ -121,7 +139,7 @@ var Polymorphic =
     return search;
   },
 
-  parseModel: function(input, remoteData)
+  parseModel: function(input, remoteData, relation)
   {
     if ( input instanceof Model )
     {
@@ -129,7 +147,9 @@ var Polymorphic =
     }
     else if ( isObject( input ) )
     {
-      var db = this.getDiscriminatorDatabase( input );
+      var db = this.hasDiscriminator ?
+        this.getDiscriminatorDatabase( relation.parent ) :
+        this.getDiscriminatorDatabase( input );
 
       if ( db )
       {
@@ -187,28 +207,22 @@ var Polymorphic =
 
   grabInitial: function( model, fields )
   {
-    var discriminator = this.discriminator;
-    var discriminatorValue = model[ discriminator ];
-
-    if ( hasFields( model, fields, isValue ) && isValue( discriminatorValue ) )
+    if ( this.hasDiscriminator && hasFields( model, fields, isValue ) )
     {
-      var related = this.discriminatorToModel[ discriminatorValue ];
+      var related = this.getDiscriminatorDatabase( model );
 
-      if ( related.Database )
+      if ( related )
       {
-        var db = related.Database;
         var initial = {};
 
-        initial[ discriminator ] = discriminatorValue;
-
-        updateFieldsReturnChanges( initial, db.key, model, fields );
+        updateFieldsReturnChanges( initial, related.key, model, fields );
 
         return initial;
       }
     }
   },
 
-  grabModel: function(input, callback, remoteData)
+  grabModel: function(input, callback, remoteData, relation)
   {
     if ( input instanceof Model )
     {
@@ -218,7 +232,9 @@ var Polymorphic =
     // object we can't really determine the related database.
     else if ( isObject( input ) )
     {
-      var db = this.getDiscriminatorDatabase( input );
+      var db = this.hasDiscriminator ?
+        this.getDiscriminatorDatabase( relation.parent ) :
+        this.getDiscriminatorDatabase( input );
 
       if ( db !== false )
       {

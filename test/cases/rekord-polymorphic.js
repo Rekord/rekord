@@ -237,3 +237,110 @@ test( 'poly hasMany', function()
   ok( c1.$isDeleted() );
   ok( c2.$isDeleted() );
 });
+
+test( 'polymorphic hasmany', function(assert) {
+
+  // Polymorphic Relationships
+  // hasMany: discriminator on related
+  // hasManyThrough: discriminator on through
+  // hasOne: discriminator on model
+  // belongsTo: discriminator on model
+
+  var prefix = 'polymorphic_hasmany_';
+
+  var ListenName = prefix + 'listen';
+  var TodoName = prefix + 'todo';
+  var TodoListName = prefix + 'todo_list';
+
+  var ListenRest = Rekord.rest[ ListenName ] = new TestRest();
+  var TodoRest = Rekord.rest[ TodoName ] = new TestRest();
+  var TodoListRest = Rekord.rest[ TodoListName ] = new TestRest();
+
+  ListenRest.map.put(1, {id: 1, related_id: 't1', related_type: 't', on_event: 'e0'});
+  ListenRest.map.put(2, {id: 2, related_id: 'tl1', related_type: 'tl', on_event: 'e1'});
+  ListenRest.map.put(3, {id: 3, related_id: 't1', related_type: 't', on_event: 'e2'});
+  ListenRest.map.put(4, {id: 4, related_id: 't2', related_type: 't', on_event: 'e3'});
+
+  TodoRest.map.put('t1', {id: 't1', name: 'todo1', done: true});
+  TodoRest.map.put('t2', {id: 't2', name: 'todo2', done: false});
+
+  TodoListRest.map.put('tl1', {id: 'tl1', name: 'todolist1'});
+  TodoListRest.map.put('tl2', {id: 'tl2', name: 'todolist2'});
+
+  var Discriminators = {};
+  Discriminators[ TodoName ] = 't';
+  Discriminators[ TodoListName ] = 'tl';
+
+  Rekord.autoload = false;
+
+  var Listen = Rekord({
+    name: ListenName,
+    fields: ['related_id', 'related_type', 'on_event'],
+    hasOne: {
+      related: {
+        local: 'related_id',
+        discriminator: 'related_type',
+        discriminators: Discriminators,
+        cascade: Rekord.Cascade.None
+      }
+    }
+  });
+
+  var HasListens = function(options) {
+    var discriminator = Discriminators[ options.name ];
+    return {
+      hasMany: {
+        listens: {
+          model: ListenName,
+          foreign: 'related_id',
+          where: function(related, relation) {
+            return Rekord.equals( related.related_type, discriminator );
+          }
+        }
+      }
+    };
+  };
+
+  var Todo = Rekord({
+    name: TodoName,
+    fields: ['name', 'done', 'order'],
+    traits: [HasListens]
+  });
+
+  var TodoList = Rekord({
+    name: TodoListName,
+    fields: ['name'],
+    traits: [HasListens]
+  });
+
+  Rekord.load();
+  Rekord.autoload = true;
+
+  var l1 = Listen.get(1);
+  var l2 = Listen.get(2);
+  var l3 = Listen.get(3);
+  var l4 = Listen.get(4);
+
+  var t1 = Todo.get('t1');
+  var t2 = Todo.get('t2');
+
+  var tl1 = TodoList.get('tl1');
+  var tl2 = TodoList.get('tl2');
+
+  strictEqual( l1.related, t1 );
+  strictEqual( l2.related, tl1 );
+  strictEqual( l3.related, t1 );
+  strictEqual( l4.related, t2 );
+
+  strictEqual( t1.listens.length, 2 );
+  strictEqual( t1.listens[0], l1 );
+  strictEqual( t1.listens[1], l3 );
+
+  strictEqual( t2.listens.length, 1 );
+  strictEqual( t2.listens[0], l4 );
+
+  strictEqual( tl1.listens.length, 1 );
+  strictEqual( tl1.listens[0], l2 );
+
+  strictEqual( tl2.listens.length, 0 );
+});

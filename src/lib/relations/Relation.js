@@ -30,6 +30,8 @@ Class.create( Relation,
   debugQuery: null,
   debugQueryResults: null,
 
+  hasDiscriminator: false,
+
   getDefaults: function(database, field, options)
   {
     return Relation.Defaults;
@@ -236,7 +238,7 @@ Class.create( Relation,
     return ModelCollection.create( this.model.Database, initial );
   },
 
-  parseModel: function(input, remoteData)
+  parseModel: function(input, remoteData, relation)
   {
     return this.model.Database.parseModel( input, remoteData );
   },
@@ -249,7 +251,7 @@ Class.create( Relation,
     }
   },
 
-  grabModel: function(input, callback, remoteData)
+  grabModel: function(input, callback, remoteData, relation)
   {
     this.model.Database.grabModel( input, callback, this, remoteData );
   },

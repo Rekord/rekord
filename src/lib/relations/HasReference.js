@@ -53,7 +53,7 @@ Class.extend( RelationSingle, HasReference,
     {
       Rekord.debug( Rekord.Debugs.HASREFERENCE_INITIAL, this, model, initialValue );
 
-      this.grabModel( initialValue, this.handleModel( relation ), remoteData );
+      this.grabModel( initialValue, this.handleModel( relation ), remoteData, relation );
     }
     else if ( this.query )
     {

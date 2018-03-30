@@ -76,7 +76,7 @@ Class.extend( RelationMultiple, HasRemote,
           return;
         }
 
-        if ( relator.where && !relator.where( this ) )
+        if ( relator.where && !relator.where( this, relation ) )
         {
           relator.removeModel( relation, this, true );
         }
@@ -110,7 +110,7 @@ Class.extend( RelationMultiple, HasRemote,
 
   addModel: function(relation, related, remoteData)
   {
-    if ( related.$isDeleted() || (this.where && !this.where( related ) ) )
+    if ( related.$isDeleted() || (this.where && !this.where( related, relation ) ) )
     {
       return;
     }

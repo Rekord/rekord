@@ -128,7 +128,7 @@ Class.extend( RelationMultiple, HasManyThrough,
           return;
         }
 
-        if ( relator.where && !relator.where( this ) )
+        if ( relator.where && !relator.where( this, relation ) )
         {
           relator.removeModel( relation, this );
         }
@@ -337,7 +337,7 @@ Class.extend( RelationMultiple, HasManyThrough,
 
   addModel: function(relation, related, remoteData)
   {
-    if ( related.$isDeleted() || (this.where && !this.where( related ) ) )
+    if ( related.$isDeleted() || (this.where && !this.where( related, relation ) ) )
     {
       return;
     }
@@ -386,7 +386,7 @@ Class.extend( RelationMultiple, HasManyThrough,
   {
     return function onAddModelFromThrough(related)
     {
-      if ( related && ( !this.where || this.where( related ) ) )
+      if ( related && ( !this.where || this.where( related, relation ) ) )
       {
         this.finishAddThrough( relation, through, remoteData );
         this.finishAddModel( relation, related, remoteData );

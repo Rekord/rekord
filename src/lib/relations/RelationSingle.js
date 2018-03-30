@@ -12,6 +12,8 @@ Class.extend( Relation, RelationSingle,
   debugClearKey: null,
   debugUpdateKey: null,
 
+  hasDiscriminator: true,
+
   onInitialized: function(database, field, options)
   {
     if ( !this.discriminated )
@@ -35,7 +37,7 @@ Class.extend( Relation, RelationSingle,
     else
     {
       var relation = model.$relations[ this.name ];
-      var related = this.parseModel( input, remoteData );
+      var related = this.parseModel( input, remoteData, relation );
 
       if ( related && relation.related !== related )
       {
@@ -48,7 +50,7 @@ Class.extend( Relation, RelationSingle,
   relate: function(model, input, remoteData)
   {
     var relation = model.$relations[ this.name ];
-    var related = this.parseModel( input, remoteData );
+    var related = this.parseModel( input, remoteData, relation );
 
     if ( related && relation.related !== related )
     {
@@ -60,7 +62,7 @@ Class.extend( Relation, RelationSingle,
   unrelate: function(model, input, remoteData)
   {
     var relation = model.$relations[ this.name ];
-    var related = this.parseModel( input );
+    var related = this.parseModel( input, remoteData, relation );
 
     if ( !related || relation.related === related )
     {
@@ -71,7 +73,7 @@ Class.extend( Relation, RelationSingle,
   isRelated: function(model, input)
   {
     var relation = model.$relations[ this.name ];
-    var related = this.parseModel( input );
+    var related = this.parseModel( input, false, relation );
 
     return related === relation.related;
   },
