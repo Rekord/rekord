@@ -70,6 +70,13 @@ Class.extend( RelationSingle, HasOne,
     model.$on( Model.Events.PreSave, this.preSave, this );
     model.$on( Model.Events.PostRemove, this.postRemove, this );
 
+    this.setInitial( model, initialValue, remoteData );
+  }),
+
+  setInitial: function(model, initialValue, remoteData)
+  {
+    var relation = model.$relations[ this.name ];
+
     if ( isEmpty( initialValue ) )
     {
       initialValue = this.grabInitial( model, this.local );
@@ -91,7 +98,7 @@ Class.extend( RelationSingle, HasOne,
     {
       relation.query = this.executeQuery( model );
     }
-  }),
+  },
 
   populateInitial: function(initialValue, relation, model)
   {

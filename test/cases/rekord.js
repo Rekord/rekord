@@ -556,3 +556,142 @@ test( 'repeated searches second finishes first', function(assert)
 
   timer.run();
 });
+
+test( 'load priority', function(assert)
+{
+  var prefix = 'load_priority_';
+
+  Rekord.autoload = false;
+
+  var Todo = Rekord({
+    name: prefix + 'todo',
+    fields: ['text', 'done'],
+    priority: 2
+  });
+
+  var Action = Rekord({
+    name: prefix + 'action',
+    fields: ['message'],
+    priority: 3
+  });
+
+  var order = 0;
+
+  expect(2);
+
+  Todo.Database.on( Rekord.Database.Events.LocalLoad, function() {
+    strictEqual(order++, 1);
+  });
+
+  Action.Database.on( Rekord.Database.Events.LocalLoad, function() {
+    strictEqual(order++, 0);
+  });
+
+  Rekord.load();
+  Rekord.autoload = true;
+});
+
+test( 'load relation order', function(assert)
+{
+  var prefix = 'load_relation_order';
+
+  Rekord.autoload = false;
+
+  var ActionName = prefix + 'action';
+  var TodoName = prefix + 'todo';
+  var ListName = prefix + 'list';
+
+  var Discriminators = {};
+  Discriminators[ ActionName ] = 'action';
+  Discriminators[ TodoName ] = 'todo';
+  Discriminators[ ListName ] = 'list';
+
+  var Action = Rekord({
+    name: ActionName,
+    priority: 0,
+    fields: ['related_id', 'related_type'],
+    hasOne: {
+      related: {
+        local: 'related_id',
+        discriminator: 'related_type',
+        discriminators: Discriminators,
+        cascade: Rekord.Cascade.None,
+        saveCascade: Rekord.Cascade.None
+      }
+    }
+  });
+
+  var Todo = Rekord({
+    name: TodoName,
+    priority: 1,
+    fields: ['list_id', 'text', 'done'],
+    belongsTo: {
+      list: {
+        model: ListName,
+        local: 'list_id'
+      }
+    }
+  });
+
+  var List = Rekord({
+    name: ListName,
+    priority: 2,
+    fields: ['name'],
+    hasMany: {
+      todos: {
+        model: TodoName,
+        foreign: 'list_id'
+      }
+    }
+  });
+
+  // Ones referenced in belongsTo and hasOne should be loaded BEFORE
+
+  // Polymorphic hasOne/belongsTo have lowest priority number
+  // Normal hasOne/belongsTo has middle priority number
+  // Polymorphic & Normal hasMany/hasManyThrough has highest priority number
+
+  var ActionStore = Action.Database.store.map;
+  var TodoStore = Todo.Database.store.map;
+  var ListStore = List.Database.store.map;
+
+  ActionStore.put(1, {id: 1, related_id: 1, related_type: 'todo'});
+  ActionStore.put(2, {id: 2, related_id: 1, related_type: 'list'});
+  ActionStore.put(3, {id: 3, related_id: 2, related_type: 'todo'});
+
+  TodoStore.put(1, {id: 1, list_id: 1, text: 'todo1', done: false});
+  TodoStore.put(2, {id: 2, list_id: 1, text: 'todo2', done: true});
+  TodoStore.put(3, {id: 3, list_id: 3, text: 'todo3', done: false});
+
+  ListStore.put(1, {id: 1, name: 'list1'});
+  ListStore.put(2, {id: 2, name: 'list2'});
+
+  Rekord.load();
+  Rekord.autoload = true;
+
+  var a1 = Action.get(1);
+  var a2 = Action.get(2);
+  var a3 = Action.get(3);
+
+  var t1 = Todo.get(1);
+  var t2 = Todo.get(2);
+  var t3 = Todo.get(3);
+
+  var l1 = List.get(1);
+  var l2 = List.get(2);
+
+  strictEqual(t1.list, l1, 'list1 matched to todo1');
+  strictEqual(t2.list, l1, 'list1 matched to todo2');
+  strictEqual(t3.list, undefined, 'no list matched to todo3');
+
+  strictEqual(l1.name, 'list1', 'list1 name loaded');
+  strictEqual(t1.text, 'todo1', 'todo1 name loaded');
+  strictEqual(t2.text, 'todo2', 'todo2 name loaded');
+
+  strictEqual(a1.related, t1, 'todo1 related to action1');
+  strictEqual(a2.related, l1, 'list1 related to action2');
+  strictEqual(a3.related, t2, 'todo2 related to action3');
+
+  deepEqual(l1.todos.toArray(), [t1, t2], 'todos matched to list1');
+  deepEqual(l2.todos.toArray(), [], 'todos matched to list2');
+});

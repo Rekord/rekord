@@ -1,4 +1,4 @@
-/* rekord 1.5.9 - A javascript REST ORM that is offline and real-time capable http://rekord.github.io/rekord/ by Philip Diffenderfer */
+/* rekord 1.5.10 - A javascript REST ORM that is offline and real-time capable http://rekord.github.io/rekord/ by Philip Diffenderfer */
 // UMD (Universal Module Definition)
 (function (root, factory)
 {
@@ -2666,6 +2666,13 @@ Rekord.load = function(callback, context)
     }
   }
 
+  // Load by priority defined in Database
+  loading.sort(function(a, b)
+  {
+    return b.priority - a.priority;
+  });
+
+  // Begin the loading procedure for every unloaded Database
   for (var i = 0; i < loading.length; i++)
   {
     loading[ i ].loadBegin( onLoadFinish );
@@ -3878,6 +3885,7 @@ var Defaults = Database.Defaults =
   defaults:             {},
   publishAlways:        [],
   saveAlways:           [],
+  priority:             0,
   comparator:           null,
   comparatorNullsFirst: null,
   revision:             null,
@@ -4698,7 +4706,13 @@ Class.create( Database,
         var encoded = records[ i ];
         var key = keys[ i ];
         var decoded = db.decode( copy( encoded, true ) );
-        var model = db.instantiate( decoded, true );
+        var existing = db.all[ key ];
+        var model = existing || db.instantiate( decoded, true );
+
+        if (existing)
+        {
+          model.$set( decoded, undefined, true );
+        }
 
         if ( model.$invalid === true )
         {
@@ -5211,6 +5225,11 @@ Class.create( Model,
       this.$reset( props );
     }
 
+    this.$initRelations( remoteData );
+  },
+
+  $initRelations: function(remoteData)
+  {
     if ( this.$db.loadRelations )
     {
       var databaseRelations = this.$db.relations;
@@ -13808,10 +13827,15 @@ Class.create( Relation,
    * @param  {Rekord.Model} model [description]
    */
 
-  load: Gate(function(model, initialValue, remoteData)
+  load: Gate(function(model, initialValue, remoteData, skipInitial)
   {
 
   }),
+
+  setInitial: function(model, initialValue, remoteData)
+  {
+
+  },
 
   set: function(model, input, remoteData)
   {
@@ -14746,6 +14770,13 @@ Class.extend( RelationSingle, BelongsTo,
     model.$on( Model.Events.PostRemove, this.postRemove, this );
     model.$on( Model.Events.KeyUpdate, this.onKeyUpdate, this );
 
+    this.setInitial( model, initialValue, remoteData );
+  }),
+
+  setInitial: function(model, initialValue, remoteData)
+  {
+    var relation = model.$relations[ this.name ];
+
     if ( isEmpty( initialValue ) )
     {
       initialValue = this.grabInitial( model, this.local );
@@ -14766,7 +14797,7 @@ Class.extend( RelationSingle, BelongsTo,
     {
       relation.query = this.executeQuery( model );
     }
-  }),
+  },
 
   sync: function(model, removeUnrelated)
   {
@@ -14891,6 +14922,13 @@ Class.extend( RelationSingle, HasOne,
     model.$on( Model.Events.PreSave, this.preSave, this );
     model.$on( Model.Events.PostRemove, this.postRemove, this );
 
+    this.setInitial( model, initialValue, remoteData );
+  }),
+
+  setInitial: function(model, initialValue, remoteData)
+  {
+    var relation = model.$relations[ this.name ];
+
     if ( isEmpty( initialValue ) )
     {
       initialValue = this.grabInitial( model, this.local );
@@ -14912,7 +14950,7 @@ Class.extend( RelationSingle, HasOne,
     {
       relation.query = this.executeQuery( model );
     }
-  }),
+  },
 
   populateInitial: function(initialValue, relation, model)
   {
@@ -15165,6 +15203,16 @@ Class.extend( RelationMultiple, HasMany,
     }
 
     // If the model's initial value is an array, populate the relation from it!
+    this.setInitial( model, initialValue, remoteData );
+
+    // We only need to set the property once since the underlying array won't change.
+    this.setProperty( relation );
+  }),
+
+  setInitial: function(model, initialValue, remoteData)
+  {
+    var relation = model.$relations[ this.name ];
+
     if ( isArray( initialValue ) )
     {
       Rekord.debug( Rekord.Debugs.HASMANY_INITIAL, this, model, relation, initialValue );
@@ -15181,10 +15229,7 @@ Class.extend( RelationMultiple, HasMany,
 
       this.ready( this.handleLazyLoad( relation ) );
     }
-
-    // We only need to set the property once since the underlying array won't change.
-    this.setProperty( relation );
-  }),
+  },
 
   sync: function(model, removeUnrelated)
   {
@@ -15608,6 +15653,17 @@ Class.extend( RelationMultiple, HasManyThrough,
     }
 
     // If the model's initial value is an array, populate the relation from it!
+    this.setInitial( model, initialValue, remoteData );
+
+    // We only need to set the property once since the underlying array won't change.
+    this.setProperty( relation );
+  }),
+
+  setInitial: function(model, initialValue, remoteData)
+  {
+    var relation = model.$relations[ this.name ];
+    var throughDatabase = this.through.Database;
+
     if ( isArray( initialValue ) )
     {
       Rekord.debug( Rekord.Debugs.HASMANYTHRU_INITIAL, this, model, relation, initialValue );
@@ -15624,10 +15680,7 @@ Class.extend( RelationMultiple, HasManyThrough,
 
       throughDatabase.ready( this.handleLazyLoad( relation ), this );
     }
-
-    // We only need to set the property once since the underlying array won't change.
-    this.setProperty( relation );
-  }),
+  },
 
   sync: function(model, removeUnrelated)
   {
@@ -16287,16 +16340,23 @@ Class.extend( RelationMultiple, HasList,
     };
 
     // If the model's initial value is an array, populate the relation from it!
+    this.setInitial( model, initialValue, remoteData );
+
+    // We only need to set the property once since the underlying array won't change.
+    this.setProperty( relation );
+  }),
+
+  setInitial: function(model, initialValue, remoteData)
+  {
+    var relation = model.$relations[ this.name ];
+
     if ( isArray( initialValue ) )
     {
       Rekord.debug( Rekord.Debugs.HASLIST_INITIAL, this, model, relation, initialValue );
 
       this.grabModels( relation, initialValue, this.handleModel( relation, remoteData ), remoteData );
     }
-
-    // We only need to set the property once since the underlying array won't change.
-    this.setProperty( relation );
-  }),
+  },
 
   addModel: function(relation, related, remoteData)
   {
@@ -16428,6 +16488,13 @@ Class.extend( RelationSingle, HasReference,
       }
     };
 
+    this.setInitial( model, initialValue, remoteData );
+  }),
+
+  setInitial: function(model, initialValue, remoteData)
+  {
+    var relation = model.$relations[ this.name ];
+
     if ( !isEmpty( initialValue ) )
     {
       Rekord.debug( Rekord.Debugs.HASREFERENCE_INITIAL, this, model, initialValue );
@@ -16438,7 +16505,7 @@ Class.extend( RelationSingle, HasReference,
     {
       relation.query = this.executeQuery( model );
     }
-  }),
+  },
 
   preClone: function(model, clone, properties)
   {

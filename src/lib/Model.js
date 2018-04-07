@@ -134,6 +134,11 @@ Class.create( Model,
       this.$reset( props );
     }
 
+    this.$initRelations( remoteData );
+  },
+
+  $initRelations: function(remoteData)
+  {
     if ( this.$db.loadRelations )
     {
       var databaseRelations = this.$db.relations;

@@ -199,6 +199,7 @@ var Defaults = Database.Defaults =
   defaults:             {},
   publishAlways:        [],
   saveAlways:           [],
+  priority:             0,
   comparator:           null,
   comparatorNullsFirst: null,
   revision:             null,
@@ -1019,7 +1020,13 @@ Class.create( Database,
         var encoded = records[ i ];
         var key = keys[ i ];
         var decoded = db.decode( copy( encoded, true ) );
-        var model = db.instantiate( decoded, true );
+        var existing = db.all[ key ];
+        var model = existing || db.instantiate( decoded, true );
+
+        if (existing)
+        {
+          model.$set( decoded, undefined, true );
+        }
 
         if ( model.$invalid === true )
         {

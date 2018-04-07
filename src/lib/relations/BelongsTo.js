@@ -76,6 +76,13 @@ Class.extend( RelationSingle, BelongsTo,
     model.$on( Model.Events.PostRemove, this.postRemove, this );
     model.$on( Model.Events.KeyUpdate, this.onKeyUpdate, this );
 
+    this.setInitial( model, initialValue, remoteData );
+  }),
+
+  setInitial: function(model, initialValue, remoteData)
+  {
+    var relation = model.$relations[ this.name ];
+
     if ( isEmpty( initialValue ) )
     {
       initialValue = this.grabInitial( model, this.local );
@@ -96,7 +103,7 @@ Class.extend( RelationSingle, BelongsTo,
     {
       relation.query = this.executeQuery( model );
     }
-  }),
+  },
 
   sync: function(model, removeUnrelated)
   {

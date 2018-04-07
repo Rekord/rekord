@@ -49,6 +49,13 @@ Class.extend( RelationSingle, HasReference,
       }
     };
 
+    this.setInitial( model, initialValue, remoteData );
+  }),
+
+  setInitial: function(model, initialValue, remoteData)
+  {
+    var relation = model.$relations[ this.name ];
+
     if ( !isEmpty( initialValue ) )
     {
       Rekord.debug( Rekord.Debugs.HASREFERENCE_INITIAL, this, model, initialValue );
@@ -59,7 +66,7 @@ Class.extend( RelationSingle, HasReference,
     {
       relation.query = this.executeQuery( model );
     }
-  }),
+  },
 
   preClone: function(model, clone, properties)
   {

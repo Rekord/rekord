@@ -67,16 +67,23 @@ Class.extend( RelationMultiple, HasList,
     };
 
     // If the model's initial value is an array, populate the relation from it!
+    this.setInitial( model, initialValue, remoteData );
+
+    // We only need to set the property once since the underlying array won't change.
+    this.setProperty( relation );
+  }),
+
+  setInitial: function(model, initialValue, remoteData)
+  {
+    var relation = model.$relations[ this.name ];
+
     if ( isArray( initialValue ) )
     {
       Rekord.debug( Rekord.Debugs.HASLIST_INITIAL, this, model, relation, initialValue );
 
       this.grabModels( relation, initialValue, this.handleModel( relation, remoteData ), remoteData );
     }
-
-    // We only need to set the property once since the underlying array won't change.
-    this.setProperty( relation );
-  }),
+  },
 
   addModel: function(relation, related, remoteData)
   {

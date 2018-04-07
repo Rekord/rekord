@@ -98,6 +98,13 @@ Rekord.load = function(callback, context)
     }
   }
 
+  // Load by priority defined in Database
+  loading.sort(function(a, b)
+  {
+    return b.priority - a.priority;
+  });
+
+  // Begin the loading procedure for every unloaded Database
   for (var i = 0; i < loading.length; i++)
   {
     loading[ i ].loadBegin( onLoadFinish );

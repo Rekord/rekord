@@ -116,10 +116,15 @@ Class.create( Relation,
    * @param  {Rekord.Model} model [description]
    */
 
-  load: Gate(function(model, initialValue, remoteData)
+  load: Gate(function(model, initialValue, remoteData, skipInitial)
   {
 
   }),
+
+  setInitial: function(model, initialValue, remoteData)
+  {
+
+  },
 
   set: function(model, input, remoteData)
   {

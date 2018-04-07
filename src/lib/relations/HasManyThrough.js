@@ -154,6 +154,17 @@ Class.extend( RelationMultiple, HasManyThrough,
     }
 
     // If the model's initial value is an array, populate the relation from it!
+    this.setInitial( model, initialValue, remoteData );
+
+    // We only need to set the property once since the underlying array won't change.
+    this.setProperty( relation );
+  }),
+
+  setInitial: function(model, initialValue, remoteData)
+  {
+    var relation = model.$relations[ this.name ];
+    var throughDatabase = this.through.Database;
+
     if ( isArray( initialValue ) )
     {
       Rekord.debug( Rekord.Debugs.HASMANYTHRU_INITIAL, this, model, relation, initialValue );
@@ -170,10 +181,7 @@ Class.extend( RelationMultiple, HasManyThrough,
 
       throughDatabase.ready( this.handleLazyLoad( relation ), this );
     }
-
-    // We only need to set the property once since the underlying array won't change.
-    this.setProperty( relation );
-  }),
+  },
 
   sync: function(model, removeUnrelated)
   {
