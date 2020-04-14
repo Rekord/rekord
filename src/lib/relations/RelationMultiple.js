@@ -115,7 +115,7 @@ Class.extend( Relation, RelationMultiple,
             this.addModel( relation, related, remoteData );
           }
         }
-      });
+      }, remoteData );
     }
     else if ( isValue( input ) )
     {
@@ -145,7 +145,7 @@ Class.extend( Relation, RelationMultiple,
             this.removeModel( relation, related, remoteData );
           }
         }
-      });
+      }, remoteData );
     }
     else if ( isValue( input ) )
     {
@@ -166,7 +166,7 @@ Class.extend( Relation, RelationMultiple,
         {
           this.removeModel( relation, all[ i ], remoteData );
         }
-      });
+      }, remoteData );
     }
   },
 
